@@ -1,0 +1,83 @@
+# v2.9 palette depth: procedural fire foley, a blown-reed melody through a
+# hash-pinned stone-room IR, deep-tuned drums, wind in the distance.
+asset hearthside {
+  kind: soundtrack
+  duration: 24s
+  samplerate: 48000
+  bitdepth: 24
+  tempo: 78bpm
+  key: D minor
+  groove: laidback 0.5
+
+  marker embers @ 0s
+  marker reed_song @ 4.6s
+  marker night_wind @ 14s
+
+  bus music {
+    fx: peak(400hz, gain=-1.5, q=1.1),
+        convolve(file="stone_room_ir.wav", sha256="2d994ff43430784462c4a0b4f0b04b30b287c25a7e867a092dfe9a1dc36ff4cd", mix=0.22),
+        saturate(amount=0.12, warmth=0.4)
+  }
+
+  layer hearth : foley {
+    model: fire
+    intensity: 0.55
+    brightness: 0.5
+    duration: 24s
+    gain: -17db
+    pan: -0.2
+    env: a=1.5s d=1s s=0.85 r=3s
+  }
+  layer night : foley {
+    model: wind
+    intensity: 0.4
+    brightness: 0.3
+    duration: 24s
+    gain: -24db
+    pan: 0.3
+    env: a=4s d=2s s=0.7 r=4s
+    auto gain: 0s=-30db, 14s=-22db, 24s=-30db
+  }
+  layer reed : notes {
+    osc: blown
+    pressure: 0.55
+    brightness: 0.5
+    gain: -13db
+    pan: 0.08
+    bus: music
+    humanize: 0.5
+    env: a=0.12s d=0.4s s=0.85 r=0.6s
+    notes: D4 @ 6b for 2.5b vel 0.7, F4 @ 9b for 1.5b vel 0.6,
+           A4 @ 11b for 3b vel 0.8, G4 @ 15b for 1.5b vel 0.6,
+           E4 @ 17b for 2b vel 0.65, D4 @ 20b for 4b vel 0.75
+  }
+  layer low_drum : drums {
+    voice: kick
+    pattern: X.......x.......X.......x.x.....
+    tune: -5st
+    decay: 1.8
+    snap: 0.15
+    bend: 0.4
+    gain: -10db
+    bus: music
+    humanize: 0.4
+  }
+  layer frame_drum : drums {
+    voice: tom
+    pattern: ....x.......x..x....x.......x...
+    tune: -3st
+    decay: 1.3
+    gain: -16db
+    pan: 0.2
+    bus: music
+    humanize: 0.55
+  }
+  master {
+    width: 0.78
+    lufs: -17
+    peak: -1db
+    fadein: 1s
+    fadeout: 3s
+    fx: lowshelf(90hz, gain=1), highshelf(9500hz, gain=1)
+  }
+}

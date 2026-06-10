@@ -1,0 +1,62 @@
+# P1 exit criterion: real hash-pinned orchestral samples (VSCO 2 CE, CC0)
+# rendering byte-stably through the deterministic SFZ-subset engine.
+# A minor phrase: violin section sustains, spiccato answers, timpani anchors.
+asset vsco_first_light {
+  kind: soundtrack
+  duration: 22s
+  samplerate: 48000
+  bitdepth: 24
+  tempo: 84bpm
+  key: A minor
+  library: "vsco2-ce-subset@e4f0356b9e6d43fe3a68d23a4e34e16d2f8be35783c9f050bcc4ec53fa2c4137"
+
+  marker phrase1 @ 0s
+  marker answer @ 8.5s
+  marker close @ 15s
+
+  bus strings {
+    fx: peak(300hz, gain=-1.5, q=1.0), hall(rt60=2.4s, damp=0.4, mix=0.26)
+  }
+
+  layer vln_sus : instrument {
+    instrument: violins_1
+    articulation: sustain
+    gain: -8db
+    bus: strings
+    humanize: 0.35
+    notes: A3 @ 0b for 4b vel 0.5, C4 @ 4b for 4b vel 0.62,
+           E4 @ 8b for 3b vel 0.78, D5 @ 11b for 1b vel 0.6,
+           B4 @ 12b for 4b vel 0.72, A3 @ 16b for 6b vel 0.5,
+           E4 @ 18b for 4b vel 0.45
+  }
+  layer vln_spic : instrument {
+    instrument: violins_1
+    articulation: spiccato
+    gain: -11db
+    pan: 0.18
+    bus: strings
+    humanize: 0.5
+    notes: A3 @ 8b for 0.5b vel 0.8, C4 @ 8.5b for 0.5b vel 0.7,
+           E4 @ 9b for 0.5b vel 0.85, C4 @ 9.5b for 0.5b vel 0.7,
+           A3 @ 10b for 0.5b vel 0.8, E4 @ 10.5b for 0.5b vel 0.75,
+           A3 @ 12b for 0.5b vel 0.85, C4 @ 12.5b for 0.5b vel 0.75,
+           E4 @ 13b for 0.5b vel 0.9, A3 @ 14b for 0.5b vel 0.8
+  }
+  layer timp : instrument {
+    instrument: timpani
+    gain: -9db
+    pan: -0.12
+    humanize: 0.3
+    notes: A2 @ 0b for 1b vel 0.55, A2 @ 8b for 1b vel 0.85,
+           E2 @ 12b for 1b vel 0.7, A2 @ 16b for 1b vel 1.0,
+           A2 @ 17.5b for 1b vel 0.5
+  }
+  master {
+    width: 0.85
+    lufs: -17
+    peak: -1db
+    fadein: 0.3s
+    fadeout: 2.5s
+    fx: lowshelf(100hz, gain=1), highshelf(9000hz, gain=0.8)
+  }
+}

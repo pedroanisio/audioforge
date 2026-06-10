@@ -1,0 +1,62 @@
+# Acoustic-leaning underscore showcasing the v2.1 instruments together:
+# Karplus-Strong harp figure, marimba accents, PADsynth warmth, hall space.
+asset acoustic_reveal_v1 {
+  kind: bed
+  duration: 16s
+  tempo: 80bpm
+  key: D major
+  emotion: wonder=0.6, intimacy=0.5
+  intensity: 0s=0.4, 11s=0.9, 16s=0.3
+
+  marker reveal @ 11s
+
+  motif arp {
+    D3 @ 0b for 1b vel 0.9
+    A3 @ 0.5b for 1b vel 0.7
+    D4 @ 1b for 1b vel 0.8
+    F#4 @ 1.5b for 1b vel 0.75
+    A4 @ 2b for 2b vel 0.9
+  }
+
+  layer harp : notes {
+    osc: pluck
+    damping: 0.8
+    brightness: 0.7
+    pluckpos: 0.2
+    gain: -7db
+    env: a=0.002s d=1.5s s=0.4 r=0.6s
+    play arp @ 0b
+    play arp @ 4b
+    play arp @ 8b transpose +5st
+    play arp @ 12b transpose +12st vel 1.1
+    fx: hall(rt60=2.8, damp=0.35, mix=0.32)
+  }
+  layer warmth : notes {
+    osc: pad
+    bandwidth: 38c
+    gain: -13db
+    pan: -0.2
+    env: a=2s d=1s s=0.85 r=2.5s
+    notes: D2 @ 0b for 8b, A2 @ 0b for 8b,
+           G2 @ 8b for 8b, D3 @ 8b for 8b
+    fx: lowpass(1500hz), hall(rt60=4s, damp=0.5, mix=0.38)
+  }
+  layer mallets : notes {
+    osc: modal
+    material: marimba
+    modedecay: 1.2s
+    gain: -12db
+    pan: 0.3
+    env: a=0.001s d=0.9s s=0 r=0.3s
+    notes: D5 @ 3b for 1b vel 0.7, A4 @ 7b for 1b vel 0.6,
+           F#5 @ 11b for 1b vel 0.9, D5 @ 13.5b for 1.5b vel 0.7
+    fx: delay(time=0.375s, feedback=0.25, mix=0.25), hall(rt60=2.5, mix=0.3)
+  }
+  master {
+    width: 0.75
+    lufs: -16
+    peak: -1db
+    fadein: 0.4s
+    fadeout: 1.5s
+  }
+}

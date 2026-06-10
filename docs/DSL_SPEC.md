@@ -1,0 +1,329 @@
+# AudioForge DSL Specification
+
+**DSL 1.7 · Engine 2.14.0**
+
+The `.af` DSL is the authoring surface for humans and AI agents. It compiles to a JSON spec — the deterministic intermediate representation (IR) that the engine renders. Everything expressive in the DSL (emotion tags, intensity curves, motifs, chords, transforms, groove templates, `vary()` choices) is **expanded at compile time** into explicit JSON parameters, so the IR is always the single, inspectable ground truth for what will be rendered. Same DSL text → same IR → same spec hash → byte-identical audio, forever.
+
+---
+
+## 1. Lexical rules
+
+Comments run from `#` to end of line (a `#` *inside* an identifier, as in `C#4`, is part of the identifier). Statements are line-oriented; a property list continues onto the next line if the current line ends with a comma or is inside parentheses. Strings are double-quoted: `file: "kick_room.wav"`.
+
+Numbers may carry a unit suffix, validated against what the property expects:
+
+| Unit | Meaning | Example |
+|------|---------|---------|
+| `s` | seconds | `duration: 36s` |
+| `b` | beats | `C4 @ 8b for 2b` |
+| `bpm` | tempo | `tempo: 60bpm` |
+| `db` | decibels | `gain: -9db` |
+| `hz` | frequency | `lowpass(1800hz)` |
+| `st` | semitones | `transpose +12st`, `tune: -4st` |
+| `c` | cents | `detune: 7c`, `pitchspread: 30c` |
+
+**Pitches.** Notes are pitch names: `C4`, `F#2`, `Eb3`, `A-1` (MIDI-style octaves, A4 = 440 Hz). Raw frequencies are accepted anywhere a note is: `432hz @ 0b for 4b`. **Chord symbols** are a root-with-octave plus a quality, accepted anywhere a note is (including motifs): `C3min7`, `Ab2maj7`, `E4sus4`. Qualities: `maj min m dim aug 6 7 9 m6 m7 maj7 min7 maj9 min9 m9 sus2 sus4 add9 dim7 min7b5/m7b5`.
+
+---
+
+## 2. Asset structure
+
+```
+asset <id> {
+  <asset properties>
+  marker <name> @ <time_s>
+  motif <name> { <note events> }
+  stage { <stage properties> }            # concert staging (§7a)
+  cutdowns { <cutdown lines> }            # campaign matrix (§10)
+  bus <name> { <bus properties> }         # mix buses (§7)
+  layer <name> : <type> { <layer properties> }
+  master { <master properties> }
+}
+```
+
+A file may contain multiple `asset` blocks; each compiles to its own spec. Buses must be declared before layers reference them.
+
+### 2.1 Asset properties
+
+| Property | Value | Compiles to |
+|----------|-------|-------------|
+| `kind:` | `signature sfx loop jingle transition cue bed soundtrack` | `kind` |
+| `duration:` | seconds | `duration_s` |
+| `samplerate:` | integer Hz | `sample_rate` (default 48000) |
+| `bitdepth:` | `16` or `24` | `bit_depth` (default 24) |
+| `tempo:` | bpm, or a **tempo map**: `96bpm, 20b=96bpm, 26b=128bpm` | `bpm` + `tempo_map` |
+| `key:` | e.g. `C minor`, or a **key map**: `A minor, 26b=C major` | `key` + `key_map` |
+| `swing:` | 0..1 | `swing` (legacy; prefer `groove:`) |
+| `groove:` | `<template> [amount]` — `straight swing16 shuffle laidback pushed heavy_one` | explicit 16-slot `timing`/`accent` arrays |
+| `loopsafe:` | `on` | `loop_safe` (validates whole-beat duration) |
+| `emotion:` | `name=0..1, ...` | metadata + macro expansion (§12) |
+| `intensity:` | `time=0..1, ...` | tagged master `gain_db` automation + `intensity_curve` |
+| `library:` | `"name@manifest_sha256"` | `library` — pins a content-addressed instrument library (§11); mandatory for `instrument` layers |
+
+**Tempo maps** ramp BPM linearly between points; beat→seconds is the exact analytic integral (logarithmic per ramp segment), so accelerandi are smooth, not stepped. Every musical grid — note starts/durations, drum steps, groove and swing offsets, loop expansion — follows the map. Layer `start:`, automation breakpoints, and markers remain in real seconds. **Key maps** modulate mid-asset: scale advisories and `diatonic` transforms (§3) resolve whichever key is in force at their position.
+
+Known emotion tags: `tension awe sadness triumph suspense intimacy urgency calm fear wonder cinematic_intensity`. Unknown tags are kept as metadata with a warning.
+
+### 2.2 Markers
+
+`marker climax @ 26s` — compiled into `markers`, written to the manifest and a `.markers.json` sidecar for video-timeline alignment.
+
+---
+
+## 3. Motifs, `play`, and transforms
+
+```
+motif ascent {
+  C4 @ 0b for 1.5b vel 0.7
+  G4 @ 3b for 2b vel 0.85
+}
+layer voice : notes {
+  play ascent @ 10b
+  play ascent @ 18b invert vel 0.9
+  play ascent @ 26b retrograde diatonic -2
+  play ascent @ 34b stretch 1.5 transpose +12st
+}
+```
+
+`play` expands the motif into the layer's note list at compile time. Transform flags apply in a fixed, documented order: **retrograde → invert → stretch → diatonic → transpose → vel**.
+
+| Flag | Behavior |
+|------|----------|
+| `retrograde` | reverses the motif in time (end-aligned) |
+| `invert` | chromatic mirror around the motif's first (earliest, then lowest) pitch |
+| `stretch N` | starts and durations × N (augmentation/diminution) |
+| `diatonic ±N` | moves each pitch N scale degrees within the key in force at the play position (key map aware). Chromatic passing tones keep their offset from the nearest lower scale tone |
+| `transpose ±Nst` | chromatic shift; fractional semitones compile to explicit `freq_hz` (chords need whole semitones) |
+| `vel X` | velocity scale |
+
+Motifs may contain chord symbols; transforms move the chord root and preserve the quality. Motifs are pure macros — the IR contains only expanded notes.
+
+---
+
+## 4. Layer types
+
+`layer <name> : <type>` — eight types. Common properties on every layer: `gain:` (db), `pan:` (-1..1, constant-power), `start:` (s), `duration:` (s, truncates), `env: a=… d=… s=… r=…` (ADSR; a/d/r seconds, s level 0..1), `fx:` (§8), `auto <target>:` (§9), `bus:` (§7).
+
+| Type | Specific properties |
+|------|--------------------|
+| `tone` | `osc:` (§5), `note:`/`freq:`, `detune:` (c), `fmratio:`/`fmindex:`, voice params (§5) |
+| `notes` | `osc:`, `notes:` event list, `play` statements, `loop:` (beats), `arp:` (§6), voice + performance params (§5–6) |
+| `sweep` | `shape:` (an oscillator waveform), `from:`/`to:` (hz), `curve:` (`lin`/`exp`) |
+| `noise` | `color:` (`white pink brown`) |
+| `drums` | `voice:` (`kick snare hat open_hat clap tom` + plugins), `pattern:` (§6), depth params `tune: ±12st`, `decay: 0.25..4`, `snap: 0..1`, `bend: 0..1.5`, `humanize:` |
+| `grain` | granular texture: `source:` (any oscillator or noise color), `note:`/`freq:` for pitched sources, `srcdur:` (s), `grainsize:` (s), `density:` (grains/s), `pitchspread:` (c), `scatter:` (0 = scan through the source, 1 = anywhere) |
+| `sample` | content-addressed audio: `file: "name.wav"`, `sha256: "…64 hex…"`, then either `start:` (one-shot) or `pattern:` (drum-grid triggering with groove/humanize), `pitch: ±Nst`. WAV PCM 16/24/32-bit, auto mono-mix, deterministic resample. The pinned hash participates in the spec hash; a byte mismatch refuses with both hashes named |
+| `foley` | procedural ambience: `model:` (`rain wind fire surf`), `intensity: 0..1`, `brightness: 0..1` |
+| `instrument` | sampled instruments from a content-addressed library (§11): `instrument:` (name in the manifest), `articulation:` (layer default, per-note `art` overrides), `dynamic:` curve, `notes:` events, performance props. Requires a spec-level `library:` pin |
+
+**Validate means render-ready (since 2.14).** `validate` runs the structural schema check *plus* a resource-binding resolve pass: libraries located and manifest-verified, instruments and articulations resolved, sample/IR files found and hash-checked, native kernels probed. `OK: valid — render-ready` is a true predicate for "will render"; resource problems are reported as line-cited diagnostics, and `render` refuses with the same structured list rather than a raw traceback (`--no-resolve` gives the pure structural check). Pins that are one repeated hex character (e.g. all zeros) are reported distinctly as **unbound placeholders**. Source line numbers travel in a `_meta` sidecar that is **excluded from the spec hash** — the same music reformatted hashes identically.
+
+**Note events** (in `notes:` lists and motifs): `PITCH @ START for DUR [vel V] [voicing NAME] [art NAME]`. Note lists may wrap consecutive notes in `slur( …, … )` — the group shares a slur id in the IR. `slur( play m @ 0b, play m @ 4b … )` is also valid (since 2.14): the motif expansions join as **one** slur group; `play motif @ Nb legato` remains the single-motif shorthand. `notes:` needs its first event on the same line and continues across lines with trailing commas; `play` is a layer-body statement, one per line — the parser now says exactly this when the shapes are confused. Automation (`auto target:`) honors the same comma-newline continuation rule as every property list (fixed in 2.14). where PITCH is a note, frequency, or chord symbol. Articulations: `sustain staccato spiccato pizzicato tremolo marcato legato trill` — `trill` expands at compile time into alternating notes with the key-aware diatonic upper neighbor (0.125 b steps, reported in diagnostics). Chord voicings: `close` (default) `drop2 drop3 spread open wide inv1 inv2`. A chord expands to simultaneous notes — or to a sequence if the layer has an `arp:` (§6).
+
+---
+
+## 5. Oscillator voices
+
+All oscillators are bandlimited; all randomness derives from per-note seeded RNG paths, so every voice is byte-reproducible.
+
+| Voice | Properties (defaults) | Character |
+|-------|----------------------|-----------|
+| `sine saw square triangle` | — | exact-Fourier wavetables |
+| `fm` | `fmratio: 2`, `fmindex: 0` | 2-operator FM |
+| `organ` | — | drawbar partial stack |
+| `pad` | `bandwidth: 40c`, `harmonics: 48` | PADsynth (public domain): Gaussian-widened harmonics — lush, perfectly-looping ensemble pads |
+| `pluck` | `damping: 0.5`, `brightness: 0.6`, `pluckpos: 0.28` | extended Karplus-Strong string |
+| `modal` | `material: bell glass marimba gong steel`, `modedecay: Ns`, **or** `modes: r a t, r a t, …` (1–32 `ratio amp t60_share` triplets — bespoke percussion from a list of numbers) | decaying-partial resonator bank + seeded strike |
+| `morph` | `scan: 0..1` (automatable, §9) | wavetable morphing: sine→triangle→pulse→saw→square between bandlimited frames |
+| `bowed` | `pressure: 0.2..1`, `bowpos: 0.05..0.45`, `brightness:` | McIntyre-Woodhouse/STK-lineage friction-curve waveguide (**native kernel** — needs a C compiler, fails loudly without) |
+| `blown` | `pressure: 0.2..1`, `brightness:` | STK-Clarinet-lineage reed waveguide; loop-gain constants solved analytically so it self-oscillates across the pressure range; odd-harmonic cylindrical-bore spectrum; seeded breath turbulence (**native kernel**) |
+| any classic shape | `unison: 2..16`, `spread: Nc` | detuned stack, golden-ratio phases (no RNG); survives pitch envelopes |
+
+The physical models (`pluck`, `modal`, `bowed`, `blown`) ignore pitch envelopes (glide/vibrato) by design. Both waveguides speak ~2% sharp of nominal (delay-line quantization + excitation phase delay). Plugin oscillators and drum voices extend the `osc:`/`voice:` choices.
+
+---
+
+## 6. Performance & rhythm
+
+All deviation from the grid comes from per-note seeded RNG paths or fixed templates — "imperfect" and byte-reproducible at once, with everything expanded into explicit IR values.
+
+| Property | Where | Behavior |
+|----------|-------|----------|
+| `groove: <name> [amount]` | asset | template × amount → explicit 16-slot timing (fractions of a 16th) and accent arrays, applied to drum patterns and note onsets |
+| `humanize: 0..1` (or `time=…s vel=…`) | notes/drums | macro → `{timing_s, vel}` (at 1.0: ±18 ms, ±15%); per-hit seeded jitter |
+| `velbright: 0..1` | notes | velocity→timbre: soft notes get a lowpass pulled toward the fundamental (measured: vel 0.3 vs 1.0 → 400 vs 1923 Hz centroid on a saw) |
+| `glide: Ns` | notes | portamento from the previous note (monophonic-line semantics), exponential |
+| `vibrato: rate=Hz depth=Nc delay=Ns` | notes | per-note vibrato entering after `delay` with a fade-in |
+| `arp: <pattern> [rate=…b octaves=N gate=0..1]` | notes | chords in the layer sequence instead of sounding together. Patterns: `up down updown downup random` (`random` order is seeded from variant + layer + event index — compile-stable) |
+| `slur( … )` / `play … legato` | notes/instrument | phrase groups (since 2.12). On instrument layers, consecutive slurred notes render with **legato joins**: the outgoing note holds through an equal-power crossfade (`legato: Ns`, default 0.05 s), the incoming note skips 60 ms past its recorded attack and glides its read rate from the previous pitch — a real smear, not a crossfade artifact. Synth layers use slurs for phrasing only (use `glide:` for portamento) |
+| `section: size=N [spread=0..1] [detune=Nc] [timing=Ns]` | instrument | ensemble multiplication (since 2.12): N seeded virtual players — independent timing (±9 ms default), micro-detune (±7 c), per-player round-robin pools — spread across the stereo stage (the layer becomes true stereo; `pan:` offsets the whole section). Honest disclosure: N copies of one recording is a chorus of soloists, not a true section — VSCO's violins are already section recordings; use multiplication to thicken or for divisi |
+| `phrasing: 0..1` | notes/instrument | a deterministic arch over slur groups (since 2.12): velocities rise toward the group's pitch peak (±18% at 1.0) and ease after; the last note lifts (−5% duration, −7% velocity). Documented constants, no learned model — that upgrade is Tier N's territory |
+| `dynamic: beats=mark, …` | notes/instrument | dynamics as timbre (since 2.11). Marks `ppp pp p mp mf f ff fff` map to documented 0..1 values (0.10/0.22/0.35/0.48/0.60/0.74/0.87/1.00); raw numbers accepted; a hairpin is simply two points. On **instrument** layers the curve drives equal-power, *time-varying* velocity-layer crossfades (a crescendo on one held note moves through the recorded layers) plus a −9 dB..0 level term — real dynamics are mostly timbre. On **notes** layers it drives brightness (full velbright coupling unless `velbright:` is set explicitly) and the same level term, with brightness sampled at note onset. Per-note `vel` remains a local accent on amplitude |
+
+**Drum patterns** are 16th-note strings (`x` hit, `X` accent, `.` rest), or Euclidean: `pattern: euclid(5,16)` / `euclid(5,16,rot)` expands via Bjorklund to the explicit string. Glide and vibrato render through pitch-envelope synthesis (phase integration / variable-rate table reads), bandlimited at the envelope's maximum frequency.
+
+---
+
+## 7. Buses & mix
+
+```
+bus music {
+  gain: -1db
+  duck: source=kick amount=5db attack=0.012s release=0.18s threshold=-38db
+  fx: peak(400hz, gain=-2, q=1.1), hall(rt60=2.3s, mix=0.22), saturate(amount=0.15)
+  auto gain: 0s=-3db, 8s=0db
+}
+layer pad : tone { ... bus: music ... }
+```
+
+Layers without `bus:` route directly to the master. Buses process in declaration order: **duck → fx chain → gain → gain automation**, then sum into the mix. Bus fx run through the same true-stereo chain machinery as the master, so a bus hall is one shared reverb instance, not N copies.
+
+**Sidechain ducking:** `duck.source` is a layer name or `bus:<name>` of an *earlier* bus (cycles are impossible by construction). The gain curve gates the source against `threshold` per 1 ms block, then approaches full/zero reduction with exact piecewise-exponential attack/release — deterministic, no per-sample loops. A hash-pinned VO sample layer as duck source gives reproducible voiceover ducking.
+
+---
+
+## 7a. Stage & room (since 2.13)
+
+For staged layers, per-layer reverb is replaced by a physically-motivated, fully deterministic chain (the fx path remains for sound design):
+
+```
+stage {
+  hall: "stalbans_ortf_ir.wav@<sha256>"   # content-addressed measured IR
+  mics: tree=0.72, close=0.22, ambient=0.4
+  size: 15m, 23m, 12m                      # shoebox fit (default 18,26,10)
+}
+layer vln1 : instrument { ... seat: -16deg @ 4.5m ... }
+```
+
+`seat: <azimuth>deg @ <distance>m` places a source; seats and buses are mutually exclusive (the stage is the staged layer's bus). Three taps per source, blended by `mics:`: **close** = the spot mic (placement with distance clamped to 1.5 m); **tree** = the main-pair image: direct sound at distance (1/r gain, air absorption as a −0.3 dB/m high-shelf above 6 kHz — a documented approximation of ISO 9613-1 behavior, not a certified implementation — constant-power azimuth pan plus a sub-ms ITD) **plus** image-source early reflections over the shoebox (second order, reflection coefficient 0.82, closed-form, seedless, cached); **ambient** = one shared stereo convolution per stage with the pinned hall IR (stereo IRs give a decorrelated tail; the tail feed is distance-flat, as in real halls). This refines the architecture plan's tap definition — a real main pair captures direct + early together, so the mix model does too. Sectioned layers keep their internal stereo image; the seat adds distance, air, and the shared room. The shipped `stalbans_ortf_ir.wav` is the Lady Chapel, St Albans Cathedral from OpenAIR (University of York), **CC BY 4.0 — attribution required**, recorded in `samples/stalbans_ortf_ir.ATTRIBUTION.txt`; point `hall:` at any IR you own, pinned the same way.
+
+## 8. FX chains
+
+`fx: lowpass(1800hz), plate(decay=0.7, mix=0.3)` — comma-separated, applied in order; usable on layers, buses, and the master. Positional args fill the primary parameter.
+
+| Call | Parameters (defaults) | Notes |
+|------|----------------------|-------|
+| `lowpass(hz, q=0.7071)` `highpass(hz, q=0.7071)` `bandpass(hz, q=0.9)` | | biquads; cutoff automatable (§9) |
+| `peak(freq, gain, q=0.7071)` | dB ±24 | RBJ parametric bell |
+| `lowshelf(freq, gain)` `highshelf(freq, gain)` | | RBJ shelves |
+| `delay(time=0.25, feedback=0.3, mix=0.3)` | | |
+| `reverb(decay=1.2, mix=0.25)` | | seeded-IR convolution reverb |
+| `hall(rt60=2.5, damp=0.4, mix=0.3)` | | Freeverb-lineage combs + allpasses |
+| `plate(decay=0.7, damp=0.3, predelay=0, mod=0, modrate=1, mix=0.3)` | feedback 0.1..0.97 | Dattorro 1997 tank, published constants. `mod>0` engages the original's delay modulation via the native kernel (needs a C compiler; mod=0 path validated to machine epsilon against it) |
+| `fdn(rt60=3, rt60_high=rt60·0.4, crossover=2500, size=1, mix=0.3)` | | 8-line Householder FDN, per-line shelving: independent low/high RT60. True stereo on master/buses |
+| `convolve(file="ir.wav", sha256="…", mix=0.3, gain=0db)` | | hash-pinned impulse response: real spaces under sample content-addressing. Energy-normalized; mismatch refuses. Mono IR per channel in stereo chains |
+| `comp(threshold=-18, ratio=2.5, attack=0.03, release=0.15, knee=6, makeup=0)` | | lookahead windowed-RMS, soft knee; stereo-linked on master/buses |
+| `mbcomp(threshold=-20, ratio=2, low=180, high=2800, …)` | | 3-band LR4 glue |
+| `transient(attack=0, sustain=0)` | dB ±12 | envelope-follower transient shaper: onsets vs body |
+| `saturate(amount=0.3, mix=1, warmth=0.3)` | | 4×-oversampled biased-tanh glue; `warmth` adds even harmonics; `mix=0` is bit-exact bypass |
+| `drive(amount=0.3)` | | harder oversampled tanh |
+| `tremolo(rate=5, depth=0.5)` `gain(db)` | | |
+| *any plugin name* | named args pass through | |
+
+---
+
+## 9. Automation
+
+```
+auto cutoff: 0s=400, 26s=2400, 36s=600    # first filter in this fx chain
+auto gain:   0s=-12db, 26s=0db            # layer / bus / master gain
+auto scan:   0s=0, 8s=1, 16s=0.2          # morph oscillator wavetable position
+```
+
+Breakpoints interpolate linearly (log-domain for cutoff; clipped 0..1 for scan). Gain is a sample-accurate multiplier; cutoff drives a block-based time-varying biquad with carried state; scan reaches the morph oscillator per-sample (sliced per note in `notes` layers). Breakpoint times are real seconds (tempo maps do not bend them).
+
+---
+
+## 10. Variation at scale
+
+One spec is a pack factory and a campaign master.
+
+**Variants.** A `variant` tag folds into the spec hash, coherently re-realizing every seeded path (pad textures, humanize, grains, breath, dither) while the composed note IR stays identical. Same tag = byte-identical forever. SDK: `forge.compile(src, variant="v3")`, `asset.variant(tag)`; CLI: `render --variant v3`.
+
+**`vary()` choice sets** — structural variation. Any property value can offer alternatives, resolved per variant by a stable SHA-256 of variant|asset|scope|prop:
+
+```
+pattern: vary(X...x..., X..x..x.)
+groove: vary(laidback 0.5, pushed 0.4)
+grainsize: vary(0.06s, 0.12s)
+```
+
+No variant = alternative 0 (the canonical render). Resolved values are explicit in the compiled IR.
+
+**Campaign cutdowns** — declared in the asset:
+
+```
+cutdowns {
+  15s: keep 0s to 5.5s, keep 19.5s to 30s, fade 0.5s
+  6s: keep 23.5s to 30s, fade 0.5s
+}
+```
+
+The premaster renders once; each cutdown splices its keep-windows with equal-power crossfades, then gets the full loudness/fade finish at the declared targets. The validator requires windows to assemble to the declared length (±1 s). Manifests record parent spec hash + windows. CLI: `audioforge campaign spec.af`; packs: `audioforge pack spec.af --variants 8` (+ `pack.manifest.json`).
+
+**Intensity ladder.** `asset.with_intensity(0.3)` / `--intensity 0.3` scales the intensity-curve-derived master automation — the same cue at a different dramatic temperature, hash-tracked.
+
+---
+
+## 11. Samples, libraries, ingestion
+
+**Single files.** Sample and IR files resolve against registered search paths (default `./samples`; add with `audioforge.samples.add_sample_path(dir)` or in-memory `register_sample(name, bytes)`). `audioforge ingest dir/` hashes and catalogs every WAV and prints paste-ready, hash-pinned layer snippets.
+
+**Instrument libraries (Tier S, since 2.10).** A library is a directory of WAV + SFZ files plus a `library.manifest.json` pinning every byte and the instrument→SFZ mapping (the manifest hash covers both — remapping an instrument changes audio, so it changes the hash). `audioforge libgen dir/ --name N --license L` generates it; specs pin it with `library: "name@manifest_sha256"`, which folds into the spec hash; every sample is byte-verified at first load and mismatches refuse with both hashes named. Libraries resolve against `./libraries` plus `audioforge.library.add_library_path(dir)`.
+
+**Articulations (since 2.11).** Per note (`art spiccato`) or per layer (`articulation:`). If the library samples the articulation, its SFZ map is selected; otherwise a documented synthetic fallback applies and is **recorded in the render manifest** (`articulation_fallbacks`) — loud, not silent: staccato/spiccato = sustain clamped to 0.18/0.12 s; pizzicato = shortest available articulation clamped to 0.10 s; marcato = +2.5 dB, hard attack; tremolo = seeded ~12 Hz re-trigger train; legato = sustain until P3's joins.
+
+The sampler interprets a documented SFZ subset: `<control>/<global>/<group>/<region>` inheritance, `default_path`, key/velocity mapping (`key lokey hikey pitch_keycenter lovel hivel`), **seeded round-robins** (`seq_length/seq_position` — picked from the per-note RNG path, which includes the variant tag, so repeats vary, re-renders are byte-identical, and pack variants re-realize), `ampeg_*` envelopes, forward loops with equal-power seam crossfades (`loop_mode/loop_start/loop_end/loop_crossfade`), and `tune/transpose/volume`. Unknown opcodes are collected and reported, never silently honored. Resampling is a fixed 32-tap windowed-sinc kernel (measured ±0.3 cents through a 44.1k→48k pitch-shifted path). Without a `dynamic` curve, velocity maps linearly to amplitude and selects layers on the 1–127 scale; with one, the curve owns selection and crossfade (§6).
+
+---
+
+## 12. Emotion macro expansion (exact mapping)
+
+Emotion never invents notes or changes timing — only spatial/spectral framing, all visible in the compiled IR:
+
+| Derived axis | Formula | Effect |
+|--------------|---------|--------|
+| `awe` | `awe + 0.6·wonder` | reverb `decay ×(1+0.8·awe)` (cap 15 s), reverb `mix +0.15·awe` (cap 0.7), width `+0.25·awe` |
+| `big` | `cinematic_intensity + 0.5·triumph` | width `+0.15·big` (cap 1.0) |
+| `calm` | `calm + 0.5·intimacy` | `fade_in ≥ 0.6·calm` s, `fade_out ≥ 1.2·calm` s |
+| `dark` | `tension + fear + 0.7·suspense` | appends master lowpass at `9000·(1−0.65·min(dark,1))` Hz |
+
+`sadness`/`urgency` are metadata-only. An `intensity:` curve maps value `v` → master gain `−14·(1−v)` dB. **Authoring note:** stacked dark tags can over-darken a mix (the macro warns with the resulting cutoff); brighten by lowering tension/fear/suspense or raising layer cutoffs.
+
+---
+
+## 13. Master block, loudness, mastering order
+
+`width:` (0..1), `peak:` (dBFS true-peak ceiling), `lufs:` (integrated target), `fadein:`/`fadeout:` (s), `fx:`, `auto gain:`.
+
+The master stage runs: **fx chain → gain automation → DC blocker (~8 Hz, always on) → LUFS gain + lookahead true-peak limiter (4× oversampled, stereo-linked, iterative makeup) → seeded dither → quantize**. `lufs:` uses a BS.1770-style measurement (K-weighting, gated 400 ms blocks); the manifest reports `measured_lufs`, `applied_gain_db`, max gain reduction, and `final_lufs`. Without `lufs:`, output is peak-normalized to `peak:`. 16-bit exports use high-pass TPDF dither; 24-bit flat TPDF. `loopsafe: on` fails compilation on non-whole-beat durations.
+
+Export presets (SDK/CLI `--preset`): `social_video` 48k/16/−14 · `broadcast` 48k/24/−23 · `cinematic_master` 96k/24/−16 · `web_preview` 22k05/16/−16.
+
+---
+
+## 14. Determinism, manifests, versioning
+
+Every render is keyed to the spec content hash; `ENGINE_VERSION` folds into it, so any engine change that could alter bytes changes all hashes — stale caches can never masquerade as current renders. Manifests record spec hash, output SHA-256, loudness report, markers, variant/intensity tags, and cutdown lineage. `audioforge verify spec manifest` re-renders and compares output hashes — the CI reproducibility gate. Cross-platform float reproducibility is *checked* by that gate per environment, not assumed.
+
+## 15. Diagnostics contract (for agents)
+
+Parse/compile errors raise with line numbers. Non-fatal advice arrives as warnings: out-of-scale notes (advisory — chromaticism is allowed), unknown properties (ignored, named), emotion expansion notes, cutdown length mismatches. The SDK (`AudioForge.compile`) never raises on user input — everything is a structured `Diagnostic(severity, message)`. Known gap: events placed past the asset's end are silently skipped at render; a validator warning is planned.
+
+## 16. CLI
+
+```
+audioforge validate spec.af
+audioforge compile  spec.af
+audioforge render   spec.(af|json) [-o dir] [--preset P] [--stems] [--variant T] [--intensity K]
+audioforge pack     spec.af [--variants N] [-o dir] [--preset P]
+audioforge campaign spec.af [-o dir] [--preset P] [--intensity K]
+audioforge ingest   samples_dir/ [-o catalog.json]
+audioforge libgen   library_dir/ [--name N] [--version V] [--license L]
+audioforge batch    specs_dir/ [-o dir]
+audioforge verify   spec manifest
+```
+
+## 17. Honest limits
+
+LUFS is a BS.1770-style approximation (manifests record measured values). Compressors are documented offline lookahead-RMS designs, not analog models. `bowed`/`blown`/plate-`mod` need a C compiler and fail loudly without one. Space IRs are computed in a Python loop bounded by tail length (seconds per parameter set, cached). Physical models ignore pitch envelopes and speak ~2% sharp. Layers are mono pre-pan, except sectioned instrument layers and staged layers, which are true stereo. The stage approximates: ISO 9613-1-flavored air shelf, integer-sample ITD (≤ ~21 µs quantization), image-source to second order only, no B-format decoding (stereo IRs only). Sample layers accept WAV PCM only. The darkness emotion macro can over-darken (it warns). Encoder-dependent formats (future FLAC/MP3) will sit outside the byte-hash guarantee. The sampler covers a documented SFZ subset only (no filters/LFOs/CC — AudioForge fx and automation own that ground); synth-layer dynamic brightness samples at note onset (the level term is fully time-varying); sampled-layer crossfades are time-varying throughout.

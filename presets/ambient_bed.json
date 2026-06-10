@@ -1,0 +1,32 @@
+{
+  "id": "ambient_bed_v1",
+  "kind": "bed",
+  "duration_s": 12.0,
+  "bpm": 60,
+  "layers": [
+    {"name": "pad_root", "type": "notes", "osc": "saw", "detune_cents": 6, "gain_db": -10,
+     "loop_beats": 8,
+     "env": {"attack": 1.2, "decay": 1.0, "sustain": 0.7, "release": 1.5},
+     "notes": [
+       {"note": "A2", "start_beat": 0, "dur_beats": 8},
+       {"note": "E3", "start_beat": 0, "dur_beats": 8},
+       {"note": "C4", "start_beat": 4, "dur_beats": 4, "vel": 0.7}
+     ],
+     "fx": [{"type": "filter", "mode": "lowpass", "cutoff_hz": 1400},
+            {"type": "reverb", "decay_s": 3.0, "mix": 0.45}]},
+    {"name": "texture", "type": "noise", "color": "pink", "gain_db": -26,
+     "env": {"attack": 2.0, "decay": 4.0, "sustain": 0.8, "release": 3.0},
+     "fx": [{"type": "filter", "mode": "lowpass", "cutoff_hz": 900},
+            {"type": "tremolo", "rate_hz": 0.15, "depth": 0.5}]},
+    {"name": "motif", "type": "notes", "osc": "sine", "gain_db": -13, "pan": 0.2,
+     "env": {"attack": 0.05, "decay": 1.4, "sustain": 0.0, "release": 0.6},
+     "notes": [
+       {"note": "E5", "start_beat": 2.0, "dur_beats": 2},
+       {"note": "C5", "start_beat": 6.0, "dur_beats": 2},
+       {"note": "B4", "start_beat": 9.0, "dur_beats": 3}
+     ],
+     "fx": [{"type": "delay", "time_s": 0.5, "feedback": 0.35, "mix": 0.3},
+            {"type": "reverb", "decay_s": 2.5, "mix": 0.4}]}
+  ],
+  "master": {"target_peak_dbfs": -3.0, "fade_in_s": 0.8, "fade_out_s": 1.5, "stereo_width": 0.8}
+}

@@ -1,0 +1,4 @@
+stalbans_ortf_ir.wav — "Lady Chapel, St Albans Cathedral" impulse response
+(ORTF stereo), from OpenAIR (openair.hosted.york.ac.uk), University of York.
+License: CC BY 4.0 — attribution required in derived works.
+Fetched 2026-06-10; license verified on the entry page at integration time.

@@ -1,0 +1,40 @@
+# Scene transition — airy sweep with tail, sync-marked for the cut point.
+asset scene_sweep_v1 {
+  kind: transition
+  duration: 1.6s
+  emotion: urgency=0.4
+
+  marker cut_point @ 0.8s
+
+  layer air : noise {
+    color: pink
+    gain: -3db
+    env: a=0.7s d=0.6s s=0 r=0.3s
+    fx: bandpass(1100hz, q=0.9), reverb(decay=0.7s, mix=0.25)
+    auto cutoff: 0s=400, 0.8s=4500, 1.6s=700
+  }
+  layer rise_fall : sweep {
+    shape: sine
+    from: 200hz
+    to: 1900hz
+    curve: exp
+    duration: 0.85s
+    gain: -11db
+    env: a=0.65s d=0.2s s=0 r=0.05s
+  }
+  layer tail : sweep {
+    shape: sine
+    from: 1100hz
+    to: 110hz
+    curve: exp
+    start: 0.8s
+    duration: 0.8s
+    gain: -12db
+    env: a=0.01s d=0.55s s=0 r=0.2s
+  }
+  master {
+    width: 0.8
+    peak: -1.5db
+    fadeout: 0.1s
+  }
+}

@@ -1,0 +1,125 @@
+# Cinematic ambient cue, v4 (final form) — Tier-3 on top of v3: the plate
+# now runs the original's delay-line modulation (native kernel) for the
+# chorus shimmer, and the master gets multiband + glue compression before
+# the limiter. Compare the choir tails against v3.
+asset cosmic_awe_cue_v4 {
+  kind: cue
+  duration: 36s
+  samplerate: 48000
+  bitdepth: 24
+  tempo: 60bpm
+  key: C minor
+  emotion: awe=0.9, tension=0.55, wonder=0.7, suspense=0.4, cinematic_intensity=0.8
+  intensity: 0s=0.15, 8s=0.3, 16s=0.55, 26s=1.0, 31s=0.85, 36s=0.1
+
+  marker scene_start @ 0s
+  marker build_start @ 8s
+  marker second_lift @ 16s
+  marker climax @ 26s
+  marker resolve @ 31s
+
+  motif ascent {
+    C4 @ 0b for 1.5b vel 0.7
+    Eb4 @ 1.5b for 1.5b vel 0.75
+    G4 @ 3b for 2b vel 0.85
+    Bb4 @ 5b for 3b vel 0.95
+  }
+
+  # vast low foundation — full-bandwidth saw unison instead of capped organ
+  layer deep_drone : notes {
+    osc: saw
+    unison: 5
+    spread: 9c
+    gain: -11db
+    loop: 16b
+    env: a=4s d=2s s=0.85 r=5s
+    notes: C2 @ 0b for 16b, G2 @ 0b for 16b
+    fx: lowpass(750hz), hall(rt60=4, damp=0.55, mix=0.22)
+    auto cutoff: 0s=380, 26s=2200, 36s=550
+  }
+
+  layer sub_anchor : tone {
+    osc: sine
+    note: C1
+    gain: -10db
+    env: a=3s d=4s s=0.8 r=6s
+  }
+
+  # the choir, now a Gaussian-widened PADsynth ensemble
+  layer pad_choir : notes {
+    osc: pad
+    bandwidth: 55c
+    harmonics: 56
+    gain: -11db
+    pan: -0.15
+    env: a=2.5s d=1s s=0.9 r=4s
+    notes: C3 @ 0b for 8b, Eb3 @ 0b for 8b, G3 @ 0b for 8b,
+           Ab2 @ 8b for 8b, C4 @ 8b for 8b, Eb4 @ 8b for 8b,
+           Eb3 @ 16b for 8b, G3 @ 16b for 8b, Bb3 @ 16b for 8b,
+           G2 @ 24b for 8b, D4 @ 24b for 8b, G4 @ 24b for 8b,
+           C3 @ 32b for 4b, G3 @ 32b for 4b
+    fx: plate(decay=0.84, damp=0.35, predelay=0.015, mod=0.55, modrate=0.8, mix=0.3)
+    auto gain: 0s=-10db, 26s=0db, 33s=-8db
+  }
+
+  # relentless pulse, unchanged voice — continuity anchor for the A/B
+  layer time_pulse : notes {
+    osc: fm
+    fmratio: 5.04
+    fmindex: 3
+    gain: -19db
+    pan: 0.25
+    loop: 1b
+    env: a=0.001s d=0.06s s=0 r=0.02s
+    notes: E6 @ 0b for 0.25b
+    fx: highpass(1200hz), delay(time=0.5s, feedback=0.25, mix=0.25)
+    auto gain: 0s=-6db, 16s=0db, 31s=-12db, 36s=-30db
+  }
+
+  # ascent motif on plucked strings; the climax answer rings on a bell
+  layer motif_strings : notes {
+    osc: pluck
+    damping: 0.85
+    brightness: 0.55
+    gain: -10db
+    pan: 0.1
+    env: a=0.002s d=2s s=0.5 r=2s
+    play ascent @ 10b
+    fx: delay(time=1s, feedback=0.3, mix=0.25), plate(decay=0.8, mix=0.28)
+  }
+
+  layer climax_bell : notes {
+    osc: modal
+    material: bell
+    modedecay: 7s
+    gain: -13db
+    pan: -0.1
+    env: a=0.001s d=6s s=0.3 r=3s
+    notes: C5 @ 26b for 8b, G5 @ 28b for 6b vel 0.7
+    fx: plate(decay=0.86, damp=0.4, mod=0.5, modrate=0.7, mix=0.32)
+  }
+
+  # high shimmer entering with the second lift
+  layer shimmer : tone {
+    osc: pad
+    bandwidth: 80c
+    note: G5
+    start: 16s
+    duration: 18s
+    gain: -23db
+    pan: -0.3
+    env: a=5s d=4s s=0.6 r=6s
+    fx: tremolo(rate=0.4, depth=0.5)
+  }
+
+  master {
+    width: 0.85
+    lufs: -16
+    peak: -1db
+    fadein: 0.6s
+    fadeout: 3s
+    fx: highpass(28hz), fdn(rt60=7, rt60_high=2.4, crossover=2000, size=1.3, mix=0.3),
+        mbcomp(threshold=-24, ratio=1.8, low=150, high=2500, attack=0.05, release=0.25),
+        comp(threshold=-17, ratio=1.6, attack=0.06, release=0.3)
+  }
+}

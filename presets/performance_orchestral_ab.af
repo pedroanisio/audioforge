@@ -1,0 +1,78 @@
+# P3 exit criterion A/B: the same music, detached vs performed.
+# 'typewriter': P2 dynamics but disconnected notes, single player image.
+# 'singing': slurred phrases with legato joins (attack-skip + pitch smear),
+# an 8-player violin section across the stereo stage, phrasing arches.
+asset eroica_typewriter {
+  kind: soundtrack
+  duration: 28s
+  samplerate: 48000
+  bitdepth: 24
+  tempo: 72bpm
+  key: A minor
+  library: "vsco2-ce-subset@e4f0356b9e6d43fe3a68d23a4e34e16d2f8be35783c9f050bcc4ec53fa2c4137"
+
+  bus strings { fx: hall(rt60=2.4s, damp=0.42, mix=0.25) }
+
+  layer vln : instrument {
+    instrument: violins_1
+    gain: -8db
+    bus: strings
+    humanize: 0.3
+    dynamic: 0b=pp, 12b=f, 20b=mf, 30b=pp
+    notes: A3 @ 0b for 3b, C4 @ 3b for 2b, E4 @ 5b for 3b,
+           D5 @ 8b for 2b, B4 @ 10b for 2b, A4 @ 12b for 4b,
+           G4 @ 16b for 2b, E4 @ 18b for 2b, C4 @ 20b for 3b,
+           A3 @ 23b for 8b
+  }
+  layer timp : instrument {
+    instrument: timpani
+    gain: -11db
+    humanize: 0.3
+    dynamic: 0b=pp, 12b=f, 24b=p
+    notes: A2 @ 0b for 1b, A2 @ 12b for 1b, A2 @ 23b for 1b
+  }
+  master { lufs: -17
+           peak: -1db
+           fadein: 0.3s
+           fadeout: 2.5s }
+}
+
+asset eroica_singing {
+  kind: soundtrack
+  duration: 28s
+  samplerate: 48000
+  bitdepth: 24
+  tempo: 72bpm
+  key: A minor
+  library: "vsco2-ce-subset@e4f0356b9e6d43fe3a68d23a4e34e16d2f8be35783c9f050bcc4ec53fa2c4137"
+
+  marker phrase_peak @ 10s
+
+  bus strings { fx: hall(rt60=2.4s, damp=0.42, mix=0.25) }
+
+  layer vln : instrument {
+    instrument: violins_1
+    section: size=8 spread=0.75 detune=7c timing=0.011s
+    legato: 0.07s
+    phrasing: 0.7
+    gain: -8db
+    bus: strings
+    humanize: 0.3
+    dynamic: 0b=pp, 12b=f, 20b=mf, 30b=pp
+    notes: slur( A3 @ 0b for 3b, C4 @ 3b for 2b, E4 @ 5b for 3b,
+                 D5 @ 8b for 2b, B4 @ 10b for 2b, A4 @ 12b for 4b ),
+           slur( G4 @ 16b for 2b, E4 @ 18b for 2b, C4 @ 20b for 3b,
+                 A3 @ 23b for 8b )
+  }
+  layer timp : instrument {
+    instrument: timpani
+    gain: -11db
+    humanize: 0.3
+    dynamic: 0b=pp, 12b=f, 24b=p
+    notes: A2 @ 0b for 1b, A2 @ 12b for 1b, A2 @ 23b for 1b
+  }
+  master { lufs: -17
+           peak: -1db
+           fadein: 0.3s
+           fadeout: 2.5s }
+}

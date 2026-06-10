@@ -1,0 +1,21 @@
+{
+  "id": "success_cue_v1",
+  "kind": "cue",
+  "duration_s": 1.1,
+  "bpm": 140,
+  "layers": [
+    {"name": "arp", "type": "notes", "osc": "triangle", "gain_db": -3,
+     "env": {"attack": 0.004, "decay": 0.22, "sustain": 0.0, "release": 0.08},
+     "notes": [
+       {"note": "C5", "start_beat": 0.0, "dur_beats": 0.5},
+       {"note": "E5", "start_beat": 0.5, "dur_beats": 0.5},
+       {"note": "G5", "start_beat": 1.0, "dur_beats": 1.2, "vel": 1.1}
+     ],
+     "fx": [{"type": "delay", "time_s": 0.16, "feedback": 0.25, "mix": 0.2},
+            {"type": "reverb", "decay_s": 0.8, "mix": 0.25}]},
+    {"name": "sparkle", "type": "tone", "osc": "fm", "note": "C7",
+     "fm_ratio": 3.01, "fm_index": 2.0, "start_s": 0.42, "duration_s": 0.6, "gain_db": -16,
+     "env": {"attack": 0.002, "decay": 0.4, "sustain": 0.0, "release": 0.1}, "pan": -0.25}
+  ],
+  "master": {"target_peak_dbfs": -2.0, "fade_out_s": 0.06, "stereo_width": 0.6}
+}

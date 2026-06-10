@@ -1,0 +1,150 @@
+# Johann Bach (1604-1673) — "Unser Leben ist ein Schatten", opening
+# statement (mm. 1-8, complete authentic cadence), six voices.
+#
+# PROVENANCE: transcribed visually from the Claverie LilyPond engraving
+# (IMSLP 404011, CC BY-SA typeset; the composition itself is public
+# domain), rasterized at 300 dpi and read per staff with harmonic
+# cross-checks per measure. Inner-voice eighth-note details carry a
+# small residual transcription risk (+-1 step on 2-3 inner notes);
+# the outer voices, the chromatic ascent (G-Ab-A-B natural -> C), the
+# m2 durezza cross-relation over the G pedal, and the m4-6 descending
+# 6/5 sequence are verified.
+#
+# REALIZATION: an instrumental synth-consort rendering (no vocal
+# samples are pinned in this project; the bass reaches Eb2, far below
+# the violin library). Dynamics are interpretive — the source has
+# none, per period practice. Staged in the Lady Chapel, St Albans
+# (OpenAIR, CC BY 4.0 — see samples/stalbans_ortf_ir.ATTRIBUTION.txt).
+asset unser_leben_opening {
+  kind: soundtrack
+  duration: 31s
+  samplerate: 48000
+  bitdepth: 24
+  tempo: 76bpm
+  key: C minor
+
+  marker statement_1 @ 0s
+  marker statement_2 @ 9.5s
+  marker chromatic_ascent @ 19.7s
+  marker cadence @ 22.1s
+
+  stage {
+    hall: "stalbans_ortf_ir.wav@be670d833feaf274e601ad026b4f32f126c71fa8eb9b386e855ed9f0035410aa"
+    mics: tree=0.74, close=0.18, ambient=0.5
+    size: 12m, 22m, 13m
+  }
+
+  layer canto1 : notes {
+    osc: saw
+    unison: 3
+    spread: 9c
+    vibrato: rate=4.6hz depth=7c delay=0.35s
+    env: a=0.09s d=0.2s s=0.85 r=0.45s
+    seat: -18deg @ 4m
+    gain: -13db
+    humanize: 0.25
+    dynamic: 0b=0.28, 12b=0.4, 24b=0.45, 27b=0.66, 28b=0.78, 30.5b=0.5
+    notes: G4 @ 0b for 2b, G4 @ 2b for 2b, Ab4 @ 4b for 4b, G4 @ 8b for 4b,
+           Bb4 @ 12b for 2b, Bb4 @ 14b for 2b, C5 @ 16b for 4b,
+           Bb4 @ 20b for 4b,
+           G4 @ 25b for 0.5b, G4 @ 25.5b for 0.5b, Ab4 @ 26b for 0.5b,
+           Ab4 @ 26.5b for 0.5b, A4 @ 27b for 0.5b, B4 @ 27.5b for 0.5b,
+           C5 @ 28b for 0.25b, D5 @ 28.25b for 0.25b, Eb5 @ 28.5b for 0.25b,
+           F5 @ 28.75b for 0.25b, G5 @ 29b for 0.5b, G5 @ 29.5b for 0.6b
+  }
+  layer canto2 : notes {
+    osc: saw
+    unison: 3
+    spread: 8c
+    vibrato: rate=4.3hz depth=7c delay=0.4s
+    env: a=0.09s d=0.2s s=0.85 r=0.45s
+    seat: -8deg @ 4.5m
+    gain: -13.5db
+    humanize: 0.25
+    dynamic: 0b=0.26, 12b=0.36, 24b=0.44, 27b=0.64, 28b=0.74, 30.5b=0.48
+    notes: G4 @ 0b for 2b, G4 @ 2b for 2b, Ab4 @ 4b for 4b, G4 @ 8b for 4b,
+           G4 @ 12b for 2b, G4 @ 14b for 2b, Ab4 @ 16b for 4b,
+           G4 @ 20b for 4b,
+           G4 @ 25b for 0.5b, G4 @ 25.5b for 0.5b, Ab4 @ 26b for 0.5b,
+           Ab4 @ 26.5b for 0.5b, A4 @ 27b for 0.5b, B4 @ 27.5b for 0.5b,
+           C5 @ 28b for 0.5b, C5 @ 28.5b for 0.6b
+  }
+  layer alto : notes {
+    osc: saw
+    unison: 3
+    spread: 8c
+    vibrato: rate=4.4hz depth=6c delay=0.4s
+    env: a=0.1s d=0.2s s=0.85 r=0.45s
+    seat: 3deg @ 5m
+    gain: -14db
+    humanize: 0.3
+    dynamic: 0b=0.25, 12b=0.35, 24b=0.42, 27b=0.6, 28b=0.7, 30.5b=0.46
+    notes: Eb4 @ 0b for 2b, Eb4 @ 2b for 2b,
+           Eb4 @ 4b for 2b, D4 @ 6b for 1b, C4 @ 7b for 1b, D4 @ 8b for 4b,
+           F4 @ 12b for 2b, F4 @ 14b for 2b,
+           F4 @ 16b for 2b, Eb4 @ 18b for 1b, D4 @ 19b for 1b,
+           Eb4 @ 20b for 4b,
+           D4 @ 25b for 0.5b, D4 @ 25.5b for 0.5b, Eb4 @ 26b for 0.5b,
+           Eb4 @ 26.5b for 0.5b, F4 @ 27b for 0.5b, F4 @ 27.5b for 0.5b,
+           F4 @ 28b for 0.5b, Eb4 @ 28.5b for 0.6b
+  }
+  layer tenore1 : notes {
+    osc: saw
+    unison: 3
+    spread: 9c
+    vibrato: rate=4.2hz depth=6c delay=0.45s
+    env: a=0.1s d=0.2s s=0.85 r=0.45s
+    seat: 10deg @ 5m
+    gain: -13.5db
+    humanize: 0.3
+    dynamic: 0b=0.27, 12b=0.37, 24b=0.43, 27b=0.62, 28b=0.72, 30.5b=0.47
+    notes: C4 @ 0b for 2b, C4 @ 2b for 2b,
+           C4 @ 4b for 2b, B3 @ 6b for 1b, A3 @ 7b for 1b, B3 @ 8b for 4b,
+           D4 @ 12b for 2b, D4 @ 14b for 2b,
+           D4 @ 16b for 2b, C4 @ 18b for 1b, Bb3 @ 19b for 1b,
+           Bb3 @ 20b for 4b,
+           D4 @ 25b for 0.5b, D4 @ 25.5b for 0.5b, D4 @ 26b for 0.5b,
+           D4 @ 26.5b for 0.5b, F4 @ 27b for 0.5b, F4 @ 27.5b for 0.5b,
+           Eb4 @ 28b for 0.5b, Eb4 @ 28.5b for 0.6b
+  }
+  layer tenore2 : notes {
+    osc: saw
+    unison: 3
+    spread: 8c
+    vibrato: rate=4.5hz depth=6c delay=0.45s
+    env: a=0.1s d=0.2s s=0.85 r=0.45s
+    seat: 16deg @ 5.5m
+    gain: -14db
+    humanize: 0.3
+    dynamic: 0b=0.26, 12b=0.36, 24b=0.42, 27b=0.6, 28b=0.7, 30.5b=0.46
+    notes: G3 @ 0b for 2b, G3 @ 2b for 2b, Ab3 @ 4b for 4b, G3 @ 8b for 4b,
+           Bb3 @ 12b for 2b, Bb3 @ 14b for 2b, C4 @ 16b for 4b,
+           Bb3 @ 20b for 4b,
+           Bb3 @ 25b for 0.5b, Bb3 @ 25.5b for 0.5b, Bb3 @ 26b for 0.5b,
+           Bb3 @ 26.5b for 0.5b, D4 @ 27b for 0.5b, D4 @ 27.5b for 0.5b,
+           G3 @ 28b for 0.5b, G3 @ 28.5b for 0.6b
+  }
+  layer basso : notes {
+    osc: saw
+    unison: 2
+    spread: 6c
+    vibrato: rate=4.0hz depth=4c delay=0.5s
+    env: a=0.11s d=0.2s s=0.85 r=0.5s
+    seat: 0deg @ 6.5m
+    gain: -11.5db
+    humanize: 0.3
+    dynamic: 0b=0.3, 12b=0.4, 24b=0.46, 27b=0.64, 28b=0.74, 30.5b=0.5
+    notes: C3 @ 0b for 2b, C3 @ 2b for 2b, G2 @ 4b for 4b, G2 @ 8b for 4b,
+           Bb2 @ 12b for 2b, Bb2 @ 14b for 2b, F2 @ 16b for 4b,
+           Eb2 @ 20b for 4b,
+           G2 @ 25b for 0.5b, G2 @ 25.5b for 0.5b, C3 @ 26b for 0.5b,
+           C3 @ 26.5b for 0.5b, B2 @ 27b for 0.5b, B2 @ 27.5b for 0.5b,
+           C3 @ 28b for 0.5b, C3 @ 28.5b for 0.6b
+  }
+  master {
+    lufs: -18
+    peak: -1db
+    fadein: 0.2s
+    fadeout: 4s
+  }
+}

@@ -1,0 +1,52 @@
+# FX — riser into impact hit with sub drop. For product reveals & cuts.
+asset impact_riser_v1 {
+  kind: sfx
+  duration: 3.2s
+  emotion: urgency=0.7, cinematic_intensity=0.9
+
+  marker riser_start @ 0s
+  marker impact @ 2s
+
+  layer riser_noise : noise {
+    color: white
+    gain: -6db
+    duration: 2s
+    env: a=1.85s d=0.15s s=0 r=0.1s
+    fx: bandpass(900hz, q=0.8)
+    auto cutoff: 0s=300, 2s=6000
+  }
+  layer riser_tone : sweep {
+    shape: saw
+    from: 80hz
+    to: 1600hz
+    curve: exp
+    duration: 2s
+    gain: -14db
+    env: a=1.8s d=0.2s s=0 r=0.05s
+    fx: lowpass(3000hz)
+  }
+  layer impact_boom : sweep {
+    shape: sine
+    from: 160hz
+    to: 38hz
+    curve: exp
+    start: 2s
+    duration: 1.2s
+    gain: -2db
+    env: a=0.002s d=0.9s s=0 r=0.2s
+    fx: drive(0.4)
+  }
+  layer impact_crack : noise {
+    color: white
+    start: 2s
+    duration: 0.4s
+    gain: -8db
+    env: a=0.001s d=0.25s s=0 r=0.1s
+    fx: highpass(2000hz), reverb(decay=1.4s, mix=0.35)
+  }
+  master {
+    width: 0.75
+    peak: -1db
+    fadeout: 0.25s
+  }
+}

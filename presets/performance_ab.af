@@ -1,0 +1,118 @@
+# A/B: the same phrase, machine-quantized vs performed.
+# Asset 1 — every note on the grid, every hit identical, static pitch.
+asset performance_quantized {
+  kind: cue
+  duration: 9.6s
+  tempo: 100bpm
+  key: A minor
+
+  motif phrase {
+    A3 @ 0b for 0.75b vel 0.7
+    C4 @ 1b for 0.75b vel 0.55
+    E4 @ 2b for 1.25b vel 0.85
+    D4 @ 3.5b for 0.5b vel 0.5
+    C4 @ 4b for 0.75b vel 0.65
+    A3 @ 5b for 1.5b vel 0.75
+    E4 @ 7b for 1b vel 0.9
+    A4 @ 8b for 3.5b vel 1.0
+  }
+
+  layer lead : notes {
+    osc: triangle
+    gain: -8db
+    env: a=0.02s d=0.4s s=0.55 r=0.6s
+    play phrase @ 0b
+    fx: plate(decay=0.7, damp=0.4, mix=0.24)
+  }
+  layer strings : notes {
+    osc: pluck
+    damping: 0.7
+    brightness: 0.6
+    gain: -12db
+    pan: -0.25
+    loop: 4b
+    env: a=0.002s d=0.8s s=0.3 r=0.4s
+    notes: A2 @ 0b for 0.5b vel 0.7, E3 @ 1b for 0.5b vel 0.55,
+           A3 @ 2b for 0.5b vel 0.65, E3 @ 3b for 0.5b vel 0.5
+    fx: hall(rt60=1.6, damp=0.4, mix=0.2)
+  }
+  layer kick : drums {
+    voice: kick
+    pattern: X...x...X...x...
+    gain: -4db
+  }
+  layer hat : drums {
+    voice: hat
+    pattern: x.x.x.x.x.x.x.x.
+    gain: -16db
+    pan: 0.2
+  }
+  master { width: 0.7
+           lufs: -15
+           peak: -1db
+           fadeout: 0.8s }
+}
+
+# Asset 2 — identical notes; laid-back groove, seeded human jitter,
+# velocity-shaped timbre, portamento into the high note, sung vibrato.
+asset performance_performed {
+  kind: cue
+  duration: 9.6s
+  tempo: 100bpm
+  key: A minor
+  groove: laidback 0.7
+
+  motif phrase {
+    A3 @ 0b for 0.75b vel 0.7
+    C4 @ 1b for 0.75b vel 0.55
+    E4 @ 2b for 1.25b vel 0.85
+    D4 @ 3.5b for 0.5b vel 0.5
+    C4 @ 4b for 0.75b vel 0.65
+    A3 @ 5b for 1.5b vel 0.75
+    E4 @ 7b for 1b vel 0.9
+    A4 @ 8b for 3.5b vel 1.0
+  }
+
+  layer lead : notes {
+    osc: triangle
+    gain: -8db
+    humanize: 0.55
+    velbright: 0.85
+    glide: 0.09s
+    vibrato: rate=5.2 depth=16c delay=0.3s
+    env: a=0.02s d=0.4s s=0.55 r=0.6s
+    play phrase @ 0b
+    fx: plate(decay=0.7, damp=0.4, mix=0.24)
+  }
+  layer strings : notes {
+    osc: pluck
+    damping: 0.7
+    brightness: 0.6
+    gain: -12db
+    pan: -0.25
+    loop: 4b
+    humanize: 0.6
+    velbright: 0.7
+    env: a=0.002s d=0.8s s=0.3 r=0.4s
+    notes: A2 @ 0b for 0.5b vel 0.7, E3 @ 1b for 0.5b vel 0.55,
+           A3 @ 2b for 0.5b vel 0.65, E3 @ 3b for 0.5b vel 0.5
+    fx: hall(rt60=1.6, damp=0.4, mix=0.2)
+  }
+  layer kick : drums {
+    voice: kick
+    pattern: X...x...X...x...
+    gain: -4db
+    humanize: 0.35
+  }
+  layer hat : drums {
+    voice: hat
+    pattern: x.x.x.x.x.x.x.x.
+    gain: -16db
+    pan: 0.2
+    humanize: 0.6
+  }
+  master { width: 0.7
+           lufs: -15
+           peak: -1db
+           fadeout: 0.8s }
+}

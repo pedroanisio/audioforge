@@ -1,0 +1,57 @@
+# Beat loop — 2 bars at 104 bpm, loop-safe, for social cuts.
+asset urban_loop_104_v1 {
+  kind: loop
+  duration: 4.615384615384615s
+  tempo: 104bpm
+  swing: 0.1
+  loopsafe: on
+  key: D minor
+  emotion: urgency=0.5, triumph=0.3
+
+  layer kick : drums {
+    voice: kick
+    pattern: X..x..x...x...x.
+    gain: -1db
+  }
+  layer snare : drums {
+    voice: snare
+    pattern: ....X......X..X.
+    gain: -5db
+  }
+  layer hat : drums {
+    voice: hat
+    pattern: x.xx.xx.x.xx.xxx
+    gain: -13db
+    pan: 0.3
+  }
+  layer clap : drums {
+    voice: clap
+    pattern: ....x.......x...
+    gain: -10db
+    pan: -0.2
+  }
+  layer bass  : notes {
+    osc: saw
+    gain: -8db
+    loop: 8b
+    env: a=0.005s d=0.12s s=0.5 r=0.05s
+    notes: D2 @ 0b for 0.75b, D2 @ 1.5b for 0.5b, F2 @ 3b for 0.75b,
+           A2 @ 4.5b for 0.5b, C3 @ 6b for 0.75b, A2 @ 7b for 1b
+    fx: lowpass(700hz), drive(0.3)
+  }
+  layer stab : notes {
+    osc: square
+    gain: -16db
+    pan: 0.15
+    loop: 8b
+    env: a=0.004s d=0.18s s=0 r=0.05s
+    notes: D4 @ 1b for 0.5b, F4 @ 1b for 0.5b, A4 @ 5.5b for 0.5b vel 0.8
+    fx: bandpass(1500hz, q=0.7), delay(time=0.288s, feedback=0.3, mix=0.25)
+  }
+  master {
+    width: 0.55
+    lufs: -14
+    fadeout: 0.005s
+    fx: highpass(30hz)
+  }
+}

@@ -1,0 +1,51 @@
+# Jingle — bright, optimistic 4-second tag for outros.
+asset bright_jingle_v1 {
+  kind: jingle
+  duration: 4s
+  tempo: 120bpm
+  key: G major
+  emotion: triumph=0.7, calm=0.2
+
+  marker tag_start @ 0s
+  marker button @ 3s
+
+  motif hook {
+    G4 @ 0b for 0.5b
+    B4 @ 0.5b for 0.5b
+    D5 @ 1b for 0.75b vel 1.05
+    G5 @ 2b for 1.5b vel 1.1
+  }
+
+  layer lead : notes {
+    osc: triangle
+    gain: -5db
+    env: a=0.005s d=0.25s s=0.4 r=0.3s
+    play hook @ 0b
+    fx: delay(time=0.25s, feedback=0.25, mix=0.2), reverb(decay=1.2s, mix=0.3)
+  }
+  layer harmony : notes {
+    osc: sine
+    gain: -12db
+    pan: -0.25
+    env: a=0.02s d=0.4s s=0.5 r=0.4s
+    notes: B3 @ 0b for 3b, D4 @ 0b for 3b, G3 @ 3b for 4b,
+           B3 @ 3b for 4b, D4 @ 3b for 4b
+    fx: reverb(decay=1.5s, mix=0.35)
+  }
+  layer button_chime : tone {
+    osc: fm
+    note: G6
+    fmratio: 3.01
+    fmindex: 2
+    start: 1.5s
+    duration: 2.2s
+    gain: -15db
+    pan: 0.3
+    env: a=0.002s d=1.4s s=0 r=0.4s
+  }
+  master {
+    width: 0.6
+    lufs: -14
+    fadeout: 0.4s
+  }
+}

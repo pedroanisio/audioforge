@@ -1,0 +1,18 @@
+{
+  "id": "transition_whoosh_v1",
+  "kind": "transition",
+  "duration_s": 1.4,
+  "layers": [
+    {"name": "air", "type": "noise", "color": "pink", "gain_db": -2,
+     "env": {"attack": 0.55, "decay": 0.5, "sustain": 0.0, "release": 0.25},
+     "fx": [{"type": "filter", "mode": "bandpass", "cutoff_hz": 1200, "q": 0.9},
+            {"type": "reverb", "decay_s": 0.6, "mix": 0.2}]},
+    {"name": "riser", "type": "sweep", "shape": "sine",
+     "f_start_hz": 180, "f_end_hz": 2200, "curve": "exp", "gain_db": -10,
+     "env": {"attack": 0.5, "decay": 0.55, "sustain": 0.0, "release": 0.2}},
+    {"name": "tail_drop", "type": "sweep", "shape": "sine", "start_s": 0.7,
+     "f_start_hz": 900, "f_end_hz": 90, "curve": "exp", "duration_s": 0.7, "gain_db": -12,
+     "env": {"attack": 0.01, "decay": 0.45, "sustain": 0.0, "release": 0.15}}
+  ],
+  "master": {"target_peak_dbfs": -1.5, "fade_out_s": 0.08, "stereo_width": 0.8}
+}

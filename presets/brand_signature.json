@@ -1,0 +1,29 @@
+{
+  "id": "brand_signature_v1",
+  "kind": "signature",
+  "duration_s": 2.8,
+  "sample_rate": 48000,
+  "bit_depth": 24,
+  "bpm": 100,
+  "layers": [
+    {"name": "chime_low", "type": "notes", "osc": "fm", "fm_ratio": 2.0, "fm_index": 1.6,
+     "gain_db": -4,
+     "env": {"attack": 0.005, "decay": 0.9, "sustain": 0.0, "release": 0.3},
+     "notes": [
+       {"note": "C4", "start_beat": 0.0, "dur_beats": 2.5},
+       {"note": "G4", "start_beat": 0.5, "dur_beats": 2.0},
+       {"note": "E5", "start_beat": 1.0, "dur_beats": 2.0, "vel": 0.8}
+     ],
+     "fx": [{"type": "reverb", "decay_s": 1.6, "mix": 0.35}]},
+    {"name": "shimmer", "type": "notes", "osc": "sine", "detune_cents": 7, "gain_db": -14,
+     "env": {"attack": 0.2, "decay": 1.2, "sustain": 0.0, "release": 0.4},
+     "notes": [{"note": "C6", "start_beat": 1.0, "dur_beats": 2.0}],
+     "fx": [{"type": "tremolo", "rate_hz": 6.0, "depth": 0.4},
+            {"type": "reverb", "decay_s": 2.0, "mix": 0.5}], "pan": 0.3},
+    {"name": "sub_anchor", "type": "tone", "osc": "sine", "note": "C2",
+     "duration_s": 1.8, "gain_db": -8,
+     "env": {"attack": 0.01, "decay": 1.4, "sustain": 0.0, "release": 0.3}}
+  ],
+  "master": {"target_peak_dbfs": -1.0, "fade_out_s": 0.12, "stereo_width": 0.7,
+             "fx": [{"type": "filter", "mode": "highpass", "cutoff_hz": 35}]}
+}
