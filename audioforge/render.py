@@ -158,12 +158,25 @@ def _layer_signal(layer: dict, total_n: int, sr: int, tm, swing: float,
                           e["sustain"], e["release"])
     elif t == "sample":
         from . import samples as smod
-        hit = smod.load_sample(layer["file"], layer["sha256"], sr,
-                               pitch_st=float(layer.get("pitch_st", 0.0)))
+        preserve_channels = bool(layer.get("preserve_channels")) \
+            and "pattern" not in layer
+        if preserve_channels:
+            hit = smod.load_sample_multi(layer["file"], layer["sha256"], sr)
+            if hit.ndim == 2 and hit.shape[1] > 2:
+                hit = hit[:, :2]
+            elif hit.ndim == 2 and hit.shape[1] == 1:
+                hit = hit[:, 0]
+        else:
+            hit = smod.load_sample(layer["file"], layer["sha256"], sr,
+                                   pitch_st=float(layer.get("pitch_st", 0.0)))
         if "pattern" in layer:
             sig = sequencer.render_drum_track(
                 layer, dur_n, sr, tm, swing, rng("voice"), groove=groove,
                 rng_humanize=rng("humanize"), hit_override=hit)
+        elif hit.ndim == 2:
+            sig = np.zeros((dur_n, hit.shape[1]))
+            seg = min(hit.shape[0], dur_n)
+            sig[:seg, :hit.shape[1]] = hit[:seg]
         else:
             sig = np.zeros(dur_n)
             seg = min(hit.size, dur_n)

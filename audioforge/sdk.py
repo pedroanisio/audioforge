@@ -126,6 +126,7 @@ class AudioAsset:
         except SpecError as e:
             out.append(Diagnostic("error", str(e)))
             return out
+        out.extend(_timeline_warnings(self.spec))
         out.extend(Diagnostic("warning", m)
                    for m in run_extra_validators(self.spec))
         if resolve:
@@ -256,6 +257,25 @@ class CompileResult:
     @property
     def ok(self) -> bool:
         return not self.errors
+
+
+def _timeline_warnings(spec: dict) -> list[Diagnostic]:
+    bpm = float(spec.get("bpm", 120.0))
+    beat_s = 60.0 / bpm
+    duration_s = float(spec["duration_s"])
+    out: list[Diagnostic] = []
+    for i, layer in enumerate(spec.get("layers", [])):
+        if layer.get("type") not in ("notes", "instrument"):
+            continue
+        for j, ev in enumerate(layer.get("notes", [])):
+            end_s = (float(ev["start_beat"]) + float(ev["dur_beats"])) * beat_s
+            if end_s > duration_s:
+                out.append(Diagnostic(
+                    "warning",
+                    "note event extends past asset duration and will be "
+                    "truncated or skipped at render",
+                    f"layers.{i}.notes.{j}"))
+    return out
 
 
 class AudioForge:

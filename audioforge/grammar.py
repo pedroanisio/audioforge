@@ -5,12 +5,18 @@ from __future__ import annotations
 _EBNF = r"""
 file             = { asset } ;
 asset            = "asset" IDENT "{" { asset_item } "}" ;
-asset_item       = property | marker | motif | stage | cutdowns | bus | layer | master ;
+asset_item       = smart_directive | score_property | property | marker | motif | stage | cutdowns | bus | layer | master ;
+score_property   = meter | pickup | form | repeat | polymeter ;
 property         = IDENT ":" value_list newline ;
 smart_directive  = ("style" | "perform" | "ensemble" | "voicing" | "space") ":" value_list newline ;
+meter            = "meter" ":" NUMBER NUMBER newline ;
+pickup           = "pickup" ":" NUMBER "b" newline ;
+form             = "form" ":" IDENT NUMBER "b" "for" NUMBER "b" { "," IDENT NUMBER "b" "for" NUMBER "b" } newline ;
+repeat           = "repeat" ":" IDENT "x" NUMBER newline ;
+polymeter        = "polymeter" ":" IDENT NUMBER NUMBER newline ;
 marker           = "marker" IDENT "@" NUMBER "s" newline ;
 motif            = "motif" IDENT "{" { note_event } "}" ;
-layer            = "layer" IDENT ":" IDENT "{" { layer_item } "}" ;
+layer            = "layer" IDENT ":" ("tone" | "notes" | "sweep" | "noise" | "drums" | "grain" | "sample" | "audio" | "foley" | "instrument") "{" { layer_item } "}" ;
 layer_item       = property | notes | play | automation ;
 notes            = "notes" ":" note_entry { "," note_entry } newline ;
 play             = "play" IDENT "@" NUMBER "b" { transform } newline ;
@@ -31,12 +37,19 @@ newline          = "\n" ;
 _GBNF = r"""
 root ::= (asset ws*)+
 asset ::= "asset" ws ident ws "{" ws asset-item* "}" ws
-asset-item ::= smart-directive | property | marker | motif | bus | layer | master | stage | cutdowns
+asset-item ::= smart-directive | score-property | property | marker | motif | bus | layer | master | stage | cutdowns
+score-property ::= meter | pickup | form | repeat | polymeter
+meter ::= "meter:" ws number ws number nl
+pickup ::= "pickup:" ws number "b" nl
+form ::= "form:" ws ident ws number "b" ws "for" ws number "b" ("," ws ident ws number "b" ws "for" ws number "b")* nl
+repeat ::= "repeat:" ws ident ws "x" number nl
+polymeter ::= "polymeter:" ws ident ws number ws number nl
 smart-directive ::= ("style" | "perform" | "ensemble" | "voicing" | "space") ":" value-list nl
 property ::= ident ":" value-list nl
 marker ::= "marker" ws ident ws "@" ws number "s" nl
 motif ::= "motif" ws ident ws "{" ws note-event* "}" ws
-layer ::= "layer" ws ident ws ":" ws ident ws "{" ws layer-item* "}" ws
+layer ::= "layer" ws ident ws ":" ws layer-kind ws "{" ws layer-item* "}" ws
+layer-kind ::= "tone" | "notes" | "sweep" | "noise" | "drums" | "grain" | "sample" | "audio" | "foley" | "instrument"
 layer-item ::= property | notes | play | automation
 notes ::= "notes:" ws note-entry ("," ws note-entry)* nl
 play ::= "play" ws ident ws "@" ws number "b" (ws transform)* nl
@@ -66,4 +79,3 @@ def dsl_ebnf() -> str:
 
 def dsl_gbnf() -> str:
     return _GBNF.strip() + "\n"
-

@@ -179,6 +179,25 @@ asset sp { kind: cue
           "notes outside stay unslurred")
 
 
+def test_validate_warns_for_notes_past_asset_end():
+    src = """
+asset late { kind: cue
+  duration: 1s
+  tempo: 60bpm
+  layer v : notes { osc: sine
+    env: a=0.01s d=0.1s s=0.8 r=0.1s
+    notes: C4 @ 2b for 1b
+  }
+  master { peak: -1db }
+}"""
+    asset = AF.compile(src).assets[0]
+    warnings = [d for d in asset.validate() if d.severity == "warning"]
+    assert any("extends past asset duration" in d.message
+               and d.path == "layers.0.notes.0" for d in warnings)
+    print("PASS  validate: note events beyond asset duration produce a "
+          "structured warning")
+
+
 if __name__ == "__main__":
     test_property_validate_implies_renders()
     test_property_render_error_implies_validate_error()
@@ -187,4 +206,5 @@ if __name__ == "__main__":
     test_multiline_auto_continuation()
     test_targeted_grammar_diagnostics_on_fixtures()
     test_slur_of_plays()
+    test_validate_warns_for_notes_past_asset_end()
     print("\nAll validate/render contract tests passed.")

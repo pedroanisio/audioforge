@@ -16,15 +16,20 @@ from audioforge.samples import register_sample  # noqa: E402
 from audioforge.styles import list_style_packs, style_pack  # noqa: E402
 
 
-def _wav_bytes(sr=24000, seconds=0.25):
+def _wav_bytes(sr=24000, seconds=0.25, stereo=False):
     t = np.arange(int(sr * seconds)) / sr
     x = 0.2 * np.sin(2 * np.pi * 330 * t)
     buf = io.BytesIO()
     with wave.open(buf, "wb") as w:
-        w.setnchannels(1)
+        w.setnchannels(2 if stereo else 1)
         w.setsampwidth(2)
         w.setframerate(sr)
-        w.writeframes((x * 32767).astype("<i2").tobytes())
+        if stereo:
+            y = 0.2 * np.sin(2 * np.pi * 660 * t)
+            pcm = np.stack([x, y], axis=1).reshape(-1)
+        else:
+            pcm = x
+        w.writeframes((pcm * 32767).astype("<i2").tobytes())
     return buf.getvalue()
 
 
@@ -91,6 +96,27 @@ asset audio_source {{
     assert meta["analysis"]["duration_s"] == 1.0
 
 
+def test_audio_preserve_stereo_renders_distinct_left_right_channels():
+    sha = register_sample("wide_take.wav", _wav_bytes(stereo=True))
+    src = f"""
+asset stereo_audio {{
+  kind: cue
+  duration: 0.5s
+  tempo: 80bpm
+  layer take : audio {{
+    file: "wide_take.wav"
+    sha256: "{sha}"
+    preserve: stereo
+  }}
+  master {{ peak: -1db }}
+}}
+"""
+    asset = AudioForge().compile(src).assets[0]
+    stereo, _sr, _meta = asset.render()
+    assert stereo.ndim == 2 and stereo.shape[1] == 2
+    assert np.max(np.abs(stereo[:, 0] - stereo[:, 1])) > 1e-4
+
+
 def test_style_pack_registry_is_manifested_and_expands_defaults():
     names = list_style_packs()
     assert {"cinematic", "ambient", "trap", "choral"}.issubset(names)
@@ -98,6 +124,9 @@ def test_style_pack_registry_is_manifested_and_expands_defaults():
     assert pack["perform"]["expressivity"] > 0
     cap = __import__("audioforge.capabilities", fromlist=["capability_manifest"]).capability_manifest()
     assert "trap" in cap["style_packs"]
+    assert "audio" in cap["layer_types"]
+    assert "score_layer" in cap
+    assert "export-midi" in cap["interop"]["cli"]
     src = """
 asset styled {
   kind: cue
@@ -164,6 +193,10 @@ asset cli_interop {
     from audioforge.cli import main as cli_main
     assert cli_main(["export-midi", str(src), "-o", str(tmp_path / "p.mid")]) == 0
     assert (tmp_path / "p.mid").read_bytes().startswith(b"MThd")
+    assert cli_main(["import-midi", str(tmp_path / "p.mid"), "--id", "cli_midi"]) == 0
+    assert '"id": "cli_midi"' in capsys.readouterr().out
     assert cli_main(["export-musicxml", str(src), "-o", str(tmp_path / "p.musicxml")]) == 0
     assert "<score-partwise" in (tmp_path / "p.musicxml").read_text()
-    capsys.readouterr()
+    assert cli_main(["import-musicxml", str(tmp_path / "p.musicxml"),
+                     "--id", "cli_xml"]) == 0
+    assert '"id": "cli_xml"' in capsys.readouterr().out
