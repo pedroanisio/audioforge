@@ -7,6 +7,11 @@ Deterministic audio-asset generation for production pipelines. One schema + one 
  agents                inspectable, mutable, versioned            sha256-verified
 ```
 
+## Disclaimer
+
+This work is subject to the methodological caveats and commitments described in [@DISCLAIMER.md](./DISCLAIMER.md).
+> No statement or premise not backed by a real logical definition or verifiable reference should be taken for granted.
+
 ## Why deterministic
 
 Every spec is canonically hashed (with the engine version folded in). The manifest records `spec_hash` and `output_sha256`; `audioforge verify` re-renders and compares bytes — a CI gate against silent drift. All randomness (noise, reverb IRs, dither, plugin entropy) derives from per-component seeds rooted in the spec hash. No wall clocks, no global RNG.
@@ -62,7 +67,7 @@ asset cue_v1 {
 }
 ```
 
-Design rule: **the DSL is sugar; the JSON IR is truth.** Emotion tags, intensity curves, motifs, and key expand at compile time into explicit parameters, so an agent can always read exactly what will render.
+Design rule: **the DSL is sugar; the JSON IR is truth.** Emotion tags, intensity curves, motifs, and key expand at compile time into explicit parameters, so an agent can always read exactly what will render. The agent-facing concepts behind this — the consumption model, the universality claim, and the open pillars toward it — are organized in [AI-CORE.md](AI-CORE.md).
 
 ## Production features
 
@@ -133,6 +138,8 @@ audioforge/          engine: determinism, synth, fx, sequencer, loudness,
                      schema (IR validation), render, dsl, sdk, plugins, cli
 presets/             reference .af + .json presets (cinematic, emotional,
                      FX, beat, loop, jingle, brand, transition)
+AI-CORE.md           agent-facing core concepts (consumption model,
+                     IR-is-truth, universality claim, open pillars)
 docs/DSL_SPEC.md     full DSL grammar + emotion mapping table
 examples/            agent_loop.py, integration_pipeline.py, custom_plugin.py
 tests/               determinism suite + v2 suite (DSL, SDK, plugins,
