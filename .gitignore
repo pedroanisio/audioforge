@@ -1,2 +1,5 @@
 *.pyc
 libraries/
+tracks/
+static/
+compare/

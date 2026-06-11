@@ -254,7 +254,7 @@ class Parser:
             raise DSLError("note duration must be in beats", d.line)
         ev["dur_beats"] = d.value
         while self.peek().kind == "IDENT" and self.peek().text in (
-                "vel", "voicing", "art"):
+                "vel", "voicing", "art", "gen"):
             kw = self.next().text
             if kw == "vel":
                 ev["vel"] = self.next().value
@@ -265,6 +265,8 @@ class Parser:
                                    f"(available: {sorted(ARTICULATIONS)})",
                                    t.line)
                 ev["art"] = a
+            elif kw == "gen":
+                ev["generated"] = self.expect("IDENT").text
             else:
                 v = self.expect("IDENT").text
                 if v not in theory.VOICINGS:
@@ -787,6 +789,399 @@ def _apply_emotion(spec: dict, emotion: dict, diags: list[str]):
                      "(reverb/width/fades); see compiled JSON for exact values")
 
 
+STYLE_DEFAULTS = {
+    "baroque": {"perform": {"style": "baroque", "expressivity": 0.45},
+                "ensemble": {"family": "chamber", "size": 3, "spread": 0.25,
+                             "octaves": 0},
+                "voicing": {"richness": 0.35, "extensions": [7]},
+                "space": {"hall": "room", "depth": 0.25}},
+    "romantic": {"perform": {"style": "romantic", "expressivity": 0.75},
+                 "ensemble": {"family": "orchestra", "size": 6, "spread": 0.55,
+                              "octaves": 1},
+                 "voicing": {"richness": 0.65, "extensions": [7, 9]},
+                 "space": {"hall": "hall", "depth": 0.55}},
+    "cinematic": {"perform": {"style": "cinematic", "expressivity": 0.7},
+                  "ensemble": {"family": "hybrid", "size": 5, "spread": 0.5,
+                               "octaves": 1},
+                  "voicing": {"richness": 0.7, "extensions": [7, 9]},
+                  "space": {"hall": "studio", "depth": 0.5}},
+    "jazz": {"perform": {"style": "jazz", "expressivity": 0.6},
+             "ensemble": {"family": "combo", "size": 2, "spread": 0.35,
+                          "octaves": 0},
+             "voicing": {"richness": 0.8, "extensions": [7, 9]},
+             "space": {"hall": "club", "depth": 0.25}},
+    "ambient": {"perform": {"style": "ambient", "expressivity": 0.5},
+                "ensemble": {"family": "synth", "size": 4, "spread": 0.7,
+                             "octaves": 1},
+                "voicing": {"richness": 0.55, "extensions": [9]},
+                "space": {"hall": "large", "depth": 0.75}},
+    "pop": {"perform": {"style": "pop", "expressivity": 0.45},
+            "ensemble": {"family": "band", "size": 2, "spread": 0.3,
+                         "octaves": 0},
+            "voicing": {"richness": 0.45, "extensions": [7]},
+            "space": {"hall": "studio", "depth": 0.35}},
+}
+
+
+def _kv_directive(toks: list[Tok], line: int,
+                  bare_key: str | None = None) -> dict:
+    out, i = {}, 0
+    if bare_key and toks and toks[0].kind == "IDENT" and (
+            len(toks) == 1 or toks[1].text != "="):
+        out[bare_key] = toks[0].text
+        i = 1
+    while i < len(toks):
+        if toks[i].kind == "PUNCT" and toks[i].text == ",":
+            i += 1
+            continue
+        if i + 2 >= len(toks) or toks[i].kind != "IDENT" \
+                or toks[i + 1].text != "=":
+            raise DSLError("smart directive expects key=value pairs",
+                           toks[i].line if i < len(toks) else line)
+        key = toks[i].text
+        vals = []
+        i += 2
+        while i < len(toks):
+            t = toks[i]
+            if t.kind == "PUNCT" and t.text == ",":
+                if i + 1 < len(toks) and toks[i + 1].kind == "NUMBER" \
+                        and key == "extensions":
+                    i += 1
+                    continue
+                i += 1
+                break
+            if t.kind == "IDENT" and i + 1 < len(toks) \
+                    and toks[i + 1].text == "=":
+                break
+            vals.append(t.value if t.kind == "NUMBER" else t.text)
+            i += 1
+        if key == "extensions":
+            out[key] = [int(v) for v in vals]
+        else:
+            out[key] = vals[0] if len(vals) == 1 else vals
+    return out
+
+
+def _merge_defaults(base: dict, override: dict) -> dict:
+    out = {k: dict(v) if isinstance(v, dict) else v
+           for k, v in base.items()}
+    for k, v in override.items():
+        if isinstance(v, dict) and isinstance(out.get(k), dict):
+            out[k].update(v)
+        else:
+            out[k] = v
+    return out
+
+
+def _read_smart_directives(p: dict, line: int) -> dict:
+    style = None
+    explicit: dict = {}
+    if "style" in p:
+        style = _one(p.pop("style"), line)
+        if style not in STYLE_DEFAULTS:
+            raise DSLError(f"style: unknown '{style}' "
+                           f"(available: {sorted(STYLE_DEFAULTS)})", line)
+    if "perform" in p:
+        explicit["perform"] = _kv_directive(p.pop("perform"), line)
+    if "ensemble" in p:
+        explicit["ensemble"] = _kv_directive(p.pop("ensemble"), line,
+                                             bare_key="family")
+    if "voicing" in p:
+        explicit["voicing"] = _kv_directive(p.pop("voicing"), line)
+    if "space" in p:
+        explicit["space"] = _kv_directive(p.pop("space"), line)
+    if not style and not explicit:
+        return {}
+    defaults = STYLE_DEFAULTS.get(style, {})
+    intent = _merge_defaults(defaults, explicit)
+    if style:
+        intent["style"] = style
+    return intent
+
+
+def _apply_smart_directives(spec: dict, intent: dict, diags: list[str]):
+    """Expand high-level musical intent into explicit render-layer IR."""
+    if not intent:
+        return
+    spec["intent"] = intent
+    perform = intent.get("perform", {})
+    ensemble = intent.get("ensemble", {})
+    voicing = intent.get("voicing", {})
+    space = intent.get("space", {})
+    expressivity = max(0.0, min(1.0, float(perform.get("expressivity", 0.0))))
+    size = int(ensemble.get("size", 0) or 0)
+    spread = max(0.0, min(1.0, float(ensemble.get("spread", 0.0) or 0.0)))
+    octaves = int(ensemble.get("octaves", 0) or 0)
+    phrase_report = {}
+    for layer in spec["layers"]:
+        phrases = _analyze_layer_phrases(layer)
+        if phrases:
+            phrase_report[layer["name"]] = phrases
+        if layer["type"] in ("notes", "instrument", "drums"):
+            if expressivity:
+                layer.setdefault("humanize", {
+                    "timing_s": round(0.018 * expressivity, 5),
+                    "vel": round(0.15 * expressivity, 4),
+                })
+                layer.setdefault("phrasing", round(expressivity, 3))
+                layer.setdefault("vel_brightness", round(0.65 * expressivity, 3))
+                _apply_performance_phrase_ir(layer, phrases, expressivity)
+        if layer["type"] == "notes" and size >= 2:
+            layer.setdefault("unison", size)
+            layer.setdefault("spread_cents", round(18.0 * spread, 3))
+        if layer["type"] == "instrument" and size >= 2:
+            layer.setdefault("section", {
+                "size": size,
+                "spread": spread,
+                "detune_c": round(9.0 * max(0.2, spread), 3),
+                "timing_s": round(0.012 * max(0.2, expressivity), 5),
+            })
+        if octaves > 0 and layer["type"] == "notes" and layer.get("notes"):
+            extra = []
+            for ev in layer["notes"]:
+                if "note" in ev:
+                    extra.append({**ev, "note": theory.semis_to_note(
+                        theory.note_to_semis(ev["note"]) - 12)})
+            layer["notes"].extend(extra)
+            layer["notes"].sort(key=lambda e: (e["start_beat"],
+                                               e.get("note", ""),
+                                               e.get("freq_hz", 0)))
+        if layer["type"] == "notes" and layer.get("notes"):
+            _apply_voicing_extensions(layer, voicing)
+    if phrase_report:
+        intent.setdefault("analysis", {})["phrases"] = [
+            {**p, "layer": lname}
+            for lname, ps in sorted(phrase_report.items())
+            for p in ps
+        ]
+    _apply_role_routing(spec, ensemble, space)
+    depth = max(0.0, min(1.0, float(space.get("depth", 0.0) or 0.0)))
+    if depth:
+        master = spec.setdefault("master", {})
+        fx = master.setdefault("fx", [])
+        fx.append({"type": "hall", "rt60": round(1.2 + 3.8 * depth, 3),
+                   "damp": round(0.25 + 0.35 * depth, 3),
+                   "mix": round(0.08 + 0.28 * depth, 3)})
+        fx.append({"type": "saturate", "amount": round(0.08 + 0.14 * depth, 3),
+                   "mix": 0.35, "warmth": 0.35})
+    if expressivity:
+        spec.setdefault("master", {}).setdefault("fx", []).append({
+            "type": "comp", "threshold": -20.0, "ratio": 1.4,
+            "attack": 0.04, "release": 0.22, "knee": 6.0, "makeup": 0.0})
+    diags.append("smart directives: expanded style/perform/ensemble/voicing/"
+                 "space into explicit layer and master IR")
+
+
+def _analyze_layer_phrases(layer: dict) -> list[dict]:
+    if layer.get("type") != "notes" or not layer.get("notes"):
+        return []
+    notes = [e for e in sorted(layer["notes"], key=lambda x: x["start_beat"])
+             if "note" in e]
+    if not notes:
+        return []
+    phrases: list[list[dict]] = [[notes[0]]]
+    for prev, ev in zip(notes, notes[1:]):
+        gap = ev["start_beat"] - (prev["start_beat"] + prev["dur_beats"])
+        if gap >= 1.5:
+            phrases.append([ev])
+        else:
+            phrases[-1].append(ev)
+    out = []
+    for idx, ph in enumerate(phrases, 1):
+        semis = [(theory.note_to_semis(e["note"]), e) for e in ph]
+        peak_s, peak = max(semis, key=lambda x: (x[0], x[1]["start_beat"]))
+        out.append({
+            "id": idx,
+            "start_beat": ph[0]["start_beat"],
+            "end_beat": round(max(e["start_beat"] + e["dur_beats"]
+                                  for e in ph), 6),
+            "peak_beat": peak["start_beat"],
+            "peak_note": peak["note"],
+            "note_count": len(ph),
+            "cadence_beat": ph[-1]["start_beat"],
+        })
+    return out
+
+
+def _apply_performance_phrase_ir(layer: dict, phrases: list[dict],
+                                 expressivity: float):
+    if layer.get("type") != "notes" or not layer.get("notes"):
+        return
+    notes = sorted(layer["notes"], key=lambda e: (e["start_beat"],
+                                                  e.get("note", "")))
+    if phrases and "dynamic" not in layer:
+        pts = []
+        for ph in phrases:
+            low = round(max(0.1, 0.42 + 0.1 * expressivity), 3)
+            high = round(min(1.0, 0.62 + 0.3 * expressivity), 3)
+            pts.extend([[ph["start_beat"], low], [ph["peak_beat"], high],
+                        [ph["end_beat"], round(max(0.1, low - 0.08), 3)]])
+        layer["dynamic"] = sorted(pts, key=lambda p: p[0])
+    if "vibrato" not in layer:
+        layer["vibrato"] = {"rate_hz": round(4.8 + 1.2 * expressivity, 3),
+                            "depth_cents": round(10.0 * expressivity, 3),
+                            "delay_s": 0.18}
+    next_slur = max([e.get("slur", 0) or 0 for e in notes] + [0])
+    for a, b in zip(notes, notes[1:]):
+        if "note" not in a or "note" not in b:
+            continue
+        interval = abs(theory.note_to_semis(a["note"]) -
+                       theory.note_to_semis(b["note"]))
+        gap = b["start_beat"] - (a["start_beat"] + a["dur_beats"])
+        if interval <= 3 and gap <= 0.25:
+            if not a.get("slur") and not b.get("slur"):
+                next_slur += 1
+                a["slur"] = b["slur"] = next_slur
+            elif a.get("slur") and not b.get("slur"):
+                b["slur"] = a["slur"]
+    for ph in phrases:
+        for ev in notes:
+            if ev.get("start_beat") == ph["peak_beat"] \
+                    and ev.get("note") == ph["peak_note"]:
+                ev["dur_beats"] = round(ev["dur_beats"]
+                                        * (1.0 + 0.08 * expressivity), 6)
+    layer["notes"] = sorted(notes, key=lambda e: (e["start_beat"],
+                                                  e.get("note", ""),
+                                                  e.get("freq_hz", 0)))
+
+
+def _apply_voicing_extensions(layer: dict, voicing: dict):
+    richness = max(0.0, min(1.0, float(voicing.get("richness", 0.0) or 0.0)))
+    if richness <= 0:
+        return
+    extensions = [int(x) for x in voicing.get("extensions", [])]
+    if not extensions:
+        return
+    intervals = {7: 10, 9: 14, 11: 17, 13: 21}
+    notes = list(layer.get("notes", []))
+    additions = []
+    groups: dict[tuple[float, float], list[dict]] = {}
+    for ev in notes:
+        if "note" in ev:
+            groups.setdefault((ev["start_beat"], ev["dur_beats"]), []).append(ev)
+    for group in groups.values():
+        if len(group) < 3:
+            continue
+        semis = sorted(theory.note_to_semis(ev["note"]) for ev in group)
+        pcs = {s % 12 for s in semis}
+        root = semis[0]
+        for ext in extensions:
+            if ext not in intervals:
+                continue
+            target = root + intervals[ext]
+            if target % 12 in pcs:
+                continue
+            base = {k: v for k, v in group[0].items()
+                    if k not in ("note", "freq_hz")}
+            additions.append({**base, "note": theory.semis_to_note(target),
+                              "vel": round(group[0].get("vel", 1.0)
+                                           * (0.72 + 0.2 * richness), 4)})
+            pcs.add(target % 12)
+    starts = sorted(groups)
+    for a_key, b_key in zip(starts, starts[1:]):
+        a_group, b_group = groups[a_key], groups[b_key]
+        a_semis = sorted(theory.note_to_semis(e["note"]) for e in a_group)
+        b_semis = sorted(theory.note_to_semis(e["note"]) for e in b_group)
+        if not a_semis or not b_semis:
+            continue
+        if abs(b_semis[0] - a_semis[0]) >= 3:
+            step = 2 if b_semis[0] > a_semis[0] else -2
+            additions.append({
+                "note": theory.semis_to_note(a_semis[0] + step),
+                "start_beat": round(a_key[0] + a_key[1] * 0.72, 6),
+                "dur_beats": round(min(0.5, a_key[1] * 0.22), 6),
+                "vel": round(0.55 + 0.25 * richness, 4),
+                "generated": "voice_leading",
+            })
+        moving = min(a_semis, key=lambda s: min(abs(s - t) for t in b_semis))
+        target = min(b_semis, key=lambda s: abs(s - moving))
+        if abs(target - moving) >= 3:
+            mid = moving + (1 if target > moving else -1) * min(2, abs(target - moving) // 2)
+            additions.append({
+                "note": theory.semis_to_note(mid),
+                "start_beat": round(a_key[0] + a_key[1] * 0.72, 6),
+                "dur_beats": round(min(0.5, a_key[1] * 0.22), 6),
+                "vel": round(0.55 + 0.25 * richness, 4),
+                "generated": "voice_leading",
+            })
+        common = set(s % 12 for s in a_semis) & set(s % 12 for s in b_semis)
+        if common:
+            sus_pc = sorted(common)[0]
+            sus = next(s for s in a_semis if s % 12 == sus_pc)
+            additions.append({
+                "note": theory.semis_to_note(sus),
+                "start_beat": b_key[0],
+                "dur_beats": round(min(0.5, b_key[1] * 0.25), 6),
+                "vel": round(0.48 + 0.22 * richness, 4),
+                "generated": "suspension",
+            })
+        elif abs(b_semis[0] - a_semis[-1]) <= 7:
+            additions.append({
+                "note": theory.semis_to_note((b_semis[0] + a_semis[-1]) // 2),
+                "start_beat": round(b_key[0] - min(0.5, a_key[1] * 0.2), 6),
+                "dur_beats": round(min(0.5, a_key[1] * 0.2), 6),
+                "vel": round(0.45 + 0.2 * richness, 4),
+                "generated": "passing_tone",
+            })
+    if additions:
+        voicing["voice_leading"] = True
+    if additions:
+        layer["notes"] = sorted(notes + additions,
+                                key=lambda e: (e["start_beat"],
+                                               e.get("note", ""),
+                                               e.get("freq_hz", 0)))
+
+
+def _layer_role(layer: dict) -> str:
+    name = layer.get("name", "").lower()
+    if "bass" in name or "sub" in name:
+        return "bass"
+    if any(x in name for x in ("lead", "melody", "theme", "top")):
+        return "melody"
+    notes = [e for e in layer.get("notes", []) if "note" in e]
+    if notes:
+        avg = sum(theory.note_to_semis(e["note"]) for e in notes) / len(notes)
+        if avg < theory.note_to_semis("C3"):
+            return "bass"
+        if avg >= theory.note_to_semis("C5"):
+            return "melody"
+    return "harmony"
+
+
+def _apply_role_routing(spec: dict, ensemble: dict, space: dict):
+    if not ensemble and not space:
+        return
+    buses = spec.setdefault("buses", [])
+    existing = {b["name"] for b in buses}
+    role_defs = {
+        "af_bass": {"name": "af_bass", "gain_db": -0.5,
+                    "fx": [{"type": "peak", "freq_hz": 90.0,
+                            "gain_db": 1.5, "q": 0.9}]},
+        "af_harmony": {"name": "af_harmony", "gain_db": -1.5,
+                       "fx": [{"type": "hall", "rt60": 1.8,
+                               "damp": 0.35, "mix": 0.12}]},
+        "af_melody": {"name": "af_melody", "gain_db": 0.0,
+                      "fx": [{"type": "delay", "time_s": 0.18,
+                              "feedback": 0.12, "mix": 0.08}]},
+        "af_space": {"name": "af_space", "gain_db": 0.0,
+                     "fx": [{"type": "hall",
+                             "rt60": round(1.5 + 3.0 * float(space.get("depth", 0.4) or 0.4), 3),
+                             "damp": 0.45,
+                             "mix": round(0.16 + 0.2 * float(space.get("depth", 0.4) or 0.4), 3)}]},
+    }
+    for name, b in role_defs.items():
+        if name not in existing:
+            buses.append(b)
+            existing.add(name)
+    for layer in spec.get("layers", []):
+        if layer.get("bus"):
+            continue
+        role = _layer_role(layer)
+        layer["role"] = role
+        layer["bus"] = {"bass": "af_bass", "melody": "af_melody"}.get(
+            role, "af_harmony")
+
+
 def compile_asset(a: Asset, variant=None) -> tuple[dict, list[str]]:
     diags: list[str] = []
     _apply_vary(a, variant)
@@ -800,6 +1195,7 @@ def compile_asset(a: Asset, variant=None) -> tuple[dict, list[str]]:
 
     spec["kind"] = _one(take("kind", [Tok("IDENT", "sfx", a.line)]), a.line)
     spec["duration_s"] = _one(take("duration"), a.line, "s", "duration")
+    smart_intent = _read_smart_directives(p, a.line)
     if "samplerate" in p:
         spec["sample_rate"] = int(_one(take("samplerate"), a.line))
     if "bitdepth" in p:
@@ -1003,6 +1399,8 @@ def compile_asset(a: Asset, variant=None) -> tuple[dict, list[str]]:
 
     if emotion:
         _apply_emotion(spec, emotion, diags)
+    if smart_intent:
+        _apply_smart_directives(spec, smart_intent, diags)
 
     # advisory checks
     for lay in spec["layers"]:

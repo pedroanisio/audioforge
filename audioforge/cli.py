@@ -46,6 +46,7 @@ def main(argv=None) -> int:
     p.add_argument("--preset", default=None)
     p.add_argument("--variant", default=None)
     p.add_argument("--intensity", type=float, default=None)
+    p.add_argument("--analyze", action="store_true")
 
     p = sub.add_parser("pack"); p.add_argument("spec")
     p.add_argument("-o", "--out", default="pack_out")
@@ -66,6 +67,13 @@ def main(argv=None) -> int:
     p.add_argument("--intensity", type=float, default=None)
 
     p = sub.add_parser("compile"); p.add_argument("spec")
+
+    p = sub.add_parser("decompile"); p.add_argument("spec")
+
+    sub.add_parser("capabilities")
+
+    p = sub.add_parser("grammar")
+    p.add_argument("--format", choices=("ebnf", "gbnf"), default="ebnf")
 
     p = sub.add_parser("batch"); p.add_argument("specs_dir")
     p.add_argument("-o", "--out", default="out")
@@ -94,11 +102,22 @@ def main(argv=None) -> int:
         elif args.cmd == "compile":
             for a in _assets(args.spec):
                 print(a.to_json())
+        elif args.cmd == "decompile":
+            for a in _assets(args.spec):
+                print(a.to_dsl())
+        elif args.cmd == "capabilities":
+            from .capabilities import capability_manifest
+            print(json.dumps(capability_manifest(), indent=2,
+                             sort_keys=True))
+        elif args.cmd == "grammar":
+            from .grammar import dsl_ebnf, dsl_gbnf
+            print(dsl_ebnf() if args.format == "ebnf" else dsl_gbnf())
         elif args.cmd == "render":
             for a in _assets(args.spec, variant=args.variant):
                 if args.intensity is not None:
                     a = a.with_intensity(args.intensity)
-                meta = a.export(args.out, preset=args.preset, stems=args.stems)
+                meta = a.export(args.out, preset=args.preset,
+                                stems=args.stems, analyze=args.analyze)
                 print(json.dumps(meta, indent=2))
         elif args.cmd == "pack":
             from .sdk import AudioForge

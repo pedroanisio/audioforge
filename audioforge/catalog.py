@@ -171,7 +171,7 @@ def _scan_instrument(sfz_path: Path, libdir: Path):
 
 @dataclass
 class Library:
-    name: str
+    name: str                       # directory name (catalog identity)
     instrument_count: int
     renderable_count: int
     parse_errors: int
@@ -181,6 +181,10 @@ class Library:
     audio_files_orphan: int
     pin: str | None
     categories: dict[str, list[str]]
+    manifest_name: str | None = None   # the name the resolver matches on
+
+    def matches(self, key: str) -> bool:
+        return key in (self.name, self.manifest_name)
 
 
 def _scan_library(libdir: Path):
@@ -198,12 +202,14 @@ def _scan_library(libdir: Path):
         cats.setdefault(i.category or "Unknown", []).append(i.id)
         fmts.update(i.samples.get("formats", []))
     mp = libdir / "library.manifest.json"
-    pin = None
+    pin = manifest_name = None
     if mp.is_file():
         try:
-            pin = json.loads(mp.read_text()).get("manifest_sha256")
+            man = json.loads(mp.read_text())
+            pin = man.get("manifest_sha256")
+            manifest_name = man.get("name")
         except (ValueError, OSError):
-            pin = None
+            pin = manifest_name = None
     lib = Library(
         name=libdir.name, instrument_count=len(insts),
         renderable_count=sum(1 for i in insts if i.renderable),
@@ -211,7 +217,8 @@ def _scan_library(libdir: Path):
         sample_formats=sorted(fmts), audio_files_on_disk=len(on_disk),
         audio_files_referenced=len(referenced & on_disk),
         audio_files_orphan=len(on_disk - referenced),
-        pin=pin, categories={k: sorted(v) for k, v in sorted(cats.items())})
+        pin=pin, categories={k: sorted(v) for k, v in sorted(cats.items())},
+        manifest_name=manifest_name)
     return lib, insts
 
 
@@ -230,6 +237,9 @@ class Catalog:
         root = Path(root)
         if not root.is_dir():
             raise NotADirectoryError(root)
+        # so libraries discovered here are also resolvable at render time
+        from .library import add_library_path
+        add_library_path(root)
         libs = sorted(c for c in root.iterdir()
                       if c.is_dir() and any(c.rglob("*.sfz")))
         if not libs and any(root.rglob("*.sfz")):
@@ -288,7 +298,8 @@ class Catalog:
             out = [i for i in out
                    if t in i.id.lower() or t in (i.category or "").lower()]
         if library:
-            out = [i for i in out if i.library == library]
+            libs = {l.name for l in self.libraries if l.matches(library)}
+            out = [i for i in out if i.library in (libs or {library})]
         if family:
             f = family.lower()
             out = [i for i in out
@@ -304,9 +315,12 @@ class Catalog:
 
     def instrument(self, id: str, library: str | None = None) -> Instrument:
         """The first instrument matching `id` (exact, then case-insensitive),
-        optionally pinned to a library. Raises KeyError if none."""
+        optionally pinned to a library (directory or manifest name). Raises
+        KeyError if none."""
+        libs = ({l.name for l in self.libraries if l.matches(library)}
+                if library else None)
         cands = [i for i in self.instruments
-                 if (library is None or i.library == library)]
+                 if (libs is None or i.library in (libs or {library}))]
         for i in cands:
             if i.id == id:
                 return i
@@ -318,7 +332,7 @@ class Catalog:
 
     def library(self, name: str) -> Library:
         for l in self.libraries:
-            if l.name == name:
+            if l.matches(name):
                 return l
         raise KeyError(f"no library {name!r}")
 

@@ -265,7 +265,43 @@ The premaster renders once; each cutdown splices its keep-windows with equal-pow
 
 ---
 
-## 11. Samples, libraries, ingestion
+## 11. Smart AI-agent directives
+
+High-level musical intent may be written at asset level. These directives are
+compile-time sugar only: every choice expands into explicit JSON IR under normal
+layer/master parameters, while the original intent is preserved under `intent`
+for agents to inspect.
+
+```
+style: cinematic
+perform:  style=cinematic expressivity=0.8
+ensemble: synth size=5 spread=0.45 octaves=1
+voicing:  richness=0.7 extensions=7,9
+space:    hall=studio depth=0.5
+```
+
+`style:` supplies deterministic defaults for `baroque romantic cinematic jazz
+ambient pop`. Explicit directives override those defaults.
+
+`perform:` first runs a deterministic phrase analysis over note layers and
+preserves it under `intent.analysis.phrases`; then it expands to concrete
+`humanize`, `phrasing`, `velbright`, `dynamic`, vibrato, slur ids, and phrase-peak
+lengthening. `ensemble:` expands synth notes to unison/spread and sampled
+instruments to `section`; `octaves` adds explicit octave-doubling note events and
+role-routes layers through generated `af_bass`/`af_harmony`/`af_melody` buses.
+`voicing:` adds requested 7/9/11/13 extensions to simultaneous chord stacks as
+normal note events and may add `gen voice_leading`, `gen suspension`, or
+`gen passing_tone` notes. `space:` appends deterministic master glue and creates
+an `af_space` bus with shared room processing. The compiler emits a diagnostic
+naming the expansion; inspect `compile` output to see the exact render-layer IR.
+
+`audioforge capabilities` is the canonical agent manifest: it includes the
+current engine/DSL versions, layer/FX/articulation enums, smart-directive
+properties, examples, repair hints, and known incompatibilities.
+
+---
+
+## 12. Samples, libraries, ingestion
 
 **Single files.** Sample and IR files resolve against registered search paths (default `./samples`; add with `audioforge.samples.add_sample_path(dir)` or in-memory `register_sample(name, bytes)`). `audioforge ingest dir/` hashes and catalogs every WAV and prints paste-ready, hash-pinned layer snippets.
 
@@ -277,7 +313,7 @@ The sampler interprets a documented SFZ subset: `<control>/<global>/<group>/<reg
 
 ---
 
-## 12. Emotion macro expansion (exact mapping)
+## 13. Emotion macro expansion (exact mapping)
 
 Emotion never invents notes or changes timing — only spatial/spectral framing, all visible in the compiled IR:
 
@@ -292,7 +328,7 @@ Emotion never invents notes or changes timing — only spatial/spectral framing,
 
 ---
 
-## 13. Master block, loudness, mastering order
+## 14. Master block, loudness, mastering order
 
 `width:` (0..1), `peak:` (dBFS true-peak ceiling), `lufs:` (integrated target), `fadein:`/`fadeout:` (s), `fx:`, `auto gain:`.
 
@@ -302,20 +338,23 @@ Export presets (SDK/CLI `--preset`): `social_video` 48k/16/−14 · `broadcast` 
 
 ---
 
-## 14. Determinism, manifests, versioning
+## 15. Determinism, manifests, versioning
 
-Every render is keyed to the spec content hash; `ENGINE_VERSION` folds into it, so any engine change that could alter bytes changes all hashes — stale caches can never masquerade as current renders. Manifests record spec hash, output SHA-256, loudness report, markers, variant/intensity tags, and cutdown lineage. `audioforge verify spec manifest` re-renders and compares output hashes — the CI reproducibility gate. Cross-platform float reproducibility is *checked* by that gate per environment, not assumed.
+Every render is keyed to the spec content hash; `ENGINE_VERSION` folds into it, so any engine change that could alter bytes changes all hashes — stale caches can never masquerade as current renders. Manifests record spec hash, output SHA-256, loudness report, markers, variant/intensity tags, and cutdown lineage. `audioforge render --analyze` also writes deterministic analysis features and actionable recommendations (`low_foundation_weak`, `mono_image`, `very_bright`, etc.) into the manifest for agent critique loops. `audioforge verify spec manifest` re-renders and compares output hashes — the CI reproducibility gate. Cross-platform float reproducibility is *checked* by that gate per environment, not assumed.
 
-## 15. Diagnostics contract (for agents)
+## 16. Diagnostics contract (for agents)
 
 Parse/compile errors raise with line numbers. Non-fatal advice arrives as warnings: out-of-scale notes (advisory — chromaticism is allowed), unknown properties (ignored, named), emotion expansion notes, cutdown length mismatches. The SDK (`AudioForge.compile`) never raises on user input — everything is a structured `Diagnostic(severity, message)`. Known gap: events placed past the asset's end are silently skipped at render; a validator warning is planned.
 
-## 16. CLI
+## 17. CLI
 
 ```
 audioforge validate spec.af
 audioforge compile  spec.af
-audioforge render   spec.(af|json) [-o dir] [--preset P] [--stems] [--variant T] [--intensity K]
+audioforge decompile spec.(af|json)
+audioforge capabilities
+audioforge grammar  [--format ebnf|gbnf]
+audioforge render   spec.(af|json) [-o dir] [--preset P] [--stems] [--variant T] [--intensity K] [--analyze]
 audioforge pack     spec.af [--variants N] [-o dir] [--preset P]
 audioforge campaign spec.af [-o dir] [--preset P] [--intensity K]
 audioforge ingest   samples_dir/ [-o catalog.json]
@@ -324,6 +363,6 @@ audioforge batch    specs_dir/ [-o dir]
 audioforge verify   spec manifest
 ```
 
-## 17. Honest limits
+## 18. Honest limits
 
 LUFS is a BS.1770-style approximation (manifests record measured values). Compressors are documented offline lookahead-RMS designs, not analog models. `bowed`/`blown`/plate-`mod` need a C compiler and fail loudly without one. Space IRs are computed in a Python loop bounded by tail length (seconds per parameter set, cached). Physical models ignore pitch envelopes and speak ~2% sharp. Layers are mono pre-pan, except sectioned instrument layers and staged layers, which are true stereo. The stage approximates: ISO 9613-1-flavored air shelf, integer-sample ITD (≤ ~21 µs quantization), image-source to second order only, no B-format decoding (stereo IRs only). Sample layers accept WAV PCM only. The darkness emotion macro can over-darken (it warns). Encoder-dependent formats (future FLAC/MP3) will sit outside the byte-hash guarantee. The sampler covers a documented SFZ subset only (no filters/LFOs/CC — AudioForge fx and automation own that ground); synth-layer dynamic brightness samples at note onset (the level term is fully time-varying); sampled-layer crossfades are time-varying throughout.

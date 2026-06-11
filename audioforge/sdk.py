@@ -184,7 +184,8 @@ class AudioAsset:
         return self.export(out_dir, preset="web_preview", id_suffix="__preview")
 
     def export(self, out_dir: str | Path, preset: str | None = None,
-               stems: bool = False, id_suffix: str | None = None) -> dict:
+               stems: bool = False, id_suffix: str | None = None,
+               analyze: bool = False) -> dict:
         spec = copy.deepcopy(self.spec)
         if preset:
             if preset not in EXPORT_PRESETS:
@@ -203,14 +204,32 @@ class AudioAsset:
             if isinstance(e, SpecError):
                 raise
             raise SpecError(f"render failed: {e}") from e
+        if analyze:
+            from .analysis import analyze_audio
+            stereo, sr, _ = render(self._resolved(spec))
+            meta["analysis"] = analyze_audio(stereo, sr)
+            manifest = Path(out_dir) / f"{spec['id']}.manifest.json"
+            if manifest.exists():
+                manifest.write_text(json.dumps(meta, indent=2,
+                                               sort_keys=True))
         for name, exporter in sorted(EXPORTERS.items()):
             meta.setdefault("extra_exports", {})[name] = exporter(
                 spec, meta, Path(out_dir))
         return meta
 
+    def analyze(self) -> dict:
+        """Render in memory and return deterministic analysis features."""
+        from .analysis import analyze_audio
+        stereo, sr, _ = self.render()
+        return analyze_audio(stereo, sr)
+
     # -- serialization -----------------------------------------------------
     def to_json(self) -> str:
         return json.dumps(self.spec, indent=2, sort_keys=True)
+
+    def to_dsl(self) -> str:
+        from .decompile import spec_to_dsl
+        return spec_to_dsl(self.spec)
 
     @classmethod
     def from_json(cls, text: str) -> "AudioAsset":

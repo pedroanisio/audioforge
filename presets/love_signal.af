@@ -1,0 +1,125 @@
+asset love_signal {
+  kind: cue
+  duration: 36s
+  tempo: 76bpm
+  key: A major
+  style: ambient
+  perform: style=romantic expressivity=0.88
+  ensemble: synth size=6 spread=0.58 octaves=1
+  voicing: richness=0.85 extensions=7,9
+  space: hall=studio depth=0.62
+  emotion: intimacy=0.85, wonder=0.45, calm=0.55, triumph=0.18
+  intensity: 0s=0.25, 10s=0.48, 24s=0.78, 32s=0.55, 36s=0.28
+  marker first_light @ 8s
+  marker close_hold @ 25s
+  marker afterglow @ 33s
+
+  motif vow {
+    A4 @ 0b for 1b vel 0.72
+    C#5 @ 1b for 1b vel 0.78
+    E5 @ 2b for 1.5b vel 0.86
+    F#5 @ 3.5b for 1.5b vel 0.82
+    E5 @ 5b for 2b vel 0.74
+  }
+
+  motif answer {
+    C#5 @ 0b for 1b vel 0.70
+    B4 @ 1b for 1b vel 0.66
+    A4 @ 2b for 2b vel 0.76
+  }
+
+  layer heart_bass : notes {
+    osc: sine
+    gain: -16db
+    pan: -0.06
+    env: a=0.02s d=0.25s s=0.82 r=0.9s
+    dynamic: 0b=mp, 16b=mf, 28b=f, 40b=mp
+    notes: A2 @ 0b for 8b, F#2 @ 8b for 8b, D2 @ 16b for 8b, E2 @ 24b for 8b,
+           A2 @ 32b for 8b
+    fx: lowpass(900hz), saturate(amount=0.08, mix=0.35)
+  }
+
+  layer warm_body : notes {
+    osc: pad
+    gain: -18db
+    pan: -0.22
+    env: a=1.8s d=1.2s s=0.86 r=3s
+    dynamic: 0b=pp, 12b=mp, 28b=mf, 40b=p
+    notes: A3maj9 @ 0b for 8b voicing spread, F#3min9 @ 8b for 8b voicing open,
+           D3maj9 @ 16b for 8b voicing spread, E3sus4 @ 24b for 4b voicing open,
+           E3maj @ 28b for 4b voicing open, A3maj9 @ 32b for 8b voicing wide
+    auto cutoff: 0s=550, 11s=1200, 24s=2400, 36s=700
+    fx: lowpass(1400hz), hall(rt60=3.4, damp=0.46, mix=0.20)
+  }
+
+  layer pulse : drums {
+    voice: kick
+    gain: -22db
+    pan: -0.03
+    pattern: x...x...x...x...
+    decay: 1.6
+    tune: -3st
+    humanize: 0.25
+  }
+
+  layer shimmer : notes {
+    osc: triangle
+    gain: -24db
+    pan: 0.34
+    env: a=0.01s d=0.15s s=0.42 r=1.1s
+    arp: updown rate=0.5b octaves=2 gate=0.62
+    dynamic: 0b=p, 16b=mp, 28b=mf, 40b=p
+    notes: A4add9 @ 0b for 8b voicing wide, F#4min7 @ 8b for 8b voicing open,
+           D4maj7 @ 16b for 8b voicing wide, E4sus4 @ 24b for 8b voicing open,
+           A4maj9 @ 32b for 8b voicing wide
+    fx: delay(time=0.375s, feedback=0.22, mix=0.22), highpass(800hz), reverb(decay=3.2s, mix=0.24)
+  }
+
+  layer left_halo : notes {
+    osc: organ
+    gain: -30db
+    pan: -0.72
+    env: a=0.8s d=0.6s s=0.55 r=2.2s
+    dynamic: 0b=pp, 18b=mp, 34b=p
+    notes: C#5 @ 4b for 4b vel 0.55, B4 @ 12b for 4b vel 0.50,
+           A4 @ 20b for 6b vel 0.58, F#4 @ 30b for 4b vel 0.45
+    fx: highpass(1200hz), delay(time=0.625s, feedback=0.16, mix=0.28), reverb(decay=3.8s, mix=0.30)
+  }
+
+  layer right_halo : notes {
+    osc: triangle
+    gain: -31db
+    pan: 0.76
+    env: a=0.7s d=0.5s s=0.5 r=2.4s
+    dynamic: 0b=pp, 18b=mp, 34b=p
+    notes: E5 @ 5b for 4b vel 0.50, C#5 @ 14b for 4b vel 0.56,
+           B4 @ 22b for 5b vel 0.52, A4 @ 31b for 4b vel 0.45
+    fx: highpass(1400hz), delay(time=0.5s, feedback=0.14, mix=0.30), reverb(decay=4.0s, mix=0.32)
+  }
+
+  layer lead_theme : notes {
+    osc: sine
+    gain: -14db
+    pan: 0.14
+    env: a=0.06s d=0.3s s=0.72 r=1.4s
+    glide: 0.05s
+    vibrato: rate=5.2 depth=8c delay=0.25s
+    dynamic: 0b=mp, 12b=mf, 24b=f, 36b=mp
+    notes: slur(A4 @ 0b for 1b vel 0.70, C#5 @ 1b for 1b vel 0.78, E5 @ 2b for 2b vel 0.86),
+           B4 @ 6b for 1b vel 0.65, A4 @ 7b for 1b vel 0.70
+    play vow @ 8b legato
+    play answer @ 18b legato transpose +12st
+    play vow @ 24b legato stretch 1.15 vel 1.05
+    play answer @ 34b legato vel 0.88
+    fx: delay(time=0.5s, feedback=0.18, mix=0.18), reverb(decay=2.8s, mix=0.26)
+  }
+
+  master {
+    width: 0.82
+    peak: -1db
+    lufs: -16
+    fadein: 0.8s
+    fadeout: 2.8s
+    fx: highpass(28hz), lowshelf(150hz, gain=0.8), highpass(24hz), saturate(amount=0.10, mix=0.42)
+  }
+}
