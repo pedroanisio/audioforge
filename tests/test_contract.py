@@ -320,6 +320,67 @@ asset lad { kind: cue
           "bit-deterministic")
 
 
+def test_tape_effect_flutters_saturates_and_renders():
+    """End-to-end: a tape fx parses, validates, renders, and exhibits both of
+    its defining behaviours — flutter (the time-varying delay spreads a pure
+    carrier into sidebands) and saturation (a clean sine grows harmonics) —
+    while staying bounded and bit-deterministic."""
+    pytest.importorskip("numpy")
+    from audioforge._native import tape_native, native_available
+    if not native_available():
+        pytest.skip("no C compiler; native tape unavailable")
+
+    src = """
+asset tp { kind: cue
+  duration: 1s
+  tempo: 100bpm
+  layer t : tone { osc: saw
+    note: A3
+    duration: 1s
+    env: a=0.01s d=0.1s s=0.8 r=0.1s
+    fx: tape(drive=0.6, flutter=0.4, tone=0.4)
+    gain: -8db
+  }
+  master { peak: -1db }
+}"""
+    res = AF.compile(src)
+    assert res.ok, [d.message for d in res.diagnostics]
+    a = res.assets[0]
+    assert not [d for d in a.validate() if d.severity == "error"]
+    assert a.spec["layers"][0]["fx"][0] == {
+        "type": "tape", "drive": 0.6, "flutter": 0.4, "tone": 0.4, "mix": 1.0}
+    a.render()                                          # must not raise
+
+    sr = 48000
+    carrier = np.sin(2 * np.pi * 440 * np.arange(sr) / sr) * 0.5
+
+    def concentration(y):                               # 1.0 = pure tone
+        S = np.abs(np.fft.rfft(y * np.hanning(y.size)))
+        f = np.fft.rfftfreq(y.size, 1.0 / sr)
+        return S[(f > 435) & (f < 445)].sum() / S[(f > 400) & (f < 480)].sum()
+
+    # flutter: time-varying delay spreads the carrier (less concentrated)
+    assert concentration(tape_native(carrier, sr, 0.0, 0.7, 0.5)) < 0.7
+    assert concentration(tape_native(carrier, sr, 0.0, 0.0, 0.5)) > 0.95
+
+    # saturation: a clean sine gains a 3rd harmonic; output stays bounded
+    sat = tape_native(carrier, sr, 0.9, 0.0, 0.0)
+    S = np.abs(np.fft.rfft(sat * np.hanning(sat.size)))
+    f = np.fft.rfftfreq(sat.size, 1.0 / sr)
+    h = lambda k: S[(f > k * 440 - 20) & (f < k * 440 + 20)].max()  # noqa: E731
+    assert h(3) > 0.05 * h(1)
+    assert np.all(np.isfinite(sat)) and np.max(np.abs(sat)) <= 1.001
+
+    # tone controls HF loss; determinism is bit-exact
+    hf = lambda y: (np.abs(np.fft.rfft(y))[
+        np.fft.rfftfreq(y.size, 1.0 / sr) > 6000]).sum()
+    n = np.random.default_rng(0).standard_normal(sr) * 0.3
+    assert hf(tape_native(n, sr, 0.0, 0.0, 1.0)) > hf(tape_native(n, sr, 0.0, 0.0, 0.0))
+    assert np.array_equal(sat, tape_native(carrier, sr, 0.9, 0.0, 0.0))
+    print("PASS  tape: parses/validates/renders; flutter spreads carrier, "
+          "saturation adds harmonics; bounded and bit-deterministic")
+
+
 if __name__ == "__main__":
     test_property_validate_implies_renders()
     test_property_render_error_implies_validate_error()
@@ -333,4 +394,5 @@ if __name__ == "__main__":
     test_native_osc_set_single_source_of_truth(_pytest.MonkeyPatch())
     test_native_fx_set_single_source_of_truth(_pytest.MonkeyPatch())
     test_ladder_filter_renders_and_resonates()
+    test_tape_effect_flutters_saturates_and_renders()
     print("\nAll validate/render contract tests passed.")

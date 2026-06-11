@@ -21,6 +21,11 @@ CHORD_QUALITIES = {
     "maj": (0, 4, 7), "min": (0, 3, 7), "dim": (0, 3, 6), "aug": (0, 4, 8),
     "m7": (0, 3, 7, 10), "m6": (0, 3, 7, 9),
     "m": (0, 3, 7), "7": (0, 4, 7, 10), "6": (0, 4, 7, 9), "9": (0, 4, 7, 10, 14),
+    # merged from the _tmp/audioforge subset (scripts/diff_engines.py); `s11`
+    # spells #11 without the DSL comment char. Aliases let subset-authored
+    # specs parse here too.
+    "7sus4": (0, 5, 7, 10), "dom7sus4": (0, 5, 7, 10),
+    "maj7#11": (0, 4, 7, 11, 18), "maj7s11": (0, 4, 7, 11, 18),
 }
 _QUALITY_ALT = sorted(CHORD_QUALITIES, key=len, reverse=True)
 CHORD_RE = re.compile(
