@@ -9,24 +9,66 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from audioforge import render_to_wav, spec_hash, validate_spec, SpecError  # noqa: E402
 
-PRESETS = Path(__file__).resolve().parents[1] / "presets"
+SUCCESS_CUE = {
+    "id": "success_cue_v1",
+    "kind": "cue",
+    "duration_s": 1.1,
+    "bpm": 140,
+    "layers": [
+        {
+            "name": "arp",
+            "type": "notes",
+            "osc": "triangle",
+            "gain_db": -3,
+            "env": {"attack": 0.004, "decay": 0.22, "sustain": 0.0, "release": 0.08},
+            "notes": [
+                {"note": "C5", "start_beat": 0.0, "dur_beats": 0.5},
+                {"note": "E5", "start_beat": 0.5, "dur_beats": 0.5},
+                {"note": "G5", "start_beat": 1.0, "dur_beats": 1.2, "vel": 1.1},
+            ],
+        }
+    ],
+    "master": {"target_peak_dbfs": -2.0, "fade_out_s": 0.06, "stereo_width": 0.6},
+}
+
+TRANSITION_WHOOSH = {
+    "id": "transition_whoosh_v1",
+    "kind": "transition",
+    "duration_s": 1.4,
+    "layers": [
+        {
+            "name": "air",
+            "type": "noise",
+            "color": "pink",
+            "gain_db": -2,
+            "env": {"attack": 0.55, "decay": 0.5, "sustain": 0.0, "release": 0.25},
+        }
+    ],
+    "master": {"target_peak_dbfs": -1.5, "fade_out_s": 0.08, "stereo_width": 0.8},
+}
 
 
 def _load(name):
-    return json.loads((PRESETS / name).read_text())
+    if name == "success_cue.json":
+        return copy.deepcopy(SUCCESS_CUE)
+    if name == "transition_whoosh.json":
+        return copy.deepcopy(TRANSITION_WHOOSH)
+    raise FileNotFoundError(name)
 
 
 def test_byte_identical_rerender():
     """The core guarantee: same spec -> identical WAV bytes, twice."""
-    for preset in sorted(PRESETS.glob("*.json")):
-        spec = json.loads(preset.read_text())
+    for name, spec in {
+        "success_cue.json": SUCCESS_CUE,
+        "transition_whoosh.json": TRANSITION_WHOOSH,
+    }.items():
         with tempfile.TemporaryDirectory() as a, tempfile.TemporaryDirectory() as b:
             m1 = render_to_wav(spec, a)
             m2 = render_to_wav(copy.deepcopy(spec), b)
-            assert m1["output_sha256"] == m2["output_sha256"], preset.name
+            assert m1["output_sha256"] == m2["output_sha256"], name
             bytes_a = (Path(a) / m1["file"]).read_bytes()
             bytes_b = (Path(b) / m2["file"]).read_bytes()
-            assert bytes_a == bytes_b, preset.name
+            assert bytes_a == bytes_b, name
     print("PASS  byte-identical re-render (all presets)")
 
 

@@ -126,6 +126,7 @@ def resolve_spec(spec: dict) -> list[str]:
                    "spec.stage")
 
     from ._native import native_available
+    from .schema import NATIVE_OSC_SHAPES
     for i, layer in enumerate(spec.get("layers", [])):
         lname = layer.get("name", f"layer{i}")
         where = f"layers[{i}] '{lname}'{_line_of(spec, lname)}"
@@ -135,7 +136,7 @@ def resolve_spec(spec: dict) -> list[str]:
             if fx.get("type") == "convolve":
                 check_file(fx["file"], fx["sha256"], "convolve IR", where)
         voice = layer.get("osc") or layer.get("voice")
-        needs_native = voice in ("bowed", "blown") or any(
+        needs_native = voice in NATIVE_OSC_SHAPES or any(
             fx.get("type") == "plate" and fx.get("mod", 0) > 0
             for fx in (layer.get("fx") or []))
         if needs_native and not native_available():

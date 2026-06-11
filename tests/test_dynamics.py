@@ -8,6 +8,7 @@ import numpy as np  # noqa: F811
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -67,6 +68,13 @@ def build_p2_library(root: Path) -> str:
             "articulations": {"sustain": "testviolin_sus.sfz",
                               "spiccato": "testviolin_spic.sfz"}}})
     return m["manifest_sha256"]
+
+
+@pytest.fixture
+def lib(tmp_path: Path):
+    root = tmp_path / "minilib2"
+    pin = build_p2_library(root)
+    return libmod.load_library(f"minilib2@{pin}")
 
 
 def _track(notes, dynamic=None, art=None, gain_db=0.0):

@@ -9,6 +9,7 @@ import wave
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -67,6 +68,16 @@ def build_library(root: Path) -> str:
                                  license_str="CC0-1.0")
     libmod.add_library_path(root.parent)
     return m["manifest_sha256"]
+
+
+@pytest.fixture
+def tmp(tmp_path: Path) -> Path:
+    return tmp_path / "minilib"
+
+
+@pytest.fixture
+def pin(tmp: Path) -> str:
+    return build_library(tmp)
 
 
 def _f0(x, sr=ENG_SR, lo=200, hi=500):

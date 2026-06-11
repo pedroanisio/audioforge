@@ -7,6 +7,7 @@ import tempfile
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -21,6 +22,13 @@ from test_dynamics import build_p2_library  # noqa: E402
 SR = 48000
 AF = AudioForge()
 TM = TempoMap([[0.0, 120.0]])
+
+
+@pytest.fixture
+def lib(tmp_path: Path):
+    root = tmp_path / "minilib2"
+    pin = build_p2_library(root)
+    return libmod.load_library(f"minilib2@{pin}")
 
 
 def _render(lib, notes, dur_s=6.0, **extra):

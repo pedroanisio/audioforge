@@ -29,9 +29,15 @@ KINDS = {"signature", "sfx", "loop", "jingle", "transition", "cue", "bed",
 LAYER_TYPES = {"tone", "sweep", "noise", "drums", "notes",
                "grain", "sample", "foley", "instrument"}
 NOISE_COLORS = {"white", "pink", "brown"}
-OSC_SHAPES = {"blown", "sine", "saw", "square", "triangle", "fm", "organ",
-              "pad", "pluck", "modal",
-              "morph", "bowed"}
+# Voices whose render path is the native C kernel — sequential nonlinear /
+# time-varying DSP that NumPy can't express. Single source of truth: the
+# readiness gate in resolve.py keys off this set (not a private literal), so
+# adding a kernel voice here can't silently bypass the fail-loud "no compiler"
+# check. The matching dispatch in synth.osc() and binding in _native.py are
+# guarded by tests/test_contract so the three can't drift apart.
+NATIVE_OSC_SHAPES = {"bowed", "blown"}
+OSC_SHAPES = {"sine", "saw", "square", "triangle", "fm", "organ",
+              "pad", "pluck", "modal", "morph"} | NATIVE_OSC_SHAPES
 FX_TYPES = {"filter", "delay", "reverb", "hall", "plate", "fdn",
             "comp", "mbcomp", "drive", "tremolo", "gain",
             "peak", "lowshelf", "highshelf", "transient", "saturate",

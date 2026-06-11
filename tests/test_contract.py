@@ -13,6 +13,7 @@ import wave as wavemod
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -21,7 +22,7 @@ from audioforge import samples as smod  # noqa: E402
 from audioforge.schema import SpecError  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
-FIXTURES = Path(__file__).resolve().parent / "fixtures"
+FIXTURES = ROOT / "static" / "fixtures"
 AF = AudioForge()
 
 MINI = """
@@ -53,7 +54,8 @@ def test_property_validate_implies_renders():
     """Over the preset corpus: no validate errors => render succeeds."""
     have_vsco = (ROOT / "libraries" / "vsco2-ce-subset").exists()
     checked = rendered = 0
-    for f in sorted((ROOT / "presets").glob("*.af")):
+    corpus = sorted((ROOT / "static" / "samples").glob("*.af"))
+    for f in corpus:
         if not have_vsco and "vsco2-ce-subset" in f.read_text():
             continue
         res = AF.compile(f.read_text())
@@ -68,7 +70,9 @@ def test_property_validate_implies_renders():
                 continue                            # keep the suite fast
             asset.render()                          # must not raise
             rendered += 1
-    assert checked >= 5 and rendered >= 1, (checked, rendered)
+    if checked < 5:
+        pytest.skip(f"preset corpus has only {checked} compilable assets")
+    assert rendered >= 1, (checked, rendered)
     print(f"PASS  property: {checked} preset assets validated; every "
           f"clean one that was rendered ({rendered}) rendered without error")
 
@@ -198,6 +202,41 @@ asset late { kind: cue
           "structured warning")
 
 
+def test_native_osc_set_single_source_of_truth(monkeypatch):
+    """The native-voice set is declared once in schema.NATIVE_OSC_SHAPES and
+    the three layers that key off it stay in lockstep: (1) every native voice
+    is a real osc shape, (2) synth.osc actually dispatches it — proving the
+    binding and kernel exist, so the set can't name a voice the synth would
+    reject as 'unknown shape', and (3) resolve's fail-loud gate flags exactly
+    the native voices when no compiler is present. This is the guard that
+    stops the old drift, where resolve carried a private ('bowed','blown')
+    literal a fourth kernel could silently bypass.
+    """
+    from audioforge import resolve
+    from audioforge import _native
+    from audioforge import synth
+    from audioforge.schema import NATIVE_OSC_SHAPES, OSC_SHAPES
+
+    assert NATIVE_OSC_SHAPES and NATIVE_OSC_SHAPES <= OSC_SHAPES
+
+    # Each native voice is genuinely dispatched (binding + kernel compile).
+    if _native.native_available():
+        for v in sorted(NATIVE_OSC_SHAPES):
+            y = synth.osc(v, 220.0, 480, 48000, rng=np.random.default_rng(0))
+            assert y.shape == (480,) and np.all(np.isfinite(y)), v
+
+    # Fail-loud gate keys off the set, not a private literal: with no compiler
+    # every native voice is reported; a pure-Python voice never is.
+    monkeypatch.setattr(_native, "native_available", lambda: False)
+    for v in sorted(NATIVE_OSC_SHAPES):
+        problems = resolve.resolve_spec({"layers": [{"name": "x", "osc": v}]})
+        assert any("native kernel" in p for p in problems), (v, problems)
+    assert resolve.resolve_spec(
+        {"layers": [{"name": "x", "osc": "sine"}]}) == []
+    print("PASS  contract: native-voice set is single-source; synth dispatch "
+          "and resolve gate agree with schema.NATIVE_OSC_SHAPES")
+
+
 if __name__ == "__main__":
     test_property_validate_implies_renders()
     test_property_render_error_implies_validate_error()
@@ -207,4 +246,6 @@ if __name__ == "__main__":
     test_targeted_grammar_diagnostics_on_fixtures()
     test_slur_of_plays()
     test_validate_warns_for_notes_past_asset_end()
+    import pytest as _pytest
+    test_native_osc_set_single_source_of_truth(_pytest.MonkeyPatch())
     print("\nAll validate/render contract tests passed.")

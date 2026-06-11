@@ -7,8 +7,4 @@ __main__ blocks, not pytest fixtures. Collecting them produces 14 false
 directly (python tests/test_X.py) or via scripts/run_tests.sh.
 """
 collect_ignore = [
-    "test_sampler.py",
-    "test_dynamics.py",
-    "test_performance_model.py",
-    "test_stage.py",
 ]

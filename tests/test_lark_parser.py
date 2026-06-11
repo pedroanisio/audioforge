@@ -7,7 +7,10 @@ from audioforge.dsl import DSLError, Parser, compile_dsl, tokenize
 
 
 ROOT = Path(__file__).resolve().parents[1]
-AF_CORPUS = sorted((ROOT / "presets").glob("*.af")) + sorted((ROOT / "tests" / "fixtures").glob("*.af"))
+AF_CORPUS = (
+    sorted((ROOT / "static" / "fixtures").glob("*.af"))
+    + sorted((ROOT / "static" / "samples").glob("*.af"))
+)
 
 
 SRC = """
@@ -67,6 +70,15 @@ def test_lark_parser_matches_legacy_ast_shape():
     assert parsed == legacy
 
 
+def test_lark_tokenizer_matches_legacy_token_stream():
+    from audioforge.lark_parser import lark_tokenize
+
+    legacy = [(t.kind, t.text, t.line, t.value, t.unit) for t in tokenize(SRC)]
+    parsed = [(t.kind, t.text, t.line, t.value, t.unit) for t in lark_tokenize(SRC)]
+
+    assert parsed == legacy
+
+
 @pytest.mark.parametrize("path", AF_CORPUS, ids=lambda p: str(p.relative_to(ROOT)))
 def test_lark_parser_matches_legacy_ast_for_checked_in_af_corpus(path):
     from audioforge.lark_parser import parse_assets
@@ -101,6 +113,19 @@ def test_compile_dsl_uses_lark_parser(monkeypatch):
     assert called
     assert specs[0]["id"] == "lark_ready"
     assert isinstance(diags, list)
+
+
+def test_compile_dsl_does_not_use_legacy_regex_tokenizer(monkeypatch):
+    import audioforge.dsl as dsl
+
+    def fail_tokenize(_src):
+        raise AssertionError("legacy tokenizer should not be used by compile_dsl")
+
+    monkeypatch.setattr(dsl, "tokenize", fail_tokenize)
+
+    specs, _diags = compile_dsl(SRC)
+
+    assert specs[0]["id"] == "lark_ready"
 
 
 def test_lark_parser_reports_line_numbered_errors():
