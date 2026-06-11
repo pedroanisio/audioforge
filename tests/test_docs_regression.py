@@ -46,3 +46,17 @@ def test_exported_grammar_lists_agent_directives_and_layer_kinds():
     for kind in ("audio", "instrument", "foley"):
         assert f'"{kind}"' in ebnf
         assert f'"{kind}"' in gbnf
+
+
+def test_dsl_docs_are_consolidated_to_reference_and_gap_spec():
+    docs = {p.name for p in (ROOT / "docs").glob("*.md")}
+    assert "DSL_SPEC.md" in docs
+    assert "DSL_GAP_SPEC.md" in docs
+    for stale in (
+        "DSL_SPEC_old.md",
+        "PROPOSAL_north_star_studio_dsl_ir.md",
+        "PROPOSAL_smart_music_dsl.md",
+        "DECISION_dsl_language_constructs.md",
+        "SPEC_smart_dsl_universal_music_architecture.md",
+    ):
+        assert stale not in docs

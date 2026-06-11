@@ -154,6 +154,6 @@ def test_exported_grammar_and_docs_name_lark_as_authoritative_source():
     assert "Lark grammar" in spec
     assert "audioforge.lark_parser" in spec
 
-    proposal = (ROOT / "docs" / "PROPOSAL_north_star_studio_dsl_ir.md").read_text()
-    assert "hand-rolled parser to `lark`" not in proposal
-    assert "Lark-backed EBNF/GBNF grammar artifacts" in proposal
+    gaps = (ROOT / "docs" / "DSL_GAP_SPEC.md").read_text()
+    assert "hand-rolled parser to `lark`" not in gaps
+    assert "Lark-backed syntax gate" in gaps
