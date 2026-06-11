@@ -17,6 +17,7 @@ from dataclasses import dataclass, field
 
 from . import theory
 from .synth import NOTE_OFFSETS
+from .styles import STYLE_PACKS
 
 DSL_VERSION = "1.0"
 
@@ -789,38 +790,7 @@ def _apply_emotion(spec: dict, emotion: dict, diags: list[str]):
                      "(reverb/width/fades); see compiled JSON for exact values")
 
 
-STYLE_DEFAULTS = {
-    "baroque": {"perform": {"style": "baroque", "expressivity": 0.45},
-                "ensemble": {"family": "chamber", "size": 3, "spread": 0.25,
-                             "octaves": 0},
-                "voicing": {"richness": 0.35, "extensions": [7]},
-                "space": {"hall": "room", "depth": 0.25}},
-    "romantic": {"perform": {"style": "romantic", "expressivity": 0.75},
-                 "ensemble": {"family": "orchestra", "size": 6, "spread": 0.55,
-                              "octaves": 1},
-                 "voicing": {"richness": 0.65, "extensions": [7, 9]},
-                 "space": {"hall": "hall", "depth": 0.55}},
-    "cinematic": {"perform": {"style": "cinematic", "expressivity": 0.7},
-                  "ensemble": {"family": "hybrid", "size": 5, "spread": 0.5,
-                               "octaves": 1},
-                  "voicing": {"richness": 0.7, "extensions": [7, 9]},
-                  "space": {"hall": "studio", "depth": 0.5}},
-    "jazz": {"perform": {"style": "jazz", "expressivity": 0.6},
-             "ensemble": {"family": "combo", "size": 2, "spread": 0.35,
-                          "octaves": 0},
-             "voicing": {"richness": 0.8, "extensions": [7, 9]},
-             "space": {"hall": "club", "depth": 0.25}},
-    "ambient": {"perform": {"style": "ambient", "expressivity": 0.5},
-                "ensemble": {"family": "synth", "size": 4, "spread": 0.7,
-                             "octaves": 1},
-                "voicing": {"richness": 0.55, "extensions": [9]},
-                "space": {"hall": "large", "depth": 0.75}},
-    "pop": {"perform": {"style": "pop", "expressivity": 0.45},
-            "ensemble": {"family": "band", "size": 2, "spread": 0.3,
-                         "octaves": 0},
-            "voicing": {"richness": 0.45, "extensions": [7]},
-            "space": {"hall": "studio", "depth": 0.35}},
-}
+STYLE_DEFAULTS = STYLE_PACKS
 
 
 def _kv_directive(toks: list[Tok], line: int,
@@ -897,6 +867,57 @@ def _read_smart_directives(p: dict, line: int) -> dict:
     if style:
         intent["style"] = style
     return intent
+
+
+def _read_score_props(p: dict, line: int) -> dict:
+    score: dict = {}
+    if "meter" in p:
+        toks = [t for t in p.pop("meter") if t.kind == "NUMBER"]
+        if len(toks) != 2:
+            raise DSLError("meter: expected 'BEATS UNIT', e.g. '7 8'", line)
+        score["meter"] = {"beats": int(toks[0].value),
+                          "unit": int(toks[1].value)}
+    if "pickup" in p:
+        score["pickup_beats"] = _one(p.pop("pickup"), line, "b", "pickup")
+    if "form" in p:
+        toks = p.pop("form")
+        sections, i = [], 0
+        while i < len(toks):
+            if toks[i].kind == "PUNCT":
+                i += 1
+                continue
+            if (i + 3 >= len(toks) or toks[i].kind != "IDENT"
+                    or toks[i + 1].kind != "NUMBER"
+                    or toks[i + 2].text != "for"
+                    or toks[i + 3].kind != "NUMBER"):
+                raise DSLError("form: name STARTb for DURb, ...",
+                               toks[i].line if i < len(toks) else line)
+            name = toks[i].text
+            start = toks[i + 1].value
+            dur = toks[i + 3].value
+            sections.append({"name": name, "start_beat": start,
+                             "dur_beats": dur,
+                             "end_beat": round(start + dur, 6)})
+            i += 4
+        score["sections"] = sections
+    if "repeat" in p:
+        toks = p.pop("repeat")
+        if len(toks) < 2 or toks[0].kind != "IDENT" \
+                or toks[1].kind != "IDENT" or not toks[1].text.startswith("x"):
+            raise DSLError("repeat: section xN", line)
+        score.setdefault("repeats", []).append({
+            "section": toks[0].text,
+            "count": int(toks[1].text[1:] or "1"),
+        })
+    if "polymeter" in p:
+        toks = p.pop("polymeter")
+        if len(toks) < 3 or toks[0].kind != "IDENT":
+            raise DSLError("polymeter: layer BEATS UNIT", line)
+        score["polymeter"] = {
+            toks[0].text: {"beats": int(toks[1].value),
+                           "unit": int(toks[2].value)}
+        }
+    return score
 
 
 def _apply_smart_directives(spec: dict, intent: dict, diags: list[str]):
@@ -1196,6 +1217,9 @@ def compile_asset(a: Asset, variant=None) -> tuple[dict, list[str]]:
     spec["kind"] = _one(take("kind", [Tok("IDENT", "sfx", a.line)]), a.line)
     spec["duration_s"] = _one(take("duration"), a.line, "s", "duration")
     smart_intent = _read_smart_directives(p, a.line)
+    score = _read_score_props(p, a.line)
+    if score:
+        spec["score"] = score
     if "samplerate" in p:
         spec["sample_rate"] = int(_one(take("samplerate"), a.line))
     if "bitdepth" in p:
@@ -1553,7 +1577,10 @@ def _expand_chords(notes: list[dict], arp: dict | None,
 
 def _compile_layer(lay: Layer, motifs: dict, scale, diags: list[str],
                    key_map: list | None = None, variant=None) -> dict:
-    out: dict = {"name": lay.name, "type": lay.type}
+    ltype = "sample" if lay.type == "audio" else lay.type
+    out: dict = {"name": lay.name, "type": ltype}
+    if lay.type == "audio":
+        out["source_kind"] = "audio"
     p = dict(lay.props)
     line = lay.line
 
@@ -1688,6 +1715,9 @@ def _compile_layer(lay: Layer, motifs: dict, scale, diags: list[str],
         out["sha256"] = _one(p.pop("sha256"), line)
     if "pitch" in p:
         out["pitch_st"] = _one(p.pop("pitch"), line, "st", "pitch")
+    if "preserve" in p:
+        out["preserve_channels"] = _one(p.pop("preserve"), line) in (
+            "stereo", "channels", "true", 1.0)
     if "bus" in p:
         out["bus"] = _one(p.pop("bus"), line)
     if "model" in p:

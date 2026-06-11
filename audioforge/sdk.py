@@ -231,6 +231,14 @@ class AudioAsset:
         from .decompile import spec_to_dsl
         return spec_to_dsl(self.spec)
 
+    def to_midi(self) -> bytes:
+        from .interop import export_midi_bytes
+        return export_midi_bytes(self.spec)
+
+    def to_musicxml(self) -> str:
+        from .interop import export_musicxml
+        return export_musicxml(self.spec)
+
     @classmethod
     def from_json(cls, text: str) -> "AudioAsset":
         return cls(validate_spec(json.loads(text)))
@@ -320,3 +328,12 @@ class AudioForge:
             return self.compile(path.read_text())
         asset = AudioAsset(validate_spec(json.loads(path.read_text())))
         return CompileResult(assets=[asset])
+
+    def import_midi(self, data: bytes, asset_id: str = "imported_midi") -> AudioAsset:
+        from .interop import import_midi_bytes
+        return self.load_spec(import_midi_bytes(data, asset_id=asset_id))
+
+    def import_musicxml(self, text: str,
+                        asset_id: str = "imported_musicxml") -> AudioAsset:
+        from .interop import import_musicxml
+        return self.load_spec(import_musicxml(text, asset_id=asset_id))

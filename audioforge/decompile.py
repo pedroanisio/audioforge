@@ -92,6 +92,22 @@ def spec_to_dsl(spec: dict) -> str:
         lines.append(f"  tempo: {_fmt_num(spec['bpm'])}bpm")
     if "key" in spec:
         lines.append(f"  key: {spec['key']}")
+    score = spec.get("score", {})
+    if "meter" in score:
+        m = score["meter"]
+        lines.append(f"  meter: {m['beats']} {m['unit']}")
+    if "pickup_beats" in score:
+        lines.append(f"  pickup: {_fmt_num(score['pickup_beats'])}b")
+    if score.get("sections"):
+        parts = [
+            f"{s['name']} {_fmt_num(s['start_beat'])}b for {_fmt_num(s['dur_beats'])}b"
+            for s in score["sections"]
+        ]
+        lines.append("  form: " + ", ".join(parts))
+    for r in score.get("repeats", []):
+        lines.append(f"  repeat: {r['section']} x{r['count']}")
+    for lname, m in score.get("polymeter", {}).items():
+        lines.append(f"  polymeter: {lname} {m['beats']} {m['unit']}")
     for m in spec.get("markers", []):
         lines.append(f"  marker {m['name']} @ {_fmt_num(m['time_s'])}s")
     lines.append("")

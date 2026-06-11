@@ -12,11 +12,14 @@ from .decompile import spec_to_dsl
 from .determinism import ENGINE_VERSION, spec_hash
 from .dsl import DSL_VERSION, DSLError, compile_dsl
 from .grammar import dsl_ebnf, dsl_gbnf
+from .interop import (export_midi_bytes, export_musicxml, import_midi_bytes,
+                      import_musicxml)
 from .plugins import (register_drum_voice, register_exporter, register_fx,
                       register_oscillator, register_validator)
 from .render import render, render_to_wav, verify
 from .schema import SpecError, validate_spec
 from .sdk import AudioAsset, AudioForge, CompileResult, Diagnostic
+from .styles import list_style_packs, style_pack
 
 __all__ = [
     "ENGINE_VERSION", "DSL_VERSION", "spec_hash",
@@ -27,6 +30,8 @@ __all__ = [
     "Catalog", "Instrument", "Library", "Composer", "hall", "reverb",
     "capability_manifest", "dsl_ebnf", "dsl_gbnf", "analyze_audio",
     "spec_to_dsl",
+    "export_midi_bytes", "import_midi_bytes", "export_musicxml",
+    "import_musicxml", "list_style_packs", "style_pack",
     "register_oscillator", "register_fx", "register_drum_voice",
     "register_exporter", "register_validator",
 ]

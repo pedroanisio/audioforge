@@ -75,6 +75,18 @@ def main(argv=None) -> int:
     p = sub.add_parser("grammar")
     p.add_argument("--format", choices=("ebnf", "gbnf"), default="ebnf")
 
+    p = sub.add_parser("export-midi"); p.add_argument("spec")
+    p.add_argument("-o", "--out", required=True)
+
+    p = sub.add_parser("export-musicxml"); p.add_argument("spec")
+    p.add_argument("-o", "--out", required=True)
+
+    p = sub.add_parser("import-midi"); p.add_argument("midi")
+    p.add_argument("--id", default="imported_midi")
+
+    p = sub.add_parser("import-musicxml"); p.add_argument("musicxml")
+    p.add_argument("--id", default="imported_musicxml")
+
     p = sub.add_parser("batch"); p.add_argument("specs_dir")
     p.add_argument("-o", "--out", default="out")
 
@@ -112,6 +124,30 @@ def main(argv=None) -> int:
         elif args.cmd == "grammar":
             from .grammar import dsl_ebnf, dsl_gbnf
             print(dsl_ebnf() if args.format == "ebnf" else dsl_gbnf())
+        elif args.cmd == "export-midi":
+            from .interop import export_midi_bytes
+            assets = list(_assets(args.spec))
+            if len(assets) != 1:
+                raise SpecError("export-midi expects exactly one asset")
+            Path(args.out).write_bytes(export_midi_bytes(assets[0].spec))
+            print(f"MIDI -> {args.out}")
+        elif args.cmd == "export-musicxml":
+            from .interop import export_musicxml
+            assets = list(_assets(args.spec))
+            if len(assets) != 1:
+                raise SpecError("export-musicxml expects exactly one asset")
+            Path(args.out).write_text(export_musicxml(assets[0].spec))
+            print(f"MusicXML -> {args.out}")
+        elif args.cmd == "import-midi":
+            from .interop import import_midi_bytes
+            print(json.dumps(import_midi_bytes(Path(args.midi).read_bytes(),
+                                               asset_id=args.id),
+                             indent=2, sort_keys=True))
+        elif args.cmd == "import-musicxml":
+            from .interop import import_musicxml
+            print(json.dumps(import_musicxml(Path(args.musicxml).read_text(),
+                                             asset_id=args.id),
+                             indent=2, sort_keys=True))
         elif args.cmd == "render":
             for a in _assets(args.spec, variant=args.variant):
                 if args.intensity is not None:

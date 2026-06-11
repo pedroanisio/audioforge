@@ -6,6 +6,7 @@ from .dsl import (ARTICULATIONS, DSL_VERSION, DYNAMIC_MARKS, EMOTIONS,
                   GROOVE_TEMPLATES)
 from .schema import (AUTO_TARGETS, BIT_DEPTHS, FX_TYPES, KINDS, LAYER_TYPES,
                      NOISE_COLORS, OSC_SHAPES)
+from .styles import list_style_packs
 
 
 def _param(kind: str, *, unit: str | None = None, default=None,
@@ -116,9 +117,9 @@ def capability_manifest() -> dict:
         "emotions": sorted(EMOTIONS),
         "automation_targets": sorted(AUTO_TARGETS),
         "bit_depths": sorted(BIT_DEPTHS),
+        "style_packs": list_style_packs(),
         "smart_directives": {
-            "style": {"enum": ["baroque", "romantic", "cinematic", "jazz",
-                               "ambient", "pop"]},
+            "style": {"enum": list_style_packs()},
             "perform": {"properties": ["style", "expressivity"]},
             "ensemble": {"properties": ["family", "size", "spread", "octaves"]},
             "voicing": {"properties": ["richness", "extensions"]},
