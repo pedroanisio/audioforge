@@ -42,7 +42,7 @@ OSC_SHAPES = {"sine", "saw", "square", "triangle", "fm", "organ",
 # single-source discipline as NATIVE_OSC_SHAPES. `fx_needs_native()` below is
 # the one predicate the resolve readiness gate calls, so a native effect can't
 # silently bypass the fail-loud "no compiler" check.
-NATIVE_FX_TYPES = {"ladder"}
+NATIVE_FX_TYPES = {"ladder", "tape"}
 FX_TYPES = {"filter", "delay", "reverb", "hall", "plate", "fdn",
             "comp", "mbcomp", "drive", "tremolo", "gain",
             "peak", "lowshelf", "highshelf", "transient", "saturate",
@@ -127,6 +127,11 @@ def _validate_fx(chain, path):
             _num(fx, "cutoff_hz", p, 20, 20000)
             _num(fx, "resonance", p, 0.0, 1.1, required=False)
             _num(fx, "drive", p, 0.0, 1.0, required=False)
+            _num(fx, "mix", p, 0.0, 1.0, required=False)
+        if t == "tape":
+            _num(fx, "drive", p, 0.0, 1.0, required=False)
+            _num(fx, "flutter", p, 0.0, 1.0, required=False)
+            _num(fx, "tone", p, 0.0, 1.0, required=False)
             _num(fx, "mix", p, 0.0, 1.0, required=False)
 
 

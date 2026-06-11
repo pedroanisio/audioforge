@@ -6,3 +6,4 @@ compare/
 *egg-info*
 .coverage
 renders/
+_tmp/

@@ -203,6 +203,12 @@ def apply_fx_chain(x: np.ndarray, sr: int, chain: list[dict],
                                 fx.get("resonance", 0.5), fx.get("drive", 0.0))
             mix = float(fx.get("mix", 1.0))
             x = wet if mix >= 1.0 else (1.0 - mix) * x + mix * wet
+        elif kind == "tape":
+            from ._native import tape_native
+            wet = tape_native(x, sr, fx.get("drive", 0.4),
+                              fx.get("flutter", 0.3), fx.get("tone", 0.5))
+            mix = float(fx.get("mix", 1.0))
+            x = wet if mix >= 1.0 else (1.0 - mix) * x + mix * wet
         else:
             from .plugins import FX as FX_PLUGINS
             if kind in FX_PLUGINS:
