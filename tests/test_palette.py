@@ -122,6 +122,40 @@ def test_struck_string_tension_glide():
           f"flat ({flat:+.0f}c), deterministic")
 
 
+def test_sympathetic_resonator_halo_and_stability():
+    """The sympathetic resonator drives a bank of tarab strings (tuned to the
+    note's near-harmonics) through a shared nonlinear bridge. The defining
+    behaviour: with coupling the un-struck strings ring on, so the tail sustains
+    far longer than the bare string (the "halo"); coupling=0 reduces to one
+    decaying Karplus-Strong string. The coupled feedback stays bounded even at
+    extreme settings, and it is bit-deterministic."""
+    f0 = 146.83
+
+    def render(coupling, buzz=0.3, secs=4):
+        return synth.osc("sympathetic", f0, SR * secs, SR,
+                         rng=rng_for("t", "sy"),
+                         voice={"coupling": coupling, "buzz": buzz,
+                                "damping": 0.4, "brightness": 0.6})
+
+    rms = lambda s: float(np.sqrt(np.mean(s ** 2)))    # noqa: E731
+
+    # halo: coupling makes the tail sustain relative to the onset; coupling=0
+    # (single string) decays away.
+    tail_ratio = lambda y: rms(y[SR * 2:]) / (rms(y[:SR // 2]) + 1e-9)  # noqa
+    dry, wet = tail_ratio(render(0.0)), tail_ratio(render(0.6))
+    assert dry < 0.4, dry                              # bare string decays
+    assert wet > 2.0 * dry, (dry, wet)                 # coupling sustains a halo
+
+    # stability: even the worst corner stays bounded and does not grow
+    y = render(1.0, 1.0, secs=8)
+    assert np.all(np.isfinite(y)) and np.max(np.abs(y)) <= 1.001
+    assert rms(y[-SR:]) <= rms(y[3 * SR:4 * SR]) + 1e-6   # energy not growing
+
+    assert np.array_equal(render(0.6), render(0.6))    # deterministic
+    print(f"PASS  sympathetic: halo tail/onset {dry:.2f}->{wet:.2f} with "
+          f"coupling, bounded at extremes, deterministic")
+
+
 def test_drum_voice_depth():
     rng = lambda: rng_for("t", "drum")  # noqa: E731
     lo = DRUM_VOICES["kick"](SR, rng(), {"tune_st": -6.0})
@@ -247,6 +281,7 @@ if __name__ == "__main__":
     test_blown_sustains_odd_harmonics()
     test_brass_sustains_and_brightens()
     test_struck_string_tension_glide()
+    test_sympathetic_resonator_halo_and_stability()
     test_drum_voice_depth()
     test_foley_models_character()
     test_ingest_catalog_and_snippet()

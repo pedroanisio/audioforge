@@ -104,6 +104,28 @@ def ladder_native(x: np.ndarray, sr: int, cutoff_hz: float,
     return out
 
 
+def sympathetic_native(exc, n: int, sr: int, freq: float, coupling: float,
+                       buzz: float, damping: float,
+                       brightness: float) -> np.ndarray:
+    lib = _lib("sympathetic", "the sympathetic-string voice (osc: sympathetic)")
+    if not getattr(lib, "_symp_sig", False):
+        lib.sympathetic.restype = ctypes.c_int
+        lib.sympathetic.argtypes = [
+            ctypes.POINTER(ctypes.c_double), ctypes.c_long, ctypes.c_int,
+            ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double,
+            ctypes.c_double, ctypes.POINTER(ctypes.c_double)]
+        lib._symp_sig = True
+    ex = np.ascontiguousarray(exc, dtype=np.float64)
+    out = np.zeros(n)
+    p = lambda a: a.ctypes.data_as(ctypes.POINTER(ctypes.c_double))  # noqa
+    rc = lib.sympathetic(p(ex), n, sr, float(freq), float(coupling),
+                         float(buzz), float(damping), float(brightness), p(out))
+    if rc != 0:
+        raise RuntimeError("native sympathetic kernel failed")
+    peak = np.max(np.abs(out))
+    return out / peak if peak > 1e-9 else out
+
+
 def struck_native(exc, n: int, sr: int, freq: float, damping: float,
                   brightness: float, tension: float) -> np.ndarray:
     lib = _lib("struck", "the struck-string voice (osc: struck)")
