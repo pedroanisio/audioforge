@@ -102,6 +102,16 @@ def capability_manifest() -> dict:
         }
         for name in sorted(LAYER_TYPES)
     }
+    layers["audio"] = {
+        "compiles_to": "sample",
+        "properties": {
+            **COMMON_LAYER_PROPS,
+            "file": _param("string"),
+            "sha256": _param("sha256"),
+            "preserve": _param("enum", enum={"mono", "stereo", "channels"},
+                               default="mono"),
+        },
+    }
     return {
         "engine_version": ENGINE_VERSION,
         "dsl_version": DSL_VERSION,
@@ -125,6 +135,21 @@ def capability_manifest() -> dict:
             "voicing": {"properties": ["richness", "extensions"]},
             "space": {"properties": ["hall", "depth"]},
         },
+        "score_layer": {
+            "properties": {
+                "meter": "meter: BEATS UNIT",
+                "pickup": "pickup: N b",
+                "form": "form: section STARTb for DURb, ...",
+                "repeat": "repeat: section xN",
+                "polymeter": "polymeter: layer BEATS UNIT",
+            }
+        },
+        "interop": {
+            "exports": ["midi", "musicxml"],
+            "imports": ["midi", "musicxml"],
+            "cli": ["export-midi", "export-musicxml",
+                    "import-midi", "import-musicxml"],
+        },
         "examples": {
             "smart_directives": (
                 "style: cinematic\n"
@@ -136,6 +161,15 @@ def capability_manifest() -> dict:
             "notes_layer": (
                 "layer lead : notes { osc: sine env: a=0.01s d=0.1s "
                 "s=0.8 r=0.2s notes: C4 @ 0b for 1b }"
+            ),
+            "score_layer": (
+                "meter: 7 8\npickup: 1b\n"
+                "form: intro 0b for 7b, verse 7b for 14b\n"
+                "repeat: verse x2"
+            ),
+            "audio_layer": (
+                "layer vocal : audio { file: \"take.wav\" "
+                "sha256: \"...64 hex...\" preserve: stereo }"
             ),
         },
         "repair_hints": {
