@@ -27,7 +27,7 @@ Numbers may carry a unit suffix, validated against what the property expects:
 | `deg` | degrees | `seat: -16deg @ 4.5m` |
 | `m` | meters | `size: 15m, 23m, 12m` |
 
-**Pitches.** Notes are pitch names: `C4`, `F#2`, `Eb3`, `A-1` (MIDI-style octaves, A4 = 440 Hz). Raw frequencies are accepted anywhere a note is: `432hz @ 0b for 4b`. **Chord symbols** are a root-with-octave plus a quality, accepted anywhere a note is (including motifs): `C3min7`, `Ab2maj7`, `E4sus4`. Qualities: `maj min m dim aug 6 7 9 m6 m7 maj7 min7 maj9 min9 m9 sus2 sus4 add9 dim7 min7b5 m7b5`.
+**Pitches.** Notes are pitch names: `C4`, `F#2`, `Eb3`, `A-1` (MIDI-style octaves, A4 = 440 Hz). Raw frequencies are accepted anywhere a note is: `432hz @ 0b for 4b`. **Chord symbols** are a root-with-octave plus a quality, accepted anywhere a note is (including motifs): `C3min7`, `Ab2maj7`, `E4sus4`. Qualities: `maj min m dim aug 6 7 9 m6 m7 maj7 min7 maj9 min9 m9 sus2 sus4 add9 dim7 min7b5 m7b5 7sus4 dom7sus4 maj7#11 maj7s11` (`s11` spells #11 without the DSL comment char).
 
 ---
 
