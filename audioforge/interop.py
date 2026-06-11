@@ -161,6 +161,174 @@ def export_musicxml(spec: dict) -> str:
     return ET.tostring(root, encoding="unicode")
 
 
+# --------------------------------------------------------- notated score ----
+# A *formal* MusicXML projection: one staff per layer, durations quantized to a
+# grid so they map to standard figures, gaps filled with rests, real measures /
+# key / time signature, cross-barline ties. Lossy by construction (the IR's
+# non-metric timing is snapped) — the "as notated" view, distinct from the
+# exact-tick interchange `export_musicxml` above. Open in MuseScore/LilyPond.
+_MAJ_FIFTHS = {"C": 0, "G": 1, "D": 2, "A": 3, "E": 4, "B": 5, "F#": 6, "C#": 7,
+               "F": -1, "Bb": -2, "Eb": -3, "Ab": -4, "Db": -5, "Gb": -6, "Cb": -7}
+_MIN_FIFTHS = {"A": 0, "E": 1, "B": 2, "F#": 3, "C#": 4, "G#": 5, "D#": 6,
+               "D": -1, "G": -2, "C": -3, "F": -4, "Bb": -5, "Eb": -6, "Ab": -7}
+# (quarter-fraction, MusicXML type, dots) — largest first, for greedy split
+_FIG = [(4.0, "whole", 0), (3.0, "half", 1), (2.0, "half", 0),
+        (1.5, "quarter", 1), (1.0, "quarter", 0), (0.75, "eighth", 1),
+        (0.5, "eighth", 0), (0.375, "16th", 1), (0.25, "16th", 0),
+        (0.125, "32nd", 0)]
+
+
+def _key_fifths(key: str) -> int:
+    p = (key or "C major").split()
+    mode = p[1].lower() if len(p) > 1 else "major"
+    return (_MIN_FIFTHS if mode == "minor" else _MAJ_FIFTHS).get(p[0], 0)
+
+
+def _decompose(ticks: int, tpq: int):
+    figs = [(int(round(q * tpq)), t, d) for q, t, d in _FIG]
+    out, rem, guard = [], ticks, 0
+    while rem > 0 and guard < 128:
+        for ft, t, d in figs:
+            if ft <= rem:
+                out.append((ft, t, d))
+                rem -= ft
+                break
+        else:
+            break
+        guard += 1
+    return out or [(ticks, "quarter", 0)]
+
+
+def _xml_pitch(parent, name: str):
+    pit = ET.SubElement(parent, "pitch")
+    ET.SubElement(pit, "step").text = name[0].upper()
+    i = 1
+    if i < len(name) and name[i] in "#b":
+        ET.SubElement(pit, "alter").text = "1" if name[i] == "#" else "-1"
+        i += 1
+    ET.SubElement(pit, "octave").text = name[i:]
+
+
+def _emit_rest(measure, ticks: int, tpq: int):
+    for ft, typ, dots in _decompose(ticks, tpq):
+        n = ET.SubElement(measure, "note")
+        ET.SubElement(n, "rest")
+        ET.SubElement(n, "duration").text = str(ft)
+        ET.SubElement(n, "type").text = typ
+        for _ in range(dots):
+            ET.SubElement(n, "dot")
+
+
+def _emit_seg(measure, seg, tpq: int):
+    figs = _decompose(seg["dur"], tpq)
+    for fi, (ft, typ, dots) in enumerate(figs):
+        tie_back = (fi > 0) or seg["tie_stop"]
+        tie_fwd = (fi < len(figs) - 1) or seg["tie_start"]
+        for pi, name in enumerate(seg["pitches"]):
+            n = ET.SubElement(measure, "note")
+            if pi > 0:
+                ET.SubElement(n, "chord")
+            _xml_pitch(n, name)
+            ET.SubElement(n, "duration").text = str(ft)
+            if tie_back:
+                ET.SubElement(n, "tie", type="stop")
+            if tie_fwd:
+                ET.SubElement(n, "tie", type="start")
+            ET.SubElement(n, "type").text = typ
+            for _ in range(dots):
+                ET.SubElement(n, "dot")
+            if tie_back or tie_fwd:
+                nots = ET.SubElement(n, "notations")
+                if tie_back:
+                    ET.SubElement(nots, "tied", type="stop")
+                if tie_fwd:
+                    ET.SubElement(nots, "tied", type="start")
+
+
+def export_notated_musicxml(spec: dict, *, beats_per_bar: int = 4,
+                            grid: float = 0.25) -> str:
+    """Formal, engraver-ready MusicXML (quantized; open in MuseScore)."""
+    tpq, mt = TPQ, beats_per_bar * TPQ
+    fifths = _key_fifths(spec.get("key", "C major"))
+    bpm = float(spec.get("bpm", 120.0))
+
+    parts = []
+    for layer in spec.get("layers", []):
+        raw = [e for e in (layer.get("notes") or []) if "note" in e]
+        if not raw:
+            continue
+        groups = {}
+        for e in raw:
+            on = round(round(e["start_beat"] / grid) * grid, 4)
+            du = max(grid, round(e["dur_beats"] / grid) * grid)
+            g = groups.setdefault(on, {"p": set(), "dur": 0.0})
+            g["p"].add(e["note"])
+            g["dur"] = max(g["dur"], du)
+        onsets = sorted(groups)
+        events = []
+        for i, on in enumerate(onsets):
+            nxt = onsets[i + 1] if i + 1 < len(onsets) else on + groups[on]["dur"]
+            dur = min(groups[on]["dur"], round(nxt - on, 4))
+            if dur > 0:
+                events.append((int(round(on * tpq)), int(round(dur * tpq)),
+                               sorted(groups[on]["p"], key=_midi_note)))
+        if events:
+            mids = sorted(_midi_note(p) for _, _, ps in events for p in ps)
+            parts.append({"id": f"P{len(parts) + 1}",
+                          "name": layer.get("name", "part"),
+                          "clef": "G" if mids[len(mids) // 2] >= 60 else "F",
+                          "events": events})
+    if not parts:
+        raise ValueError("no pitched layers to notate")
+
+    total = max(ev[0] + ev[1] for p in parts for ev in p["events"])
+    measures = max(1, (total + mt - 1) // mt)
+
+    root = ET.Element("score-partwise", version="3.1")
+    ET.SubElement(ET.SubElement(root, "work"), "work-title").text = \
+        spec.get("id", "AudioForge")
+    plist = ET.SubElement(root, "part-list")
+    for p in parts:
+        ET.SubElement(ET.SubElement(plist, "score-part", id=p["id"]),
+                      "part-name").text = p["name"]
+    for pi, p in enumerate(parts):
+        part = ET.SubElement(root, "part", id=p["id"])
+        by_m = {}
+        for on, dur, pitches in p["events"]:        # split at barlines, tie
+            t, end = on, on + dur
+            while t < end:
+                m = t // mt
+                seg_end = min(end, (m + 1) * mt)
+                by_m.setdefault(int(m), []).append(
+                    {"start": t - m * mt, "dur": seg_end - t, "pitches": pitches,
+                     "tie_stop": t > on, "tie_start": seg_end < end})
+                t = seg_end
+        for m in range(measures):
+            measure = ET.SubElement(part, "measure", number=str(m + 1))
+            if m == 0:
+                at = ET.SubElement(measure, "attributes")
+                ET.SubElement(at, "divisions").text = str(tpq)
+                ET.SubElement(ET.SubElement(at, "key"), "fifths").text = str(fifths)
+                tm = ET.SubElement(at, "time")
+                ET.SubElement(tm, "beats").text = str(beats_per_bar)
+                ET.SubElement(tm, "beat-type").text = "4"
+                cl = ET.SubElement(at, "clef")
+                ET.SubElement(cl, "sign").text = p["clef"]
+                ET.SubElement(cl, "line").text = "2" if p["clef"] == "G" else "4"
+                if pi == 0:
+                    ET.SubElement(measure, "sound").set("tempo", str(round(bpm, 3)))
+            pos = 0
+            for s in sorted(by_m.get(m, []), key=lambda s: s["start"]):
+                if s["start"] > pos:
+                    _emit_rest(measure, s["start"] - pos, tpq)
+                _emit_seg(measure, s, tpq)
+                pos = s["start"] + s["dur"]
+            if pos < mt:
+                _emit_rest(measure, mt - pos, tpq)
+    return '<?xml version="1.0" encoding="UTF-8"?>\n' + \
+        ET.tostring(root, encoding="unicode")
+
+
 def import_musicxml(text: str, asset_id: str = "imported_musicxml") -> dict:
     root = ET.fromstring(text)
     divisions = int(root.findtext(".//divisions", default=str(TPQ)))

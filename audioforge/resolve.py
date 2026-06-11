@@ -126,7 +126,15 @@ def resolve_spec(spec: dict) -> list[str]:
                    "spec.stage")
 
     from ._native import native_available
-    from .schema import NATIVE_OSC_SHAPES
+    from .schema import NATIVE_OSC_SHAPES, fx_needs_native
+    have_native = native_available()
+
+    def _native_gap(needs: bool, what: str, where: str):
+        if needs and not have_native:
+            problems.append(
+                f"{where}: '{what}' needs the native kernel and no C "
+                f"compiler is available on this machine")
+
     for i, layer in enumerate(spec.get("layers", [])):
         lname = layer.get("name", f"layer{i}")
         where = f"layers[{i}] '{lname}'{_line_of(spec, lname)}"
@@ -135,16 +143,13 @@ def resolve_spec(spec: dict) -> list[str]:
         for fx in (layer.get("fx") or []):
             if fx.get("type") == "convolve":
                 check_file(fx["file"], fx["sha256"], "convolve IR", where)
+            _native_gap(fx_needs_native(fx), fx.get("type", ""), where)
         voice = layer.get("osc") or layer.get("voice")
-        needs_native = voice in NATIVE_OSC_SHAPES or any(
-            fx.get("type") == "plate" and fx.get("mod", 0) > 0
-            for fx in (layer.get("fx") or []))
-        if needs_native and not native_available():
-            problems.append(
-                f"{where}: '{voice or 'plate mod'}' needs the native kernel "
-                f"and no C compiler is available on this machine")
+        if voice in NATIVE_OSC_SHAPES:
+            _native_gap(True, voice, where)
     for fx in (spec.get("master", {}).get("fx") or []):
         if fx.get("type") == "convolve":
             check_file(fx["file"], fx["sha256"], "convolve IR",
                        "spec.master")
+        _native_gap(fx_needs_native(fx), fx.get("type", ""), "spec.master")
     return problems

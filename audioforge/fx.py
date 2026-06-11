@@ -197,6 +197,12 @@ def apply_fx_chain(x: np.ndarray, sr: int, chain: list[dict],
         elif kind == "saturate":
             x = saturate_fx(x, fx.get("amount", 0.3), fx.get("mix", 1.0),
                             fx.get("warmth", 0.3))
+        elif kind == "ladder":
+            from ._native import ladder_native
+            wet = ladder_native(x, sr, fx["cutoff_hz"],
+                                fx.get("resonance", 0.5), fx.get("drive", 0.0))
+            mix = float(fx.get("mix", 1.0))
+            x = wet if mix >= 1.0 else (1.0 - mix) * x + mix * wet
         else:
             from .plugins import FX as FX_PLUGINS
             if kind in FX_PLUGINS:

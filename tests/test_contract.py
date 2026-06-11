@@ -237,6 +237,89 @@ def test_native_osc_set_single_source_of_truth(monkeypatch):
           "and resolve gate agree with schema.NATIVE_OSC_SHAPES")
 
 
+def test_native_fx_set_single_source_of_truth(monkeypatch):
+    """Same single-source guard for native effects: every NATIVE_FX_TYPES entry
+    is a real fx type, fx_needs_native() is the one predicate resolve's gate
+    calls, and with no compiler a native fx on a layer OR the master bus is
+    flagged while a pure-Python fx never is."""
+    from audioforge import resolve, _native
+    from audioforge.schema import NATIVE_FX_TYPES, FX_TYPES, fx_needs_native
+
+    assert NATIVE_FX_TYPES and NATIVE_FX_TYPES <= FX_TYPES
+    for t in NATIVE_FX_TYPES:
+        assert fx_needs_native({"type": t})
+    assert not fx_needs_native({"type": "filter", "mode": "lowpass"})
+    assert fx_needs_native({"type": "plate", "mod": 0.4})      # legacy path
+    assert not fx_needs_native({"type": "plate", "mod": 0.0})
+
+    monkeypatch.setattr(_native, "native_available", lambda: False)
+    for t in sorted(NATIVE_FX_TYPES):
+        layer = resolve.resolve_spec(
+            {"layers": [{"name": "x", "osc": "sine", "fx": [{"type": t}]}]})
+        master = resolve.resolve_spec(
+            {"layers": [], "master": {"fx": [{"type": t}]}})
+        assert any("native kernel" in p for p in layer), (t, layer)
+        assert any("native kernel" in p for p in master), (t, master)
+    clean = resolve.resolve_spec(
+        {"layers": [{"name": "x", "osc": "sine",
+                     "fx": [{"type": "drive"}]}]})
+    assert clean == []
+    print("PASS  contract: native-fx set is single-source; resolve gate covers "
+          "both layer and master chains via fx_needs_native")
+
+
+def test_ladder_filter_renders_and_resonates():
+    """End-to-end: a ladder fx parses, validates, renders, and behaves like a
+    resonant nonlinear lowpass — a strong resonance peak near cutoff that a
+    flat LTI biquad rolloff does not produce."""
+    pytest.importorskip("numpy")
+    from audioforge._native import ladder_native, native_available
+    if not native_available():
+        pytest.skip("no C compiler; native ladder unavailable")
+
+    src = """
+asset lad { kind: cue
+  duration: 1s
+  tempo: 100bpm
+  layer t : tone { osc: saw
+    note: A2
+    duration: 1s
+    env: a=0.01s d=0.1s s=0.8 r=0.1s
+    fx: ladder(cutoff=600, resonance=0.9, drive=0.4)
+    gain: -8db
+  }
+  master { peak: -1db }
+}"""
+    res = AF.compile(src)
+    assert res.ok, [d.message for d in res.diagnostics]
+    a = res.assets[0]
+    assert not [d for d in a.validate() if d.severity == "error"]
+    fx = a.spec["layers"][0]["fx"][0]
+    assert fx == {"type": "ladder", "cutoff_hz": 600.0, "resonance": 0.9,
+                  "drive": 0.4, "mix": 1.0}
+    a.render()                                          # must not raise
+
+    # DSP property: at high resonance the band around cutoff carries far more
+    # energy than at low resonance (the resonance peak), and output is finite.
+    sr = 48000
+    x = np.random.default_rng(0).standard_normal(sr) * 0.3
+    fc = 1500.0
+
+    def band(sig, lo, hi):
+        S = np.abs(np.fft.rfft(sig))
+        f = np.fft.rfftfreq(sig.size, 1.0 / sr)
+        return S[(f >= lo) & (f < hi)].mean()
+
+    lo_r = ladder_native(x, sr, fc, 0.1, 0.0)
+    hi_r = ladder_native(x, sr, fc, 1.0, 0.0)
+    assert np.all(np.isfinite(hi_r))
+    assert band(hi_r, 1200, 1800) > 1.5 * band(lo_r, 1200, 1800)
+    # determinism: bit-identical reruns
+    assert np.array_equal(hi_r, ladder_native(x, sr, fc, 1.0, 0.0))
+    print("PASS  ladder: parses/validates/renders; resonance peak present; "
+          "bit-deterministic")
+
+
 if __name__ == "__main__":
     test_property_validate_implies_renders()
     test_property_render_error_implies_validate_error()
@@ -248,4 +331,6 @@ if __name__ == "__main__":
     test_validate_warns_for_notes_past_asset_end()
     import pytest as _pytest
     test_native_osc_set_single_source_of_truth(_pytest.MonkeyPatch())
+    test_native_fx_set_single_source_of_truth(_pytest.MonkeyPatch())
+    test_ladder_filter_renders_and_resonates()
     print("\nAll validate/render contract tests passed.")

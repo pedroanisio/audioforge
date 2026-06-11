@@ -44,6 +44,44 @@ def test_blown_sustains_odd_harmonics():
           f"(odd-harmonic bore), deterministic")
 
 
+def test_brass_sustains_and_brightens():
+    """The brass lip-reed completes bowed/blown/brass: it self-oscillates on the
+    proven reed core (sustained, tightly in tune), carries a *full* harmonic
+    series — the even harmonics the bell-flare rectifier supplies and a plain
+    cylindrical reed (blown) cannot — brightens with the `brightness` control,
+    and is bit-deterministic. Locks the kernel's measured properties."""
+    v = {"pressure": 0.6, "brightness": 0.6}
+    x = synth.osc("brass", 220.0, SR * 3, SR, rng=rng_for("t", "br"), voice=v)
+    tail = x[-SR:]
+    assert np.sqrt(np.mean(tail ** 2)) > 0.3          # self-oscillates, sustains
+    s, f = _spec(tail)
+    band = (f > 180) & (f < 260)
+    pitch = f[band][np.argmax(s[band])]
+    cents = 1200.0 * np.log2(pitch / 220.0)
+    assert abs(cents) < 35, (pitch, cents)            # tight tuning (meas. ~+8c)
+
+    # full harmonic series: the even harmonics (H2, H4) must be well above the
+    # odd-only floor — the bell flare, the brass-defining feature vs blown.
+    hk = lambda k: s[(f > k * pitch - 20) & (f < k * pitch + 20)].max()
+    fund = hk(1)
+    h2, h3, h4 = hk(2) / fund, hk(3) / fund, hk(4) / fund
+    assert h2 > 0.03 and h4 > 0.02, (h2, h4)          # evens present (~-18dB)
+    assert h3 > 0.1, h3                               # strong odd series too
+
+    # brightness drives the in-loop steepening: brighter => more high-freq energy
+    def hf(b):
+        y = synth.osc("brass", 220.0, SR, SR, rng=rng_for("t", "br"),
+                      voice={"pressure": 0.6, "brightness": b})[-SR // 2:]
+        S, F = _spec(y)
+        return S[F > 1500].sum() / S.sum()
+    assert hf(0.9) > hf(0.1), (hf(0.1), hf(0.9))
+
+    x2 = synth.osc("brass", 220.0, SR * 3, SR, rng=rng_for("t", "br"), voice=v)
+    assert np.array_equal(x, x2)                       # deterministic
+    print(f"PASS  brass: {pitch:.0f} Hz ({cents:+.0f}c) sustained, full series "
+          f"(H2={20 * np.log10(h2):.0f}dB), brightens, deterministic")
+
+
 def test_drum_voice_depth():
     rng = lambda: rng_for("t", "drum")  # noqa: E731
     lo = DRUM_VOICES["kick"](SR, rng(), {"tune_st": -6.0})
@@ -167,6 +205,7 @@ def test_convolve_hash_pinned():
 
 if __name__ == "__main__":
     test_blown_sustains_odd_harmonics()
+    test_brass_sustains_and_brightens()
     test_drum_voice_depth()
     test_foley_models_character()
     test_ingest_catalog_and_snippet()

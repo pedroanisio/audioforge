@@ -35,13 +35,28 @@ NOISE_COLORS = {"white", "pink", "brown"}
 # adding a kernel voice here can't silently bypass the fail-loud "no compiler"
 # check. The matching dispatch in synth.osc() and binding in _native.py are
 # guarded by tests/test_contract so the three can't drift apart.
-NATIVE_OSC_SHAPES = {"bowed", "blown"}
+NATIVE_OSC_SHAPES = {"bowed", "blown", "brass"}
 OSC_SHAPES = {"sine", "saw", "square", "triangle", "fm", "organ",
               "pad", "pluck", "modal", "morph"} | NATIVE_OSC_SHAPES
+# Effects whose render path is the native C kernel — same rationale and
+# single-source discipline as NATIVE_OSC_SHAPES. `fx_needs_native()` below is
+# the one predicate the resolve readiness gate calls, so a native effect can't
+# silently bypass the fail-loud "no compiler" check.
+NATIVE_FX_TYPES = {"ladder"}
 FX_TYPES = {"filter", "delay", "reverb", "hall", "plate", "fdn",
             "comp", "mbcomp", "drive", "tremolo", "gain",
             "peak", "lowshelf", "highshelf", "transient", "saturate",
-            "convolve"}
+            "convolve"} | NATIVE_FX_TYPES
+
+
+def fx_needs_native(fx: dict) -> bool:
+    """Whether an fx dict can only be rendered by the native kernel. The plate
+    is LTI (a cached impulse response) unless its swept-allpass modulation is
+    engaged (mod > 0); everything in NATIVE_FX_TYPES is native unconditionally."""
+    t = fx.get("type")
+    if t in NATIVE_FX_TYPES:
+        return True
+    return t == "plate" and float(fx.get("mod", 0.0)) > 0.0
 BIT_DEPTHS = {16, 24}
 AUTO_TARGETS = {"gain_db", "cutoff_hz", "scan"}
 
@@ -107,6 +122,11 @@ def _validate_fx(chain, path):
             _num(fx, "mix", p, 0.0, 1.0, required=False)
         if t == "reverb":
             _num(fx, "decay_s", p, 0.05, 15.0, required=False)
+            _num(fx, "mix", p, 0.0, 1.0, required=False)
+        if t == "ladder":
+            _num(fx, "cutoff_hz", p, 20, 20000)
+            _num(fx, "resonance", p, 0.0, 1.1, required=False)
+            _num(fx, "drive", p, 0.0, 1.0, required=False)
             _num(fx, "mix", p, 0.0, 1.0, required=False)
 
 

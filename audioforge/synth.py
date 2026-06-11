@@ -76,6 +76,16 @@ def osc(shape: str, freq: float, n: int, sr: int, *,
                             pressure=float(v.get("pressure", 0.6)),
                             position=float(v.get("bow_position", 0.13)),
                             brightness=float(v.get("brightness", 0.6)))
+    if shape == "brass":
+        from ._native import brass_native
+        if rng is None:
+            raise ValueError("oscillator 'brass' needs a seeded rng "
+                             "(breath turbulence)")
+        return brass_native(f, n, sr,
+                            pressure=float(v.get("pressure", 0.6)),
+                            brightness=float(v.get("brightness", 0.6)),
+                            lip=float(v.get("lip", 0.5)),
+                            noise=rng.standard_normal(n))
     if shape == "blown":
         from ._native import blown_native
         if rng is None:

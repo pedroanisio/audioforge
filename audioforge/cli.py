@@ -80,6 +80,14 @@ def main(argv=None) -> int:
 
     p = sub.add_parser("export-musicxml"); p.add_argument("spec")
     p.add_argument("-o", "--out", required=True)
+    p.add_argument("--notated", action="store_true",
+                   help="formal quantized score (figures+rests) for MuseScore")
+    p.add_argument("--bars", type=int, default=4, help="beats per measure")
+
+    p = sub.add_parser("score"); p.add_argument("spec")
+    p.add_argument("-o", "--out", default=None)
+    p.add_argument("--title", default=None)
+    p.add_argument("--bars", type=int, default=10)
 
     p = sub.add_parser("import-midi"); p.add_argument("midi")
     p.add_argument("--id", default="imported_midi")
@@ -132,12 +140,44 @@ def main(argv=None) -> int:
             Path(args.out).write_bytes(export_midi_bytes(assets[0].spec))
             print(f"MIDI -> {args.out}")
         elif args.cmd == "export-musicxml":
-            from .interop import export_musicxml
+            from .interop import export_musicxml, export_notated_musicxml
+            exporter = ((lambda s: export_notated_musicxml(s, beats_per_bar=args.bars))
+                        if args.notated else export_musicxml)
             assets = list(_assets(args.spec))
-            if len(assets) != 1:
-                raise SpecError("export-musicxml expects exactly one asset")
-            Path(args.out).write_text(export_musicxml(assets[0].spec))
-            print(f"MusicXML -> {args.out}")
+            out = Path(args.out)
+            if len(assets) == 1:
+                out.write_text(exporter(assets[0].spec))
+                print(f"MusicXML -> {out}")
+            else:
+                for a in assets:
+                    fp = out.with_name(f"{out.stem}.{a.spec.get('id', 'asset')}"
+                                       f"{out.suffix}")
+                    fp.write_text(exporter(a.spec))
+                    print(f"MusicXML -> {fp}")
+        elif args.cmd == "score":
+            from .score import score_pdf
+            assets = list(_assets(args.spec))
+            specs = [a.spec for a in assets]
+            out = args.out or (Path(args.spec).stem + ".pdf")
+            program = None
+            try:
+                lines = []
+                for ln in Path(args.spec).read_text().splitlines():
+                    s = ln.strip()
+                    if s.startswith("asset"):
+                        break
+                    if s.startswith("#"):
+                        t = s.lstrip("#").strip()
+                        if t and not set(t) <= set("=-~_· "):
+                            lines.append(t)
+                program = "\n".join(lines) if lines else None
+            except Exception:
+                program = None
+            score_pdf(specs if len(specs) > 1 else specs[0], out,
+                      title=args.title, program=program,
+                      bars_per_system=args.bars)
+            print(f"score -> {out}  ({len(specs)} movement"
+                  f"{'s' if len(specs) != 1 else ''})")
         elif args.cmd == "import-midi":
             from .interop import import_midi_bytes
             print(json.dumps(import_midi_bytes(Path(args.midi).read_bytes(),

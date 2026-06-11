@@ -84,6 +84,67 @@ def plate_mod_native(mono: np.ndarray, sr: int, decay: float, damp: float,
     return wetL, wetR
 
 
+def ladder_native(x: np.ndarray, sr: int, cutoff_hz: float,
+                  resonance: float, drive: float) -> np.ndarray:
+    lib = _lib("ladder", "the nonlinear ladder filter (fx: ladder)")
+    if not getattr(lib, "_ladder_sig", False):
+        lib.ladder.restype = ctypes.c_int
+        lib.ladder.argtypes = [
+            ctypes.POINTER(ctypes.c_double), ctypes.c_long, ctypes.c_int,
+            ctypes.c_double, ctypes.c_double, ctypes.c_double,
+            ctypes.POINTER(ctypes.c_double)]
+        lib._ladder_sig = True
+    xin = np.ascontiguousarray(x, dtype=np.float64)
+    out = np.zeros(xin.size)
+    p = lambda a: a.ctypes.data_as(ctypes.POINTER(ctypes.c_double))  # noqa
+    rc = lib.ladder(p(xin), xin.size, sr, float(cutoff_hz),
+                    float(resonance), float(drive), p(out))
+    if rc != 0:
+        raise RuntimeError("native ladder kernel failed")
+    return out
+
+
+def tape_native(x: np.ndarray, sr: int, drive: float, flutter: float,
+                tone: float) -> np.ndarray:
+    lib = _lib("tape", "the analog tape effect (fx: tape)")
+    if not getattr(lib, "_tape_sig", False):
+        lib.tape.restype = ctypes.c_int
+        lib.tape.argtypes = [
+            ctypes.POINTER(ctypes.c_double), ctypes.c_long, ctypes.c_int,
+            ctypes.c_double, ctypes.c_double, ctypes.c_double,
+            ctypes.POINTER(ctypes.c_double)]
+        lib._tape_sig = True
+    xin = np.ascontiguousarray(x, dtype=np.float64)
+    out = np.zeros(xin.size)
+    p = lambda a: a.ctypes.data_as(ctypes.POINTER(ctypes.c_double))  # noqa
+    rc = lib.tape(p(xin), xin.size, sr, float(drive), float(flutter),
+                  float(tone), p(out))
+    if rc != 0:
+        raise RuntimeError("native tape kernel failed")
+    return out
+
+
+def brass_native(freq: float, n: int, sr: int, pressure: float,
+                 brightness: float, lip: float, noise) -> np.ndarray:
+    lib = _lib("brass", "the brass lip-reed voice (osc: brass)")
+    if not getattr(lib, "_brass_sig", False):
+        lib.brass_lip.restype = ctypes.c_int
+        lib.brass_lip.argtypes = [
+            ctypes.c_double, ctypes.c_long, ctypes.c_int, ctypes.c_double,
+            ctypes.c_double, ctypes.c_double,
+            ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double)]
+        lib._brass_sig = True
+    nz = np.ascontiguousarray(noise, dtype=np.float64)
+    out = np.zeros(n)
+    p = lambda a: a.ctypes.data_as(ctypes.POINTER(ctypes.c_double))  # noqa
+    rc = lib.brass_lip(float(freq), n, sr, float(pressure),
+                       float(brightness), float(lip), p(nz), p(out))
+    if rc != 0:
+        raise RuntimeError("brass kernel failed")
+    peak = np.max(np.abs(out))
+    return out / peak if peak > 1e-9 else out
+
+
 def bowed_native(freq: float, n: int, sr: int, pressure: float,
                  position: float, brightness: float) -> np.ndarray:
     lib = _lib("bowed", "the bowed-string voice (osc: bowed)")
