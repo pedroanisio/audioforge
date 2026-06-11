@@ -189,6 +189,11 @@ def _directive_value(value) -> str:
     return str(value)
 
 
+def _perform_part(key: str, value) -> str:
+    suffix = "b" if key == "segment" else ""
+    return f"{key}={_directive_value(value)}{suffix}"
+
+
 def _smart_directive_lines(intent: dict | None, semantic: dict) -> list[str]:
     if not isinstance(intent, dict) or not semantic.get("smart_directives"):
         return []
@@ -199,9 +204,9 @@ def _smart_directive_lines(intent: dict | None, semantic: dict) -> list[str]:
     if "perform" in fields and isinstance(intent.get("perform"), dict):
         perform = intent["perform"]
         parts = [
-            f"{key}={_directive_value(perform[key])}"
-            for key in ("style", "expressivity")
-            if key in perform
+            _perform_part(key, perform[key])
+            for key in ("rubato", "amount", "segment", "style", "expressivity")
+            if key in perform and key != "rubato_compiled"
         ]
         lines.append("  perform: " + " ".join(parts))
     if "ensemble" in fields and isinstance(intent.get("ensemble"), dict):
@@ -282,6 +287,12 @@ def spec_to_dsl(spec: dict) -> str:
     lines.append(f"  duration: {_fmt_num(spec['duration_s'])}s")
     if "bpm" in spec:
         lines.append(f"  tempo: {_fmt_num(spec['bpm'])}bpm")
+    if spec.get("holds"):
+        parts = [
+            f"{_fmt_num(h['beat'])}b={_fmt_num(h['duration_s'])}s"
+            for h in spec["holds"]
+        ]
+        lines.append("  fermata: " + ", ".join(parts))
     if "key" in spec:
         lines.append(f"  key: {spec['key']}")
     smart_lines = _smart_directive_lines(spec.get("intent"), semantic)

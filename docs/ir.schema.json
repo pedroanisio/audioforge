@@ -132,6 +132,24 @@
       ],
       "type": "object"
     },
+    "hold": {
+      "additionalProperties": false,
+      "properties": {
+        "beat": {
+          "minimum": 0.0,
+          "type": "number"
+        },
+        "duration_s": {
+          "minimum": 0.0,
+          "type": "number"
+        }
+      },
+      "required": [
+        "beat",
+        "duration_s"
+      ],
+      "type": "object"
+    },
     "layer": {
       "additionalProperties": true,
       "properties": {
@@ -613,6 +631,12 @@
       "additionalProperties": true,
       "type": "object"
     },
+    "holds": {
+      "items": {
+        "$ref": "#/$defs/hold"
+      },
+      "type": "array"
+    },
     "id": {
       "minLength": 1,
       "type": "string"
@@ -748,6 +772,7 @@
         "key",
         "key_map",
         "tempo_map",
+        "holds",
         "groove",
         "markers",
         "cutdowns",

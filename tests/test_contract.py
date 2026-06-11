@@ -25,6 +25,14 @@ ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = ROOT / "static" / "fixtures"
 AF = AudioForge()
 
+
+def _skip_optional(message: str):
+    if __name__ == "__main__":
+        print(f"  SKIP {message}")
+        return True
+    pytest.skip(message)
+    return True
+
 MINI = """
 asset c_{n} {{ kind: cue
   duration: 3s
@@ -71,7 +79,8 @@ def test_property_validate_implies_renders():
             asset.render()                          # must not raise
             rendered += 1
     if checked < 5:
-        pytest.skip(f"preset corpus has only {checked} compilable assets")
+        if _skip_optional(f"preset corpus has only {checked} compilable assets"):
+            return
     assert rendered >= 1, (checked, rendered)
     print(f"PASS  property: {checked} preset assets validated; every "
           f"clean one that was rendered ({rendered}) rendered without error")
@@ -286,7 +295,8 @@ def test_ladder_filter_renders_and_resonates():
     pytest.importorskip("numpy")
     from audioforge._native import ladder_native, native_available
     if not native_available():
-        pytest.skip("no C compiler; native ladder unavailable")
+        if _skip_optional("no C compiler; native ladder unavailable"):
+            return
 
     src = """
 asset lad { kind: cue
@@ -339,7 +349,8 @@ def test_tape_effect_flutters_saturates_and_renders():
     pytest.importorskip("numpy")
     from audioforge._native import tape_native, native_available
     if not native_available():
-        pytest.skip("no C compiler; native tape unavailable")
+        if _skip_optional("no C compiler; native tape unavailable"):
+            return
 
     src = """
 asset tp { kind: cue

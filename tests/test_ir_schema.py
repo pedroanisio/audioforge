@@ -125,6 +125,7 @@ def test_ir_schema_metadata_declares_hash_boundaries():
     assert metadata["hash_excluded_top_level"] == ["_meta", "intent", "notation"]
     assert "_meta" in metadata["field_layers"]["provenance"]
     assert "intent" in metadata["field_layers"]["semantic"]
+    assert "holds" in metadata["field_layers"]["semantic"]
     assert "layers" in metadata["field_layers"]["render"]
 
     with_meta = copy.deepcopy(spec)

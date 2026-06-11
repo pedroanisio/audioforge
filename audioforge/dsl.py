@@ -12,6 +12,7 @@ notes, hot gains, loop-safety issues).
 """
 from __future__ import annotations
 
+import math
 import re
 from dataclasses import dataclass, field
 
@@ -908,6 +909,31 @@ def _read_smart_directives(p: dict, line: int) -> dict:
     return intent
 
 
+def _read_hold_events(toks: list[Tok], line: int) -> list[dict]:
+    holds = []
+    i = 0
+    while i < len(toks):
+        if toks[i].kind == "PUNCT" and toks[i].text == ",":
+            i += 1
+            continue
+        if i + 2 >= len(toks) or toks[i + 1].text != "=":
+            raise DSLError("fermata expects BEATb=DURATIONs pairs",
+                           toks[i].line if i < len(toks) else line)
+        beat, duration = toks[i], toks[i + 2]
+        if beat.kind != "NUMBER" or beat.unit not in (None, "b"):
+            raise DSLError("fermata beat must use beats, e.g. 4b",
+                           beat.line)
+        if duration.kind != "NUMBER" or duration.unit not in (None, "s"):
+            raise DSLError("fermata duration must use seconds, e.g. 1.5s",
+                           duration.line)
+        holds.append({
+            "beat": round(float(beat.value), 6),
+            "duration_s": round(float(duration.value), 6),
+        })
+        i += 3
+    return sorted(holds, key=lambda h: h["beat"])
+
+
 def _intent_token_value(tok: Tok):
     if tok.kind == "NUMBER":
         return tok.value
@@ -1166,6 +1192,8 @@ def _apply_smart_directives(spec: dict, intent: dict, diags: list[str]):
             for lname, ps in sorted(phrase_report.items())
             for p in ps
         ]
+    if perform.get("rubato"):
+        _apply_rubato_tempo_map(spec, perform, phrase_report, diags)
     _apply_role_routing(spec, ensemble, space)
     depth = max(0.0, min(1.0, float(space.get("depth", 0.0) or 0.0)))
     if depth:
@@ -1188,6 +1216,114 @@ def _append_unique_master_fx(master: dict, fx: dict):
     chain = master.setdefault("fx", [])
     if fx not in chain:
         chain.append(fx)
+
+
+def _base_tempo_points(spec: dict) -> list[list[float]]:
+    return [[float(b), float(v)] for b, v in
+            (spec.get("tempo_map") or [[0.0, float(spec.get("bpm", 120.0))]])]
+
+
+def _tempo_at(points: list[list[float]], beat: float) -> float:
+    if not points:
+        return 120.0
+    if beat <= points[0][0]:
+        return points[0][1]
+    for (b0, v0), (b1, v1) in zip(points, points[1:]):
+        if b0 <= beat <= b1:
+            if b1 == b0:
+                return v1
+            x = (beat - b0) / (b1 - b0)
+            return v0 + (v1 - v0) * x
+    return points[-1][1]
+
+
+def _rubato_multiplier(shape: str, x: float, amount: float) -> float:
+    x = max(0.0, min(1.0, x))
+    if shape in {"ritard", "rit", "release"}:
+        return 1.0 - amount * (x * x)
+    if shape in {"accelerando", "accel", "push"}:
+        return 1.0 + amount * (x * x)
+    if shape in {"sigh", "push_pull"}:
+        return 1.0 + amount * math.sin(2.0 * math.pi * x)
+    # arch/default: slower edges, faster phrase center.
+    return 1.0 + amount * (2.0 * math.sin(math.pi * x) - 1.0)
+
+
+def _rubato_value(value) -> str:
+    if isinstance(value, list):
+        return str(value[0]) if value else "arch"
+    return str(value)
+
+
+def _rubato_float(perform: dict, key: str, default: float,
+                  *, minimum: float, maximum: float) -> float:
+    value = perform.get(key, default)
+    if isinstance(value, list):
+        value = value[0] if value else default
+    out = float(value)
+    return max(minimum, min(maximum, out))
+
+
+def _rubato_segment_beats(perform: dict) -> float:
+    value = perform.get("segment", 0.25)
+    if isinstance(value, list):
+        value = value[0] if value else 0.25
+    return max(0.05, min(1.0, float(value)))
+
+
+def _apply_rubato_tempo_map(spec: dict, perform: dict,
+                            phrase_report: dict[str, list[dict]],
+                            diags: list[str]):
+    shape = _rubato_value(perform.get("rubato", "arch")).lower()
+    amount = _rubato_float(perform, "amount", 0.12, minimum=0.0, maximum=0.35)
+    segment = _rubato_segment_beats(perform)
+    phrases = [
+        ph for _lname, layer_phrases in sorted(phrase_report.items())
+        for ph in layer_phrases
+        if ph["end_beat"] > ph["start_beat"]
+    ]
+    if not phrases:
+        diags.append("perform.rubato: no note phrases found; no tempo_map "
+                     "points were generated")
+        return
+    base_points = _base_tempo_points(spec)
+    compiled: dict[float, float] = {
+        round(float(b), 6): float(v) for b, v in base_points
+    }
+    for ph in phrases:
+        start = float(ph["start_beat"])
+        end = float(ph["end_beat"])
+        dur = max(1e-9, end - start)
+        steps = max(1, int(math.ceil(dur / segment)))
+        for idx in range(steps + 1):
+            beat = round(start + dur * idx / steps, 6)
+            x = (beat - start) / dur
+            bpm = _tempo_at(base_points, beat) * _rubato_multiplier(
+                shape, x, amount)
+            compiled[beat] = round(max(20.0, min(400.0, bpm)), 6)
+        for key in ("peak_beat", "cadence_beat"):
+            beat = round(float(ph[key]), 6)
+            x = (beat - start) / dur
+            bpm = _tempo_at(base_points, beat) * _rubato_multiplier(
+                shape, x, amount)
+            compiled[beat] = round(max(20.0, min(400.0, bpm)), 6)
+    points = [[b, compiled[b]] for b in sorted(compiled)]
+    if points[0][0] != 0.0:
+        points.insert(0, [0.0, _tempo_at(base_points, 0.0)])
+    spec["tempo_map"] = points
+    max_error = min(0.002, round((segment ** 3) * 0.001, 6))
+    perform["rubato_compiled"] = {
+        "target": "tempo_map",
+        "shape": shape,
+        "amount": amount,
+        "base_bpm": float(spec.get("bpm", points[0][1])),
+        "segment_beats": segment,
+        "max_segment_error_s": max_error,
+        "point_count": len(points),
+        "phrases": len(phrases),
+    }
+    diags.append("perform.rubato: compiled phrase curve to dense tempo_map "
+                 f"points (max segment error <= {max_error:.3g}s)")
 
 
 def _apply_structured_intent(spec: dict, structured: dict, diags: list[str]):
@@ -1556,6 +1692,20 @@ def compile_asset(a: Asset, variant=None) -> tuple[dict, list[str]]:
         spec["bpm"] = pts[0][1]
         if len(pts) > 1:
             spec["tempo_map"] = pts
+    holds = []
+    if "fermata" in p:
+        holds.extend(_read_hold_events(take("fermata"), a.line))
+    if "hold" in p:
+        holds.extend(_read_hold_events(take("hold"), a.line))
+    if holds:
+        merged: dict[float, float] = {}
+        for hold in holds:
+            merged[hold["beat"]] = merged.get(hold["beat"], 0.0) \
+                + hold["duration_s"]
+        spec["holds"] = [
+            {"beat": beat, "duration_s": round(duration, 6)}
+            for beat, duration in sorted(merged.items())
+        ]
     if "swing" in p:
         spec["swing"] = _one(take("swing"), a.line)
     if "library" in p:

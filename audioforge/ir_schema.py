@@ -26,6 +26,7 @@ SEMANTIC_FIELDS = [
     "key",
     "key_map",
     "tempo_map",
+    "holds",
     "groove",
     "markers",
     "cutdowns",
@@ -193,6 +194,7 @@ def ir_json_schema() -> dict[str, Any]:
             "key": {"type": "string"},
             "key_map": _array_items({"type": "array", "minItems": 3}),
             "tempo_map": _array_items({"$ref": "#/$defs/point"}),
+            "holds": _array_items({"$ref": "#/$defs/hold"}),
             "groove": {"type": "object", "additionalProperties": True},
             "markers": _array_items({"$ref": "#/$defs/marker"}),
             "cutdowns": _array_items({"type": "object", "additionalProperties": True}),
@@ -228,6 +230,15 @@ def ir_json_schema() -> dict[str, Any]:
                     "time_s": _number(minimum=0.0),
                 },
                 "additionalProperties": True,
+            },
+            "hold": {
+                "type": "object",
+                "required": ["beat", "duration_s"],
+                "properties": {
+                    "beat": _number(minimum=0.0),
+                    "duration_s": _number(minimum=0.0),
+                },
+                "additionalProperties": False,
             },
             "score": {
                 "type": "object",

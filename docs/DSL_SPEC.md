@@ -70,12 +70,12 @@ A file may contain multiple `asset` blocks; each compiles to its own spec. Buses
 | `repeat:` | `section xN` | `score.repeats` |
 | `polymeter:` | `layer BEATS UNIT` | `score.polymeter` |
 | `style:` | style-pack name | deterministic defaults under `intent.style` and explicit render IR |
-| `perform:` | `style=... expressivity=...` | phrase analysis + explicit performance parameters |
+| `perform:` | `style=... expressivity=... rubato=arch amount=0.12 segment=0.25b` | phrase analysis + explicit performance parameters; rubato lowers to dense `tempo_map` points |
 | `ensemble:` | `family size=N spread=... octaves=N` | explicit unison/section/octave events and role buses |
 | `voicing:` | `richness=... extensions=...` | explicit chord extensions and generated voice-leading notes |
 | `space:` | `hall=... depth=...` | explicit room/glue processing |
 
-**Tempo maps** ramp BPM linearly between points; beat→seconds is the exact analytic integral (logarithmic per ramp segment), so accelerandi are smooth, not stepped. Every musical grid — note starts/durations, drum steps, groove and swing offsets, loop expansion — follows the map. Layer `start:`, automation breakpoints, and markers remain in real seconds. **Key maps** modulate mid-asset: scale advisories and `diatonic` transforms (§3) resolve whichever key is in force at their position.
+**Tempo maps** ramp BPM linearly between points; beat→seconds is the exact analytic integral (logarithmic per ramp segment), so accelerandi are smooth, not stepped. Keep them austere: `tempo_map` is only `[beat, bpm]` points. `fermata: 12b=1.5s` (or `hold:`) compiles to first-class `holds` events that insert absolute seconds at the named beat, before events at that beat and all later beats. `perform: rubato=...` is smart directive sugar: the compiler analyzes phrases and writes dense piecewise-linear tempo points with ≤2 ms segment error, so the render IR stays diffable and verifiable. Every musical grid — note starts/durations, drum steps, groove and swing offsets, loop expansion — follows the map plus holds. Layer `start:`, automation breakpoints, and markers remain in real seconds. **Key maps** modulate mid-asset: scale advisories and `diatonic` transforms (§3) resolve whichever key is in force at their position.
 
 Known emotion tags: `tension awe sadness triumph suspense intimacy urgency calm fear wonder cinematic_intensity`. Unknown tags are kept as metadata with a warning.
 

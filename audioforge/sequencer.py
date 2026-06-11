@@ -140,6 +140,48 @@ class TempoMap:
         return b0 + dt * v0 / 60.0
 
 
+class TimelineMap:
+    """Beat timeline wrapper that inserts absolute-time holds.
+
+    ``TempoMap`` remains the austere [beat, bpm] integrator. Holds are separate
+    IR events with trivial semantics: a hold at beat B inserts N seconds before
+    events at B and shifts all later beats by N seconds.
+    """
+
+    def __init__(self, tempo_map: TempoMap, holds: list[dict] | None = None):
+        self.tempo_map = tempo_map
+        merged: dict[float, float] = {}
+        for hold in holds or []:
+            beat = float(hold["beat"])
+            duration = float(hold["duration_s"])
+            if duration <= 0.0:
+                continue
+            merged[beat] = merged.get(beat, 0.0) + duration
+        self.holds = [
+            {"beat": beat, "duration_s": duration,
+             "base_time_s": self.tempo_map.sec(beat)}
+            for beat, duration in sorted(merged.items())
+        ]
+
+    def sec(self, beat: float) -> float:
+        base = self.tempo_map.sec(beat)
+        offset = sum(h["duration_s"] for h in self.holds
+                     if h["beat"] <= beat)
+        return base + offset
+
+    def beat_at(self, t: float) -> float:
+        offset = 0.0
+        for hold in self.holds:
+            start = hold["base_time_s"] + offset
+            end = start + hold["duration_s"]
+            if t < start:
+                return self.tempo_map.beat_at(t - offset)
+            if t <= end:
+                return hold["beat"]
+            offset += hold["duration_s"]
+        return self.tempo_map.beat_at(t - offset)
+
+
 def dyn_env(points, tm, start_n: int, n: int, sr: int) -> np.ndarray:
     """Per-sample dynamic value over [start_n, start_n+n): the layer's
     [beat, 0..1] breakpoints, linearly interpolated in beat space, sampled

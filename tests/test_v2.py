@@ -181,6 +181,9 @@ def test_cinematic_cue_renders_and_reproduces():
     forge = AudioForge()
     canonical = PRESETS / "cosmic_awe_cue.af"
     if not canonical.exists():
+        if __name__ == "__main__":
+            print("  SKIP cosmic_awe_cue.af: optional cinematic static example is absent")
+            return
         pytest.skip("optional cinematic static example is absent")
     src = canonical.read_text()
     a1 = forge.compile(src).assets[0]

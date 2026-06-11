@@ -138,6 +138,11 @@ def capability_manifest() -> dict:
         "emotions": sorted(EMOTIONS),
         "automation_targets": sorted(AUTO_TARGETS),
         "bit_depths": sorted(BIT_DEPTHS),
+        "timing": {
+            "tempo_map": "piecewise-linear [beat, bpm] points integrated exactly",
+            "fermata": "fermata: BEATb=DURATIONs inserts absolute seconds",
+            "hold": "alias for fermata with identical IR under spec.holds",
+        },
         "style_packs": list_style_packs(),
         "generated_from": {
             "layer_types": "audioforge.schema.LAYER_TYPES",
@@ -146,7 +151,14 @@ def capability_manifest() -> dict:
         },
         "smart_directives": {
             "style": {"enum": list_style_packs()},
-            "perform": {"properties": ["style", "expressivity"]},
+            "perform": {
+                "properties": ["style", "expressivity", "rubato", "amount",
+                               "segment"],
+                "rubato": {
+                    "enum": ["arch", "push_pull", "ritard", "accelerando"],
+                    "compiles_to": "dense tempo_map points",
+                },
+            },
             "ensemble": {"properties": ["family", "size", "spread", "octaves"]},
             "voicing": {"properties": ["richness", "extensions"]},
             "space": {"properties": ["hall", "depth"]},
@@ -195,7 +207,7 @@ def capability_manifest() -> dict:
         "examples": {
             "smart_directives": (
                 "style: cinematic\n"
-                "perform: style=cinematic expressivity=0.8\n"
+                "perform: style=cinematic expressivity=0.8 rubato=arch\n"
                 "ensemble: synth size=5 spread=0.45 octaves=1\n"
                 "voicing: richness=0.7 extensions=7,9\n"
                 "space: hall=studio depth=0.5"

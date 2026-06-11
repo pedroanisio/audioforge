@@ -218,6 +218,8 @@ def _premaster(spec: dict, root: str, sr: int, master: dict,
     total_n = int(spec["duration_s"] * sr)
     bpm = float(spec.get("bpm", 120.0))
     tm = sequencer.TempoMap(spec.get("tempo_map") or [[0.0, bpm]])
+    if spec.get("holds"):
+        tm = sequencer.TimelineMap(tm, spec["holds"])
     swing = float(spec.get("swing", 0.0))
 
     buses = spec.get("buses", [])

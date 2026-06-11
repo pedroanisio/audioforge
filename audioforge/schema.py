@@ -557,6 +557,22 @@ def validate_spec(spec: dict) -> dict:
         if tmap[0][0] != 0.0:
             raise SpecError("spec.tempo_map: first point must be at beat 0")
 
+    holds = spec.get("holds")
+    if holds is not None:
+        if (not isinstance(holds, list)
+                or not all(isinstance(x, dict) for x in holds)):
+            raise SpecError("spec.holds: list of {beat, duration_s} events")
+        last = -1.0
+        for idx, hold in enumerate(holds):
+            p = f"spec.holds[{idx}]"
+            _num(hold, "beat", p, 0.0, required=True)
+            _num(hold, "duration_s", p, 0.0, required=True)
+            if hold["duration_s"] <= 0.0:
+                raise SpecError(f"{p}.duration_s: must be > 0")
+            if hold["beat"] < last:
+                raise SpecError("spec.holds: beats must ascend")
+            last = hold["beat"]
+
     groove = spec.get("groove")
     if groove is not None:
         if not isinstance(groove, dict):

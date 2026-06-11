@@ -15,9 +15,10 @@ __LARK_SOURCE__
 
 file             = { asset } ;
 asset            = "asset" IDENT "{" { asset_item } "}" ;
-asset_item       = smart_directive | intent_block | score_property | property | marker | motif | stage | cutdowns | bus | layer | master ;
+asset_item       = smart_directive | intent_block | score_property | timing_property | property | marker | motif | stage | cutdowns | bus | layer | master ;
 score_property   = meter | pickup | form | repeat | polymeter ;
 property         = IDENT ":" value_list newline ;
+timing_property  = ("fermata" | "hold") ":" hold_event { "," hold_event } newline ;
 smart_directive  = ("style" | "perform" | "ensemble" | "voicing" | "space") ":" value_list newline ;
 intent_block     = "intent" "{" { intent_field } "}" ;
 intent_field     = ("density" | "contour" | "texture" | "affect" | "avoid" | "repair" | "style_text") ":" value_list newline ;
@@ -40,6 +41,7 @@ cutdowns         = "cutdowns" "{" { property } "}" ;
 note_entry       = note_event | "slur" "(" note_event { "," note_event } ")" ;
 note_event       = PITCH "@" NUMBER "b" "for" NUMBER "b" [ "vel" NUMBER ] [ "art" IDENT ] [ "voicing" IDENT ] ;
 breakpoint       = NUMBER "s" "=" NUMBER [ UNIT ] ;
+hold_event       = NUMBER "b" "=" NUMBER "s" ;
 transform        = "legato" | "invert" | "retrograde" | "stretch" NUMBER | "diatonic" SIGNED_NUMBER | "transpose" SIGNED_NUMBER "st" | "vel" NUMBER ;
 value_list       = VALUE { VALUE | "," | "(" | ")" | "=" | "@" } ;
 newline          = "\n" ;
@@ -52,7 +54,7 @@ _GBNF = r"""
 
 root ::= (asset ws*)+
 asset ::= "asset" ws ident ws "{" ws asset-item* "}" ws
-asset-item ::= smart-directive | intent-block | score-property | property | marker | motif | bus | layer | master | stage | cutdowns
+asset-item ::= smart-directive | intent-block | score-property | timing-property | property | marker | motif | bus | layer | master | stage | cutdowns
 score-property ::= meter | pickup | form | repeat | polymeter
 meter ::= "meter:" ws number ws number nl
 pickup ::= "pickup:" ws number "b" nl
@@ -63,6 +65,7 @@ smart-directive ::= ("style" | "perform" | "ensemble" | "voicing" | "space") ":"
 intent-block ::= "intent" ws "{" ws intent-field* "}" ws
 intent-field ::= ("density" | "contour" | "texture" | "affect" | "avoid" | "repair" | "style_text") ":" ws value-list nl
 property ::= ident ":" value-list nl
+timing-property ::= ("fermata" | "hold") ":" ws hold-event ("," ws hold-event)* nl
 marker ::= "marker" ws ident ws "@" ws number "s" nl
 motif ::= "motif" ws ident ws "{" ws note-event* "}" ws
 layer ::= "layer" ws ident ws ":" ws layer-kind ws "{" ws layer-item* "}" ws
@@ -78,6 +81,7 @@ cutdowns ::= "cutdowns" ws "{" ws property* "}" ws
 note-entry ::= note-event | "slur(" ws note-event ("," ws note-event)+ ws ")"
 note-event ::= pitch ws "@" ws number "b" ws "for" ws number "b" (ws "vel" ws number)? (ws "art" ws ident)? (ws "voicing" ws ident)?
 breakpoint ::= number "s" ws "=" ws number unit?
+hold-event ::= number "b" ws "=" ws number "s"
 transform ::= "legato" | "invert" | "retrograde" | ("stretch" ws number) | ("diatonic" ws signed-number) | ("transpose" ws signed-number "st") | ("vel" ws number)
 value-list ::= ([^\n{}]+)
 pitch ::= [A-Ga-g] ("#" | "b")? "-"? [0-9]+ [A-Za-z0-9#b]*
