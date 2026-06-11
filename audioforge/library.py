@@ -49,13 +49,16 @@ def _canonical_manifest_hash(m: dict) -> str:
 def generate_manifest(directory, name: str | None = None,
                       version: str = "0.0.0", license_str: str = "UNKNOWN",
                       instruments: dict | None = None) -> dict:
-    """Scan a library directory: hash every wav/sfz, build the manifest.
-    Without an explicit instruments mapping, every top-level .sfz becomes
-    an instrument (stem as name) with a single 'sustain' articulation."""
+    """Scan a library directory: hash every sample/sfz, build the manifest.
+    Sample formats are WAV plus the libsndfile-decoded ones (FLAC/Ogg/MP3/
+    AIFF). Without an explicit instruments mapping, every top-level .sfz
+    becomes an instrument (stem as name) with a single 'sustain' articulation."""
     base = Path(directory)
+    audio_exts = (".wav", ".sfz", ".flac", ".ogg", ".oga", ".mp3",
+                  ".aif", ".aiff")
     files = []
     for p in sorted(base.rglob("*")):
-        if p.suffix.lower() in (".wav", ".sfz") and p.is_file():
+        if p.suffix.lower() in audio_exts and p.is_file():
             files.append({"path": p.relative_to(base).as_posix(),
                           "sha256": hashlib.sha256(p.read_bytes()).hexdigest()})
     if instruments is None:
@@ -72,7 +75,13 @@ def generate_manifest(directory, name: str | None = None,
     return m
 
 
-def _decode_wav_bytes(data: bytes) -> tuple[np.ndarray, int]:
+def _decode_wav_bytes(data: bytes, ext: str = "") -> tuple[np.ndarray, int]:
+    """Decode a sample to (mono float64, sample_rate). WAV is read in pure
+    Python; FLAC / Ogg / AIFF are routed through libsndfile (see _sndfile)."""
+    if not data[:4] == b"RIFF" and (ext.lower().lstrip(".") != "wav"):
+        from . import _sndfile
+        x, sr = _sndfile.decode(data, ext)          # [frames, channels]
+        return (x.mean(axis=1) if x.ndim > 1 else x), sr
     with wave.open(io.BytesIO(data)) as w:
         sr, ch, sw, n = (w.getframerate(), w.getnchannels(),
                          w.getsampwidth(), w.getnframes())
@@ -150,7 +159,9 @@ class Library:
 
     def audio(self, rel: str) -> tuple[np.ndarray, int]:
         if rel not in self._audio_cache:
-            self._audio_cache[rel] = _decode_wav_bytes(self._verified_bytes(rel))
+            ext = rel.rsplit(".", 1)[-1] if "." in rel else ""
+            self._audio_cache[rel] = _decode_wav_bytes(
+                self._verified_bytes(rel), ext)
         return self._audio_cache[rel]
 
 

@@ -1,0 +1,1260 @@
+# =============================================================================
+# AudioForge DSL 1.6 · Engine 2.13.0
+#
+# "CANÇÕES DO SERTÃO"
+# (Songs of the Backlands)
+#
+# An original work for Orchestra of Violoncelli
+# 8 cellos in 4 stands — same forces as the Bachianas Brasileiras tradition
+#
+# I.   EMBOLADA    — Animato (♩ = 109)   Bb minor → D major     ~132s
+# II.  MODINHA     — Andante (♩ = 63)    Eb major               ~171s
+# III. CONVERSA    — Un poco animato (♩ = 96) Bb minor → Bb major ~275s
+#
+# COMPOSITIONAL CONCEPT
+# ----------------------
+# Three movements each carry a dual identity: a Brazilian popular form
+# and a Bachian structural archetype, fused rather than juxtaposed.
+#
+# I.  EMBOLADA: rapid-fire syncopated Brazilian vocal game → Toccata energy,
+#     imitative 16th-note figuration. Rhythmic cell: 3+3+2 sixteenth groupings
+#     (baião/embolada feel). 8 cellos enter in staggered pairs, building
+#     from a single line to a full 8-part texture, then dissolving back.
+#
+# II. MODINHA: sentimental Brazilian parlour song → Bach Sarabande aria.
+#     Singing solo cello emerges from sustained lower-stand harmonics;
+#     inner voices provide rocking 6/8 accompaniment; bass holds pedal.
+#     Modal inflections (Dorian/Mixolydian) bridge the two worlds.
+#
+# III.CONVERSA: cello "conversation" → 4-voice fugue with Brazilian accentuation.
+#     Subject is a chromatic descent in Bb minor; answer at the dominant;
+#     stretto from m.55; Picardy-third Bb major resolution at the close.
+#     All four stands participate as independent fugal voices.
+#
+# STAGE LAYOUT (antiphonal, left-to-right arc)
+# Stand 1 (Celli I & II):   -20° @ 4.0m   upper melodic
+# Stand 2 (Celli III & IV):  -8° @ 5.0m   inner harmony
+# Stand 3 (Celli V & VI):    +8° @ 5.5m   inner harmony / bass melody
+# Stand 4 (Celli VII & VIII):+20° @ 6.0m  bass foundation / pizz
+#
+# ORIGINAL WORK — no material derived from any copyrighted source.
+# All motifs, harmonic progressions, and structural decisions are original.
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# MOVEMENT I — EMBOLADA
+# ---------------------------------------------------------------------------
+
+asset cancoes_sertao_I {
+
+  kind:       cue
+  duration:   132s
+  samplerate: 48000
+  bitdepth:   24
+  tempo:      109bpm, 16b=109bpm, 17b=96bpm, 18b=109bpm   # rall at m9, a tempo m11
+  key:        Bb minor, 100b=D major
+
+  emotion:    urgency=0.75, tension=0.50, cinematic_intensity=0.60,
+              wonder=0.25, awe=0.20
+
+  intensity:  0s=0.80, 9s=0.50, 11s=0.75, 30s=0.60,
+              54s=0.70, 82s=0.95, 110s=0.65, 132s=0.30
+
+
+  # Structural markers
+  marker emb_opening        @ 0s
+  marker emb_rall           @ 8.8s
+  marker emb_a_tempo        @ 11.0s
+  marker emb_div_texture    @ 20.9s
+  marker emb_solo_p         @ 29.7s
+  marker emb_full_8_voice   @ 53.9s
+  marker emb_peak           @ 81.5s
+  marker emb_pizz_break     @ 109.0s
+  marker emb_dissolution    @ 125.5s
+
+  # ---------------------------------------------------------------------------
+  # CORE MOTIFS
+  # ---------------------------------------------------------------------------
+
+  # Cell A — Embolada head: pentatonic + blue note, 3+3+2 rhythmic grouping
+  # Bb3 D4 F4 Bb4 Ab4 G4 F4 Eb4 (one measure of 2/4 in 16ths)
+  motif cell_A {
+    Bb3 @ 0b    for 0.1875b vel 0.88    # 3 sixteenths: Bb
+    D4  @ 0.1875b for 0.1875b vel 0.82
+    F4  @ 0.375b for 0.1875b vel 0.86
+    Bb4 @ 0.5625b for 0.1875b vel 0.90  # 3 sixteenths: up to high Bb
+    Ab4 @ 0.75b  for 0.1875b vel 0.85
+    G4  @ 0.9375b for 0.0625b vel 0.80  # 2 sixteenths: turn
+    F4  @ 1b     for 0.1875b vel 0.78
+    Eb4 @ 1.1875b for 0.1875b vel 0.75
+  }
+
+  # Cell A inverted — descent from Bb4
+  motif cell_A_inv {
+    Bb4 @ 0b    for 0.1875b vel 0.86
+    G4  @ 0.1875b for 0.1875b vel 0.80
+    Eb4 @ 0.375b for 0.1875b vel 0.84
+    Bb3 @ 0.5625b for 0.1875b vel 0.88
+    C4  @ 0.75b  for 0.1875b vel 0.82
+    Db4 @ 0.9375b for 0.0625b vel 0.78
+    Eb4 @ 1b     for 0.1875b vel 0.76
+    F4  @ 1.1875b for 0.1875b vel 0.73
+  }
+
+  # Rhythmic pizz ostinato — baião pattern (Stand 4)
+  # x . x . | x . x x  (8th + 8th + 8th + 16th + 16th)
+  motif pizz_ostinato {
+    Bb2 @ 0b    for 0.5b   vel 0.82
+    Bb2 @ 0.5b  for 0.5b   vel 0.70
+    F2  @ 1b    for 0.5b   vel 0.80
+    Bb2 @ 1.5b  for 0.25b  vel 0.75
+    F2  @ 1.75b for 0.25b  vel 0.72
+  }
+
+  # Syncopated inner voice — the "conversation starter"
+  motif inner_sync {
+    D4  @ 0b    for 0.375b vel 0.72
+    F4  @ 0.5b  for 0.25b  vel 0.68
+    Eb4 @ 0.875b for 0.125b vel 0.70
+    C4  @ 1b    for 0.375b vel 0.73
+    Bb3 @ 1.5b  for 0.5b   vel 0.68
+  }
+
+  # ---------------------------------------------------------------------------
+  # Buses
+  # ---------------------------------------------------------------------------
+
+  bus stand_1 {
+    gain: 0db
+    fx: reverb(decay=1.6, mix=0.14),
+        comp(threshold=-16, ratio=1.8, attack=0.012, release=0.18, knee=6)
+  }
+  bus stand_2 {
+    gain: -1.5db
+    fx: reverb(decay=1.6, mix=0.14)
+  }
+  bus stand_3 {
+    gain: -1.5db
+    fx: reverb(decay=1.6, mix=0.14)
+  }
+  bus stand_4 {
+    gain: -1db
+    fx: reverb(decay=1.4, mix=0.12),
+        highpass(45hz)
+  }
+
+
+  # ---------------------------------------------------------------------------
+  # STAND 1 — Celli I & II  (upper melodic voices)
+  # ---------------------------------------------------------------------------
+
+  layer cello_I : notes {
+    osc:          pad
+    bandwidth:    25c
+    harmonics:    48
+    dynamic:      0b=ff, 16b=p, 20b=mf, 40b=f, 150b=ff, 200b=mf
+    humanize:     time=0.010s vel=0.07
+    gain:         0db
+    bus:          stand_1
+
+      # Stand 1 opens alone — forte, unison statement of Cell A
+
+      # a tempo — Cell A in upper register
+
+      # div. texture enters (m.20): Cell A fragments
+
+      # solo p (m.28): lyrical extension of Cell A
+
+      # Full 8-voice entry (m.50): Cell A at ff
+
+      # Embolada peak (m.75): cascading entries
+
+      # Pizz transition (m.100)
+
+      # Dissolution — key shift to D major, arco
+
+      # Final bars fade
+    play cell_A @ 0b    vel 0.92
+    play cell_A @ 2b    vel 0.90
+    play cell_A @ 4b    diatonic +1  vel 0.88
+    play cell_A @ 6b    diatonic -1  vel 0.86
+    play cell_A @ 8b    stretch 1.5  vel 0.80   # rall begins
+    play cell_A @ 11b   transpose +12st  vel 0.85
+    play cell_A @ 13b   transpose +12st  invert  vel 0.82
+    play cell_A @ 15b   transpose +12st  diatonic -2  vel 0.80
+    play cell_A @ 20b   vel 0.75
+    play cell_A @ 22b   retrograde  vel 0.72
+    play cell_A @ 24b   diatonic +2  vel 0.70
+    play cell_A @ 50b   vel 0.95
+    play cell_A @ 52b   invert  vel 0.92
+    play cell_A @ 54b   diatonic -3  vel 0.90
+    play cell_A @ 56b   stretch 0.75  vel 0.93   # diminution
+    play cell_A @ 75b   vel 1.0
+    play cell_A @ 77b   transpose +12st  vel 0.97
+    play cell_A @ 79b   retrograde  transpose +12st  vel 0.94
+    play cell_A_inv @ 81b  vel 0.92
+    play cell_A @ 108b  transpose +3st  vel 0.65   # D major inflection
+    play cell_A @ 110b  transpose +3st  diatonic -1  vel 0.55
+    play cell_A @ 112b  transpose +3st  retrograde  vel 0.45
+    notes: slur( Bb4 @ 28b for 2b vel 0.62 art sustain, C5 @ 30b for 1b vel 0.65, Db5 @ 31b for 1b vel 0.68, F5 @ 32b for 2b vel 0.72, Eb5 @ 34b for 1b vel 0.68, Db5 @ 35b for 1b vel 0.65, Bb4 @ 36b for 4b vel 0.60 ),
+           Bb3 @ 100b for 1b vel 0.80 art pizzicato,
+           F4 @ 101b for 1b vel 0.75 art pizzicato,
+           Eb4 @ 102b for 1b vel 0.72 art pizzicato,
+           D4 @ 103b for 1b vel 0.70 art pizzicato,
+           D5 @ 116b for 8b vel 0.35 art sustain,
+           F#5 @ 120b for 8b vel 0.25 art sustain
+  }
+
+  layer cello_II : notes {
+    osc:          pad
+    bandwidth:    25c
+    harmonics:    48
+    dynamic:      0b=ff, 16b=p, 20b=mp, 40b=mf, 150b=f, 200b=mp
+    humanize:     time=0.011s vel=0.07
+    gain:         -0.5db
+    bus:          stand_1
+
+      # Cello II enters 2 beats after Cello I — imitation
+
+
+
+
+
+
+
+
+    play cell_A @ 2b    vel 0.88
+    play cell_A @ 4b    vel 0.86
+    play cell_A @ 6b    diatonic -1  vel 0.84
+    play cell_A @ 8b    stretch 1.5  diatonic -1  vel 0.78
+    play cell_A @ 13b   transpose +12st  diatonic -2  vel 0.82
+    play cell_A @ 15b   transpose +12st  vel 0.80
+    play cell_A @ 17b   transpose +12st  invert  vel 0.77
+    play inner_sync @ 20b   vel 0.72
+    play inner_sync @ 22b   diatonic -1  vel 0.70
+    play inner_sync @ 24b   diatonic +1  vel 0.68
+    play cell_A @ 52b   diatonic -2  vel 0.90
+    play cell_A @ 54b   diatonic -4  vel 0.88
+    play cell_A @ 56b   invert  stretch 0.75  vel 0.90
+    play cell_A @ 77b   diatonic -2  vel 0.95
+    play cell_A @ 79b   diatonic -2  transpose +12st  vel 0.92
+    play cell_A_inv @ 83b  diatonic -1  vel 0.88
+    play cell_A @ 110b  transpose +3st  diatonic -2  vel 0.52
+    play cell_A @ 112b  transpose +3st  invert  vel 0.42
+    notes: slur( G4 @ 28b for 2b vel 0.60 art sustain, Ab4 @ 30b for 2b vel 0.63, Bb4 @ 32b for 2b vel 0.67, Ab4 @ 34b for 2b vel 0.63, G4 @ 36b for 4b vel 0.58 ),
+           Bb3 @ 100b for 1b vel 0.78 art pizzicato,
+           F3 @ 101b for 1b vel 0.73 art pizzicato,
+           Eb3 @ 102b for 1b vel 0.70 art pizzicato,
+           D3 @ 103b for 1b vel 0.68 art pizzicato,
+           A4 @ 116b for 8b vel 0.32 art sustain,
+           D5 @ 120b for 8b vel 0.22 art sustain
+  }
+
+  # ---------------------------------------------------------------------------
+  # STAND 2 — Celli III & IV  (inner harmony)
+  # ---------------------------------------------------------------------------
+
+  layer cello_III : notes {
+    osc:          pad
+    bandwidth:    25c
+    harmonics:    48
+    dynamic:      0b=p, 16b=p, 30b=mf, 40b=f, 150b=ff, 200b=p
+    humanize:     time=0.012s vel=0.08
+    gain:         -1.5db
+    bus:          stand_2
+
+      # Stand 2 enters at m.5 — inner harmony to Cell A
+
+
+      # Sustained inner harmony from m.20
+
+
+      # Full entry m.50
+
+      # Peak
+
+      # Pizz
+
+      # D major dissolution
+    play inner_sync @ 5b    vel 0.78
+    play inner_sync @ 7b    diatonic +1  vel 0.75
+    play inner_sync @ 9b    stretch 1.5  vel 0.70
+    play inner_sync @ 14b   vel 0.72
+    play inner_sync @ 16b   diatonic -1  vel 0.68
+    play inner_sync @ 18b   invert  vel 0.65
+    play inner_sync @ 32b   vel 0.70
+    play inner_sync @ 34b   retrograde  vel 0.67
+    play inner_sync @ 36b   diatonic -2  vel 0.65
+    play cell_A @ 50b   diatonic -3   vel 0.88
+    play cell_A @ 54b   diatonic -3   invert  vel 0.85
+    play cell_A @ 58b   diatonic -5   vel 0.82
+    play cell_A @ 76b   diatonic -4   vel 0.93
+    play cell_A @ 80b   diatonic -4   retrograde  vel 0.90
+    play cell_A_inv @ 82b  diatonic -3  vel 0.87
+    play cell_A @ 111b  transpose +3st  diatonic -3  vel 0.48
+    notes: Db4 @ 20b for 4b vel 0.68 art sustain,
+           Eb4 @ 24b for 4b vel 0.65 art sustain,
+           F4 @ 28b for 4b vel 0.62 art sustain,
+           F3 @ 100b for 1b vel 0.76 art pizzicato,
+           Db3 @ 101b for 1b vel 0.72 art pizzicato,
+           Bb2 @ 102b for 1b vel 0.70 art pizzicato,
+           F#4 @ 118b for 6b vel 0.28 art sustain
+  }
+
+  layer cello_IV : notes {
+    osc:          pad
+    bandwidth:    25c
+    harmonics:    48
+    dynamic:      0b=pp, 20b=p, 35b=mf, 40b=f, 150b=ff, 200b=pp
+    humanize:     time=0.013s vel=0.08
+    gain:         -2db
+    bus:          stand_2
+
+
+
+
+
+
+
+    play inner_sync @ 7b    diatonic -2  vel 0.75
+    play inner_sync @ 9b    diatonic -3  vel 0.72
+    play inner_sync @ 11b   stretch 1.5  diatonic -2  vel 0.68
+    play inner_sync @ 34b   diatonic -3  vel 0.67
+    play inner_sync @ 36b   invert  diatonic -2  vel 0.63
+    play cell_A @ 52b   diatonic -4   vel 0.85
+    play cell_A @ 56b   diatonic -6   vel 0.82
+    play cell_A @ 78b   diatonic -5   vel 0.90
+    play cell_A_inv @ 84b  diatonic -4  vel 0.86
+    notes: Bb3 @ 20b for 6b vel 0.65 art sustain,
+           C4 @ 26b for 4b vel 0.63 art sustain,
+           Db4 @ 30b for 4b vel 0.60 art sustain,
+           Eb3 @ 100b for 1b vel 0.74 art pizzicato,
+           Bb2 @ 101b for 1b vel 0.70 art pizzicato,
+           D4 @ 116b for 8b vel 0.26 art sustain
+  }
+
+  # ---------------------------------------------------------------------------
+  # STAND 3 — Celli V & VI  (inner harmony / bass melody)
+  # ---------------------------------------------------------------------------
+
+  layer cello_V : notes {
+    osc:          pad
+    bandwidth:    25c
+    harmonics:    48
+    dynamic:      0b=pp, 25b=p, 40b=mf, 150b=f, 200b=p
+    humanize:     time=0.014s vel=0.09
+    gain:         -2db
+    bus:          stand_3
+
+
+
+
+
+
+
+    play cell_A @ 9b    transpose -12st  vel 0.80
+    play cell_A @ 11b   transpose -12st  diatonic +1  vel 0.77
+    play cell_A @ 13b   transpose -12st  invert  vel 0.74
+    play inner_sync @ 36b   transpose -12st  vel 0.68
+    play inner_sync @ 38b   transpose -12st  diatonic -2  vel 0.65
+    play cell_A @ 51b   transpose -12st  diatonic -2  vel 0.85
+    play cell_A @ 55b   transpose -12st  diatonic -4  vel 0.82
+    play cell_A @ 59b   transpose -12st  vel 0.80
+    play cell_A @ 77b   transpose -12st  diatonic -3  vel 0.90
+    play cell_A_inv @ 83b  transpose -12st  vel 0.87
+    play pizz_ostinato @ 100b   vel 0.80
+    play pizz_ostinato @ 102b   vel 0.77
+    play pizz_ostinato @ 104b   vel 0.74
+    play pizz_ostinato @ 106b   vel 0.70
+    notes: Bb2 @ 20b for 4b vel 0.65 art sustain,
+           F3 @ 24b for 4b vel 0.63 art sustain,
+           Eb3 @ 28b for 4b vel 0.60 art sustain,
+           D3 @ 116b for 8b vel 0.28 art sustain,
+           A3 @ 120b for 8b vel 0.20 art sustain
+  }
+
+  layer cello_VI : notes {
+    osc:          pad
+    bandwidth:    25c
+    harmonics:    48
+    dynamic:      0b=pp, 30b=mp, 40b=mf, 150b=f, 200b=pp
+    humanize:     time=0.015s vel=0.09
+    gain:         -2.5db
+    bus:          stand_3
+
+
+
+
+
+
+    play cell_A @ 11b   transpose -12st  diatonic -2  vel 0.76
+    play cell_A @ 13b   transpose -12st  diatonic -3  vel 0.73
+    play cell_A @ 53b   transpose -12st  diatonic -5  vel 0.82
+    play cell_A @ 57b   transpose -12st  invert  vel 0.80
+    play cell_A @ 79b   transpose -12st  diatonic -4  vel 0.88
+    play cell_A_inv @ 85b  transpose -12st  diatonic -2  vel 0.84
+    play pizz_ostinato @ 101b   vel 0.78
+    play pizz_ostinato @ 103b   vel 0.75
+    play pizz_ostinato @ 105b   vel 0.72
+    play pizz_ostinato @ 107b   vel 0.68
+    notes: F2 @ 20b for 8b vel 0.62 art sustain,
+           Bb2 @ 28b for 4b vel 0.60 art sustain,
+           C3 @ 32b for 4b vel 0.58 art sustain,
+           A2 @ 118b for 6b vel 0.22 art sustain
+  }
+
+  # ---------------------------------------------------------------------------
+  # STAND 4 — Celli VII & VIII  (bass foundation + pizzicato patterns)
+  # ---------------------------------------------------------------------------
+
+  layer cello_VII : notes {
+    osc:          pad
+    bandwidth:    25c
+    harmonics:    48
+    dynamic:      0b=mf, 16b=mf, 40b=f, 100b=ff, 150b=ff, 200b=mf
+    humanize:     time=0.016s vel=0.09
+    gain:         -1db
+    bus:          stand_4
+
+      # Bass pizz ostinato from bar 1 — the rhythmic engine
+
+
+      # Arco bass line from m.20 — walking cello bass
+
+      # Continue bass pattern to full 8-voice entry
+
+      # Full entry — bass drives ff
+
+      # Embolada peak — bass col legno / heavy articulation
+
+      # Continue ff pattern through peak
+
+      # Pizz transition (m.100) — all pizz
+
+      # D major dissolution
+    play pizz_ostinato @ 0b    vel 0.88
+    play pizz_ostinato @ 2b    vel 0.86
+    play pizz_ostinato @ 4b    vel 0.85
+    play pizz_ostinato @ 6b    vel 0.84
+    play pizz_ostinato @ 8b    stretch 1.5  vel 0.80   # rall
+    play pizz_ostinato @ 11b   vel 0.84
+    play pizz_ostinato @ 13b   vel 0.82
+    play pizz_ostinato @ 15b   vel 0.80
+    play pizz_ostinato @ 17b   vel 0.78
+    play pizz_ostinato @ 19b   vel 0.76
+    play pizz_ostinato @ 50b   vel 0.92
+    play pizz_ostinato @ 52b   vel 0.93
+    play pizz_ostinato @ 54b   vel 0.94
+    play pizz_ostinato @ 56b   vel 0.95
+    play pizz_ostinato @ 58b   vel 0.93
+    play pizz_ostinato @ 60b   vel 0.94
+    play pizz_ostinato @ 80b   vel 0.96
+    play pizz_ostinato @ 82b   vel 0.97
+    play pizz_ostinato @ 84b   vel 0.95
+    play pizz_ostinato @ 86b   vel 0.93
+    play pizz_ostinato @ 88b   vel 0.90
+    play pizz_ostinato @ 90b   vel 0.88
+    play pizz_ostinato @ 92b   vel 0.86
+    play pizz_ostinato @ 94b   vel 0.84
+    play pizz_ostinato @ 96b   vel 0.82
+    play pizz_ostinato @ 98b   vel 0.80
+    play pizz_ostinato @ 100b  vel 0.80
+    play pizz_ostinato @ 102b  vel 0.77
+    play pizz_ostinato @ 104b  vel 0.74
+    play pizz_ostinato @ 106b  vel 0.70
+    play pizz_ostinato @ 108b  vel 0.65
+    notes: Bb2 @ 20b for 1b vel 0.80 art sustain,
+           C3 @ 21b for 1b vel 0.77,
+           Db3 @ 22b for 1b vel 0.78,
+           Eb3 @ 23b for 1b vel 0.76,
+           F3 @ 24b for 1b vel 0.80,
+           Eb3 @ 25b for 1b vel 0.76,
+           Db3 @ 26b for 1b vel 0.74,
+           C3 @ 27b for 1b vel 0.72,
+           Bb2 @ 28b for 4b vel 0.75 art sustain,
+           Bb2 @ 32b for 2b vel 0.78,
+           F2 @ 34b for 2b vel 0.76,
+           Eb2 @ 36b for 2b vel 0.75,
+           F2 @ 38b for 2b vel 0.77,
+           Bb2 @ 40b for 2b vel 0.80,
+           Bb2 @ 75b for 0.5b vel 1.0 art marcato,
+           Bb2 @ 75.5b for 0.5b vel 0.95 art marcato,
+           F2 @ 76b for 1b vel 0.97 art marcato,
+           Bb2 @ 77b for 0.5b vel 1.0 art marcato,
+           Eb3 @ 77.5b for 0.5b vel 0.93 art marcato,
+           F2 @ 78b for 1b vel 0.95 art marcato,
+           D2 @ 112b for 4b vel 0.50 art pizzicato,
+           A2 @ 116b for 8b vel 0.38 art sustain,
+           D2 @ 120b for 12b vel 0.28 art sustain
+  }
+
+  layer cello_VIII : notes {
+    osc:          pad
+    bandwidth:    25c
+    harmonics:    48
+    dynamic:      0b=mf, 16b=mf, 40b=f, 100b=ff, 200b=p
+    humanize:     time=0.017s vel=0.10
+    gain:         -1.5db
+    bus:          stand_4
+
+      # Cello VIII: sustained bass pedals under VII's pizz
+
+      # Full entry — arco bass octaves
+
+      # Peak bass
+
+      # Diminuendo bass
+
+      # Pizz dissolution
+
+      # D major pedal
+    notes: Bb1 @ 0b for 8b vel 0.85 art sustain,
+           F2 @ 8b for 3b vel 0.78 art sustain,
+           Bb1 @ 11b for 9b vel 0.82 art sustain,
+           F2 @ 20b for 8b vel 0.80 art sustain,
+           Bb1 @ 28b for 8b vel 0.78 art sustain,
+           Eb2 @ 36b for 4b vel 0.77 art sustain,
+           F2 @ 40b for 4b vel 0.80 art sustain,
+           Bb1 @ 44b for 6b vel 0.82 art sustain,
+           Bb1 @ 50b for 2b vel 0.90 art sustain,
+           F2 @ 52b for 2b vel 0.88 art sustain,
+           Bb1 @ 54b for 2b vel 0.92 art sustain,
+           Eb2 @ 56b for 2b vel 0.88 art sustain,
+           F2 @ 58b for 2b vel 0.90 art sustain,
+           Bb1 @ 60b for 2b vel 0.92 art sustain,
+           Bb1 @ 75b for 1b vel 0.98 art marcato,
+           F2 @ 76b for 1b vel 0.95 art marcato,
+           Bb1 @ 77b for 1b vel 0.98 art marcato,
+           Eb2 @ 78b for 1b vel 0.93 art marcato,
+           F2 @ 79b for 1b vel 0.96 art marcato,
+           Bb1 @ 80b for 2b vel 0.98 art sustain,
+           Bb1 @ 86b for 4b vel 0.90 art sustain,
+           F2 @ 90b for 4b vel 0.85 art sustain,
+           Bb1 @ 94b for 4b vel 0.80 art sustain,
+           F2 @ 98b for 4b vel 0.75 art sustain,
+           Bb1 @ 104b for 2b vel 0.68 art pizzicato,
+           F2 @ 106b for 2b vel 0.62 art pizzicato,
+           Bb1 @ 108b for 4b vel 0.55 art pizzicato,
+           D2 @ 112b for 20b vel 0.35 art sustain
+  }
+
+  # ---------------------------------------------------------------------------
+  # TEXTURE LAYER — granular cello breath / rosin noise
+  # ---------------------------------------------------------------------------
+
+  layer rosin_air : grain {
+    env: a=2s d=0s s=1.0 r=3s
+    source:      pink
+    srcdur:      3.0s
+    grainsize:   0.08s
+    density:     15
+    pitchspread: 35c
+    scatter:     0.5
+    gain:        -26db
+    start:       0s
+    fx:          bandpass(800hz, q=0.8), highpass(200hz)
+
+    auto gain: 0s=-32db, 82s=-22db, 110s=-28db, 132s=-38db
+  }
+
+  master {
+    width:   0.82
+    lufs:    -16
+    peak:    -1.0
+    fadein:  0.2s
+    fadeout: 2.0s
+
+    fx: fdn(rt60=2.4, rt60_high=0.9, crossover=2000, size=0.9, mix=0.15),
+        comp(threshold=-16, ratio=2.0, attack=0.015, release=0.22, knee=8),
+        highpass(32hz),
+        lowshelf(80hz, gain=-1.5),
+        peak(300hz, gain=-1.0, q=1.5),
+        highshelf(9000hz, gain=+0.5)
+  }
+}
+
+# ---------------------------------------------------------------------------
+# MOVEMENT II — MODINHA
+# ---------------------------------------------------------------------------
+
+asset cancoes_sertao_II {
+
+  kind:       cue
+  duration:   171s
+  samplerate: 48000
+  bitdepth:   24
+  tempo:      63bpm, 24b=52bpm, 32b=63bpm, 64b=63bpm, 68b=48bpm, 72b=63bpm
+  key:        Eb major
+
+  emotion:    sadness=0.55, intimacy=0.70, calm=0.60,
+              awe=0.40, wonder=0.45
+
+  intensity:  0s=0.50, 20s=0.40, 37s=0.30, 55s=0.65,
+              100s=0.75, 135s=0.55, 155s=0.85, 163s=0.20, 171s=0.05
+
+
+  marker mod_opening      @ 0s
+  marker mod_meno         @ 20.0s
+  marker mod_adagio       @ 37.1s
+  marker mod_piu_mosso    @ 55.2s
+  marker mod_climax       @ 100s
+  marker mod_allarg       @ 135s
+  marker mod_andantino    @ 148s
+  marker mod_final_ppp    @ 163s
+
+  # ---------------------------------------------------------------------------
+  # MOTIFS
+  # ---------------------------------------------------------------------------
+
+  # Cell B — Modinha melody: cantabile arc in Eb major (Dorian inflection)
+  # Eb4 G4 Bb4 C5 Bb4 Ab4 G4 F4 | Eb4 (one phrase, 4 beats)
+  motif modinha_theme {
+    Eb4 @ 0b   for 0.5b  vel 0.72   art sustain
+    G4  @ 0.5b for 0.5b  vel 0.76
+    Bb4 @ 1b   for 0.5b  vel 0.80
+    C5  @ 1.5b for 0.5b  vel 0.84   # peak
+    Bb4 @ 2b   for 0.5b  vel 0.80
+    Ab4 @ 2.5b for 0.5b  vel 0.76   # Dorian Ab = modal colour
+    G4  @ 3b   for 0.5b  vel 0.73
+    F4  @ 3.5b for 0.5b  vel 0.70
+  }
+
+  motif modinha_continuation {
+    Eb4 @ 0b   for 1b    vel 0.68   art sustain
+    F4  @ 1b   for 0.5b  vel 0.70
+    G4  @ 1.5b for 0.5b  vel 0.73
+    Ab4 @ 2b   for 0.5b  vel 0.76
+    Bb4 @ 2.5b for 1.5b  vel 0.72
+  }
+
+  # Rocking accompaniment pattern (6/8 feel within 3/4)
+  motif rock_accomp {
+    Eb3 @ 0b   for 0.33b vel 0.55
+    G3  @ 0.33b for 0.33b vel 0.50
+    Bb3 @ 0.66b for 0.34b vel 0.52
+    Eb3 @ 1b   for 0.33b vel 0.53
+    G3  @ 1.33b for 0.33b vel 0.48
+    Bb3 @ 1.66b for 0.34b vel 0.50
+    Eb3 @ 2b   for 0.33b vel 0.52
+    G3  @ 2.33b for 0.33b vel 0.47
+    Bb3 @ 2.66b for 0.34b vel 0.49
+  }
+
+  bus mod_melody {
+    gain: 0db
+    fx: hall(rt60=3.2s, damp=0.30, mix=0.32),
+        comp(threshold=-20, ratio=1.6, attack=0.020, release=0.30, knee=10)
+  }
+  bus mod_harmony {
+    gain: -2db
+    fx: hall(rt60=3.2s, damp=0.30, mix=0.32)
+  }
+  bus mod_bass {
+    gain: -1.5db
+    fx: reverb(decay=2.5, mix=0.20), highpass(38hz)
+  }
+
+
+  # Stand 1 — solo melody voice
+  layer mod_cello_I : notes {
+    osc:          pad
+    bandwidth:    25c
+    harmonics:    48
+    dynamic:      0b=mf, 24b=p, 48b=mf, 72b=f, 116b=ff, 152b=pp
+    humanize:     time=0.009s vel=0.06
+    glide:        0.04s
+    gain:         0db
+    bus:          mod_melody
+
+      # Opening: tutti mf, theme stated fully
+
+      # Meno (m.8): theme in relative minor (C minor)
+
+      # Adagio (m.14): solo cello emerges, p
+
+      # Piu mosso (m.22): theme transformed, more agitated
+
+      # Climax (m.40)
+
+      # Allarg (m.52)
+
+      # Final ppp — theme dissolves
+    play modinha_theme @ 156b  stretch 1.5  vel 0.70
+    play modinha_continuation @ 160b  stretch 1.5  vel 0.65
+    notes: slur( play modinha_theme @ 0b vel 0.72, play modinha_continuation @ 4b vel 0.70, play modinha_theme @ 8b diatonic +1 vel 0.74, play modinha_continuation @ 12b diatonic +1 vel 0.72 ),
+           slur( play modinha_theme @ 24b diatonic -3 vel 0.65, play modinha_continuation @ 28b diatonic -3 vel 0.63 ),
+           slur( play modinha_theme @ 42b vel 0.60, play modinha_continuation @ 46b vel 0.62, play modinha_theme @ 50b invert vel 0.58, play modinha_continuation @ 54b diatonic +2 vel 0.56 ),
+           slur( play modinha_theme @ 66b stretch 0.75 vel 0.75, play modinha_theme @ 69b stretch 0.75 diatonic +2 vel 0.78, play modinha_theme @ 72b stretch 0.75 diatonic +4 vel 0.82, play modinha_theme @ 75b vel 0.85 ),
+           slur( play modinha_theme @ 120b transpose +12st vel 0.90, play modinha_continuation @ 124b transpose +12st vel 0.88, play modinha_theme @ 128b transpose +12st invert vel 0.85 ),
+           slur( Eb5 @ 164b for 3b vel 0.38 art sustain, Bb4 @ 167b for 3b vel 0.30, G4 @ 170b for 3b vel 0.22, Eb4 @ 173b for 6b vel 0.12 )
+  }
+
+  # Stand 2 — inner harmonies and secondary melody
+  layer mod_cello_III : notes {
+    osc:          pad
+    bandwidth:    25c
+    harmonics:    48
+    dynamic:      0b=mf, 24b=p, 72b=mf, 116b=f, 152b=pp
+    humanize:     time=0.012s vel=0.07
+    gain:         -2db
+    bus:          mod_harmony
+
+
+      # Meno: sustained harmony
+
+      # Return of rock_accomp
+
+      # Piu mosso — harmony in motion
+
+      # Climax
+
+      # Final
+    play rock_accomp @ 0b    vel 0.58
+    play rock_accomp @ 3b    vel 0.56
+    play rock_accomp @ 6b    vel 0.57
+    play rock_accomp @ 9b    vel 0.55
+    play rock_accomp @ 12b   vel 0.56
+    play rock_accomp @ 15b   vel 0.54
+    play rock_accomp @ 18b   vel 0.55
+    play rock_accomp @ 21b   vel 0.53
+    play rock_accomp @ 42b   vel 0.55
+    play rock_accomp @ 45b   vel 0.53
+    play rock_accomp @ 48b   vel 0.55
+    play rock_accomp @ 51b   vel 0.57
+    play modinha_theme @ 66b  diatonic -2  vel 0.68
+    play modinha_continuation @ 70b  diatonic -2  vel 0.66
+    play modinha_theme @ 75b  diatonic -3  vel 0.72
+    play modinha_theme @ 120b  diatonic -2  vel 0.85
+    play modinha_continuation @ 124b  diatonic -2  vel 0.82
+    notes: G3 @ 24b for 6b vel 0.55 art sustain,
+           Ab3 @ 30b for 6b vel 0.53 art sustain,
+           G3 @ 36b for 6b vel 0.52 art sustain,
+           G4 @ 164b for 9b vel 0.30 art sustain,
+           Bb4 @ 173b for 6b vel 0.18 art sustain
+  }
+
+  # Stand 3 — lower harmony
+  layer mod_cello_V : notes {
+    osc:          pad
+    bandwidth:    25c
+    harmonics:    48
+    dynamic:      0b=mf, 24b=p, 72b=mf, 116b=f, 152b=ppp
+    humanize:     time=0.014s vel=0.08
+    gain:         -2.5db
+    bus:          mod_harmony
+
+      # Lower rocking harmony
+
+
+
+
+
+    play modinha_theme @ 66b  transpose -12st  diatonic -2  vel 0.65
+    play modinha_continuation @ 70b  transpose -12st  diatonic -3  vel 0.62
+    play modinha_theme @ 120b  transpose -12st  diatonic -4  vel 0.80
+    notes: Bb2 @ 0b for 1b vel 0.55 art sustain,
+           G2 @ 1b for 1b vel 0.52,
+           Eb2 @ 2b for 1b vel 0.54,
+           Bb2 @ 3b for 3b vel 0.55 art sustain,
+           G2 @ 6b for 3b vel 0.53 art sustain,
+           Eb2 @ 9b for 3b vel 0.55 art sustain,
+           Bb2 @ 12b for 3b vel 0.53 art sustain,
+           G2 @ 15b for 3b vel 0.52 art sustain,
+           Eb2 @ 18b for 3b vel 0.53 art sustain,
+           Eb3 @ 24b for 12b vel 0.50 art sustain,
+           Bb2 @ 36b for 6b vel 0.48 art sustain,
+           Eb3 @ 42b for 3b vel 0.53 art sustain,
+           Bb2 @ 45b for 3b vel 0.50 art sustain,
+           G2 @ 48b for 3b vel 0.52 art sustain,
+           Eb2 @ 51b for 3b vel 0.50 art sustain,
+           Eb3 @ 164b for 9b vel 0.25 art sustain,
+           G2 @ 173b for 6b vel 0.15 art sustain
+  }
+
+  # Stand 4 — bass pedal
+  layer mod_cello_VII : notes {
+    osc:          pad
+    bandwidth:    25c
+    harmonics:    48
+    dynamic:      0b=mf, 48b=p, 116b=mf, 152b=ppp
+    humanize:     time=0.016s vel=0.09
+    gain:         -1.5db
+    bus:          mod_bass
+
+
+
+
+
+
+    notes: Eb2 @ 0b for 9b vel 0.72 art sustain,
+           Bb1 @ 9b for 9b vel 0.70 art sustain,
+           Ab1 @ 18b for 6b vel 0.68 art sustain,
+           Eb2 @ 24b for 12b vel 0.65 art sustain,
+           Bb1 @ 36b for 6b vel 0.63 art sustain,
+           Eb2 @ 42b for 9b vel 0.66 art sustain,
+           Eb2 @ 51b for 15b vel 0.62 art sustain,
+           Bb1 @ 66b for 9b vel 0.68 art sustain,
+           Eb2 @ 75b for 9b vel 0.70 art sustain,
+           Eb2 @ 84b for 12b vel 0.72 art sustain,
+           Ab1 @ 96b for 12b vel 0.70 art sustain,
+           Bb1 @ 108b for 12b vel 0.74 art sustain,
+           Eb2 @ 120b for 12b vel 0.76 art sustain,
+           Eb2 @ 132b for 12b vel 0.65 art sustain,
+           Bb1 @ 144b for 12b vel 0.60 art sustain,
+           Eb1 @ 156b for 6b vel 0.50 art sustain,
+           Bb1 @ 162b for 3b vel 0.35 art sustain,
+           Eb1 @ 165b for 14b vel 0.18 art sustain
+  }
+
+  master {
+    width:   0.75
+    lufs:    -18
+    peak:    -1.0
+    fadein:  1.5s
+    fadeout: 4.0s
+
+    fx: fdn(rt60=3.8, rt60_high=1.4, crossover=2200, size=1.1, mix=0.22),
+        comp(threshold=-20, ratio=1.7, attack=0.025, release=0.35, knee=12),
+        highpass(30hz),
+        lowshelf(90hz, gain=-1.0),
+        highshelf(8500hz, gain=+0.3)
+  }
+}
+
+# ---------------------------------------------------------------------------
+# MOVEMENT III — CONVERSA  (Fugue)
+# ---------------------------------------------------------------------------
+
+asset cancoes_sertao_III {
+
+  kind:       cue
+  duration:   275s
+  samplerate: 48000
+  bitdepth:   24
+  tempo:      96bpm
+  key:        Bb minor, 420b=Bb major
+
+  emotion:    tension=0.65, wonder=0.55, cinematic_intensity=0.70,
+              urgency=0.50, awe=0.35, triumph=0.60
+
+  intensity:  0s=0.45, 10s=0.50, 20s=0.55, 30s=0.60,
+              68s=0.65, 135s=0.80, 185s=0.95, 235s=1.0,
+              255s=0.85, 268s=0.70, 275s=0.50
+
+
+  marker conv_subject_I    @ 0s
+  marker conv_answer_II    @ 10.0s
+  marker conv_answer_III   @ 20.0s
+  marker conv_answer_IV    @ 30.0s
+  marker conv_episode_1    @ 40.0s
+  marker conv_middle       @ 67.5s
+  marker conv_stretto      @ 135.0s
+  marker conv_climax       @ 185.0s
+  marker conv_picardy      @ 235.0s
+  marker conv_allarg       @ 258.3s
+  marker conv_fff_close    @ 270.0s
+
+  # ---------------------------------------------------------------------------
+  # FUGUE SUBJECT — Cell C
+  # Chromatic descent in Bb minor, Brazilian syncopation on beat 3
+  # Bb3 C4 Db4 Eb4 F4 Eb4 D4 C4 Bb3 (9 notes, ~3 beats + anacrusis)
+  # ---------------------------------------------------------------------------
+
+  motif fugue_subject {
+    Bb3 @ 0b    for 0.25b  vel 0.85   # anacrusis
+    C4  @ 0.25b for 0.25b  vel 0.80
+    Db4 @ 0.5b  for 0.25b  vel 0.83
+    Eb4 @ 0.75b for 0.25b  vel 0.86
+    F4  @ 1b    for 0.25b  vel 0.90   # peak — syncopated accent
+    Eb4 @ 1.25b for 0.25b  vel 0.84
+    D4  @ 1.5b  for 0.25b  vel 0.80
+    C4  @ 1.75b for 0.25b  vel 0.78
+    Bb3 @ 2b    for 1b     vel 0.76   # landing
+  }
+
+  motif fugue_answer {
+    # Tonal answer on F (dominant of Bb)
+    F4  @ 0b    for 0.25b  vel 0.85
+    G4  @ 0.25b for 0.25b  vel 0.80
+    Ab4 @ 0.5b  for 0.25b  vel 0.83
+    Bb4 @ 0.75b for 0.25b  vel 0.86
+    C5  @ 1b    for 0.25b  vel 0.90
+    Bb4 @ 1.25b for 0.25b  vel 0.84
+    A4  @ 1.5b  for 0.25b  vel 0.80
+    G4  @ 1.75b for 0.25b  vel 0.78
+    F4  @ 2b    for 1b     vel 0.76
+  }
+
+  motif countersubject_III {
+    # Running counterpoint against subject — syncopated 8ths
+    Eb4 @ 0b    for 0.375b vel 0.68
+    F4  @ 0.5b  for 0.25b  vel 0.65
+    G4  @ 0.875b for 0.125b vel 0.67
+    Ab4 @ 1b    for 0.375b vel 0.70
+    G4  @ 1.5b  for 0.25b  vel 0.66
+    F4  @ 1.875b for 0.125b vel 0.64
+    Eb4 @ 2b    for 0.5b   vel 0.62
+    D4  @ 2.5b  for 0.5b   vel 0.60
+  }
+
+  motif bass_pedal_tonic {
+    Bb1 @ 0b    for 4b     vel 0.85   art sustain
+  }
+
+  bus conv_upper {
+    gain: 0db
+    fx: reverb(decay=1.8, mix=0.16),
+        comp(threshold=-18, ratio=1.8, attack=0.010, release=0.20, knee=7)
+  }
+  bus conv_inner {
+    gain: -1.5db
+    fx: reverb(decay=1.8, mix=0.16)
+  }
+  bus conv_bass {
+    gain: -0.5db
+    fx: reverb(decay=1.6, mix=0.14), highpass(40hz)
+  }
+
+
+  # ---------------------------------------------------------------------------
+  # VOICE 1 — Stand 1  (enters first with subject)
+  # ---------------------------------------------------------------------------
+
+  layer conv_I : notes {
+    osc:          pad
+    bandwidth:    25c
+    harmonics:    48
+    dynamic:      0b=f, 16b=mf, 40b=f, 220b=ff, 400b=fff, 420b=ff
+    humanize:     time=0.009s vel=0.06
+    gain:         0db
+    bus:          conv_upper
+
+      # EXPOSITION: Stand 1 opens alone (m.1)
+
+
+      # After answer entries — countersubject continues
+
+      # EPISODE 1 (m.17): sequences
+
+      # MIDDLE ENTRIES (m.28–54)
+
+      # More episodes
+
+      # STRETTO (m.55): entries 1 beat apart
+
+      # CLIMAX (m.75)
+
+      # PICARDY (m.105): Bb major
+
+      # Allarg
+
+      # fff close
+    play fugue_subject @ 0b   vel 0.88
+    play countersubject_III @ 3b  vel 0.68
+    play fugue_subject @ 6b   diatonic +1  vel 0.85
+    play countersubject_III @ 9b  diatonic +1  vel 0.65
+    play countersubject_III @ 12b  vel 0.65
+    play countersubject_III @ 15b  diatonic -1  vel 0.63
+    play countersubject_III @ 18b  diatonic +2  vel 0.65
+    play fugue_subject @ 22b  diatonic -2  vel 0.80
+    play countersubject_III @ 25b  diatonic -2  vel 0.62
+    play fugue_subject @ 28b  diatonic -4  vel 0.77
+    play countersubject_III @ 31b  diatonic -4  vel 0.60
+    play fugue_subject @ 44b  diatonic +2  vel 0.82   # Cb entry (modal)
+    play countersubject_III @ 47b  diatonic +2  vel 0.65
+    play fugue_subject @ 55b  vel 0.85
+    play countersubject_III @ 58b  vel 0.67
+    play fugue_subject @ 66b  diatonic -2  vel 0.82
+    play countersubject_III @ 69b  diatonic -2  vel 0.64
+    play fugue_subject @ 77b  diatonic +1  vel 0.80
+    play fugue_subject @ 88b  invert  vel 0.78
+    play countersubject_III @ 91b  invert  vel 0.63
+    play fugue_subject @ 132b  vel 0.90
+    play fugue_subject @ 133b  diatonic -3  vel 0.88   # stretto entry
+    play countersubject_III @ 135b  vel 0.78
+    play fugue_subject @ 136b  diatonic -5  vel 0.87
+    play fugue_subject @ 140b  invert  vel 0.85
+    play countersubject_III @ 143b  invert  vel 0.75
+    play fugue_subject @ 148b  stretch 0.75  vel 0.90   # diminution stretto
+    play fugue_subject @ 150b  stretch 0.75  diatonic +2  vel 0.88
+    play fugue_subject @ 178b  vel 0.95
+    play fugue_subject @ 179b  diatonic -2  vel 0.93
+    play fugue_subject @ 182b  transpose +12st  vel 0.97
+    play countersubject_III @ 185b  transpose +12st  vel 0.85
+    play fugue_subject @ 188b  retrograde  vel 0.93
+    play fugue_subject @ 192b  invert  transpose +12st  vel 0.95
+    play fugue_answer @ 210b  vel 0.88    # answer in Bb major
+    play countersubject_III @ 213b  diatonic +1  vel 0.75
+    play fugue_subject @ 252b  stretch 1.5  vel 0.85
+    play fugue_subject @ 256b  stretch 2.0  vel 0.88
+    notes: Bb4 @ 264b for 4b vel 0.95 art sustain,
+           F5 @ 268b for 4b vel 0.98 art sustain,
+           Bb5 @ 272b for 8b vel 1.0 art sustain
+  }
+
+  # ---------------------------------------------------------------------------
+  # VOICE 2 — Stand 2  (enters at m.5 with answer)
+  # ---------------------------------------------------------------------------
+
+  layer conv_III : notes {
+    osc:          pad
+    bandwidth:    25c
+    harmonics:    48
+    dynamic:      0b=p, 16b=mf, 40b=f, 220b=ff, 400b=fff
+    humanize:     time=0.011s vel=0.07
+    gain:         -1.5db
+    bus:          conv_inner
+
+      # Silent mm.1-4, enters with answer m.5
+
+
+      # Countersubject while other voices hold subject
+
+      # EPISODE 1
+
+      # MIDDLE
+
+
+      # STRETTO
+
+      # CLIMAX
+
+      # PICARDY
+
+
+    play fugue_answer @ 12b   vel 0.85
+    play countersubject_III @ 15b  diatonic -1  vel 0.65
+    play fugue_answer @ 18b   diatonic +1  vel 0.82
+    play countersubject_III @ 21b  vel 0.63
+    play countersubject_III @ 24b  diatonic -2  vel 0.65
+    play countersubject_III @ 27b  vel 0.63
+    play fugue_answer @ 24b   diatonic -1  vel 0.78
+    play countersubject_III @ 27b  diatonic -3  vel 0.60
+    play fugue_answer @ 32b   diatonic -3  vel 0.75
+    play countersubject_III @ 35b  diatonic -5  vel 0.58
+    play fugue_answer @ 48b   diatonic +1  vel 0.80
+    play countersubject_III @ 51b  diatonic +1  vel 0.63
+    play fugue_answer @ 60b   vel 0.83
+    play countersubject_III @ 63b  vel 0.65
+    play fugue_answer @ 70b   diatonic -2  vel 0.80
+    play fugue_answer @ 82b   diatonic +2  vel 0.78
+    play fugue_answer @ 92b   invert  diatonic -1  vel 0.76
+    play fugue_answer @ 132b  diatonic -2  vel 0.88
+    play fugue_answer @ 134b  vel 0.87
+    play countersubject_III @ 136b  diatonic -2  vel 0.76
+    play fugue_answer @ 138b  diatonic -4  vel 0.86
+    play fugue_answer @ 142b  invert  diatonic +1  vel 0.84
+    play fugue_answer @ 180b  vel 0.93
+    play fugue_answer @ 181b  diatonic -3  vel 0.91
+    play countersubject_III @ 184b  vel 0.83
+    play fugue_answer @ 190b  invert  vel 0.90
+    play fugue_answer @ 212b  diatonic +1  vel 0.86
+    play countersubject_III @ 215b  vel 0.73
+    play fugue_answer @ 254b  stretch 1.5  vel 0.83
+    play fugue_answer @ 258b  stretch 2.0  vel 0.86
+    notes: Bb3 @ 264b for 4b vel 0.90 art sustain,
+           D4 @ 268b for 4b vel 0.93 art sustain,
+           F4 @ 272b for 8b vel 0.96 art sustain
+  }
+
+  # ---------------------------------------------------------------------------
+  # VOICE 3 — Stand 3  (enters at m.9 with subject an octave lower)
+  # ---------------------------------------------------------------------------
+
+  layer conv_V : notes {
+    osc:          pad
+    bandwidth:    25c
+    harmonics:    48
+    dynamic:      0b=pp, 24b=mp, 40b=mf, 220b=f, 400b=fff
+    humanize:     time=0.013s vel=0.08
+    gain:         -2db
+    bus:          conv_inner
+
+      # Enters m.9 with subject at lower octave
+
+
+      # EPISODE 1
+
+      # MIDDLE
+
+
+      # STRETTO (tenor voice)
+
+      # CLIMAX
+
+      # PICARDY
+
+
+    play fugue_subject @ 24b  transpose -12st  vel 0.85
+    play countersubject_III @ 27b  transpose -12st  vel 0.63
+    play fugue_subject @ 30b  transpose -12st  diatonic +1  vel 0.82
+    play countersubject_III @ 33b  transpose -12st  vel 0.61
+    play fugue_subject @ 36b  transpose -12st  diatonic -2  vel 0.78
+    play fugue_subject @ 40b  transpose -12st  diatonic -4  vel 0.75
+    play fugue_subject @ 52b  transpose -12st  diatonic +2  vel 0.80
+    play countersubject_III @ 55b  transpose -12st  diatonic +1  vel 0.63
+    play fugue_subject @ 64b  transpose -12st  vel 0.83
+    play countersubject_III @ 67b  transpose -12st  vel 0.65
+    play fugue_subject @ 74b  transpose -12st  diatonic -3  vel 0.80
+    play fugue_subject @ 86b  transpose -12st  invert  vel 0.78
+    play fugue_subject @ 133b  transpose -12st  vel 0.87
+    play fugue_subject @ 135b  transpose -12st  diatonic -2  vel 0.85
+    play countersubject_III @ 137b  transpose -12st  vel 0.75
+    play fugue_subject @ 139b  transpose -12st  invert  vel 0.84
+    play fugue_subject @ 143b  transpose -12st  stretch 0.75  vel 0.82
+    play fugue_subject @ 181b  transpose -12st  vel 0.92
+    play fugue_subject @ 183b  transpose -12st  diatonic -3  vel 0.90
+    play countersubject_III @ 186b  transpose -12st  vel 0.82
+    play fugue_subject @ 189b  transpose -12st  invert  vel 0.88
+    play fugue_subject @ 193b  transpose -12st  retrograde  vel 0.86
+    play fugue_subject @ 214b  transpose -12st  vel 0.84
+    play countersubject_III @ 217b  transpose -12st  diatonic +1  vel 0.72
+    play fugue_subject @ 255b  transpose -12st  stretch 1.5  vel 0.82
+    play fugue_subject @ 259b  transpose -12st  stretch 2.0  vel 0.84
+    notes: Bb2 @ 264b for 4b vel 0.88 art sustain,
+           D3 @ 268b for 4b vel 0.90 art sustain,
+           F3 @ 272b for 8b vel 0.93 art sustain
+  }
+
+  # ---------------------------------------------------------------------------
+  # VOICE 4 — Stand 4  (bass, enters m.13)
+  # ---------------------------------------------------------------------------
+
+  layer conv_VII : notes {
+    osc:          pad
+    bandwidth:    25c
+    harmonics:    48
+    dynamic:      0b=pp, 32b=mf, 40b=f, 220b=ff, 400b=fff
+    humanize:     time=0.015s vel=0.09
+    gain:         -1db
+    bus:          conv_bass
+
+      # Bass enters last (m.13) with subject two octaves below soprano
+
+
+      # EPISODE 1 — bass walking line
+
+      # MIDDLE ENTRIES — bass subjects
+
+      # Bass episodes — sustained pedals
+
+      # STRETTO — bass enters with tight overlapping
+
+      # Stretto pedal
+
+      # CLIMAX — bass fff marcato
+
+
+      # Transition to Picardy — bass walk up to Bb major
+
+      # PICARDY — Bb major bass line
+
+
+      # Allarg — augmented subject in bass
+
+      # fff sustained pedal to end
+    play fugue_subject @ 36b  transpose -24st  vel 0.90
+    play countersubject_III @ 39b  transpose -24st  vel 0.68
+    play fugue_subject @ 42b  transpose -24st  diatonic +1  vel 0.87
+    play countersubject_III @ 45b  transpose -24st  vel 0.65
+    play fugue_subject @ 60b  transpose -24st  diatonic +2  vel 0.85
+    play fugue_subject @ 72b  transpose -24st  vel 0.88
+    play fugue_subject @ 84b  transpose -24st  diatonic -2  vel 0.85
+    play fugue_subject @ 96b  transpose -24st  invert  vel 0.82
+    play fugue_subject @ 134b  transpose -24st  vel 0.92
+    play fugue_subject @ 136b  transpose -24st  diatonic -3  vel 0.90
+    play countersubject_III @ 138b  transpose -24st  vel 0.80
+    play fugue_subject @ 140b  transpose -24st  invert  vel 0.89
+    play fugue_subject @ 178b  transpose -24st  vel 0.98
+    play fugue_subject @ 188b  transpose -24st  retrograde  vel 0.96
+    play fugue_subject @ 192b  transpose -24st  vel 0.98
+    play fugue_subject @ 226b  transpose -12st  vel 0.86
+    play fugue_subject @ 234b  transpose -12st  diatonic +1  vel 0.84
+    play fugue_subject @ 242b  transpose -12st  retrograde  vel 0.82
+    play fugue_subject @ 252b  transpose -12st  stretch 2.0  vel 0.90
+    play fugue_subject @ 258b  transpose -12st  stretch 3.0  vel 0.93
+    notes: Bb1 @ 48b for 1b vel 0.82 art sustain,
+           C2 @ 49b for 1b vel 0.78,
+           Db2 @ 50b for 1b vel 0.80,
+           Eb2 @ 51b for 1b vel 0.77,
+           F2 @ 52b for 2b vel 0.82 art sustain,
+           Eb2 @ 54b for 1b vel 0.78,
+           Db2 @ 55b for 1b vel 0.76,
+           C2 @ 56b for 1b vel 0.74,
+           Bb1 @ 57b for 3b vel 0.78 art sustain,
+           Bb1 @ 108b for 4b vel 0.82 art sustain,
+           F2 @ 112b for 4b vel 0.80 art sustain,
+           Bb1 @ 116b for 4b vel 0.82 art sustain,
+           Eb2 @ 120b for 4b vel 0.80 art sustain,
+           F2 @ 124b for 4b vel 0.82 art sustain,
+           Bb1 @ 128b for 4b vel 0.85 art sustain,
+           Bb1 @ 144b for 4b vel 0.90 art sustain,
+           F2 @ 148b for 4b vel 0.88 art sustain,
+           Bb1 @ 152b for 4b vel 0.90 art sustain,
+           Eb2 @ 156b for 4b vel 0.88 art sustain,
+           Bb1 @ 181b for 1b vel 1.0 art marcato,
+           F2 @ 182b for 1b vel 0.98 art marcato,
+           Bb1 @ 183b for 1b vel 1.0 art marcato,
+           Eb2 @ 184b for 1b vel 0.96 art marcato,
+           Bb1 @ 200b for 2b vel 0.90 art sustain,
+           C2 @ 202b for 2b vel 0.88,
+           D2 @ 204b for 2b vel 0.87,
+           Eb2 @ 206b for 2b vel 0.85,
+           F2 @ 208b for 2b vel 0.87,
+           Bb1 @ 210b for 4b vel 0.88 art sustain,
+           F2 @ 214b for 4b vel 0.86 art sustain,
+           D2 @ 218b for 4b vel 0.85 art sustain,
+           Bb1 @ 222b for 4b vel 0.87 art sustain,
+           Bb1 @ 264b for 4b vel 0.96 art sustain,
+           F2 @ 268b for 4b vel 0.98 art sustain,
+           Bb1 @ 272b for 8b vel 1.0 art sustain
+  }
+
+  # Final chord — Bb major sustained, all voices
+  layer conv_final_chord : tone {
+    osc:   pad
+    bandwidth: 30c
+    harmonics: 24
+    note:  Bb2
+    gain:  -8db
+    start: 267s
+    env:   a=1.5s d=0.0s s=1.0 r=4.0s
+    fx:    lowpass(3000hz), reverb(decay=4.0, mix=0.40)
+
+    auto gain: 267s=-16db, 270s=-8db, 275s=-20db
+  }
+
+  master {
+    width:   0.80
+    lufs:    -14
+    peak:    -1.0
+    fadein:  0.3s
+    fadeout: 3.5s
+
+    fx: fdn(rt60=2.8, rt60_high=1.0, crossover=2100, size=1.0, mix=0.18),
+        comp(threshold=-16, ratio=2.2, attack=0.012, release=0.25, knee=8),
+        highpass(35hz),
+        lowshelf(85hz, gain=-1.5),
+        peak(250hz, gain=-1.0, q=1.4),
+        highshelf(9500hz, gain=+0.6),
+        mbcomp(threshold=-20, ratio=1.8, low=150, high=2500)
+  }
+}
+
+# =============================================================================
+# Render targets:
+#   audioforge validate  cancoes_sertao_I.af
+#   audioforge validate  cancoes_sertao_II.af
+#   audioforge validate  cancoes_sertao_III.af
+#   audioforge render    cancoes_sertao_I.af   --preset cinematic_master -o ./renders
+#   audioforge render    cancoes_sertao_II.af  --preset cinematic_master -o ./renders
+#   audioforge render    cancoes_sertao_III.af --preset cinematic_master -o ./renders
+#   audioforge pack      cancoes_sertao_I.af   --variants 4 -o ./packs
+#
+# Campaign cutdowns (I only — most broadcast-ready):
+#   cutdowns {
+#     60s: keep 0s to 15s, keep 54s to 99s, fade 1.2s
+#     30s: keep 0s to 8s, keep 82s to 104s, fade 0.8s
+#     15s: keep 82s to 97s, fade 0.6s
+#   }
+# =============================================================================

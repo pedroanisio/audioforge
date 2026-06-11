@@ -284,6 +284,14 @@ class AudioForge:
             json.dumps(pack, indent=1))
         return pack
 
+    def catalog(self, root: str | Path = "libraries"):
+        """Discover the installed instrument libraries and return a queryable
+        `Catalog` (see audioforge.catalog). Pairs with the spec/asset SDK:
+        find an instrument, read its key range/articulations, and get its
+        library pin to author `library:`/`instrument:` references."""
+        from .catalog import Catalog
+        return Catalog.build(root)
+
     def load_spec(self, spec: dict) -> AudioAsset:
         return AudioAsset(validate_spec(spec))
 
