@@ -3,3 +3,5 @@ libraries/
 tracks/
 static/
 compare/
+*egg-info*
+.coverage
