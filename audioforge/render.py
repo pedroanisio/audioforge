@@ -221,11 +221,13 @@ def _premaster(spec: dict, root: str, sr: int, master: dict,
     swing = float(spec.get("swing", 0.0))
 
     buses = spec.get("buses", [])
-    bus_names = [b["name"] for b in buses]
     duck_sources = {b["duck"]["source"] for b in buses if "duck" in b}
     acc = {None: np.zeros((total_n, 2))}
-    for bn in bus_names:
-        acc[bn] = np.zeros((total_n, 2))
+
+    def _acc_add(bus, st):                  # lazy: unrouted declared
+        if bus not in acc:                  # buses cost nothing
+            acc[bus] = np.zeros((total_n, 2))
+        acc[bus] += st
     kept: dict[str, np.ndarray] = {}        # duck-source signals (mono mix)
     stems: dict[str, np.ndarray] = {}
     report: dict = {}
@@ -262,12 +264,17 @@ def _premaster(spec: dict, root: str, sr: int, master: dict,
             st = np.stack([np.cos(theta) * sig, np.sin(theta) * sig],
                           axis=1)
         lname = layer.get("name", f"layer{i}")
-        acc[layer.get("bus")] += st
+        _acc_add(layer.get("bus"), st)
         if lname in duck_sources:
             kept[lname] = st.mean(axis=1)
         if return_stems:
             stems[lname] = st
 
+    for lib in _layer_library_cache.values():     # notes all rendered:
+        lib._audio_cache.clear()                   # drop decoded float64
+        lib._region_cache.clear()                  # audio before the
+    import gc                                      # memory-peak tail conv
+    gc.collect()
     mix = acc[None]
     stg = spec.get("stage")
     if stg is not None and np.any(stage_tail_in):
@@ -275,9 +282,12 @@ def _premaster(spec: dict, root: str, sr: int, master: dict,
         mix = mix + float(stg.get("mics", {}).get("ambient", 0.3)) \
             * hall_tail(stage_tail_in, sr, stg["hall_file"],
                         stg["hall_sha256"])
+    del stage_tail_in
     from .fx import apply_master_chain, duck_envelope
     for b in buses:                          # declared order; ducks resolve
         bn = b["name"]
+        if bn not in acc:                    # nothing routed here (lazy acc)
+            continue
         st = acc[bn]
         if "duck" in b:
             d = b["duck"]
@@ -304,6 +314,7 @@ def _premaster(spec: dict, root: str, sr: int, master: dict,
         if f"bus:{bn}" in duck_sources:     # later buses may duck off this one
             kept[f"bus:{bn}"] = st.mean(axis=1)
         mix += st
+    del acc, kept
     left, right = mix[:, 0], mix[:, 1]
 
     m_gain_env, m_cutoff_envs, _mscan = _automation_envs(master, total_n, sr)
@@ -335,8 +346,10 @@ def _finish(left, right, sr, master, spec, root, stems, return_stems):
     loudness_report = None
     if "target_lufs" in master:
         st = np.stack([left, right], axis=1)
+        del left, right                      # memory: one stereo copy only
         peak = max(np.max(np.abs(st)), 1e-12)
-        st = st / peak * 0.5  # pre-scale into sane range before measuring
+        st /= peak                           # in place: same ops, same bytes
+        st *= 0.5                            # pre-scale into sane range
         st, loudness_report = master_loudness(
             st, sr, float(master["target_lufs"]),
             float(master.get("target_peak_dbfs", -1.0)))
@@ -358,7 +371,11 @@ def _finish(left, right, sr, master, spec, root, stems, return_stems):
         ramp = np.linspace(1, 0, fo)
         left[-fo:] *= ramp; right[-fo:] *= ramp
 
-    stereo = np.stack([left, right], axis=1)
+    if left.base is not None and left.base is right.base:
+        stereo = left.base                   # already one [n,2] array:
+    else:                                    # no third stereo copy
+        stereo = np.stack([left, right], axis=1)
+        del left, right
     meta = {
         "id": spec["id"], "kind": spec["kind"], "engine_version": ENGINE_VERSION,
         "spec_hash": root, "sample_rate": sr,

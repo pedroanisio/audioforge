@@ -24,6 +24,8 @@ Layer shapes (discriminated by "type"):
 """
 from __future__ import annotations
 
+import re
+
 KINDS = {"signature", "sfx", "loop", "jingle", "transition", "cue", "bed",
          "soundtrack"}
 LAYER_TYPES = {"tone", "sweep", "noise", "drums", "notes",
@@ -35,7 +37,7 @@ NOISE_COLORS = {"white", "pink", "brown"}
 # adding a kernel voice here can't silently bypass the fail-loud "no compiler"
 # check. The matching dispatch in synth.osc() and binding in _native.py are
 # guarded by tests/test_contract so the three can't drift apart.
-NATIVE_OSC_SHAPES = {"bowed", "blown", "brass", "struck"}
+NATIVE_OSC_SHAPES = {"bowed", "blown", "brass", "struck", "sympathetic"}
 OSC_SHAPES = {"sine", "saw", "square", "triangle", "fm", "organ",
               "pad", "pluck", "modal", "morph"} | NATIVE_OSC_SHAPES
 # Effects whose render path is the native C kernel — same rationale and
@@ -168,6 +170,7 @@ _VOICE_RANGES = {
     "damping": (0.0, 1.0), "brightness": (0.0, 1.0),
     "pluck_pos": (0.02, 0.5), "mode_decay_s": (0.01, 30.0),
     "tension": (0.0, 1.0), "strike": (0.0, 1.0), "lip": (0.0, 1.0),
+    "coupling": (0.0, 1.0), "buzz": (0.0, 1.0),
 }
 
 
@@ -288,6 +291,13 @@ def validate_spec(spec: dict) -> dict:
         if "fx" in layer:
             _validate_fx(layer["fx"], f"{p}.fx")
         if t == "tone":
+            nt = layer.get("note")
+            if nt is not None and not re.fullmatch(
+                    r"[A-Ga-g][#b]?-?\d+", str(nt)):
+                raise SpecError(
+                    f"{p}.note: tone layers take a single pitch (e.g. Bb2)."
+                    f" '{nt}' looks like a chord — use a notes layer with a"
+                    f" chord event (e.g. Bb2maj @ 0b for 8b) instead")
             if not _osc_ok(layer.get("osc", "sine")):
                 raise SpecError(f"{p}.osc: invalid shape")
             _validate_voice(layer, p)
