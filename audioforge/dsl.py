@@ -391,11 +391,13 @@ class Parser:
         st = {"motif": name, "at_beat": at.value, "transpose_st": 0.0,
               "vel_scale": 1.0, "line": at.line}
         while self.peek().kind == "IDENT" and self.peek().text in (
-                "legato",
+                "legato", "art",
                 "transpose", "vel", "invert", "retrograde", "stretch",
                 "diatonic"):
             kw = self.next().text
-            if kw == "legato":
+            if kw == "art":
+                st["art"] = self.expect("IDENT").text
+            elif kw == "legato":
                 st["legato"] = True
             elif kw == "invert":
                 st["invert"] = True
@@ -1147,7 +1149,10 @@ def _apply_voicing_extensions(layer: dict, voicing: dict):
                 "vel": round(0.48 + 0.22 * richness, 4),
                 "generated": "suspension",
             })
-        elif abs(b_semis[0] - a_semis[-1]) <= 7:
+        elif abs(b_semis[0] - a_semis[-1]) <= 7 \
+                and b_key[0] - min(0.5, a_key[1] * 0.2) >= 0.0:
+            # an anticipation cannot precede beat 0 (merged from _tmp: jazz
+            # style + chord at 0b otherwise compiled a passing tone to -0.5b)
             additions.append({
                 "note": theory.semis_to_note((b_semis[0] + a_semis[-1]) // 2),
                 "start_beat": round(b_key[0] - min(0.5, a_key[1] * 0.2), 6),
@@ -1838,6 +1843,8 @@ def _compile_layer(lay: Layer, motifs: dict, scale, diags: list[str],
                 ev2["slur"] = next_slur[0]
         for ev2 in evs:
             ev2["start_beat"] = round(ev2["start_beat"] + play["at_beat"], 6)
+            if play.get("art") and "art" not in ev2:    # phrase-level art stamp
+                ev2["art"] = play["art"]
             if "vel" in ev2 or play["vel_scale"] != 1.0:
                 ev2["vel"] = round(ev2.get("vel", 1.0) * play["vel_scale"], 4)
             if play["transpose_st"]:

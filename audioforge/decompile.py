@@ -47,22 +47,65 @@ def _env(env: dict) -> str:
 
 
 def _fx(fx: dict) -> str:
+    """Table-driven, lossless fx serialization: every stored parameter
+    is emitted (the IR holds explicit values; round-trip fidelity wants
+    all of them — hall damp and saturate warmth were silently dropped by
+    the hand-listed version, found by the merge battery)."""
     t = fx["type"]
     if t == "filter":
-        return f"{fx['mode']}({_fmt_num(fx['cutoff_hz'])}hz)"
-    if t == "reverb":
-        return f"reverb(decay={_fmt_num(fx.get('decay_s', 1.2))}s, mix={_fmt_num(fx.get('mix', 0.25))})"
-    if t == "hall":
-        return f"hall(rt60={_fmt_num(fx.get('rt60', 2.5))}, mix={_fmt_num(fx.get('mix', 0.3))})"
-    if t == "delay":
-        return f"delay(time={_fmt_num(fx.get('time_s', 0.25))}s, feedback={_fmt_num(fx.get('feedback', 0.3))}, mix={_fmt_num(fx.get('mix', 0.3))})"
-    if t == "saturate":
-        return f"saturate(amount={_fmt_num(fx.get('amount', 0.3))}, mix={_fmt_num(fx.get('mix', 1.0))})"
-    if t == "comp":
-        return f"comp(threshold={_fmt_num(fx.get('threshold', -18))}, ratio={_fmt_num(fx.get('ratio', 2.5))})"
-    if t == "peak":
-        return f"peak({_fmt_num(fx.get('freq_hz', 1000))}hz, gain={_fmt_num(fx.get('gain_db', 0))}, q={_fmt_num(fx.get('q', 0.7071))})"
-    return t + "()"
+        return (f"{fx['mode']}({_fmt_num(fx['cutoff_hz'])}hz"
+                + (f", q={_fmt_num(fx['q'])}" if "q" in fx else "") + ")")
+    TABLE = {
+        "reverb":   [("decay_s", "decay", "s"), ("mix", "mix", "")],
+        "hall":     [("rt60", "rt60", ""), ("damp", "damp", ""),
+                     ("mix", "mix", "")],
+        "plate":    [("decay", "decay", ""), ("damp", "damp", ""),
+                     ("predelay", "predelay", ""), ("mod", "mod", ""),
+                     ("modrate", "modrate", ""), ("mix", "mix", "")],
+        "fdn":      [("rt60", "rt60", ""), ("rt60_high", "rt60_high", ""),
+                     ("crossover", "crossover", ""), ("size", "size", ""),
+                     ("mix", "mix", "")],
+        "delay":    [("time_s", "time", "s"), ("feedback", "feedback", ""),
+                     ("mix", "mix", "")],
+        "saturate": [("amount", "amount", ""), ("mix", "mix", ""),
+                     ("warmth", "warmth", "")],
+        "drive":    [("amount", "amount", "")],
+        "comp":     [("threshold", "threshold", ""), ("ratio", "ratio", ""),
+                     ("attack", "attack", ""), ("release", "release", ""),
+                     ("knee", "knee", ""), ("makeup", "makeup", "")],
+        "mbcomp":   [("threshold", "threshold", ""), ("ratio", "ratio", ""),
+                     ("low", "low", ""), ("high", "high", "")],
+        "transient": [("attack", "attack", ""), ("sustain", "sustain", "")],
+        "tremolo":  [("rate", "rate", ""), ("depth", "depth", "")],
+        "peak":     [("freq_hz", None, "hz"), ("gain_db", "gain", ""),
+                     ("q", "q", "")],
+        "lowshelf": [("freq_hz", None, "hz"), ("gain_db", "gain", "")],
+        "highshelf": [("freq_hz", None, "hz"), ("gain_db", "gain", "")],
+        "convolve": [("file", "file", "STR"), ("sha256", "sha256", "STR"),
+                     ("mix", "mix", ""), ("gain_db", "gain", "")],
+        "gain":     [("gain_db", None, "db")],
+    }
+    if t in TABLE:
+        parts = []
+        for key, name, unit in TABLE[t]:
+            if key not in fx:
+                continue
+            v = fx[key]
+            if unit == "STR":
+                val = f'"{v}"'
+            else:
+                val = f"{_fmt_num(v)}{unit}"
+            parts.append(val if name is None else f"{name}={val}")
+        return f"{t}({', '.join(parts)})"
+    # unknown/plugin fx: serialize every non-type field as a named arg
+    parts = []
+    for k in sorted(fx):
+        if k == "type":
+            continue
+        v = fx[k]
+        parts.append(f'{k}="{v}"' if isinstance(v, str)
+                     else f"{k}={_fmt_num(v)}")
+    return f"{t}({', '.join(parts)})"
 
 
 def _auto(au: dict) -> str:
@@ -133,6 +176,26 @@ def spec_to_dsl(spec: dict) -> str:
             lines.append(f"    bus: {layer['bus']}")
         if "env" in layer:
             lines.append(f"    env: {_env(layer['env'])}")
+        if "unison" in layer:
+            lines.append(f"    unison: {int(layer['unison'])}")
+        if "spread_cents" in layer:
+            lines.append(f"    spread: "
+                         f"{_fmt_num(layer['spread_cents'])}c")
+        if "phrasing" in layer:
+            lines.append(f"    phrasing: {_fmt_num(layer['phrasing'])}")
+        if "vel_brightness" in layer:
+            lines.append(f"    velbright: "
+                         f"{_fmt_num(layer['vel_brightness'])}")
+        vb = layer.get("vibrato")
+        if isinstance(vb, dict):
+            lines.append(f"    vibrato: rate={_fmt_num(vb['rate_hz'])}hz "
+                         f"depth={_fmt_num(vb['depth_cents'])}c "
+                         f"delay={_fmt_num(vb['delay_s'])}s")
+        hz = layer.get("humanize")
+        if isinstance(hz, dict):
+            lines.append(f"    humanize: time="
+                         f"{_fmt_num(hz.get('timing_s', 0))}s "
+                         f"vel={_fmt_num(hz.get('vel', 0))}")
         if "dynamic" in layer:
             lines.append(f"    dynamic: {_dynamic(layer['dynamic'])}")
         if "notes" in layer:

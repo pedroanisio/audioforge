@@ -137,10 +137,13 @@ def early_ir(az_deg: float, dist_m: float, dims, sr: int) -> np.ndarray:
 
 def early_tap(sig_mono: np.ndarray, sr: int, az_deg: float, dist_m: float,
               dims) -> np.ndarray:
-    from scipy.signal import fftconvolve
+    # oaconvolve: overlap-add keeps memory flat for long signals x short
+    # IRs (an 8-layer staged asset at several minutes OOM'd under one-shot
+    # fftconvolve — measured 2026-06-10)
+    from scipy.signal import oaconvolve
     ir = early_ir(az_deg, dist_m, dims, sr)
     n = sig_mono.size
-    return np.stack([fftconvolve(sig_mono, ir[:, c])[:n] for c in (0, 1)],
+    return np.stack([oaconvolve(sig_mono, ir[:, c])[:n] for c in (0, 1)],
                     axis=1)
 
 
@@ -148,7 +151,7 @@ def hall_tail(tail_in: np.ndarray, sr: int, file: str, sha256: str,
               gain_db: float = 0.0) -> np.ndarray:
     """Shared stereo hall: one convolution per stage with a hash-pinned IR
     (stereo IRs give a decorrelated tail; mono IRs apply per channel)."""
-    from scipy.signal import fftconvolve
+    from scipy.signal import oaconvolve
     from .samples import load_sample_multi
     ir = load_sample_multi(file, sha256, sr)          # (n, ch) verified
     if ir.ndim == 1:
@@ -157,5 +160,5 @@ def hall_tail(tail_in: np.ndarray, sr: int, file: str, sha256: str,
     ir = ir / max(e, 1e-9)
     n = tail_in.size
     g = 10.0 ** (gain_db / 20.0)
-    return np.stack([fftconvolve(tail_in, ir[:, min(c, ir.shape[1] - 1)])[:n]
+    return np.stack([oaconvolve(tail_in, ir[:, min(c, ir.shape[1] - 1)])[:n]
                      for c in (0, 1)], axis=1) * g

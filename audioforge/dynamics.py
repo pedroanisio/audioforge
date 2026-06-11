@@ -13,12 +13,36 @@ from scipy.ndimage import minimum_filter1d
 from scipy.signal import fftconvolve, resample_poly
 
 
-def _true_peak_per_sample(stereo: np.ndarray) -> np.ndarray:
-    """Stereo-linked, 4x-oversampled |peak| aligned per base sample."""
-    up = resample_poly(stereo, 4, 1, axis=0)
-    up = np.abs(up).max(axis=1)
-    n4 = (up.size // 4) * 4
-    return up[:n4].reshape(-1, 4).max(axis=1)
+def _true_peak_per_sample(stereo: np.ndarray,
+                          chunk: int = 1 << 20) -> np.ndarray:
+    """Stereo-linked, 4x-oversampled |peak| aligned per base sample.
+
+    Chunked: resample_poly is a polyphase FIR (shift-invariant direct
+    convolution), so processing overlapped chunks and keeping interior
+    samples is bit-identical to whole-signal processing — verified by
+    test — while peak memory drops from O(4n) (~850 MB on a 275 s
+    asset, the cancoes_III OOM) to O(4*chunk)."""
+    n = stereo.shape[0]
+    if n <= chunk:
+        up = resample_poly(stereo, 4, 1, axis=0)
+        up = np.abs(up).max(axis=1)
+        n4 = (up.size // 4) * 4
+        return up[:n4].reshape(-1, 4).max(axis=1)
+    OV = 1024                                  # >> FIR half-length
+    out = np.empty(n)
+    pos = 0
+    while pos < n:
+        a = max(0, pos - OV)
+        b = min(n, pos + chunk + OV)
+        up = resample_poly(stereo[a:b], 4, 1, axis=0)
+        up = np.abs(up).max(axis=1)
+        lo = (pos - a) * 4
+        hi = lo + min(chunk, n - pos) * 4
+        seg = up[lo:hi]
+        n4 = (seg.size // 4) * 4
+        out[pos:pos + n4 // 4] = seg[:n4].reshape(-1, 4).max(axis=1)
+        pos += chunk
+    return out
 
 
 def true_peak_limit(stereo: np.ndarray, sr: int, ceiling_dbfs: float = -1.0,
@@ -31,16 +55,21 @@ def true_peak_limit(stereo: np.ndarray, sr: int, ceiling_dbfs: float = -1.0,
     if np.all(required >= 1.0 - 1e-9):
         return stereo, {"gain_reduction_db_max": 0.0, "limited": False}
 
-    L = max(8, int(lookahead_ms / 1000.0 * sr))
+    del tp                                               # lifetimes: this
+    L = max(8, int(lookahead_ms / 1000.0 * sr))          # path peaked at
     eroded = minimum_filter1d(required, size=L, mode="nearest",
-                              origin=-(L // 2))          # look ahead
+                              origin=-(L // 2))          # ~1.2 GB transient
     win = np.hanning(L)
     win /= win.sum()
     padded = np.pad(eroded, L, mode="edge")              # no edge droop
+    del eroded
     smooth = fftconvolve(padded, win, mode="same")[L:-L]
+    del padded
     gain = np.minimum(smooth, required)                  # never break ceiling
+    del smooth, required
 
-    out = stereo * gain[:, None]
+    stereo *= gain[:, None]                              # in place: caller
+    out = stereo                                         # owns + reassigns
     resid = _true_peak_per_sample(out).max()             # inter-sample overs
     if resid > c:
         out *= c / resid
@@ -68,7 +97,9 @@ def master_loudness(stereo: np.ndarray, sr: int, target_lufs: float,
         if abs(shortfall) < 0.2:
             break
         total_gain_db += shortfall
-        out = out * (10.0 ** (shortfall / 20.0))
+        if out is stereo:
+            out = stereo                     # safe: caller reassigns from
+        out *= 10.0 ** (shortfall / 20.0)    # our return; no extra copy
         out, lim_i = true_peak_limit(out, sr, ceiling_dbfs)
         if lim_i["limited"]:
             lim = {"gain_reduction_db_max": max(
