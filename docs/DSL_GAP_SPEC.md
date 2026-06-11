@@ -99,35 +99,52 @@ All work in this document is gated by tests:
 
 **Current state**
 
-`DSL_SPEC.md` advertises DSL 1.7 / Engine 2.14.0, while
-`audioforge.dsl.DSL_VERSION` currently reports 1.0. The docs, manifest, grammar
-artifacts, and runtime version fields can drift unless tests explicitly lock the
-contract.
+`audioforge.version` owns the runtime engine/DSL version contract. The CLI,
+capability manifest, compiled IR `_meta`, docs, and release notes consume that
+same runtime contract, with drift tests locking the documented and exported
+versions together.
 
 **Gap**
 
-There is no single generated source of truth for DSL version metadata and
-feature-support declarations.
+Closed for G1. `audioforge/version.py` is the single runtime source of truth for
+`ENGINE_VERSION`, `DSL_VERSION`, `version_contract()`, and `version_banner()`.
+Feature-support declarations are exposed through the capability manifest and
+schema artifacts rather than duplicated prose-only claims.
 
 **Definition of Ready**
 
 - Decide which module owns DSL version metadata.
+  **Implemented:** `audioforge.version`.
 - Define which docs and manifests consume that version.
+  **Implemented:** `DSL_SPEC.md`, `docs/RELEASE_NOTES.md`,
+  `capability_manifest()`, CLI `--version`, and compile `_meta`.
 - Define drift checks for docs, grammar, manifest, and runtime.
+  **Implemented:** docs/manifest/CLI/runtime drift checks live in
+  `tests/test_docs_regression.py`, `tests/test_ai_agent_dsl.py`, and
+  `tests/test_cli.py`.
 - List all user-visible version strings that must agree.
+  **Implemented:** engine/DSL versions are exported by runtime, CLI, compiled
+  IR metadata, and capability manifest.
 
 **Definition of Done**
 
 - `DSL_SPEC.md`, capability manifest, CLI output, and runtime compile metadata
   report consistent DSL version information.
+  **Implemented:** all consume `audioforge.version`.
 - Tests fail when docs or manifest versions drift from runtime.
+  **Implemented:** regression tests compare runtime constants to docs and
+  manifest output.
 - Release notes or migration notes state when a DSL version changes.
+  **Implemented:** `docs/RELEASE_NOTES.md`.
 
 **Required tests**
 
 - Regression test comparing `audioforge.dsl.DSL_VERSION` to documented DSL
   version metadata.
 - Capability-manifest test proving the exported version matches runtime.
+  **Implemented:** version-hygiene coverage is included in
+  `tests/test_docs_regression.py`, `tests/test_ai_agent_dsl.py`, and
+  `tests/test_cli.py`.
 
 ### G2. Formal Universal Music IR Schema
 
