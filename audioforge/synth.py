@@ -76,6 +76,24 @@ def osc(shape: str, freq: float, n: int, sr: int, *,
                             pressure=float(v.get("pressure", 0.6)),
                             position=float(v.get("bow_position", 0.13)),
                             brightness=float(v.get("brightness", 0.6)))
+    if shape == "struck":
+        from ._native import struck_native
+        if rng is None:
+            raise ValueError("oscillator 'struck' needs a seeded rng "
+                             "(strike excitation)")
+        from scipy.signal import lfilter
+        L = max(int(sr / f), 4)
+        b_c = 0.15 + 0.85 * float(np.clip(v.get("brightness", 0.6), 0.0, 1.0))
+        # seeded strike burst, brightness-colored (as pluck) and amplitude-
+        # scaled by `strike` so a harder hit drives the tension modulation
+        exc = rng.uniform(-1.0, 1.0, n)
+        exc = lfilter([b_c], [1.0, -(1.0 - b_c)], exc)
+        exc[L + 2:] = 0.0                                  # burst at the front
+        exc *= 0.4 + 0.6 * float(np.clip(v.get("strike", 0.7), 0.0, 1.0))
+        return struck_native(exc, n, sr, f,
+                             damping=float(v.get("damping", 0.5)),
+                             brightness=float(v.get("brightness", 0.6)),
+                             tension=float(v.get("tension", 0.5)))
     if shape == "brass":
         from ._native import brass_native
         if rng is None:

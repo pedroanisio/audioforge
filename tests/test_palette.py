@@ -82,6 +82,46 @@ def test_brass_sustains_and_brightens():
           f"(H2={20 * np.log10(h2):.0f}dB), brightens, deterministic")
 
 
+def test_struck_string_tension_glide():
+    """The struck string is the nonlinear cousin of pluck: tension modulation
+    makes a hard strike start sharp and glide down to the nominal pitch (the
+    "boing"). tension=0 reduces to the linear Karplus-Strong (no glide); the
+    tail always lands on the nominal pitch; and it is bit-deterministic."""
+    f0 = 146.83                                        # D3
+
+    def render(tension):
+        return synth.osc("struck", f0, SR * 2, SR, rng=rng_for("t", "st"),
+                         voice={"damping": 0.4, "brightness": 0.6,
+                                "tension": tension, "strike": 0.9})
+
+    def pitch(seg):                                    # autocorrelation pitch
+        seg = seg - seg.mean()
+        ac = np.correlate(seg, seg, "full")[seg.size - 1:]
+        lo, hi = int(SR / 400), int(SR / 80)
+        return SR / (lo + np.argmax(ac[lo:hi]))
+
+    def win(y, ms, dur=120):
+        a = int(ms * SR / 1000)
+        return y[a:a + int(dur * SR / 1000)]
+
+    y = render(0.8)
+    assert np.all(np.isfinite(y))
+    assert np.sqrt(np.mean(y[:SR // 4] ** 2)) > 5 * np.sqrt(
+        np.mean(y[-SR // 4:] ** 2))                     # struck → decays
+
+    # the defining property: tension makes the onset sharp, gliding down to f0
+    glide = 1200 * np.log2(pitch(win(y, 30)) / pitch(win(y, 900)))
+    assert glide > 20, glide                           # clear downward glide
+    flat = 1200 * np.log2(pitch(win(render(0.0), 30)) /
+                          pitch(win(render(0.0), 900)))
+    assert abs(flat) < 5, flat                         # tension=0 → linear KS
+    assert abs(1200 * np.log2(pitch(y[-SR // 2:]) / f0)) < 30   # tail at nominal
+
+    assert np.array_equal(y, render(0.8))              # deterministic
+    print(f"PASS  struck: tension glide {glide:+.0f}c -> nominal, tension=0 "
+          f"flat ({flat:+.0f}c), deterministic")
+
+
 def test_drum_voice_depth():
     rng = lambda: rng_for("t", "drum")  # noqa: E731
     lo = DRUM_VOICES["kick"](SR, rng(), {"tune_st": -6.0})
@@ -206,6 +246,7 @@ def test_convolve_hash_pinned():
 if __name__ == "__main__":
     test_blown_sustains_odd_harmonics()
     test_brass_sustains_and_brightens()
+    test_struck_string_tension_glide()
     test_drum_voice_depth()
     test_foley_models_character()
     test_ingest_catalog_and_snippet()

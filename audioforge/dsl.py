@@ -1611,6 +1611,8 @@ def _compile_layer(lay: Layer, motifs: dict, scale, diags: list[str],
              "harmonics": ("harmonics", None), "damping": ("damping", None),
              "brightness": ("brightness", None),
              "pluckpos": ("pluck_pos", None),
+             "tension": ("tension", None), "strike": ("strike", None),
+             "lip": ("lip", None),
              "modedecay": ("mode_decay_s", "s")}
     for k, (jk, u) in units.items():
         if k in p:

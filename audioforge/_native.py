@@ -104,6 +104,27 @@ def ladder_native(x: np.ndarray, sr: int, cutoff_hz: float,
     return out
 
 
+def struck_native(exc, n: int, sr: int, freq: float, damping: float,
+                  brightness: float, tension: float) -> np.ndarray:
+    lib = _lib("struck", "the struck-string voice (osc: struck)")
+    if not getattr(lib, "_struck_sig", False):
+        lib.struck.restype = ctypes.c_int
+        lib.struck.argtypes = [
+            ctypes.POINTER(ctypes.c_double), ctypes.c_long, ctypes.c_int,
+            ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double,
+            ctypes.POINTER(ctypes.c_double)]
+        lib._struck_sig = True
+    ex = np.ascontiguousarray(exc, dtype=np.float64)
+    out = np.zeros(n)
+    p = lambda a: a.ctypes.data_as(ctypes.POINTER(ctypes.c_double))  # noqa
+    rc = lib.struck(p(ex), n, sr, float(freq), float(damping),
+                    float(brightness), float(tension), p(out))
+    if rc != 0:
+        raise RuntimeError("native struck kernel failed")
+    peak = np.max(np.abs(out))
+    return out / peak if peak > 1e-9 else out
+
+
 def tape_native(x: np.ndarray, sr: int, drive: float, flutter: float,
                 tone: float) -> np.ndarray:
     lib = _lib("tape", "the analog tape effect (fx: tape)")

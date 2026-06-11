@@ -35,7 +35,7 @@ NOISE_COLORS = {"white", "pink", "brown"}
 # adding a kernel voice here can't silently bypass the fail-loud "no compiler"
 # check. The matching dispatch in synth.osc() and binding in _native.py are
 # guarded by tests/test_contract so the three can't drift apart.
-NATIVE_OSC_SHAPES = {"bowed", "blown", "brass"}
+NATIVE_OSC_SHAPES = {"bowed", "blown", "brass", "struck"}
 OSC_SHAPES = {"sine", "saw", "square", "triangle", "fm", "organ",
               "pad", "pluck", "modal", "morph"} | NATIVE_OSC_SHAPES
 # Effects whose render path is the native C kernel — same rationale and
@@ -167,6 +167,7 @@ _VOICE_RANGES = {
     "bandwidth_cents": (1.0, 300.0), "harmonics": (1, 256),
     "damping": (0.0, 1.0), "brightness": (0.0, 1.0),
     "pluck_pos": (0.02, 0.5), "mode_decay_s": (0.01, 30.0),
+    "tension": (0.0, 1.0), "strike": (0.0, 1.0), "lip": (0.0, 1.0),
 }
 
 
