@@ -1,0 +1,775 @@
+{
+  "$defs": {
+    "bus": {
+      "additionalProperties": true,
+      "properties": {
+        "automation": {
+          "items": {
+            "additionalProperties": true,
+            "properties": {
+              "fx_index": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "points": {
+                "items": {
+                  "items": {
+                    "type": "number"
+                  },
+                  "maxItems": 2,
+                  "minItems": 2,
+                  "type": "array"
+                },
+                "minItems": 2,
+                "type": "array"
+              },
+              "target": {
+                "enum": [
+                  "cutoff_hz",
+                  "gain_db",
+                  "scan"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "target",
+              "points"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "duck": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "fx": {
+          "items": {
+            "$ref": "#/$defs/fx"
+          },
+          "type": "array"
+        },
+        "gain_db": {
+          "maximum": 12,
+          "minimum": -60,
+          "type": "number"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "env": {
+      "additionalProperties": true,
+      "properties": {
+        "attack": {
+          "maximum": 60,
+          "minimum": 0,
+          "type": "number"
+        },
+        "decay": {
+          "maximum": 60,
+          "minimum": 0,
+          "type": "number"
+        },
+        "release": {
+          "maximum": 60,
+          "minimum": 0,
+          "type": "number"
+        },
+        "sustain": {
+          "maximum": 60,
+          "minimum": 0,
+          "type": "number"
+        }
+      },
+      "required": [
+        "attack",
+        "decay",
+        "sustain",
+        "release"
+      ],
+      "type": "object"
+    },
+    "fx": {
+      "additionalProperties": true,
+      "properties": {
+        "type": {
+          "enum": [
+            "bandpass",
+            "comp",
+            "convolve",
+            "delay",
+            "drive",
+            "fdn",
+            "filter",
+            "gain",
+            "hall",
+            "highpass",
+            "highshelf",
+            "ladder",
+            "lowpass",
+            "lowshelf",
+            "mbcomp",
+            "peak",
+            "plate",
+            "reverb",
+            "saturate",
+            "tape",
+            "transient",
+            "tremolo"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "layer": {
+      "additionalProperties": true,
+      "properties": {
+        "articulation": {
+          "type": "string"
+        },
+        "automation": {
+          "items": {
+            "additionalProperties": true,
+            "properties": {
+              "fx_index": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "points": {
+                "items": {
+                  "items": {
+                    "type": "number"
+                  },
+                  "maxItems": 2,
+                  "minItems": 2,
+                  "type": "array"
+                },
+                "minItems": 2,
+                "type": "array"
+              },
+              "target": {
+                "enum": [
+                  "cutoff_hz",
+                  "gain_db",
+                  "scan"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "target",
+              "points"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "bus": {
+          "type": "string"
+        },
+        "color": {
+          "enum": [
+            "brown",
+            "pink",
+            "white"
+          ],
+          "type": "string"
+        },
+        "duration_s": {
+          "minimum": 0,
+          "type": "number"
+        },
+        "env": {
+          "$ref": "#/$defs/env"
+        },
+        "file": {
+          "type": "string"
+        },
+        "freq_hz": {
+          "minimum": 1,
+          "type": "number"
+        },
+        "fx": {
+          "items": {
+            "$ref": "#/$defs/fx"
+          },
+          "type": "array"
+        },
+        "gain_db": {
+          "maximum": 24,
+          "minimum": -120,
+          "type": "number"
+        },
+        "instrument": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "notes": {
+          "items": {
+            "additionalProperties": true,
+            "properties": {
+              "art": {
+                "type": "string"
+              },
+              "dur_beats": {
+                "minimum": 0,
+                "type": "number"
+              },
+              "freq_hz": {
+                "minimum": 1,
+                "type": "number"
+              },
+              "generated": {
+                "type": "string"
+              },
+              "note": {
+                "type": "string"
+              },
+              "slur": {
+                "minimum": 1,
+                "type": "integer"
+              },
+              "start_beat": {
+                "minimum": 0,
+                "type": "number"
+              },
+              "vel": {
+                "maximum": 1,
+                "minimum": 0,
+                "type": "number"
+              }
+            },
+            "required": [
+              "start_beat",
+              "dur_beats"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "osc": {
+          "enum": [
+            "blown",
+            "bowed",
+            "brass",
+            "fm",
+            "modal",
+            "morph",
+            "organ",
+            "pad",
+            "pluck",
+            "saw",
+            "sine",
+            "square",
+            "struck",
+            "sympathetic",
+            "triangle"
+          ],
+          "type": "string"
+        },
+        "pan": {
+          "maximum": 1,
+          "minimum": -1,
+          "type": "number"
+        },
+        "role": {
+          "type": "string"
+        },
+        "seat": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "section": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "sha256": {
+          "type": "string"
+        },
+        "source_kind": {
+          "type": "string"
+        },
+        "start_s": {
+          "minimum": 0,
+          "type": "number"
+        },
+        "type": {
+          "enum": [
+            "drums",
+            "foley",
+            "grain",
+            "instrument",
+            "noise",
+            "notes",
+            "sample",
+            "sweep",
+            "tone"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "marker": {
+      "additionalProperties": true,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "time_s": {
+          "minimum": 0.0,
+          "type": "number"
+        }
+      },
+      "required": [
+        "name",
+        "time_s"
+      ],
+      "type": "object"
+    },
+    "master": {
+      "additionalProperties": true,
+      "properties": {
+        "automation": {
+          "items": {
+            "additionalProperties": true,
+            "properties": {
+              "fx_index": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "points": {
+                "items": {
+                  "items": {
+                    "type": "number"
+                  },
+                  "maxItems": 2,
+                  "minItems": 2,
+                  "type": "array"
+                },
+                "minItems": 2,
+                "type": "array"
+              },
+              "target": {
+                "enum": [
+                  "cutoff_hz",
+                  "gain_db",
+                  "scan"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "target",
+              "points"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "fade_in_s": {
+          "minimum": 0,
+          "type": "number"
+        },
+        "fade_out_s": {
+          "minimum": 0,
+          "type": "number"
+        },
+        "fx": {
+          "items": {
+            "$ref": "#/$defs/fx"
+          },
+          "type": "array"
+        },
+        "stereo_width": {
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        "target_lufs": {
+          "maximum": -5,
+          "minimum": -40,
+          "type": "number"
+        },
+        "target_peak_dbfs": {
+          "maximum": 0,
+          "minimum": -40,
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "point": {
+      "items": {
+        "type": "number"
+      },
+      "maxItems": 2,
+      "minItems": 2,
+      "type": "array"
+    },
+    "score": {
+      "additionalProperties": true,
+      "properties": {
+        "meter": {
+          "additionalProperties": true,
+          "properties": {
+            "beats": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "unit": {
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "beats",
+            "unit"
+          ],
+          "type": "object"
+        },
+        "pickup_beats": {
+          "minimum": 0.0,
+          "type": "number"
+        },
+        "polymeter": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "repeats": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "sections": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "structured_intent": {
+      "additionalProperties": false,
+      "properties": {
+        "authored": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "expansions": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "metadata": {
+          "additionalProperties": false,
+          "properties": {
+            "affect": {
+              "type": "string"
+            },
+            "avoid": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "repair": {
+              "type": "string"
+            },
+            "style_text": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "render_affecting": {
+          "additionalProperties": false,
+          "properties": {
+            "contour": {
+              "enum": [
+                "arch",
+                "fall",
+                "flat",
+                "rise"
+              ],
+              "type": "string"
+            },
+            "density": {
+              "enum": [
+                "balanced",
+                "dense",
+                "sparse"
+              ],
+              "type": "string"
+            },
+            "texture": {
+              "enum": [
+                "airy",
+                "bright",
+                "neutral",
+                "smooth",
+                "warm"
+              ],
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "$id": "https://audioforge.local/schemas/audioforge-ir-1.0.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "properties": {
+    "_meta": {
+      "additionalProperties": true,
+      "properties": {
+        "dsl_version": {
+          "type": "string"
+        },
+        "engine_version": {
+          "type": "string"
+        },
+        "lines": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "semantic": {
+          "additionalProperties": true,
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "bit_depth": {
+      "enum": [
+        16,
+        24
+      ],
+      "type": "integer"
+    },
+    "bpm": {
+      "maximum": 400.0,
+      "minimum": 20.0,
+      "type": "number"
+    },
+    "buses": {
+      "items": {
+        "$ref": "#/$defs/bus"
+      },
+      "type": "array"
+    },
+    "cutdowns": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "duration_s": {
+      "maximum": 600.0,
+      "minimum": 0.05,
+      "type": "number"
+    },
+    "emotion": {
+      "additionalProperties": {
+        "maximum": 1.0,
+        "minimum": 0.0,
+        "type": "number"
+      },
+      "type": "object"
+    },
+    "groove": {
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "intensity_curve": {
+      "items": {
+        "$ref": "#/$defs/point"
+      },
+      "type": "array"
+    },
+    "intensity_scale": {
+      "maximum": 1.5,
+      "minimum": 0.0,
+      "type": "number"
+    },
+    "intent": {
+      "additionalProperties": true,
+      "properties": {
+        "structured": {
+          "$ref": "#/$defs/structured_intent"
+        }
+      },
+      "type": "object"
+    },
+    "key": {
+      "type": "string"
+    },
+    "key_map": {
+      "items": {
+        "minItems": 3,
+        "type": "array"
+      },
+      "type": "array"
+    },
+    "kind": {
+      "enum": [
+        "bed",
+        "cue",
+        "jingle",
+        "loop",
+        "sfx",
+        "signature",
+        "soundtrack",
+        "transition"
+      ],
+      "type": "string"
+    },
+    "layers": {
+      "items": {
+        "$ref": "#/$defs/layer"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "library": {
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "loop_safe": {
+      "type": "boolean"
+    },
+    "markers": {
+      "items": {
+        "$ref": "#/$defs/marker"
+      },
+      "type": "array"
+    },
+    "master": {
+      "$ref": "#/$defs/master"
+    },
+    "notation": {
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "sample_rate": {
+      "maximum": 192000,
+      "minimum": 8000,
+      "type": "integer"
+    },
+    "score": {
+      "$ref": "#/$defs/score"
+    },
+    "stage": {
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "tempo_map": {
+      "items": {
+        "$ref": "#/$defs/point"
+      },
+      "type": "array"
+    },
+    "variant": {
+      "type": [
+        "string",
+        "integer"
+      ]
+    }
+  },
+  "required": [
+    "id",
+    "kind",
+    "duration_s",
+    "layers"
+  ],
+  "title": "AudioForge Universal Music IR",
+  "type": "object",
+  "x-audioforge": {
+    "engine_version": "2.14.0",
+    "field_layers": {
+      "provenance": [
+        "_meta"
+      ],
+      "render": [
+        "id",
+        "kind",
+        "duration_s",
+        "sample_rate",
+        "bit_depth",
+        "bpm",
+        "loop_safe",
+        "layers",
+        "buses",
+        "master",
+        "variant",
+        "intensity_scale"
+      ],
+      "semantic": [
+        "intent",
+        "emotion",
+        "intensity_curve",
+        "score",
+        "key",
+        "key_map",
+        "tempo_map",
+        "groove",
+        "markers",
+        "cutdowns",
+        "stage",
+        "library",
+        "notation"
+      ]
+    },
+    "hash_excluded_top_level": [
+      "_meta",
+      "intent",
+      "notation"
+    ],
+    "migration": {
+      "current": "1.0",
+      "notes": "IR schema 1.0 formalizes the existing compiled spec shape. No migration is required for valid current specs; future schema revisions must preserve render hashes for provenance-only metadata changes.",
+      "policy": "additive-compatible",
+      "supported_from": [
+        "0.9",
+        "1.0"
+      ]
+    },
+    "version": "1.0"
+  }
+}

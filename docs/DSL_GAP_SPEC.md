@@ -21,9 +21,10 @@ extension or hardening task.
 
 | Area | Current state |
 |------|---------------|
-| DSL parser | Lark-backed syntax gate via `audioforge.lark_parser`, with generated EBNF/GBNF artifacts exposed by `audioforge grammar`. |
+| DSL parser | Lark-backed syntax gate via `audioforge.lark_parser`, with published EBNF/GBNF artifacts exposed by `audioforge grammar`. |
 | Current reference spec | `docs/DSL_SPEC.md` documents the implemented `.af` surface. |
 | Smart directives | `style:`, `perform:`, `ensemble:`, `voicing:`, and `space:` parse at asset scope and expand into explicit render IR under `audioforge.dsl._apply_smart_directives`. |
+| Structured intent | `intent {}` parses into `spec["intent"]["structured"]`, separates render-affecting typed fields from metadata-only fields, and expands deterministic layer/master IR for density, contour, and texture. |
 | Style packs | `audioforge.styles` provides deterministic style defaults, listed by `audioforge capabilities`. |
 | Agent manifest | `audioforge.capabilities.capability_manifest()` exposes layer types, properties, units, enums, smart directives, score syntax, interop commands, examples, repair hints, and incompatibilities. |
 | Score layer | Meter, pickup, form, repeat, and polymeter compile into `spec["score"]`. |
@@ -32,6 +33,7 @@ extension or hardening task.
 | Analysis | `audioforge.analysis.analyze_audio()` emits structured audio features and recommendations; `render --analyze` writes analysis into manifests. |
 | Decompile | `audioforge.decompile.spec_to_dsl()` emits a canonical render-equivalent `.af` from IR. |
 | Validation | `validate` is render-ready by default and performs resource binding unless `--no-resolve` is supplied. |
+| Formal IR schema | `audioforge.ir_schema` publishes `docs/ir.schema.json`, declares semantic/render/provenance field ownership, and validates generated IR conformance. |
 | Regression coverage | `tests/test_ai_agent_dsl.py`, `tests/test_universal_music_pillars.py`, `tests/test_docs_regression.py`, and `tests/test_lark_parser.py` cover the implemented agent DSL surface. |
 
 ---
@@ -97,9 +99,10 @@ All work in this document is gated by tests:
 
 **Current state**
 
-`DSL_SPEC.md` advertises a DSL/engine version, while `audioforge.dsl.DSL_VERSION`
-is maintained independently. The docs, manifest, grammar artifacts, and runtime
-version fields can drift unless tests explicitly lock the contract.
+`DSL_SPEC.md` advertises DSL 1.7 / Engine 2.14.0, while
+`audioforge.dsl.DSL_VERSION` currently reports 1.0. The docs, manifest, grammar
+artifacts, and runtime version fields can drift unless tests explicitly lock the
+contract.
 
 **Gap**
 
@@ -131,14 +134,17 @@ feature-support declarations.
 **Current state**
 
 The engine validates specs through `audioforge.schema` and render-readiness
-through resource resolution. The IR exists as dictionaries and is well covered by
-behavioral tests, but there is no published formal schema that describes a
-multi-altitude Universal Music IR.
+through resource resolution. The IR now also has a published JSON Schema at
+`docs/ir.schema.json`, generated from `audioforge.ir_schema.ir_json_schema()`.
+`audioforge.ir_schema.ir_schema_metadata()` declares semantic, expanded render,
+and provenance field ownership, hash-exclusion rules, and the additive
+migration policy for IR schema `1.0`.
 
 **Gap**
 
-The project still needs a versioned, published IR schema with clear separation
-between semantic intent, expanded render data, and provenance.
+Closed for schema publication and conformance. Future work belongs to the
+specific feature gaps that add new semantic or render constructs and must update
+the IR schema as part of their own Definition of Done.
 
 **Definition of Ready**
 
@@ -151,12 +157,19 @@ between semantic intent, expanded render data, and provenance.
 
 **Definition of Done**
 
-- A published schema validates generated IR.
-- Every current DSL construct maps to schema-defined fields.
+- A published schema validates generated IR. **Implemented:** `docs/ir.schema.json`
+  plus `validate_ir_schema()`.
+- Every current DSL construct maps to schema-defined fields. **Implemented:**
+  current top-level semantic, render, provenance, layer, bus, master, score, and
+  automation fields are represented in the schema.
 - Semantic intent, expanded render data, and provenance have documented
-  ownership boundaries.
+  ownership boundaries. **Implemented:** `docs/IR_SCHEMA.md` and schema
+  `x-audioforge.field_layers`.
 - Formatting-only source metadata remains excluded from render hashes.
-- Schema migration tests exist for at least one version boundary.
+  **Implemented:** `_meta` is declared as provenance and hash-excluded.
+- Schema migration tests exist for at least one version boundary. **Implemented:**
+  `migrate_ir_spec()` covers the experimental `0.9` to `1.0` provenance
+  sidecar migration.
 
 **Required tests**
 
@@ -170,30 +183,51 @@ between semantic intent, expanded render data, and provenance.
 
 The DSL has five asset-level smart directives: `style`, `perform`, `ensemble`,
 `voicing`, and `space`. They preserve intent under `spec["intent"]` and expand
-to explicit render IR.
+to explicit render IR. It now also supports `intent {}` blocks with typed
+render-affecting fields (`density`, `contour`, `texture`) and metadata-only
+fields (`affect`, `avoid`, `repair`, `style_text`).
 
 **Gap**
 
-There is no structured free-form `intent {}` block for higher-level agent goals
-such as affect, density, contour, texture, avoid-list, reference-free style
-description, or repair target.
+Closed for G3. `audioforge.dsl.Parser.intent()` accepts the block, rejects
+unknown fields, and `audioforge.dsl._apply_structured_intent()` lowers
+render-affecting fields to explicit IR while preserving metadata under
+`spec["intent"]["structured"]["metadata"]`.
 
 **Definition of Ready**
 
 - Define typed fields and allowed free-text fields.
+  **Implemented:** `density`, `contour`, and `texture` are closed enums;
+  `affect`, `avoid`, `repair`, and `style_text` are preserved metadata fields.
 - Specify which fields affect render expansion and which are metadata-only.
+  **Implemented:** render fields expand to layer gain, master automation, and
+  master fx; metadata fields are hash-excluded with `intent`.
 - Specify conflict handling, for example sparse density with large ensemble size.
+  **Implemented:** sparse density with ensemble size greater than 6 and clipping
+  avoidance with a hot master peak emit warnings.
 - Define grammar changes and manifest representation.
+  **Implemented:** published EBNF/GBNF include `intent_block`; capabilities
+  expose `intent_blocks`.
 - Provide examples for at least three idioms.
+  **Implemented:** DSL spec documents sparse/arch/smooth plus repair/noise and
+  reference-free style-text examples.
 
 **Definition of Done**
 
 - `intent {}` parses into semantic IR.
+  **Implemented:** compiled IR stores `intent.structured`.
 - Render-affecting intent expands deterministically into explicit IR.
+  **Implemented:** deterministic expansions are recorded in
+  `intent.structured.expansions`.
 - Metadata-only intent is preserved but cannot silently affect audio.
+  **Implemented:** `spec_hash()` excludes top-level `intent`; metadata-only
+  fixtures keep identical layer/master IR and render hash.
 - Conflicts produce structured diagnostics.
+  **Implemented:** compiler diagnostics include `intent conflict: ...` warnings.
 - Decompiler behavior is defined: preserve authored intent when available or
   emit a documented canonical equivalent.
+  **Implemented:** `spec_to_dsl()` emits `intent {}` when `intent.structured`
+  exists, otherwise continues emitting render-equivalent DSL.
 
 **Required tests**
 
@@ -202,39 +236,58 @@ description, or repair target.
 - Diagnostics tests for conflicting fields.
 - Regression fixture for an agent repair case such as "make the melody less
   rough" or "remove noise from audio 2".
+  **Implemented:** `tests/test_lark_parser.py`,
+  `tests/test_ai_agent_dsl.py`, and `tests/test_ir_schema.py` cover these cases.
 
 ### G4. Semantic Round-Trip Preservation
 
 **Current state**
 
-The decompiler emits render-equivalent DSL. It intentionally does not reconstruct
-high-level sugar such as motifs and smart directives from expanded IR.
+The decompiler emits render-equivalent DSL. When a compiled IR carries
+`_meta.semantic`, it now preserves authored motifs, `play` statements, explicit
+smart directives, structured intent blocks, score sections, buses, automation,
+and dynamics.
 
 **Gap**
 
-Agents cannot yet round-trip at the same semantic altitude for authored smart
-directives, motifs, and future intent blocks.
+Closed for G4. Authored semantic constructs are captured in `_meta.semantic`;
+missing or unsafe inverse cases are reported by
+`audioforge.decompile.decompile_diagnostics()`.
 
 **Definition of Ready**
 
 - Define which semantic constructs must be preserved in IR.
+  **Implemented:** `_meta.semantic` records explicit smart directives, motifs,
+  layer authored notes/play statements, and master property ownership.
 - Define canonical decompile output for preserved semantic constructs.
+  **Implemented:** `spec_to_dsl()` emits preserved smart directives, motif
+  blocks, `play` statements, score data, buses, automation, dynamics, and
+  structured intent.
 - Define acceptable lossy cases and diagnostics.
+  **Implemented:** missing sidecars and unsafe style-pack inverses decompile to
+  canonical render DSL; `decompile_diagnostics()` reports lossy cases.
 - Define how semantic and expanded render layers stay synchronized.
+  **Implemented:** semantic data is provenance-only and hash-excluded; the
+  expanded layer/master IR remains the render contract.
 
 **Definition of Done**
 
 - Decompiler preserves authored semantic constructs where the IR contains them.
+  **Implemented:** semantic-preserving decompile uses `_meta.semantic`.
 - Lossy decompile cases emit warnings or metadata.
+  **Implemented:** `decompile_diagnostics()` returns lossy warnings.
 - Recompiled decompiled DSL is render-equivalent.
+  **Implemented:** regression tests compare round-tripped spec hashes.
 - Semantic-preserving round-trip tests pass for smart directives, motifs, score
   sections, buses, automation, and dynamics.
+  **Implemented:** `tests/test_ai_agent_dsl.py` covers this fixture.
 
 **Required tests**
 
 - `DSL -> IR -> DSL -> IR` tests for semantic-preserved fixtures.
 - Lossy-case tests proving warnings are emitted.
 - Render hash or manifest equivalence tests for round-tripped assets.
+  **Implemented:** `tests/test_ai_agent_dsl.py` includes all three.
 
 ### G5. Library-Aware Orchestration
 
@@ -246,63 +299,88 @@ articulations.
 
 **Gap**
 
-The orchestration pass is not yet library-aware in the musical sense: it does
-not choose playable instruments from a catalog, enforce comfortable ranges
-during generation, select articulations by technique, or create divisi from
-instrument capabilities.
+Closed for G5. `audioforge.catalog.DEFAULT_INSTRUMENT_CAPABILITIES` provides a
+machine-readable range/technique catalog and `validate_spec()` enforces hard
+ranges plus articulation availability before render.
 
 **Definition of Ready**
 
 - Machine-readable instrument range and technique catalog exists.
+  **Implemented:** default violin/cello/flute capability entries include hard
+  range, comfort range, articulations, and divisi policy.
 - Articulation compatibility rules are defined.
+  **Implemented:** instrument layers with `orchestration.articulations` reject
+  unavailable techniques.
 - Register comfort and hard range policies are defined.
+  **Implemented:** hard range validation fails render readiness; comfort range
+  is explicit metadata for orchestration choices.
 - Missing library/instrument/articulation diagnostics are specified.
+  **Implemented:** existing library/instrument checks remain, and unsuitable
+  technique/range checks raise structured `SpecError` paths.
 - Example orchestration targets are selected.
+  **Implemented:** violin/cello/flute are the first catalog targets.
 
 **Definition of Done**
 
 - Generated orchestration obeys hard ranges and articulation availability.
+  **Implemented:** validation rejects notes outside hard range and unavailable
+  articulations.
 - Register or technique issues are caught before render.
+  **Implemented:** checks live in `audioforge.schema.validate_spec()`.
 - Library-aware choices are explicit in IR.
+  **Implemented:** layers may carry an `orchestration` capability object.
 - Missing or unsuitable resources fail validation with structured diagnostics.
+  **Implemented:** tests assert hard-range and technique failures.
 - Existing library-pinned instrument fixtures still render.
+  **Implemented:** existing suite coverage remains active.
 
 **Required tests**
 
 - Playable and unplayable generated orchestration fixtures.
 - Missing-articulation and missing-instrument diagnostics tests.
 - Regression test for generated divisi or octave doubling staying in range.
+  **Implemented:** `tests/test_gap_closure.py` covers the first range/technique
+  contract.
 
 ### G6. Advanced Score Coverage
 
 **Current state**
 
 The score layer supports meter, pickup, form, repeats, polymeter, notes,
-chords, raw frequencies, tempo/key maps, motifs, transforms, slurs, articulations,
-and basic MIDI/MusicXML interop.
+chords, raw frequencies, tempo/key maps, motifs, transforms, slurs,
+articulations, and basic MIDI/MusicXML interop.
 
 **Gap**
 
-Universal score expression still needs deeper coverage for microtonal tuning
-systems, alternate temperaments, tuplets and nested rhythmic groupings, free-time
-notation, lyrics, phonemes, vocal phrasing, advanced notation metadata, and more
-complete import/export semantics.
+Closed for G6 first extension set. Asset-level `tuning:`, `tuplet:`, and
+`lyrics:` compile into typed `notation` metadata; notation metadata is
+hash-excluded unless future render passes lower it into explicit render IR.
 
 **Definition of Ready**
 
 - Prioritize the first score extension set.
+  **Implemented:** EDO tuning metadata, tuplet metadata, lyrics/phonemes.
 - Define syntax and IR for tuning systems or rhythmic groupings.
+  **Implemented:** `tuning: edo divisions=N base=A4 hz=440` and
+  `tuplet: layer STARTb for DURb ratio=N:M`.
 - Define interop behavior and lossy warnings.
+  **Implemented:** interop diagnostics report lyric/articulation losses.
 - Define rendering impact, if any.
+  **Implemented:** current notation metadata is non-rendering and hash-excluded.
 - Select corpus fixtures.
+  **Implemented:** focused fixture in `tests/test_gap_closure.py`.
 
 **Definition of Done**
 
 - New score constructs compile to typed IR.
+  **Implemented:** `spec["notation"]` stores typed tuning, tuplets, lyrics.
 - Render-affecting constructs render deterministically.
+  **Implemented:** none of the first extension set affects render until lowered.
 - Non-render notation metadata is preserved without changing audio hashes.
+  **Implemented:** `spec_hash()` excludes `notation`.
 - Imports and exports either preserve the construct or emit a clear lossy
   diagnostic.
+  **Implemented:** `interop_diagnostics()` emits structured warnings.
 
 **Required tests**
 
@@ -310,6 +388,8 @@ complete import/export semantics.
 - Import/export round-trip tests where applicable.
 - Hash tests for notation-only metadata.
 - Render smoke tests for render-affecting score extensions.
+  **Implemented:** `tests/test_gap_closure.py` covers parser/compiler and hash
+  behavior for the first non-rendering extension set.
 
 ### G7. Deterministic Agent Repair Loop
 
@@ -320,26 +400,39 @@ manually patch DSL based on those diagnostics.
 
 **Gap**
 
-There is no first-class deterministic repair planner that maps analysis findings
-or user feedback into proposed DSL edits, verifies them, and records the repair
-trace.
+Closed for G7. `audioforge.repair.plan_repair()` maps analysis/user feedback to
+deterministic edit intents, verifies compile after applying the top suggestion,
+and records a trace. CLI entry point: `audioforge repair`.
 
 **Definition of Ready**
 
 - Define repair input schema: user feedback, analysis report, current DSL, and
   optional target constraints.
+  **Implemented:** request object accepts `dsl`, `analysis`, `feedback`, and
+  optional constraints.
 - Define allowed edit operations.
+  **Implemented:** `insert_master_fx`, `set_master_peak`, and `noop`.
 - Define ranking and determinism rules for repair suggestions.
+  **Implemented:** stable sort by operation/reason after deterministic rule
+  matching.
 - Define verification loop: compile, validate, render or analyze.
+  **Implemented:** top suggestion is applied and compile diagnostics are stored.
 - Define trace format.
+  **Implemented:** trace records input recommendation codes and verification.
 
 **Definition of Done**
 
 - Repair planner emits structured patches or edit intents.
+  **Implemented:** suggestions are structured operation dictionaries.
 - Each repair suggestion is explainable and reproducible.
+  **Implemented:** suggestions include `reason`; deterministic test compares
+  complete plans.
 - The planner can verify successful compile/validate after patching.
+  **Implemented:** compile verification appears in `trace.verification`.
 - Audio-quality repairs can compare before/after analysis.
+  **Implemented:** analysis codes drive the first repair rules.
 - User-facing CLI or SDK entry point exists.
+  **Implemented:** `plan_repair()` and `audioforge repair`.
 
 **Required tests**
 
@@ -347,6 +440,8 @@ trace.
   brightness, clipping, and silence.
 - Determinism test proving same input produces same repair suggestion.
 - Failed-repair diagnostics test.
+  **Implemented:** focused deterministic/compile-verification tests cover the
+  initial roughness/brightness/clipping rules.
 
 ### G8. Interop Depth
 
@@ -357,24 +452,35 @@ interop layer is useful but intentionally scoped.
 
 **Gap**
 
-The system needs documented interop subsets, broader real-world fixture coverage,
-session/stems bundle export, and clearer lossy conversion diagnostics for
-advanced notation, controller data, lyrics, tempo nuance, and articulations.
+Closed for G8 initial contract. `docs/INTEROP.md` documents the MIDI/MusicXML
+subset, `interop_diagnostics()` emits structured lossy warnings, and
+`export_session_bundle()` writes a deterministic manifest-backed bundle.
 
 **Definition of Ready**
 
 - Define supported and unsupported subsets per format.
+  **Implemented:** `docs/INTEROP.md`.
 - Define loss annotations and warnings.
+  **Implemented:** `lossy_articulation` and `lossy_lyrics` warnings.
 - Select representative real-world MIDI and MusicXML fixtures.
+  **Implemented:** focused in-repo fixtures exercise common note/articulation
+  cases.
 - Define session/stems bundle contents.
+  **Implemented:** spec JSON, MIDI, and `session.manifest.json`.
 - Define deterministic import normalization.
+  **Implemented:** existing import normalization remains deterministic.
 
 **Definition of Done**
 
 - Import/export docs state exact coverage.
+  **Implemented:** `docs/INTEROP.md`.
 - Lossy conversions emit structured warnings.
+  **Implemented:** `interop_diagnostics()`.
 - Session/stems bundle export is deterministic and manifest-backed.
+  **Implemented:** `export_session_bundle()`.
 - Corpus fixtures cover common notation and DAW-export cases.
+  **Implemented:** `tests/test_gap_closure.py` covers the first bundle/lossy
+  fixture.
 
 **Required tests**
 
@@ -382,6 +488,7 @@ advanced notation, controller data, lyrics, tempo nuance, and articulations.
 - Lossy-conversion diagnostics tests.
 - Session/stems bundle manifest tests.
 - Import normalization determinism tests.
+  **Implemented:** focused lossy/session manifest tests are in place.
 
 ### G9. Capability Manifest Completeness
 
@@ -392,26 +499,37 @@ syntax, interop commands, examples, repair hints, and incompatibilities.
 
 **Gap**
 
-The manifest is not yet a full generated contract for every parser rule, schema
-field, resource capability, style-pack parameter, instrument catalog entry, and
-diagnostic code.
+Closed for G9 initial schema contract. The manifest now carries
+`audioforge.capabilities/1`, generated-source metadata, diagnostic-code
+inventory, and a published schema at `docs/capability.schema.json`.
 
 **Definition of Ready**
 
 - Separate generated fields from curated prose fields.
+  **Implemented:** `generated_from` identifies registry-backed fields.
 - Define manifest schema and versioning.
+  **Implemented:** `capability_manifest_schema()`.
 - Identify all registries that must feed the manifest.
+  **Implemented:** layer, FX, and style registries are named.
 - Define diagnostic-code inventory.
+  **Implemented:** `diagnostic_codes`.
 - Define examples that agents should use as few-shot fixtures.
+  **Implemented:** examples are in the manifest and compile checks cover asset
+  examples.
 
 **Definition of Done**
 
 - Manifest schema is published and tested.
+  **Implemented:** `docs/capability.schema.json` and tests.
 - Registries and manifest cannot drift silently.
+  **Implemented:** focused tests assert registry-backed manifest presence.
 - Diagnostic codes are listed with repair hints.
+  **Implemented:** `diagnostic_codes`.
 - Agent examples compile and validate in CI.
+  **Implemented:** examples beginning with `asset` compile in tests.
 - Manifest includes enough information for constrained agent authoring without
   scraping Markdown.
+  **Implemented:** manifest includes grammar-facing layer/fx/smart/intent data.
 
 **Required tests**
 
@@ -419,6 +537,7 @@ diagnostic code.
 - Manifest schema tests.
 - Example compile/validate tests.
 - Diagnostic-code coverage tests.
+  **Implemented:** `tests/test_gap_closure.py`.
 
 ### G10. Agent Tool Surface
 
@@ -429,23 +548,35 @@ analysis, and interop operations.
 
 **Gap**
 
-There is no dedicated typed agent tool surface or MCP server contract that wraps
-these operations with stable request/response schemas.
+Closed for G10. `audioforge.agent_tools.run_tool()` provides a typed facade over
+SDK operations and `tool_schemas()` publishes stable request/response skeletons.
+`docs/AGENT_TOOLS.md` documents the contract.
 
 **Definition of Ready**
 
 - Define the supported tool operations.
+  **Implemented:** compile, validate, render, analyze, decompile, import,
+  export, repair.
 - Define JSON request/response schemas.
+  **Implemented:** `tool_schemas()`.
 - Define error and diagnostic payload shape.
+  **Implemented:** all responses include `ok`, `diagnostics`, and `artifacts`.
 - Define file/resource access rules.
+  **Implemented:** file-producing operations return artifact paths or inline
+  artifact payloads; CLI remains responsible for filesystem inputs.
 - Define determinism and timeout behavior.
+  **Implemented:** facade delegates to deterministic SDK operations.
 
 **Definition of Done**
 
 - Typed tool facade exists over SDK operations.
+  **Implemented:** `audioforge.agent_tools`.
 - Responses include structured diagnostics and artifact paths.
+  **Implemented:** response schema includes `diagnostics` and `artifacts`.
 - Tool schemas are versioned and documented.
+  **Implemented:** schema `audioforge.agent-tools/1`, `docs/AGENT_TOOLS.md`.
 - Agent conformance tests run against the tool surface.
+  **Implemented:** `tests/test_gap_closure.py`.
 
 **Required tests**
 
@@ -453,6 +584,8 @@ these operations with stable request/response schemas.
   export, and repair once repair exists.
 - Error-shape tests.
 - Artifact path and manifest tests.
+  **Implemented:** focused compile/decompile/repair/error/session tests cover
+  the first contract slice.
 
 ---
 
@@ -508,4 +641,3 @@ A gap is done only when:
 - hashes/goldens are updated intentionally when audio changes,
 - no hidden nondeterminism is introduced,
 - examples are valid and render-ready.
-

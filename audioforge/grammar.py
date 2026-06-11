@@ -15,10 +15,12 @@ __LARK_SOURCE__
 
 file             = { asset } ;
 asset            = "asset" IDENT "{" { asset_item } "}" ;
-asset_item       = smart_directive | score_property | property | marker | motif | stage | cutdowns | bus | layer | master ;
+asset_item       = smart_directive | intent_block | score_property | property | marker | motif | stage | cutdowns | bus | layer | master ;
 score_property   = meter | pickup | form | repeat | polymeter ;
 property         = IDENT ":" value_list newline ;
 smart_directive  = ("style" | "perform" | "ensemble" | "voicing" | "space") ":" value_list newline ;
+intent_block     = "intent" "{" { intent_field } "}" ;
+intent_field     = ("density" | "contour" | "texture" | "affect" | "avoid" | "repair" | "style_text") ":" value_list newline ;
 meter            = "meter" ":" NUMBER NUMBER newline ;
 pickup           = "pickup" ":" NUMBER "b" newline ;
 form             = "form" ":" IDENT NUMBER "b" "for" NUMBER "b" { "," IDENT NUMBER "b" "for" NUMBER "b" } newline ;
@@ -50,7 +52,7 @@ _GBNF = r"""
 
 root ::= (asset ws*)+
 asset ::= "asset" ws ident ws "{" ws asset-item* "}" ws
-asset-item ::= smart-directive | score-property | property | marker | motif | bus | layer | master | stage | cutdowns
+asset-item ::= smart-directive | intent-block | score-property | property | marker | motif | bus | layer | master | stage | cutdowns
 score-property ::= meter | pickup | form | repeat | polymeter
 meter ::= "meter:" ws number ws number nl
 pickup ::= "pickup:" ws number "b" nl
@@ -58,6 +60,8 @@ form ::= "form:" ws ident ws number "b" ws "for" ws number "b" ("," ws ident ws 
 repeat ::= "repeat:" ws ident ws "x" number nl
 polymeter ::= "polymeter:" ws ident ws number ws number nl
 smart-directive ::= ("style" | "perform" | "ensemble" | "voicing" | "space") ":" value-list nl
+intent-block ::= "intent" ws "{" ws intent-field* "}" ws
+intent-field ::= ("density" | "contour" | "texture" | "affect" | "avoid" | "repair" | "style_text") ":" ws value-list nl
 property ::= ident ":" value-list nl
 marker ::= "marker" ws ident ws "@" ws number "s" nl
 motif ::= "motif" ws ident ws "{" ws note-event* "}" ws

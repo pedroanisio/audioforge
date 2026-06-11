@@ -237,6 +237,17 @@ def test_native_osc_set_single_source_of_truth(monkeypatch):
           "and resolve gate agree with schema.NATIVE_OSC_SHAPES")
 
 
+def test_native_build_cache_can_be_overridden(monkeypatch, tmp_path):
+    from audioforge import _native
+
+    monkeypatch.setenv("AUDIOFORGE_NATIVE_CACHE", str(tmp_path / "native-cache"))
+    out = _native._build_output_path("plate_mod")
+
+    assert out.parent == tmp_path / "native-cache"
+    assert out.name.startswith("plate_mod_")
+    assert out.suffix == ".so"
+
+
 def test_native_fx_set_single_source_of_truth(monkeypatch):
     """Same single-source guard for native effects: every NATIVE_FX_TYPES entry
     is a real fx type, fx_needs_native() is the one predicate resolve's gate

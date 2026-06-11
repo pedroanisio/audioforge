@@ -26,6 +26,14 @@ asset lark_ready {
   polymeter: drums 3 4
   style: cinematic
   perform: style=cinematic expressivity=0.6
+  intent {
+    density: sparse
+    contour: arch
+    texture: smooth
+    affect: tense
+    avoid: clipping, noise
+    repair: "make the melody less rough"
+  }
   marker hit @ 2s
 
   motif hook {
@@ -134,6 +142,42 @@ def test_lark_parser_reports_line_numbered_errors():
 
     with pytest.raises(DSLError, match=r"line 3:"):
         parse_assets("asset bad {\n  layer x : notes {\n    notes:\n  }\n}\n")
+
+
+def test_intent_block_accepts_typed_and_metadata_fields():
+    from audioforge.lark_parser import parse_assets
+
+    parsed = parse_assets(SRC)
+
+    intent = parsed[0].intent
+    assert intent["density"][0].text == "sparse"
+    assert intent["contour"][0].text == "arch"
+    assert intent["texture"][0].text == "smooth"
+    assert intent["affect"][0].text == "tense"
+    assert [t.text for t in intent["avoid"] if t.kind == "IDENT"] == [
+        "clipping",
+        "noise",
+    ]
+    assert intent["repair"][0].text == "make the melody less rough"
+
+
+def test_intent_block_rejects_unknown_fields_at_parse_time():
+    from audioforge.lark_parser import parse_assets
+    from audioforge.dsl import DSLError
+
+    with pytest.raises(DSLError, match="unknown intent field 'moodish'"):
+        parse_assets(
+            """
+asset bad_intent {
+  kind: cue
+  duration: 1s
+  intent {
+    moodish: vague
+  }
+  layer tone : tone { osc: sine note: C4 }
+}
+"""
+        )
 
 
 def test_lark_parser_rejects_unbalanced_blocks_before_legacy_parse():

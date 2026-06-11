@@ -1,0 +1,41 @@
+{
+  "$id": "https://audioforge.local/schemas/capabilities.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "properties": {
+    "diagnostic_codes": {
+      "type": "object"
+    },
+    "dsl_version": {
+      "type": "string"
+    },
+    "engine_version": {
+      "type": "string"
+    },
+    "fx": {
+      "type": "object"
+    },
+    "intent_blocks": {
+      "type": "object"
+    },
+    "layer_types": {
+      "type": "object"
+    },
+    "repair_hints": {
+      "type": "object"
+    },
+    "schema": {
+      "const": "audioforge.capabilities/1"
+    },
+    "smart_directives": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema",
+    "engine_version",
+    "dsl_version"
+  ],
+  "title": "AudioForge Capability Manifest",
+  "type": "object"
+}

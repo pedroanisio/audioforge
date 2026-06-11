@@ -10,8 +10,10 @@ from __future__ import annotations
 
 import ctypes
 import hashlib
+import os
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 
 import numpy as np
@@ -36,10 +38,37 @@ class NativeUnavailable(RuntimeError):
     pass
 
 
-def _build(stem: str, feature: str) -> Path:
+def _native_cache_dir() -> Path:
+    override = os.environ.get("AUDIOFORGE_NATIVE_CACHE")
+    if override:
+        return Path(override)
+    xdg_cache = os.environ.get("XDG_CACHE_HOME")
+    if xdg_cache:
+        return Path(xdg_cache) / "audioforge"
+    return Path.home() / ".cache" / "audioforge"
+
+
+def _build_output_path(stem: str) -> Path:
     src_path = _NATIVE_DIR / f"{stem}.c"
     tag = hashlib.sha256(src_path.read_bytes()).hexdigest()[:16]
-    out = Path.home() / ".cache" / "audioforge" / f"{stem}_{tag}.so"
+    return _native_cache_dir() / f"{stem}_{tag}.so"
+
+
+def _ensure_cache_dir(path: Path) -> Path:
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+        return path
+    except OSError:
+        if os.environ.get("AUDIOFORGE_NATIVE_CACHE"):
+            raise
+        fallback = Path(tempfile.gettempdir()) / "audioforge-native-cache"
+        fallback.mkdir(parents=True, exist_ok=True)
+        return fallback
+
+
+def _build(stem: str, feature: str) -> Path:
+    src_path = _NATIVE_DIR / f"{stem}.c"
+    out = _build_output_path(stem)
     if out.exists():
         return out
     cc = shutil.which("cc") or shutil.which("gcc") or shutil.which("clang")
@@ -48,7 +77,11 @@ def _build(stem: str, feature: str) -> Path:
             f"{feature} needs a C compiler (cc/gcc/clang) to build the "
             f"native kernel; none found. Deterministic rendering fails "
             f"loudly rather than silently substituting different audio.")
-    out.parent.mkdir(parents=True, exist_ok=True)
+    cache_dir = _ensure_cache_dir(out.parent)
+    if cache_dir != out.parent:
+        out = cache_dir / out.name
+        if out.exists():
+            return out
     tmp = out.with_suffix(".tmp.so")
     subprocess.run([cc, "-O2", "-fPIC", "-shared", str(src_path), "-o",
                     str(tmp), "-lm"], check=True, capture_output=True)

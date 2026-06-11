@@ -1,12 +1,68 @@
 """MIDI/MusicXML interop for the explicit note-event IR."""
 from __future__ import annotations
 
+import hashlib
+import json
 import struct
 import xml.etree.ElementTree as ET
+from pathlib import Path
 
 from . import theory
+from .determinism import spec_hash
 
 TPQ = 480
+
+
+def interop_diagnostics(spec: dict, format: str) -> list[dict]:
+    """Return structured lossy-conversion warnings for an export target."""
+    warnings = []
+    if spec.get("notation", {}).get("lyrics") and format in {"midi", "musicxml"}:
+        warnings.append({
+            "severity": "warning",
+            "code": "lossy_lyrics",
+            "message": f"{format} exporter preserves notes but not lyric metadata",
+        })
+    for layer in spec.get("layers", []):
+        for ev in layer.get("notes", []):
+            if ev.get("art") and format == "midi":
+                warnings.append({
+                    "severity": "warning",
+                    "code": "lossy_articulation",
+                    "message": "MIDI export drops note articulation metadata",
+                    "path": f"layer:{layer.get('name', layer.get('type'))}",
+                })
+                return warnings
+    return warnings
+
+
+def export_session_bundle(spec: dict, outdir: str | Path) -> dict:
+    """Write a deterministic, manifest-backed session/stems bundle skeleton."""
+    out = Path(outdir)
+    out.mkdir(parents=True, exist_ok=True)
+    spec_path = out / f"{spec['id']}.spec.json"
+    spec_text = json.dumps(spec, indent=2, sort_keys=True) + "\n"
+    spec_path.write_text(spec_text)
+    midi_path = out / f"{spec['id']}.mid"
+    midi_bytes = export_midi_bytes(spec)
+    midi_path.write_bytes(midi_bytes)
+    manifest = {
+        "schema": "audioforge.session-bundle/1",
+        "id": spec["id"],
+        "spec_hash": spec_hash(spec),
+        "files": {
+            "spec": str(spec_path),
+            "midi": str(midi_path),
+        },
+        "sha256": {
+            "spec": hashlib.sha256(spec_text.encode()).hexdigest(),
+            "midi": hashlib.sha256(midi_bytes).hexdigest(),
+        },
+        "warnings": interop_diagnostics(spec, "midi"),
+    }
+    (out / "session.manifest.json").write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n"
+    )
+    return manifest
 
 
 def _vlq(n: int) -> bytes:

@@ -39,6 +39,35 @@ _ARTIC_TOKENS = [
 
 SCHEMA = "audioforge.instrument-catalog/2"
 
+DEFAULT_INSTRUMENT_CAPABILITIES = {
+    "violin": {
+        "hard_range": {"low_midi": 55, "high_midi": 103,
+                       "low_note": "G3", "high_note": "G7"},
+        "comfort_range": {"low_midi": 60, "high_midi": 88,
+                          "low_note": "C4", "high_note": "E6"},
+        "articulations": ["legato", "marcato", "spiccato", "staccato",
+                          "sustain", "tremolo"],
+        "divisi": {"max_parts": 2, "policy": "split_by_register"},
+    },
+    "cello": {
+        "hard_range": {"low_midi": 36, "high_midi": 76,
+                       "low_note": "C2", "high_note": "E5"},
+        "comfort_range": {"low_midi": 43, "high_midi": 67,
+                          "low_note": "G2", "high_note": "G4"},
+        "articulations": ["legato", "marcato", "pizzicato", "spiccato",
+                          "staccato", "sustain", "tremolo"],
+        "divisi": {"max_parts": 2, "policy": "split_by_register"},
+    },
+    "flute": {
+        "hard_range": {"low_midi": 60, "high_midi": 96,
+                       "low_note": "C4", "high_note": "C7"},
+        "comfort_range": {"low_midi": 64, "high_midi": 88,
+                          "low_note": "E4", "high_note": "E6"},
+        "articulations": ["legato", "staccato", "sustain", "trill"],
+        "divisi": {"max_parts": 1, "policy": "single_player"},
+    },
+}
+
 
 def playable_exts() -> set[str]:
     """Extensions AudioForge can decode right now (WAV always; the rest need

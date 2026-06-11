@@ -1,12 +1,16 @@
 """Machine-readable AudioForge capability manifest for AI agents."""
 from __future__ import annotations
 
-from .determinism import ENGINE_VERSION
 from .dsl import (ARTICULATIONS, DSL_VERSION, DYNAMIC_MARKS, EMOTIONS,
                   GROOVE_TEMPLATES)
 from .schema import (AUTO_TARGETS, BIT_DEPTHS, FX_TYPES, KINDS, LAYER_TYPES,
                      NOISE_COLORS, OSC_SHAPES)
 from .styles import list_style_packs
+from .version import ENGINE_VERSION, version_contract
+from .ir_schema import IR_SCHEMA_VERSION, ir_schema_metadata
+
+
+CAPABILITY_SCHEMA_VERSION = "audioforge.capabilities/1"
 
 
 def _param(kind: str, *, unit: str | None = None, default=None,
@@ -113,8 +117,15 @@ def capability_manifest() -> dict:
         },
     }
     return {
+        "schema": CAPABILITY_SCHEMA_VERSION,
         "engine_version": ENGINE_VERSION,
         "dsl_version": DSL_VERSION,
+        "version_contract": version_contract(),
+        "ir_schema": {
+            "version": IR_SCHEMA_VERSION,
+            "path": "docs/ir.schema.json",
+            "metadata": ir_schema_metadata(),
+        },
         "kinds": sorted(KINDS),
         "layer_types": layers,
         "oscillators": sorted(OSC_SHAPES),
@@ -128,12 +139,43 @@ def capability_manifest() -> dict:
         "automation_targets": sorted(AUTO_TARGETS),
         "bit_depths": sorted(BIT_DEPTHS),
         "style_packs": list_style_packs(),
+        "generated_from": {
+            "layer_types": "audioforge.schema.LAYER_TYPES",
+            "fx": "audioforge.schema.FX_TYPES",
+            "styles": "audioforge.styles.STYLE_PACKS",
+        },
         "smart_directives": {
             "style": {"enum": list_style_packs()},
             "perform": {"properties": ["style", "expressivity"]},
             "ensemble": {"properties": ["family", "size", "spread", "octaves"]},
             "voicing": {"properties": ["richness", "extensions"]},
             "space": {"properties": ["hall", "depth"]},
+        },
+        "intent_blocks": {
+            "render_affecting": {
+                "density": {
+                    "enum": ["balanced", "dense", "sparse"],
+                    "expands_to": "layer gain_db deltas",
+                },
+                "contour": {
+                    "enum": ["arch", "fall", "flat", "rise"],
+                    "expands_to": "master gain automation",
+                },
+                "texture": {
+                    "enum": ["airy", "bright", "neutral", "smooth", "warm"],
+                    "expands_to": "master fx",
+                },
+            },
+            "metadata": {
+                "affect": {"type": "string"},
+                "avoid": {"type": "string[]"},
+                "repair": {"type": "string"},
+                "style_text": {"type": "string"},
+            },
+            "conflicts": [
+                "density=sparse with ensemble.size > 6 emits a warning",
+                "avoid=clipping with master peak > -0.5 dBFS emits a warning",
+            ],
         },
         "score_layer": {
             "properties": {
@@ -157,6 +199,16 @@ def capability_manifest() -> dict:
                 "ensemble: synth size=5 spread=0.45 octaves=1\n"
                 "voicing: richness=0.7 extensions=7,9\n"
                 "space: hall=studio depth=0.5"
+            ),
+            "intent_block": (
+                "intent {\n"
+                "  density: sparse\n"
+                "  contour: arch\n"
+                "  texture: smooth\n"
+                "  affect: tense\n"
+                "  avoid: clipping, noise\n"
+                "  repair: \"make the melody less rough\"\n"
+                "}"
             ),
             "notes_layer": (
                 "layer lead : notes { osc: sine env: a=0.01s d=0.1s "
@@ -190,10 +242,44 @@ def capability_manifest() -> dict:
                 "validation is the render-ready predicate."
             ),
         },
+        "diagnostic_codes": {
+            "unknown_property": {"repair_hint": "unknown_property"},
+            "notes_first_event": {"repair_hint": "notes_first_event"},
+            "resource_pin": {"repair_hint": "resource_pin"},
+            "validate_render_ready": {"repair_hint": "validate_render_ready"},
+            "lossy_articulation": {
+                "repair_hint": "Use MusicXML for notation metadata or accept MIDI loss."
+            },
+            "intent_conflict": {
+                "repair_hint": "Review typed intent fields against explicit render settings."
+            },
+        },
         "incompatibilities": {
             "seat_with_bus": "A staged layer cannot also set bus; the stage is its route.",
             "instrument_without_library": "Instrument layers require a spec-level library pin.",
             "cutoff_auto_without_filter": "cutoff automation requires a filter fx at the target index.",
             "loopsafe_without_bpm": "loopsafe requires tempo/bpm so whole-beat duration can be checked.",
         },
+    }
+
+
+def capability_manifest_schema() -> dict:
+    return {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://audioforge.local/schemas/capabilities.schema.json",
+        "title": "AudioForge Capability Manifest",
+        "type": "object",
+        "required": ["schema", "engine_version", "dsl_version"],
+        "properties": {
+            "schema": {"const": CAPABILITY_SCHEMA_VERSION},
+            "engine_version": {"type": "string"},
+            "dsl_version": {"type": "string"},
+            "layer_types": {"type": "object"},
+            "fx": {"type": "object"},
+            "smart_directives": {"type": "object"},
+            "intent_blocks": {"type": "object"},
+            "repair_hints": {"type": "object"},
+            "diagnostic_codes": {"type": "object"},
+        },
+        "additionalProperties": True,
     }

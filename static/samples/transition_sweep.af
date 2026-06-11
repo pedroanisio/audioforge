@@ -1,0 +1,28 @@
+asset transition_sweep {
+  kind: transition
+  duration: 2s
+  tempo: 120bpm
+  marker cut_point @ 1s
+  layer riser : sweep {
+    shape: sine
+    from: 220hz
+    to: 1760hz
+    duration: 2s
+    gain: -14db
+    env: a=0.02s d=0.1s s=0.8 r=0.1s
+  }
+  layer pulse : drums {
+    voice: kick
+    pattern: x...
+    gain: -12db
+  }
+  layer air : noise {
+    color: white
+    duration: 2s
+    gain: -28db
+    env: a=0.01s d=0.2s s=0.6 r=0.2s
+  }
+  master {
+    peak: -1db
+  }
+}

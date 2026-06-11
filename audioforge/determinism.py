@@ -13,7 +13,7 @@ from typing import Any
 
 import numpy as np
 
-ENGINE_VERSION = "2.14.0"  # bump on any change that alters rendered output
+from .version import ENGINE_VERSION
 
 
 def canonical_json(obj: Any) -> str:
@@ -21,13 +21,16 @@ def canonical_json(obj: Any) -> str:
     return json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
 
 
+HASH_EXCLUDED_TOP_LEVEL = {"_meta", "intent", "notation"}
+
+
 def spec_hash(spec: dict) -> str:
     """Stable content hash of a spec (engine version included so output
-    hashes change when the engine semantics change). Top-level `_meta`
-    (source line numbers and other non-musical sidecar data) is excluded:
-    the same music reformatted must hash identically."""
-    if "_meta" in spec:
-        spec = {k: v for k, v in spec.items() if k != "_meta"}
+    hashes change when the engine semantics change). Top-level `_meta`,
+    `intent`, and notation-only metadata are excluded: render-affecting
+    semantics must first expand into explicit render IR before they can affect
+    audio bytes."""
+    spec = {k: v for k, v in spec.items() if k not in HASH_EXCLUDED_TOP_LEVEL}
     payload = ENGINE_VERSION + "\x00" + canonical_json(spec)
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 

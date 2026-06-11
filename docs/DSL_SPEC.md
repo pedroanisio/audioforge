@@ -288,10 +288,12 @@ The premaster renders once; each cutdown splices its keep-windows with equal-pow
 
 ## 12. Smart AI-agent directives
 
-High-level musical intent may be written at asset level. These directives are
-compile-time sugar only: every choice expands into explicit JSON IR under normal
-layer/master parameters, while the original intent is preserved under `intent`
-for agents to inspect.
+High-level musical intent may be written at asset level. Smart directives are
+compile-time sugar: every render-affecting choice expands into explicit JSON IR
+under normal layer/master parameters, while the original intent is preserved
+under `intent` for agents to inspect. The semantic `intent` sidecar is excluded
+from render hashes; only the explicit layer/master expansion can change audio
+identity.
 
 ```
 style: cinematic
@@ -317,10 +319,45 @@ normal note events and may add `gen voice_leading`, `gen suspension`, or
 an `af_space` bus with shared room processing. The compiler emits a diagnostic
 naming the expansion; inspect `compile` output to see the exact render-layer IR.
 
+Structured `intent {}` blocks preserve higher-level agent goals without hiding
+render behavior. Closed, typed fields are render-affecting:
+
+```
+intent {
+  density: sparse      # sparse | balanced | dense -> layer gain deltas
+  contour: arch        # flat | arch | rise | fall -> master gain automation
+  texture: smooth      # neutral | smooth | airy | warm | bright -> master fx
+
+  affect: tense        # metadata-only
+  avoid: clipping, noise
+  repair: "make the melody less rough"
+  style_text: "reference-free glassy nocturne"
+}
+```
+
+`density`, `contour`, and `texture` lower deterministically into explicit
+render IR and record their expansion under `intent.structured.expansions`.
+`affect`, `avoid`, `repair`, and `style_text` are metadata-only: they are
+preserved under `intent.structured.metadata`, excluded from render hashes, and
+cannot alter audio unless paired with a render-affecting field. Conflicts emit
+warnings rather than silently resolving intent, for example `density: sparse`
+with `ensemble size > 6`, or `avoid: clipping` with a master peak above
+`-0.5db`. The decompiler preserves authored structured intent when
+`intent.structured` is present; otherwise it emits the canonical render-layer
+equivalent.
+
+Semantic round-tripping uses the `_meta.semantic` sidecar emitted by the DSL
+compiler. When present, `audioforge decompile` preserves authored motif
+definitions, `play` statements, explicit smart directives, score sections,
+buses, automation, and dynamics. Style-pack inverses are intentionally lossy
+unless a safe semantic inverse is available, so those specs decompile to the
+canonical render-layer equivalent. Agent tools can call
+`audioforge.decompile.decompile_diagnostics(spec)` to detect lossy cases.
+
 `audioforge capabilities` is the canonical agent manifest: it includes the
 current engine/DSL versions, layer/FX/articulation enums, smart-directive
-properties, style packs, score-layer syntax, interop commands, examples, repair
-hints, and known incompatibilities.
+properties, structured intent block fields, style packs, score-layer syntax,
+interop commands, examples, repair hints, and known incompatibilities.
 
 ---
 
@@ -408,6 +445,12 @@ Export presets (SDK/CLI `--preset`): `social_video` 48k/16/−14 · `broadcast` 
 ## 17. Determinism, manifests, versioning
 
 Every render is keyed to the spec content hash; `ENGINE_VERSION` folds into it, so any engine change that could alter bytes changes all hashes — stale caches can never masquerade as current renders. Manifests record spec hash, output SHA-256, loudness report, markers, variant/intensity tags, and cutdown lineage. `audioforge render --analyze` also writes deterministic analysis features and actionable recommendations (`low_foundation_weak`, `mono_image`, `very_bright`, etc.) into the manifest for agent critique loops. `audioforge verify spec manifest` re-renders and compares output hashes — the CI reproducibility gate. Cross-platform float reproducibility is *checked* by that gate per environment, not assumed.
+
+Runtime version metadata is owned by `audioforge.version`. The DSL banner in
+this document, the capability manifest, `audioforge --version`, and compiled IR
+`_meta.dsl_version` / `_meta.engine_version` must match those constants.
+`docs/RELEASE_NOTES.md` records DSL and engine version changes, including
+whether a migration is required.
 
 ## 18. Diagnostics contract (for agents)
 

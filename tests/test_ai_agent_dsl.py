@@ -5,10 +5,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from audioforge import AudioForge  # noqa: E402
+from audioforge import AudioForge, DSL_VERSION, ENGINE_VERSION, spec_hash  # noqa: E402
 from audioforge.analysis import analyze_audio  # noqa: E402
 from audioforge.capabilities import capability_manifest  # noqa: E402
-from audioforge.decompile import spec_to_dsl  # noqa: E402
+from audioforge.decompile import decompile_diagnostics, spec_to_dsl  # noqa: E402
 from audioforge.grammar import dsl_ebnf, dsl_gbnf  # noqa: E402
 from audioforge.cli import main as cli_main  # noqa: E402
 
@@ -43,18 +43,57 @@ asset agent_ready {
 """
 
 
+INTENT_SRC = """
+asset intent_ready {
+  kind: cue
+  duration: 4s
+  tempo: 96bpm
+  ensemble: synth size=8 spread=0.4
+  intent {
+    density: sparse
+    contour: arch
+    texture: smooth
+    affect: tense
+    avoid: clipping, noise
+    repair: "make the melody less rough"
+  }
+  layer melody : notes {
+    osc: saw
+    gain: -3db
+    env: a=0.01s d=0.1s s=0.7 r=0.2s
+    notes: C4 @ 0b for 1b, E4 @ 1b for 1b, G4 @ 2b for 2b
+  }
+  master { peak: -0.2db }
+}
+"""
+
+
 def test_capability_manifest_is_machine_readable_and_current():
     cap = capability_manifest()
-    assert cap["engine_version"] and cap["dsl_version"]
+    assert cap["engine_version"] == ENGINE_VERSION
+    assert cap["dsl_version"] == DSL_VERSION
     assert "notes" in cap["layer_types"]
     assert "osc" in cap["layer_types"]["notes"]["properties"]
     assert "lowpass" in cap["fx"]
     assert "trill" in cap["articulations"]
     assert "style" in cap["smart_directives"]
+    assert cap["intent_blocks"]["render_affecting"]["density"]["enum"] == [
+        "balanced",
+        "dense",
+        "sparse",
+    ]
+    assert "repair" in cap["intent_blocks"]["metadata"]
     assert cap["examples"]["smart_directives"].startswith("style:")
+    assert cap["examples"]["intent_block"].startswith("intent {")
     assert cap["repair_hints"]["unknown_property"]
     assert cap["incompatibilities"]["seat_with_bus"]
     json.dumps(cap, sort_keys=True)
+
+
+def test_compiled_ir_carries_runtime_version_metadata():
+    spec = AudioForge().compile(SMART_SRC).assets[0].spec
+    assert spec["_meta"]["dsl_version"] == DSL_VERSION
+    assert spec["_meta"]["engine_version"] == ENGINE_VERSION
 
 
 def test_grammar_artifacts_expose_constrained_generation_surface():
@@ -256,3 +295,145 @@ def test_decompiler_preserves_buses_automation_dynamic_and_smart_render_ir():
     assert "dynamic:" in dsl
     again = AudioForge().compile(dsl)
     assert again.ok, [d.message for d in again.diagnostics]
+
+
+def test_intent_block_compiles_to_structured_semantic_ir_and_explicit_render_ir():
+    res = AudioForge().compile(INTENT_SRC)
+
+    assert res.ok, [d.message for d in res.diagnostics]
+    spec = res.assets[0].spec
+    structured = spec["intent"]["structured"]
+    assert structured["render_affecting"] == {
+        "density": "sparse",
+        "contour": "arch",
+        "texture": "smooth",
+    }
+    assert structured["metadata"] == {
+        "affect": "tense",
+        "avoid": ["clipping", "noise"],
+        "repair": "make the melody less rough",
+    }
+    assert {e["field"] for e in structured["expansions"]} == {
+        "density",
+        "contour",
+        "texture",
+    }
+
+    melody = spec["layers"][0]
+    assert melody["gain_db"] == -4.5
+    assert any(fx["type"] == "filter" and fx["mode"] == "lowpass"
+               for fx in spec["master"]["fx"])
+    assert any(auto["target"] == "gain_db"
+               and auto["points"] == [[0.0, -2.0], [2.0, 0.0], [4.0, -2.0]]
+               for auto in spec["master"]["automation"])
+    assert any("intent conflict" in d.message and d.severity == "warning"
+               for d in res.diagnostics)
+
+
+def test_intent_metadata_only_fields_do_not_change_render_hash():
+    base = """
+asset metadata_only {
+  kind: cue
+  duration: 2s
+  intent {
+    affect: calm
+    avoid: hiss
+    repair: "remove noise from audio 2"
+  }
+  layer tone : tone {
+    osc: sine
+    note: C4
+    env: a=0.01s d=0.1s s=0.8 r=0.1s
+  }
+  master { peak: -1db }
+}
+"""
+    without_intent = """
+asset metadata_only {
+  kind: cue
+  duration: 2s
+  layer tone : tone {
+    osc: sine
+    note: C4
+    env: a=0.01s d=0.1s s=0.8 r=0.1s
+  }
+  master { peak: -1db }
+}
+"""
+
+    with_spec = AudioForge().compile(base).assets[0].spec
+    without_spec = AudioForge().compile(without_intent).assets[0].spec
+
+    assert with_spec["intent"]["structured"]["metadata"]["repair"] == (
+        "remove noise from audio 2"
+    )
+    assert with_spec["layers"] == without_spec["layers"]
+    assert with_spec["master"] == without_spec["master"]
+    assert spec_hash(with_spec) == spec_hash(without_spec)
+
+
+def test_decompiler_preserves_authored_intent_block_when_available():
+    spec = AudioForge().compile(INTENT_SRC).assets[0].spec
+    dsl = spec_to_dsl(spec)
+
+    assert "intent {" in dsl
+    assert "density: sparse" in dsl
+    assert 'repair: "make the melody less rough"' in dsl
+    again = AudioForge().compile(dsl)
+    assert again.ok, [d.message for d in again.diagnostics]
+    assert again.assets[0].spec["intent"]["structured"]["metadata"]["repair"] == (
+        "make the melody less rough"
+    )
+
+
+def test_decompiler_preserves_authored_smart_motifs_and_play_semantics():
+    src = """
+asset semantic_roundtrip {
+  kind: cue
+  duration: 4s
+  tempo: 96bpm
+  key: C major
+  perform: style=cinematic expressivity=0
+  ensemble: synth size=0 spread=0 octaves=0
+  meter: 4 4
+  form: intro 0b for 4b
+  bus music {
+    gain: -1db
+    auto gain: 0s=-3db, 2s=-1db
+  }
+  motif hook {
+    C4 @ 0b for 1b
+    E4 @ 1b for 1b
+  }
+  layer lead : notes {
+    osc: sine
+    bus: music
+    env: a=0.01s d=0.1s s=0.8 r=0.2s
+    dynamic: 0b=mp, 2b=f
+    notes: G4 @ 0b for 1b
+    play hook @ 1b legato transpose +12st
+  }
+  master { peak: -1db }
+}
+"""
+    spec = AudioForge().compile(src).assets[0].spec
+    dsl = spec_to_dsl(spec)
+
+    assert "perform: style=cinematic expressivity=0" in dsl
+    assert "ensemble: synth size=0 spread=0 octaves=0" in dsl
+    assert "motif hook {" in dsl
+    assert "play hook @ 1b legato transpose 12st" in dsl
+    assert "dynamic: 0b=0.48, 2b=0.74" in dsl
+
+    again = AudioForge().compile(dsl)
+    assert again.ok, [d.message for d in again.diagnostics]
+    assert spec_hash(again.assets[0].spec) == spec_hash(spec)
+
+
+def test_decompiler_reports_lossy_semantic_cases_without_sidecar():
+    spec = AudioForge().compile(SMART_SRC).assets[0].spec
+    spec.pop("_meta", None)
+
+    warnings = decompile_diagnostics(spec)
+
+    assert any("lossy decompile" in warning for warning in warnings)

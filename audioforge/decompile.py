@@ -11,7 +11,12 @@ def _fmt_num(v) -> str:
 def _note(ev: dict) -> str:
     pitch = ev.get("note")
     if pitch is None:
-        pitch = f"{_fmt_num(ev['freq_hz'])}hz"
+        if "freq_hz" in ev:
+            pitch = f"{_fmt_num(ev['freq_hz'])}hz"
+        elif "chord_root" in ev and "chord" in ev:
+            pitch = f"{ev['chord_root']}{ev['chord']}"
+        else:
+            pitch = "C4"
     s = f"{pitch} @ {_fmt_num(ev['start_beat'])}b for {_fmt_num(ev['dur_beats'])}b"
     if "vel" in ev:
         s += f" vel {_fmt_num(ev['vel'])}"
@@ -39,6 +44,27 @@ def _notes_list(events: list[dict]) -> str:
         else:
             parts.append(_note(ev))
     return ", ".join(parts)
+
+
+def _play_stmt(play: dict) -> str:
+    s = f"play {play['motif']} @ {_fmt_num(play['at_beat'])}b"
+    if play.get("legato"):
+        s += " legato"
+    if "art" in play:
+        s += f" art {play['art']}"
+    if play.get("invert"):
+        s += " invert"
+    if play.get("retrograde"):
+        s += " retrograde"
+    if "stretch" in play:
+        s += f" stretch {_fmt_num(play['stretch'])}"
+    if "diatonic" in play:
+        s += f" diatonic {int(play['diatonic'])}"
+    if play.get("transpose_st", 0.0):
+        s += f" transpose {_fmt_num(play['transpose_st'])}st"
+    if play.get("vel_scale", 1.0) != 1.0:
+        s += f" vel {_fmt_num(play['vel_scale'])}"
+    return s
 
 
 def _env(env: dict) -> str:
@@ -121,20 +147,149 @@ def _dynamic(points: list[list]) -> str:
     return ", ".join(f"{_fmt_num(b)}b={_fmt_num(v)}" for b, v in points)
 
 
+def _quote_value(value: str) -> str:
+    if any(ch.isspace() for ch in value) or value == "":
+        return '"' + value.replace('"', '\\"') + '"'
+    return value
+
+
+def _structured_intent_lines(intent: dict | None) -> list[str]:
+    if not isinstance(intent, dict):
+        return []
+    structured = intent.get("structured")
+    if not isinstance(structured, dict):
+        return []
+    render = structured.get("render_affecting", {})
+    metadata = structured.get("metadata", {})
+    if not render and not metadata:
+        return []
+    lines = ["  intent {"]
+    for field in ("density", "contour", "texture"):
+        if field in render:
+            lines.append(f"    {field}: {render[field]}")
+    for field in ("affect", "avoid", "style_text", "repair"):
+        if field not in metadata:
+            continue
+        value = metadata[field]
+        if isinstance(value, list):
+            rendered = ", ".join(_quote_value(str(v)) for v in value)
+        else:
+            rendered = _quote_value(str(value))
+        lines.append(f"    {field}: {rendered}")
+    lines.append("  }")
+    return lines
+
+
+def _directive_value(value) -> str:
+    if isinstance(value, list):
+        return ",".join(_fmt_num(v) if isinstance(v, (int, float)) else str(v)
+                        for v in value)
+    if isinstance(value, (int, float)):
+        return _fmt_num(value)
+    return str(value)
+
+
+def _smart_directive_lines(intent: dict | None, semantic: dict) -> list[str]:
+    if not isinstance(intent, dict) or not semantic.get("smart_directives"):
+        return []
+    fields = set(semantic["smart_directives"])
+    lines = []
+    if "style" in fields and "style" in intent:
+        lines.append(f"  style: {intent['style']}")
+    if "perform" in fields and isinstance(intent.get("perform"), dict):
+        perform = intent["perform"]
+        parts = [
+            f"{key}={_directive_value(perform[key])}"
+            for key in ("style", "expressivity")
+            if key in perform
+        ]
+        lines.append("  perform: " + " ".join(parts))
+    if "ensemble" in fields and isinstance(intent.get("ensemble"), dict):
+        ensemble = intent["ensemble"]
+        parts = []
+        if "family" in ensemble:
+            parts.append(str(ensemble["family"]))
+        parts.extend(
+            f"{key}={_directive_value(ensemble[key])}"
+            for key in ("size", "spread", "octaves")
+            if key in ensemble
+        )
+        lines.append("  ensemble: " + " ".join(parts))
+    if "voicing" in fields and isinstance(intent.get("voicing"), dict):
+        voicing = intent["voicing"]
+        parts = [
+            f"{key}={_directive_value(voicing[key])}"
+            for key in ("richness", "extensions")
+            if key in voicing
+        ]
+        lines.append("  voicing: " + " ".join(parts))
+    if "space" in fields and isinstance(intent.get("space"), dict):
+        space = intent["space"]
+        parts = [
+            f"{key}={_directive_value(space[key])}"
+            for key in ("hall", "depth")
+            if key in space
+        ]
+        lines.append("  space: " + " ".join(parts))
+    return lines
+
+
+def _semantic_motif_lines(semantic: dict) -> list[str]:
+    lines = []
+    for name, events in semantic.get("motifs", {}).items():
+        lines.append(f"  motif {name} {{")
+        for event in events:
+            lines.append(f"    {_note(event)}")
+        lines.append("  }")
+    return lines
+
+
+def decompile_diagnostics(spec: dict) -> list[str]:
+    """Return warnings for semantic information that cannot be reconstructed."""
+    semantic = spec.get("_meta", {}).get("semantic", {})
+    warnings = []
+    if not semantic and spec.get("intent"):
+        warnings.append(
+            "lossy decompile: semantic sidecar is missing; smart directives "
+            "and authored intent may be emitted only as canonical render IR"
+        )
+    if not semantic:
+        for layer in spec.get("layers", []):
+            if any(ev.get("generated") for ev in layer.get("notes", [])):
+                warnings.append(
+                    "lossy decompile: generated note provenance is present but "
+                    "authored motifs/play statements are unavailable"
+                )
+                break
+    return warnings
+
+
 def spec_to_dsl(spec: dict) -> str:
     """Emit a canonical .af representation for the render-layer IR.
 
-    The decompiler preserves renderable events and parameters. High-level sugar
-    such as motifs and smart directives is intentionally not reconstructed from
-    expanded IR; agents can edit this concrete DSL and recompile it.
+    The decompiler preserves renderable events and parameters. When the IR
+    carries ``_meta.semantic`` from a DSL compile, authored motifs, play
+    statements, structured intent, and smart directives are emitted at the same
+    semantic altitude; otherwise the output is canonical render-layer DSL.
     """
     lines = [f"asset {spec['id']} {{"]
+    semantic = spec.get("_meta", {}).get("semantic", {})
+    smart_preserved = bool(semantic.get("smart_directives"))
+    preserve_authored_layers = smart_preserved or not spec.get("intent", {}).get("style")
+    semantic_layers = semantic.get("layers", {}) if preserve_authored_layers else {}
+    master_props = set(semantic.get("master_props", []))
     lines.append(f"  kind: {spec['kind']}")
     lines.append(f"  duration: {_fmt_num(spec['duration_s'])}s")
     if "bpm" in spec:
         lines.append(f"  tempo: {_fmt_num(spec['bpm'])}bpm")
     if "key" in spec:
         lines.append(f"  key: {spec['key']}")
+    smart_lines = _smart_directive_lines(spec.get("intent"), semantic)
+    if smart_lines:
+        lines.extend(smart_lines)
+    intent_lines = _structured_intent_lines(spec.get("intent"))
+    if intent_lines:
+        lines.extend(intent_lines)
     score = spec.get("score", {})
     if "meter" in score:
         m = score["meter"]
@@ -153,8 +308,14 @@ def spec_to_dsl(spec: dict) -> str:
         lines.append(f"  polymeter: {lname} {m['beats']} {m['unit']}")
     for m in spec.get("markers", []):
         lines.append(f"  marker {m['name']} @ {_fmt_num(m['time_s'])}s")
+    motif_lines = _semantic_motif_lines(semantic) if preserve_authored_layers else []
+    if motif_lines:
+        lines.append("")
+        lines.extend(motif_lines)
     lines.append("")
     for bus in spec.get("buses", []):
+        if smart_preserved and bus.get("name", "").startswith("af_"):
+            continue
         lines.append(f"  bus {bus['name']} {{")
         if "gain_db" in bus:
             lines.append(f"    gain: {_fmt_num(bus['gain_db'])}db")
@@ -164,6 +325,8 @@ def spec_to_dsl(spec: dict) -> str:
             lines.append(f"    {_auto(au)}")
         lines.append("  }")
     for layer in spec["layers"]:
+        layer_semantic = semantic_layers.get(layer.get("name", ""), {})
+        authored_props = set(layer_semantic.get("props", []))
         lines.append(f"  layer {layer.get('name', 'layer')} : {layer['type']} {{")
         for k in ("osc", "voice", "color", "shape", "model", "instrument"):
             if k in layer:
@@ -172,34 +335,47 @@ def spec_to_dsl(spec: dict) -> str:
             lines.append(f"    gain: {_fmt_num(layer['gain_db'])}db")
         if "pan" in layer:
             lines.append(f"    pan: {_fmt_num(layer['pan'])}")
-        if "bus" in layer:
+        if "bus" in layer and not (
+                smart_preserved and "bus" not in authored_props
+                and str(layer["bus"]).startswith("af_")):
             lines.append(f"    bus: {layer['bus']}")
         if "env" in layer:
             lines.append(f"    env: {_env(layer['env'])}")
-        if "unison" in layer:
+        if "unison" in layer and not (
+                smart_preserved and "unison" not in authored_props):
             lines.append(f"    unison: {int(layer['unison'])}")
-        if "spread_cents" in layer:
+        if "spread_cents" in layer and not (
+                smart_preserved and "spread" not in authored_props):
             lines.append(f"    spread: "
                          f"{_fmt_num(layer['spread_cents'])}c")
-        if "phrasing" in layer:
+        if "phrasing" in layer and not (
+                smart_preserved and "phrasing" not in authored_props):
             lines.append(f"    phrasing: {_fmt_num(layer['phrasing'])}")
-        if "vel_brightness" in layer:
+        if "vel_brightness" in layer and not (
+                smart_preserved and "velbright" not in authored_props):
             lines.append(f"    velbright: "
                          f"{_fmt_num(layer['vel_brightness'])}")
         vb = layer.get("vibrato")
-        if isinstance(vb, dict):
+        if isinstance(vb, dict) and not (
+                smart_preserved and "vibrato" not in authored_props):
             lines.append(f"    vibrato: rate={_fmt_num(vb['rate_hz'])}hz "
                          f"depth={_fmt_num(vb['depth_cents'])}c "
                          f"delay={_fmt_num(vb['delay_s'])}s")
         hz = layer.get("humanize")
-        if isinstance(hz, dict):
+        if isinstance(hz, dict) and not (
+                smart_preserved and "humanize" not in authored_props):
             lines.append(f"    humanize: time="
                          f"{_fmt_num(hz.get('timing_s', 0))}s "
                          f"vel={_fmt_num(hz.get('vel', 0))}")
-        if "dynamic" in layer:
+        if "dynamic" in layer and not (
+                smart_preserved and "dynamic" not in authored_props):
             lines.append(f"    dynamic: {_dynamic(layer['dynamic'])}")
-        if "notes" in layer:
+        if "notes" in layer_semantic:
+            lines.append(f"    notes: {_notes_list(layer_semantic['notes'])}")
+        elif "notes" in layer:
             lines.append(f"    notes: {_notes_list(layer['notes'])}")
+        for play in layer_semantic.get("plays", []):
+            lines.append(f"    {_play_stmt(play)}")
         if "pattern" in layer:
             lines.append(f"    pattern: {layer['pattern']}")
         if "fx" in layer:
@@ -217,8 +393,15 @@ def spec_to_dsl(spec: dict) -> str:
         if "target_lufs" in master:
             lines.append(f"    lufs: {_fmt_num(master['target_lufs'])}")
         if "fx" in master:
-            lines.append("    fx: " + ", ".join(_fx(fx) for fx in master["fx"]))
+            fxs = [
+                fx for fx in master["fx"]
+                if not (smart_preserved and "fx" not in master_props)
+            ]
+            if fxs:
+                lines.append("    fx: " + ", ".join(_fx(fx) for fx in fxs))
         for au in master.get("automation", []):
+            if au.get("from_intent") and "auto" not in master_props:
+                continue
             lines.append(f"    {_auto(au)}")
         lines.append("  }")
     lines.append("}")

@@ -229,6 +229,35 @@ def _validate_note_events(layer: dict, p: str):
             prev = pt[0]
 
 
+def _validate_orchestration(layer: dict, p: str):
+    orch = layer.get("orchestration")
+    if orch is None:
+        return
+    if not isinstance(orch, dict):
+        raise SpecError(f"{p}.orchestration: object")
+    hard = orch.get("hard_range", {})
+    arts = set(orch.get("articulations", []))
+    art = layer.get("articulation", "sustain")
+    if arts and art not in arts:
+        raise SpecError(
+            f"{p}.articulation: unavailable articulation '{art}' "
+            f"(available: {sorted(arts)})"
+        )
+    if hard:
+        from .theory import note_to_semis
+        low = int(hard["low_midi"])
+        high = int(hard["high_midi"])
+        for idx, ev in enumerate(layer.get("notes", [])):
+            if "note" not in ev:
+                continue
+            midi = note_to_semis(ev["note"]) + 12
+            if midi < low or midi > high:
+                raise SpecError(
+                    f"{p}.notes[{idx}].note: {ev['note']} outside hard range "
+                    f"{hard.get('low_note', low)}..{hard.get('high_note', high)}"
+                )
+
+
 def _validate_performance(layer: dict, p: str):
     hum = layer.get("humanize")
     if hum is not None:
@@ -390,6 +419,7 @@ def validate_spec(spec: dict) -> dict:
             if art not in ARTICULATIONS:
                 raise SpecError(f"{p}.articulation: '{art}' is not one of "
                                 f"{sorted(ARTICULATIONS)}")
+            _validate_orchestration(layer, p)
             sec = layer.get("section")
             if sec is not None:
                 if not isinstance(sec, dict):

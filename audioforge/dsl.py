@@ -19,8 +19,7 @@ from . import theory
 from .lark_parser import parse_assets
 from .synth import NOTE_OFFSETS
 from .styles import STYLE_PACKS
-
-DSL_VERSION = "1.0"
+from .version import DSL_VERSION, ENGINE_VERSION
 
 
 class DSLError(ValueError):
@@ -41,6 +40,14 @@ TOKEN_RE = re.compile(r"""
 """, re.VERBOSE)
 
 NOTE_RE = re.compile(r"^[A-Ga-g][#b]?-?\d$")
+
+INTENT_RENDER_FIELDS = {
+    "density": {"sparse", "balanced", "dense"},
+    "contour": {"flat", "arch", "rise", "fall"},
+    "texture": {"neutral", "smooth", "airy", "warm", "bright"},
+}
+INTENT_METADATA_FIELDS = {"affect", "avoid", "repair", "style_text"}
+INTENT_FIELDS = set(INTENT_RENDER_FIELDS) | INTENT_METADATA_FIELDS
 
 
 @dataclass
@@ -101,6 +108,7 @@ class Layer:
 class Asset:
     id: str
     props: dict = field(default_factory=dict)
+    intent: dict = field(default_factory=dict)
     markers: list = field(default_factory=list)
     motifs: dict = field(default_factory=dict)
     layers: list = field(default_factory=list)
@@ -192,6 +200,8 @@ class Parser:
                 self.bus(a)
             elif t.text == "master":
                 self.master(a)
+            elif t.text == "intent":
+                self.intent(a)
             else:
                 k, v = self.prop_line()
                 a.props[k] = v
@@ -217,6 +227,22 @@ class Parser:
             self.skip_nl()
         self.expect("PUNCT", "}")
         a.motifs[name] = events
+
+    def intent(self, a: Asset):
+        self.next()  # 'intent'
+        if a.intent:
+            raise DSLError("asset may contain only one intent block",
+                           self.peek().line)
+        self.expect("PUNCT", "{")
+        self.skip_nl()
+        while not (self.peek().kind == "PUNCT" and self.peek().text == "}"):
+            key, vals = self.prop_line()
+            if key not in INTENT_FIELDS:
+                raise DSLError(f"unknown intent field '{key}'",
+                               vals[0].line if vals else self.peek().line)
+            a.intent[key] = vals
+            self.skip_nl()
+        self.expect("PUNCT", "}")
 
     def note_event(self) -> dict:
         t = self.next()
@@ -882,6 +908,104 @@ def _read_smart_directives(p: dict, line: int) -> dict:
     return intent
 
 
+def _intent_token_value(tok: Tok):
+    if tok.kind == "NUMBER":
+        return tok.value
+    return tok.text
+
+
+def _intent_scalar(toks: list[Tok], line: int, field: str) -> str:
+    vals = [t for t in toks if not (t.kind == "PUNCT" and t.text == ",")]
+    if len(vals) != 1 or vals[0].kind not in {"IDENT", "STRING", "NUMBER"}:
+        raise DSLError(f"intent.{field}: expected a single value", line)
+    value = _intent_token_value(vals[0])
+    return str(value)
+
+
+def _intent_list(toks: list[Tok], line: int, field: str) -> list[str]:
+    vals = []
+    for tok in toks:
+        if tok.kind == "PUNCT" and tok.text == ",":
+            continue
+        if tok.kind not in {"IDENT", "STRING", "NUMBER"}:
+            raise DSLError(f"intent.{field}: expected comma-separated values",
+                           tok.line)
+        vals.append(str(_intent_token_value(tok)))
+    if not vals:
+        raise DSLError(f"intent.{field}: expected at least one value", line)
+    return vals
+
+
+def _read_structured_intent(raw: dict, line: int) -> dict:
+    """Parse the typed intent block into semantic IR.
+
+    The render-affecting fields are deliberately closed enums. Metadata fields
+    are preserved for agents and repair loops, but have no direct render effect.
+    """
+    render_affecting: dict[str, str] = {}
+    metadata: dict[str, object] = {}
+    authored: list[dict] = []
+    for field in sorted(raw):
+        toks = raw[field]
+        if field in INTENT_RENDER_FIELDS:
+            value = _intent_scalar(toks, line, field).lower()
+            allowed = INTENT_RENDER_FIELDS[field]
+            if value not in allowed:
+                raise DSLError(
+                    f"intent.{field}: expected one of {sorted(allowed)}",
+                    toks[0].line if toks else line,
+                )
+            render_affecting[field] = value
+            authored.append({"field": field, "value": value})
+        elif field == "avoid":
+            values = _intent_list(toks, line, field)
+            metadata[field] = values
+            authored.append({"field": field, "value": values})
+        else:
+            value = _intent_scalar(toks, line, field)
+            metadata[field] = value
+            authored.append({"field": field, "value": value})
+    return {
+        "render_affecting": render_affecting,
+        "metadata": metadata,
+        "expansions": [],
+        "authored": authored,
+    }
+
+
+def _semantic_sidecar(a: Asset, smart_intent: dict) -> dict:
+    """Capture authored high-level constructs that compile away.
+
+    This is provenance/semantic data: it is excluded from render hashing but lets
+    decompile stay at the same authoring altitude when the IR came from DSL.
+    """
+    semantic: dict = {}
+    if smart_intent and "style" not in smart_intent:
+        semantic["smart_directives"] = [
+            key for key in ("style", "perform", "ensemble", "voicing", "space")
+            if key in smart_intent
+        ]
+    if a.motifs:
+        semantic["motifs"] = {
+            name: [dict(ev) for ev in events]
+            for name, events in sorted(a.motifs.items())
+        }
+    layers: dict = {}
+    for lay in a.layers:
+        lsem: dict = {"props": sorted(lay.props)}
+        if "notes" in lay.props:
+            lsem["notes"] = [dict(ev) for ev in lay.props.get("notes", [])]
+        if "plays" in lay.props:
+            lsem["plays"] = [dict(play) for play in lay.props.get("plays", [])]
+        if len(lsem) > 1:
+            layers[lay.name] = lsem
+    if layers:
+        semantic["layers"] = layers
+    if a.master:
+        semantic["master_props"] = sorted(a.master)
+    return semantic
+
+
 def _read_score_props(p: dict, line: int) -> dict:
     score: dict = {}
     if "meter" in p:
@@ -931,6 +1055,60 @@ def _read_score_props(p: dict, line: int) -> dict:
                            "unit": int(toks[2].value)}
         }
     return score
+
+
+def _read_notation_props(p: dict, line: int) -> dict:
+    notation: dict = {}
+    if "tuning" in p:
+        toks = p.pop("tuning")
+        if not toks or toks[0].text != "edo":
+            raise DSLError("tuning: expected 'edo divisions=N base=A4 hz=440'",
+                           toks[0].line if toks else line)
+        out = {"system": "edo"}
+        i = 1
+        while i < len(toks):
+            if toks[i].kind == "PUNCT":
+                i += 1
+                continue
+            key = toks[i].text
+            if i + 2 >= len(toks) or toks[i + 1].text != "=":
+                raise DSLError("tuning: expected key=value pairs", toks[i].line)
+            val = toks[i + 2]
+            out[{"divisions": "divisions", "base": "base_note",
+                 "hz": "base_hz"}.get(key, key)] = (
+                int(val.value) if key == "divisions"
+                else float(val.value) if key == "hz"
+                else val.text
+            )
+            i += 3
+        notation["tuning"] = out
+    if "tuplet" in p:
+        toks = p.pop("tuplet")
+        if len(toks) < 7:
+            raise DSLError("tuplet: layer STARTb for DURb ratio=N:M", line)
+        ratio_idx = next((i for i, t in enumerate(toks)
+                          if t.kind == "IDENT" and t.text == "ratio"), -1)
+        if ratio_idx < 0 or toks[ratio_idx + 1].text != "=":
+            raise DSLError("tuplet: missing ratio=N:M", line)
+        notation.setdefault("tuplets", []).append({
+            "layer": toks[0].text,
+            "start_beat": toks[1].value,
+            "dur_beats": toks[3].value,
+            "ratio": [int(toks[ratio_idx + 2].value),
+                      int(toks[ratio_idx + 4].value)],
+        })
+    if "lyrics" in p:
+        toks = p.pop("lyrics")
+        if len(toks) < 3 or toks[2].kind != "STRING":
+            raise DSLError('lyrics: layer STARTb "text" [phonemes=...]', line)
+        lyric = {"layer": toks[0].text, "start_beat": toks[1].value,
+                 "text": toks[2].text}
+        for i, tok in enumerate(toks):
+            if tok.kind == "IDENT" and tok.text == "phonemes" \
+                    and i + 2 < len(toks) and toks[i + 1].text == "=":
+                lyric["phonemes"] = toks[i + 2].text.split("_")
+        notation.setdefault("lyrics", []).append(lyric)
+    return notation
 
 
 def _apply_smart_directives(spec: dict, intent: dict, diags: list[str]):
@@ -1004,6 +1182,107 @@ def _apply_smart_directives(spec: dict, intent: dict, diags: list[str]):
             "attack": 0.04, "release": 0.22, "knee": 6.0, "makeup": 0.0})
     diags.append("smart directives: expanded style/perform/ensemble/voicing/"
                  "space into explicit layer and master IR")
+
+
+def _append_unique_master_fx(master: dict, fx: dict):
+    chain = master.setdefault("fx", [])
+    if fx not in chain:
+        chain.append(fx)
+
+
+def _apply_structured_intent(spec: dict, structured: dict, diags: list[str]):
+    """Expand typed intent fields into explicit render IR.
+
+    Only ``render_affecting`` fields mutate layers/master. Metadata is stored
+    under ``intent.structured.metadata`` and is excluded from render hashing.
+    """
+    if not structured:
+        return
+    intent = spec.setdefault("intent", {})
+    intent["structured"] = structured
+    render = structured.get("render_affecting", {})
+    expansions = structured.setdefault("expansions", [])
+
+    density = render.get("density")
+    if density:
+        delta = {"sparse": -1.5, "balanced": 0.0, "dense": 0.8}[density]
+        affected = []
+        if delta:
+            for layer in spec.get("layers", []):
+                if layer.get("type") in {"notes", "instrument", "drums", "tone"}:
+                    layer["gain_db"] = round(float(layer.get("gain_db", 0.0))
+                                             + delta, 3)
+                    affected.append(layer.get("name", layer.get("type")))
+        expansions.append({
+            "field": "density",
+            "strategy": "layer_gain_db_delta",
+            "delta_db": delta,
+            "layers": affected,
+        })
+        ensemble_size = int(
+            spec.get("intent", {}).get("ensemble", {}).get("size", 0) or 0
+        )
+        if density == "sparse" and ensemble_size > 6:
+            diags.append(
+                "intent conflict: density=sparse with ensemble size "
+                f"{ensemble_size}; sparse layer gain expansion was kept, "
+                "but arrangement size may need agent review"
+            )
+
+    contour = render.get("contour")
+    if contour and contour != "flat":
+        duration = round(float(spec.get("duration_s", 0.0)), 6)
+        midpoint = round(duration / 2.0, 6)
+        points_by_contour = {
+            "arch": [[0.0, -2.0], [midpoint, 0.0], [duration, -2.0]],
+            "rise": [[0.0, -2.0], [duration, 0.0]],
+            "fall": [[0.0, 0.0], [duration, -2.0]],
+        }
+        points = points_by_contour[contour]
+        spec.setdefault("master", {}).setdefault("automation", []).append({
+            "target": "gain_db",
+            "points": points,
+            "from_intent": "contour",
+        })
+        expansions.append({
+            "field": "contour",
+            "strategy": "master_gain_automation",
+            "points": points,
+        })
+
+    texture = render.get("texture")
+    if texture and texture != "neutral":
+        master = spec.setdefault("master", {})
+        texture_fx = {
+            "smooth": {"type": "filter", "mode": "lowpass",
+                       "cutoff_hz": 6500.0, "q": 0.7071},
+            "airy": {"type": "filter", "mode": "highpass",
+                     "cutoff_hz": 120.0, "q": 0.7071},
+            "warm": {"type": "filter", "mode": "lowpass",
+                     "cutoff_hz": 9200.0, "q": 0.7071},
+            "bright": {"type": "highshelf", "freq_hz": 5500.0,
+                       "gain_db": 1.2},
+        }[texture]
+        _append_unique_master_fx(master, texture_fx)
+        expansions.append({
+            "field": "texture",
+            "strategy": "master_fx",
+            "fx": texture_fx,
+        })
+
+    metadata = structured.get("metadata", {})
+    avoid = set(metadata.get("avoid", []))
+    peak = spec.get("master", {}).get("target_peak_dbfs")
+    if "clipping" in avoid and peak is not None and float(peak) > -0.5:
+        diags.append(
+            "intent conflict: avoid=clipping with master peak above -0.5 dBFS; "
+            "peak was preserved for explicit user control"
+        )
+    if render:
+        diags.append(
+            "intent block: expanded render-affecting density/contour/texture "
+            "fields into explicit IR"
+        )
 
 
 def _analyze_layer_phrases(layer: dict) -> list[dict]:
@@ -1222,7 +1501,14 @@ def _apply_role_routing(spec: dict, ensemble: dict, space: dict):
 def compile_asset(a: Asset, variant=None) -> tuple[dict, list[str]]:
     diags: list[str] = []
     _apply_vary(a, variant)
-    spec: dict = {"id": a.id, "layers": []}
+    spec: dict = {
+        "id": a.id,
+        "layers": [],
+        "_meta": {
+            "dsl_version": DSL_VERSION,
+            "engine_version": ENGINE_VERSION,
+        },
+    }
     if variant is not None:
         spec["variant"] = str(variant)
     p = a.props
@@ -1233,9 +1519,18 @@ def compile_asset(a: Asset, variant=None) -> tuple[dict, list[str]]:
     spec["kind"] = _one(take("kind", [Tok("IDENT", "sfx", a.line)]), a.line)
     spec["duration_s"] = _one(take("duration"), a.line, "s", "duration")
     smart_intent = _read_smart_directives(p, a.line)
+    structured_intent = (
+        _read_structured_intent(a.intent, a.line) if a.intent else {}
+    )
+    semantic = _semantic_sidecar(a, smart_intent)
+    if semantic:
+        spec.setdefault("_meta", {})["semantic"] = semantic
     score = _read_score_props(p, a.line)
     if score:
         spec["score"] = score
+    notation = _read_notation_props(p, a.line)
+    if notation:
+        spec["notation"] = notation
     if "samplerate" in p:
         spec["sample_rate"] = int(_one(take("samplerate"), a.line))
     if "bitdepth" in p:
@@ -1441,6 +1736,8 @@ def compile_asset(a: Asset, variant=None) -> tuple[dict, list[str]]:
         _apply_emotion(spec, emotion, diags)
     if smart_intent:
         _apply_smart_directives(spec, smart_intent, diags)
+    if structured_intent:
+        _apply_structured_intent(spec, structured_intent, diags)
 
     # advisory checks
     for lay in spec["layers"]:
@@ -1512,6 +1809,7 @@ def _apply_vary(a, variant):
                 container[key] = _resolve_vary(
                     val, f"{tag}|{a.id}|{scope}|{key}", a.line)
     fix(a.props, "asset")
+    fix(a.intent, "intent")
     fix(a.master, "master")
     for lay in a.layers:
         fix(lay.props, f"layer:{lay.name}")

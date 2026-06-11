@@ -1,7 +1,9 @@
 import json
 from pathlib import Path
 
+from audioforge import DSL_VERSION, ENGINE_VERSION
 from audioforge import cli
+from audioforge.interop import export_midi_bytes, export_musicxml
 
 
 class _Diag:
@@ -48,6 +50,13 @@ class _Asset:
                 "preset": preset,
             }
         ]
+
+
+def test_cli_version_reports_runtime_contract(capsys):
+    assert cli.main(["--version"]) == 0
+    assert capsys.readouterr().out.strip() == (
+        f"audioforge engine {ENGINE_VERSION} dsl {DSL_VERSION}"
+    )
 
 
 def test_cli_validate_compile_decompile_and_grammar(monkeypatch, capsys, tmp_path):
@@ -146,3 +155,79 @@ def test_cli_ingest_and_libgen(monkeypatch, capsys, tmp_path):
     libgen_out = capsys.readouterr().out
     assert "library 'kit' v1.2.3 (CC0)" in libgen_out
     assert "pin: kit@" in libgen_out
+
+
+def test_cli_interop_score_pack_and_verify_edges(monkeypatch, capsys, tmp_path):
+    spec = tmp_path / "fake.af"
+    spec.write_text("# Program note\nasset fake {\n  kind: cue\n}\n")
+    assets = [_Asset({"id": "one"}), _Asset({"id": "two"})]
+
+    monkeypatch.setattr(cli, "_assets", lambda *args, **kwargs: assets)
+    assert cli.main(["export-midi", str(spec), "-o", str(tmp_path / "x.mid")]) == 1
+    assert "export-midi expects exactly one asset" in capsys.readouterr().err
+
+    assert cli.main(["export-musicxml", str(spec), "-o", str(tmp_path / "x.musicxml")]) == 0
+    out = capsys.readouterr().out
+    assert "x.one.musicxml" in out
+    assert "x.two.musicxml" in out
+
+    monkeypatch.setattr(cli, "_assets", lambda *args, **kwargs: [_Asset({"id": "one"})])
+    monkeypatch.setattr("audioforge.interop.export_notated_musicxml",
+                        lambda spec, beats_per_bar: "<score-partwise notated='1'/>")
+    assert cli.main(["export-musicxml", str(spec), "-o", str(tmp_path / "n.musicxml"),
+                     "--notated", "--bars", "3"]) == 0
+    assert "notated" in (tmp_path / "n.musicxml").read_text()
+
+    called = {}
+    monkeypatch.setattr("audioforge.score.score_pdf",
+                        lambda specs, out, title, program, bars_per_system:
+                        called.update({
+                            "specs": specs, "out": out, "title": title,
+                            "program": program, "bars": bars_per_system,
+                        }))
+    assert cli.main(["score", str(spec), "-o", str(tmp_path / "score.pdf"),
+                     "--title", "Title", "--bars", "6"]) == 0
+    assert called["title"] == "Title"
+    assert called["program"] == "Program note"
+    assert called["bars"] == 6
+    assert "score ->" in capsys.readouterr().out
+
+    midi_spec = {
+        "id": "m",
+        "kind": "cue",
+        "duration_s": 1,
+        "bpm": 120,
+        "layers": [{
+            "type": "notes",
+            "notes": [{"note": "C4", "start_beat": 0, "dur_beats": 1}],
+        }],
+    }
+    midi = tmp_path / "in.mid"
+    midi.write_bytes(export_midi_bytes(midi_spec))
+    assert cli.main(["import-midi", str(midi), "--id", "midi_in"]) == 0
+    assert '"id": "midi_in"' in capsys.readouterr().out
+
+    xml = tmp_path / "in.musicxml"
+    xml.write_text(export_musicxml(midi_spec))
+    assert cli.main(["import-musicxml", str(xml), "--id", "xml_in"]) == 0
+    assert '"id": "xml_in"' in capsys.readouterr().out
+
+    class _Forge:
+        def export_pack(self, dsl_text, out, n, preset):
+            return {"variants": [
+                {"file": "a.wav", "output_sha256": "f" * 64},
+                {"file": "b.wav", "output_sha256": "e" * 64},
+            ]}
+
+    monkeypatch.setattr("audioforge.sdk.AudioForge", lambda: _Forge())
+    assert cli.main(["pack", str(spec), "-o", str(tmp_path), "--variants", "2",
+                     "--preset", "web_preview"]) == 0
+    assert "pack.manifest.json: 2 renders" in capsys.readouterr().out
+
+    spec_json = tmp_path / "spec.json"
+    manifest_json = tmp_path / "manifest.json"
+    spec_json.write_text("{}")
+    manifest_json.write_text(json.dumps({"output_sha256": "bad"}))
+    monkeypatch.setattr(cli, "verify", lambda spec, expected, td: False)
+    assert cli.main(["verify", str(spec_json), str(manifest_json)]) == 2
+    assert "MISMATCH" in capsys.readouterr().out

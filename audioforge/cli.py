@@ -17,6 +17,7 @@ from .dsl import DSLError
 from .render import render_to_wav, verify
 from .schema import SpecError, validate_spec
 from .sdk import AudioForge
+from .version import version_banner
 
 
 def _assets(path: str, variant=None):
@@ -37,6 +38,11 @@ def _load(path: str) -> dict:
 
 
 def main(argv=None) -> int:
+    argv = sys.argv[1:] if argv is None else list(argv)
+    if argv in (["--version"], ["-V"]):
+        print(version_banner())
+        return 0
+
     ap = argparse.ArgumentParser(prog="audioforge")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
@@ -69,6 +75,10 @@ def main(argv=None) -> int:
     p = sub.add_parser("compile"); p.add_argument("spec")
 
     p = sub.add_parser("decompile"); p.add_argument("spec")
+
+    p = sub.add_parser("repair"); p.add_argument("spec")
+    p.add_argument("--analysis", default=None)
+    p.add_argument("--feedback", default="")
 
     sub.add_parser("capabilities")
 
@@ -125,6 +135,14 @@ def main(argv=None) -> int:
         elif args.cmd == "decompile":
             for a in _assets(args.spec):
                 print(a.to_dsl())
+        elif args.cmd == "repair":
+            from .repair import plan_repair
+            analysis = json.loads(Path(args.analysis).read_text()) if args.analysis else {}
+            print(json.dumps(plan_repair({
+                "dsl": Path(args.spec).read_text(),
+                "analysis": analysis,
+                "feedback": args.feedback,
+            }), indent=2, sort_keys=True))
         elif args.cmd == "capabilities":
             from .capabilities import capability_manifest
             print(json.dumps(capability_manifest(), indent=2,

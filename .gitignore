@@ -1,10 +1,15 @@
 *.pyc
 libraries/
 tracks/
-static/
+static/*
+!static/samples/
+!static/samples/*.af
 compare/
 *egg-info*
 .coverage
 renders/
 _tmp/
 af-external-lib.tar
+.agent-tasks/
+drift-risk-map.md
+drift-risk-map.svg
