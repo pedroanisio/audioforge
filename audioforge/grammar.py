@@ -1,8 +1,18 @@
-"""Constrained-generation grammar artifacts for the .af DSL."""
+"""Constrained-generation grammar artifacts for the .af DSL.
+
+Generated from audioforge/lark_parser.py as the executable grammar source.
+The EBNF/GBNF below are publishing forms kept aligned with that parser.
+"""
 from __future__ import annotations
+
+from .lark_parser import LARK_GRAMMAR
 
 
 _EBNF = r"""
+(* Generated from audioforge/lark_parser.py. Executable Lark source:
+__LARK_SOURCE__
+*)
+
 file             = { asset } ;
 asset            = "asset" IDENT "{" { asset_item } "}" ;
 asset_item       = smart_directive | score_property | property | marker | motif | stage | cutdowns | bus | layer | master ;
@@ -35,6 +45,9 @@ newline          = "\n" ;
 
 
 _GBNF = r"""
+# Generated from audioforge/lark_parser.py. Executable grammar source is
+# exposed as audioforge.lark_parser.LARK_GRAMMAR.
+
 root ::= (asset ws*)+
 asset ::= "asset" ws ident ws "{" ws asset-item* "}" ws
 asset-item ::= smart-directive | score-property | property | marker | motif | bus | layer | master | stage | cutdowns
@@ -74,7 +87,7 @@ nl ::= "\n"+
 
 
 def dsl_ebnf() -> str:
-    return _EBNF.strip() + "\n"
+    return _EBNF.replace("__LARK_SOURCE__", LARK_GRAMMAR.strip()).strip() + "\n"
 
 
 def dsl_gbnf() -> str:

@@ -403,7 +403,7 @@ Every render is keyed to the spec content hash; `ENGINE_VERSION` folds into it, 
 
 ## 18. Diagnostics contract (for agents)
 
-Parse/compile errors raise with line numbers. Non-fatal advice arrives as warnings: out-of-scale notes (advisory — chromaticism is allowed), unknown properties (ignored, named), emotion expansion notes, cutdown length mismatches, and note events that extend past the asset duration. The SDK (`AudioForge.compile`) never raises on user input — everything is a structured `Diagnostic(severity, message, path)`.
+The executable grammar lives in `audioforge.lark_parser` as a Lark grammar and is the source for the published EBNF/GBNF artifacts (`audioforge grammar --format ebnf|gbnf`). Parse/compile errors raise with line numbers. Non-fatal advice arrives as warnings: out-of-scale notes (advisory — chromaticism is allowed), unknown properties (ignored, named), emotion expansion notes, cutdown length mismatches, and note events that extend past the asset duration. The SDK (`AudioForge.compile`) never raises on user input — everything is a structured `Diagnostic(severity, message, path)`.
 
 ## 19. CLI
 

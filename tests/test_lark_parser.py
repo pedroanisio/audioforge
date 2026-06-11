@@ -1,0 +1,134 @@
+import tomllib
+from pathlib import Path
+
+import pytest
+
+from audioforge.dsl import DSLError, Parser, compile_dsl, tokenize
+
+
+ROOT = Path(__file__).resolve().parents[1]
+AF_CORPUS = sorted((ROOT / "presets").glob("*.af")) + sorted((ROOT / "tests" / "fixtures").glob("*.af"))
+
+
+SRC = """
+asset lark_ready {
+  kind: cue
+  duration: 4s
+  tempo: 100bpm
+  key: C major
+  meter: 7 8
+  pickup: 1b
+  form: intro 0b for 7b, verse 7b for 14b
+  repeat: verse x2
+  polymeter: drums 3 4
+  style: cinematic
+  perform: style=cinematic expressivity=0.6
+  marker hit @ 2s
+
+  motif hook {
+    C4 @ 0b for 1b vel 0.8
+    E4 @ 1b for 1b
+  }
+
+  layer pad : notes {
+    osc: saw
+    env: a=0.01s d=0.1s s=0.7 r=0.2s
+    notes: slur(
+      C4 @ 0b for 1b,
+      D4 @ 1b for 1b), E4 @ 2b for 1b
+    play hook @ 0b legato transpose +12st
+    auto gain: 0s=-12db,
+      1s=-6db
+  }
+
+  bus verb {
+    fx: reverb(decay=1.2, mix=0.3)
+  }
+
+  master {
+    peak: -1db
+  }
+}
+"""
+
+
+def test_lark_is_runtime_dependency():
+    data = tomllib.loads((ROOT / "pyproject.toml").read_text())
+
+    assert any(dep.partition(">=")[0] == "lark" for dep in data["project"]["dependencies"])
+
+
+def test_lark_parser_matches_legacy_ast_shape():
+    from audioforge.lark_parser import parse_assets
+
+    legacy = Parser(tokenize(SRC)).parse()
+    parsed = parse_assets(SRC)
+
+    assert parsed == legacy
+
+
+@pytest.mark.parametrize("path", AF_CORPUS, ids=lambda p: str(p.relative_to(ROOT)))
+def test_lark_parser_matches_legacy_ast_for_checked_in_af_corpus(path):
+    from audioforge.lark_parser import parse_assets
+
+    src = path.read_text()
+
+    try:
+        legacy = Parser(tokenize(src)).parse()
+    except DSLError as exc:
+        with pytest.raises(DSLError) as parsed:
+            parse_assets(src)
+        assert str(parsed.value) == str(exc)
+    else:
+        assert parse_assets(src) == legacy
+
+
+def test_compile_dsl_uses_lark_parser(monkeypatch):
+    import audioforge.dsl as dsl
+
+    called = False
+    real_parse_assets = dsl.parse_assets
+
+    def spy(src):
+        nonlocal called
+        called = True
+        return real_parse_assets(src)
+
+    monkeypatch.setattr(dsl, "parse_assets", spy)
+
+    specs, diags = compile_dsl(SRC)
+
+    assert called
+    assert specs[0]["id"] == "lark_ready"
+    assert isinstance(diags, list)
+
+
+def test_lark_parser_reports_line_numbered_errors():
+    from audioforge.lark_parser import parse_assets
+    from audioforge.dsl import DSLError
+
+    with pytest.raises(DSLError, match=r"line 3:"):
+        parse_assets("asset bad {\n  layer x : notes {\n    notes:\n  }\n}\n")
+
+
+def test_lark_parser_rejects_unbalanced_blocks_before_legacy_parse():
+    from audioforge.lark_parser import parse_assets
+    from audioforge.dsl import DSLError
+
+    with pytest.raises(DSLError, match=r"line 1: invalid DSL syntax"):
+        parse_assets("asset bad {\n  kind: cue\n")
+
+
+def test_exported_grammar_and_docs_name_lark_as_authoritative_source():
+    from audioforge.grammar import dsl_ebnf, dsl_gbnf
+
+    assert "Generated from audioforge/lark_parser.py" in dsl_ebnf()
+    assert "Generated from audioforge/lark_parser.py" in dsl_gbnf()
+
+    spec = (ROOT / "docs" / "DSL_SPEC.md").read_text()
+    assert "Lark grammar" in spec
+    assert "audioforge.lark_parser" in spec
+
+    proposal = (ROOT / "docs" / "PROPOSAL_north_star_studio_dsl_ir.md").read_text()
+    assert "hand-rolled parser to `lark`" not in proposal
+    assert "Lark-backed EBNF/GBNF grammar artifacts" in proposal

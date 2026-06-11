@@ -87,11 +87,11 @@ context an AI reads to author correctly on the first try, and it stays in sync
 because it's *derived from the registries*, not written by hand.
 
 ### A2 · Grammar-constrained generation
-Ship the DSL grammar as **EBNF + GBNF** (a natural by-product of migrating the
-hand-rolled parser to `lark`). This lets LLM toolchains do *grammar-constrained
-decoding* — guaranteeing **syntactically valid `.af` by construction**, eliminating
-the entire class of parse-error round-trips (Issues I-4/I-5). Few DSLs ship this;
-it is a genuine differentiator.
+Ship the DSL grammar as **EBNF + GBNF** from the executable `lark` grammar in
+`audioforge.lark_parser`. This lets LLM toolchains do *grammar-constrained
+decoding* — guaranteeing **syntactically valid `.af` by construction** for the
+published syntax surface and shrinking parse-error round-trips (Issues I-4/I-5).
+Few DSLs ship this; it is a genuine differentiator.
 
 ### A3 · Closed-loop analysis feedback
 Today the only feedback is loudness/gain-reduction in the manifest. Add an
@@ -211,7 +211,7 @@ One architecture, mutually reinforcing — provided determinism is never sacrifi
 | Phase | Theme | Initiatives | Powered by |
 |-------|-------|-------------|------------|
 | **0 — Foundation** | Make the contract solid | Resolve pass + line-numbered diagnostics (P0); validate/render parity + property test (P1); formal typed IR schema | pydantic/jsonschema, hypothesis, threadpoolctl, `pyproject.toml` |
-| **1 — Close the AI loop** | DSL the AI can trust & drive | Capability manifest (A1); EBNF/GBNF + parser migration (A2); analysis pass + write-back (A3/C4); MCP/tool surface (A4) | lark, pyloudnorm |
+| **1 — Close the AI loop** | DSL the AI can trust & drive | Capability manifest (A1); Lark-backed EBNF/GBNF grammar artifacts (A2); analysis pass + write-back (A3/C4); MCP/tool surface (A4) | lark, pyloudnorm |
 | **2 — Studio breadth** | From cues to complete works | Modulation/routing depth (B3); arrangement timeline (B4); recorded-audio layers (B2); fast preview (B5) | soundfile (I/O) |
 | **3 — Interop hub** | IR ↔ the world | MusicXML/MIDI import (B1); MIDI/MusicXML/session export (C5); IR→DSL round-trip (A5); validated corpus | mido/music21 (import-only, determinism-fenced) |
 

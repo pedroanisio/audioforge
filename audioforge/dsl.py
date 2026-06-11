@@ -16,6 +16,7 @@ import re
 from dataclasses import dataclass, field
 
 from . import theory
+from .lark_parser import parse_assets
 from .synth import NOTE_OFFSETS
 from .styles import STYLE_PACKS
 
@@ -1891,7 +1892,7 @@ def _compile_layer(lay: Layer, motifs: dict, scale, diags: list[str],
 def compile_dsl(src: str, variant=None) -> tuple[list[dict], list[str]]:
     """DSL text -> ([compiled JSON specs], diagnostics). Raises DSLError.
     `variant` resolves vary() choices and reseeds all stochastic paths."""
-    assets = Parser(tokenize(src)).parse()
+    assets = parse_assets(src)
     specs, diags = [], []
     for a in assets:
         spec, d = compile_asset(a, variant=variant)
