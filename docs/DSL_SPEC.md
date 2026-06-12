@@ -253,6 +253,30 @@ auto scan:   0s=0, 8s=1, 16s=0.2          # morph oscillator wavetable position
 
 Breakpoints interpolate linearly (log-domain for cutoff; clipped 0..1 for scan). Gain is a sample-accurate multiplier; cutoff drives a block-based time-varying biquad with carried state; scan reaches the morph oscillator per-sample (sliced per note in `notes` layers). Breakpoint times are real seconds (tempo maps do not bend them).
 
+### Performance curves
+
+Compiled IR schema `1.1` uses the same curve object for continuous performance
+state. `pitch_cents` is a relative pitch offset in cents and `dynamic` is a
+normalized performance dynamic in `[0, 1]`. Curves may live on note events
+(`note_beats` or `note_seconds`) or layer automation (`layer_beats` or
+`layer_seconds`); existing automation targets continue to use layer scope.
+
+The compiler lowers legacy expressive fields before render:
+
+- `vibrato` becomes dense sampled `pitch_cents` curves.
+- `glide_s` becomes linear-in-cents `pitch_cents` curves from the previous
+  pitch offset to zero.
+- authored `dynamic` breakpoints are re-emitted as explicit `dynamic` curves.
+
+Interpolation is explicit in IR: points are `[time, value]` or
+`[time, value, shape]`, where shape is `linear`, `hold`, or `pow:k`
+(`k` in `[0.1, 10]`). Edges hold the nearest endpoint and single-point curves
+are constants. Complex shapes should compile to dense breakpoints rather than
+adding runtime-private logic. `pitch_cents` curves sum in cents and render as
+`f_base * 2 ** (cents / 1200)`. Unsupported physical-model pitch curves reject
+with `curve_unsupported_voice`; sampled instruments and synth notes consume
+curves directly.
+
 ---
 
 ## 11. Variation at scale
@@ -403,6 +427,12 @@ audioforge export-musicxml spec.af -o out.musicxml
 audioforge import-musicxml out.musicxml --id from_xml
 ```
 
+MIDI pitch-bend import becomes layer-scope `pitch_cents` automation and honors
+RPN pitch-bend range when present. Arbitrary AudioForge pitch or dynamic curves
+that cannot be represented by the current MIDI/MusicXML exporters are reported
+through `interop_diagnostics()` as `lossy_pitch_curve` or
+`lossy_dynamic_curve`.
+
 ---
 
 ## 14. Samples, libraries, ingestion
@@ -413,7 +443,7 @@ audioforge import-musicxml out.musicxml --id from_xml
 
 **Articulations (since 2.11).** Per note (`art spiccato`) or per layer (`articulation:`). If the library samples the articulation, its SFZ map is selected; otherwise a documented synthetic fallback applies and is **recorded in the render manifest** (`articulation_fallbacks`) — loud, not silent: staccato/spiccato = sustain clamped to 0.18/0.12 s; pizzicato = shortest available articulation clamped to 0.10 s; marcato = +2.5 dB, hard attack; tremolo = seeded ~12 Hz re-trigger train; legato = sustain until the legato-join mechanism described in Performance & rhythm.
 
-The sampler interprets a documented SFZ subset: `<control>/<global>/<group>/<region>` inheritance, `default_path`, key/velocity mapping (`key lokey hikey pitch_keycenter lovel hivel`), **seeded round-robins** (`seq_length/seq_position` — picked from the per-note RNG path, which includes the variant tag, so repeats vary, re-renders are byte-identical, and pack variants re-realize), `ampeg_*` envelopes, forward loops with equal-power seam crossfades (`loop_mode/loop_start/loop_end/loop_crossfade`), and `tune/transpose/volume`. Unknown opcodes are collected and reported, never silently honored. Resampling is a fixed 32-tap windowed-sinc kernel (measured ±0.3 cents through a 44.1k→48k pitch-shifted path). Without a `dynamic` curve, velocity maps linearly to amplitude and selects layers on the 1–127 scale; with one, the curve owns selection and crossfade (§6).
+The sampler interprets a documented SFZ subset: `<control>/<global>/<group>/<region>` inheritance, `default_path`, key/velocity mapping (`key lokey hikey pitch_keycenter lovel hivel`), **seeded round-robins** (`seq_length/seq_position` — picked from the per-note RNG path, which includes the variant tag, so repeats vary, re-renders are byte-identical, and pack variants re-realize), `ampeg_*` envelopes, forward loops with equal-power seam crossfades (`loop_mode/loop_start/loop_end/loop_crossfade`), and `tune/transpose/volume`. Unknown opcodes are collected and reported, never silently honored. Resampling is a fixed 32-tap windowed-sinc kernel (measured ±0.3 cents through a 44.1k→48k pitch-shifted path). `pitch_cents` curves multiply the per-sample source-read rate before cumulative source-position integration, so bends and vibrato also cross looped sustain regions in source coordinates. Without a `dynamic` curve, velocity maps linearly to amplitude and selects layers on the 1–127 scale; with one, the curve owns selection and crossfade (§10).
 
 ---
 

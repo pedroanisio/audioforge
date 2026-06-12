@@ -24,6 +24,9 @@
     "layer_types": {
       "type": "object"
     },
+    "performance_curves": {
+      "type": "object"
+    },
     "repair_hints": {
       "type": "object"
     },

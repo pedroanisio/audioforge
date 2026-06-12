@@ -6,6 +6,7 @@ theme is single-sourcing: a published/sibling surface must never be looser than,
 or disagree with, the validator that actually gates rendering.
 """
 import json
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -145,9 +146,15 @@ def test_f8_all_compilable_af_fixtures_parse_under_the_grammar():
     from audioforge.dsl import compile_dsl, DSLError
 
     checked = 0
-    for path in sorted(ROOT.rglob("*.af")):
-        if ".venv" in path.parts:
-            continue
+    result = subprocess.run(
+        ["git", "ls-files", "--", "*.af"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    for name in sorted(line for line in result.stdout.splitlines() if line):
+        path = ROOT / name
         src = path.read_text()
         try:
             compile_dsl(src)

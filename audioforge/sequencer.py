@@ -8,6 +8,7 @@ from __future__ import annotations
 import numpy as np
 
 from . import synth
+from .curves import evaluate_curve
 from .fx import filter_fx
 
 
@@ -203,6 +204,34 @@ def dyn_gain(v: np.ndarray | float):
     return 10.0 ** ((np.asarray(v) - 1.0) * 9.0 / 20.0)
 
 
+def _note_curve_times(curve: dict, tm: "TempoMap", start_beat: float,
+                      start_time_s: float, n: int, sr: int) -> np.ndarray:
+    samples = np.arange(n, dtype=float) / sr
+    basis = curve.get("time_basis", "note_beats")
+    if basis == "note_beats":
+        return np.array([
+            tm.beat_at(start_time_s + float(t)) - start_beat
+            for t in samples
+        ], dtype=float)
+    return samples
+
+
+def _sum_note_curve(ev: dict, target: str, tm: "TempoMap",
+                    start_beat: float, start_time_s: float, n: int,
+                    sr: int) -> np.ndarray | None:
+    curves = [
+        curve for curve in ev.get("curves", [])
+        if isinstance(curve, dict) and curve.get("target") == target
+    ]
+    if not curves:
+        return None
+    out = np.zeros(n, dtype=float)
+    for curve in curves:
+        times = _note_curve_times(curve, tm, start_beat, start_time_s, n, sr)
+        out += evaluate_curve(curve, times)
+    return out
+
+
 def render_drum_track(track: dict, total_n: int, sr: int, tm: "TempoMap",
                       swing: float, rng, groove: dict | None = None,
                       rng_humanize=None, hit_override=None) -> np.ndarray:
@@ -315,17 +344,22 @@ def render_note_track(track: dict, total_n: int, sr: int, tm: "TempoMap",
         if "_scan_env" in voice:           # per-note slice of the scan ride
             voice = dict(voice)
             voice["_scan_env"] = voice["_scan_env"][start:start + n]
-        # pitch envelope: glide from the previous (monophonic-line) note,
-        # plus vibrato; static fast path when neither applies
+        # Explicit note curves are the render contract. Legacy glide/vibrato
+        # remain as a fallback for pre-curve IR during the migration window.
+        pitch_cents = _sum_note_curve(ev, "pitch_cents", tm, start_beat, t,
+                                      n, sr)
         ratio = None
-        if glide_s > 0 and prev_freq and prev_start is not None                 and prev_start < start_beat:
-            ratio = synth.glide_ratio_env(prev_freq, freq, n, sr, glide_s)
-        if vib:
-            v_env = synth.vibrato_ratio_env(
-                n, sr, float(vib.get("rate_hz", 5.0)),
-                float(vib.get("depth_cents", 12.0)),
-                float(vib.get("delay_s", 0.25)))
-            ratio = v_env if ratio is None else ratio * v_env
+        if pitch_cents is not None:
+            ratio = 2.0 ** (pitch_cents / 1200.0)
+        else:
+            if glide_s > 0 and prev_freq and prev_start is not None                 and prev_start < start_beat:
+                ratio = synth.glide_ratio_env(prev_freq, freq, n, sr, glide_s)
+            if vib:
+                v_env = synth.vibrato_ratio_env(
+                    n, sr, float(vib.get("rate_hz", 5.0)),
+                    float(vib.get("depth_cents", 12.0)),
+                    float(vib.get("delay_s", 0.25)))
+                ratio = v_env if ratio is None else ratio * v_env
         if ratio is not None and shape not in ("pluck", "modal"):
             det = 2.0 ** (track.get("detune_cents", 0.0) / 1200.0)
             sig = synth.osc_dynamic(shape, freq * det * ratio, n, sr,
@@ -340,7 +374,10 @@ def render_note_track(track: dict, total_n: int, sr: int, tm: "TempoMap",
                             fm_ratio=track.get("fm_ratio", 2.0),
                             fm_index=track.get("fm_index", 0.0))
         dyn_v = None
-        if dyn_pts:
+        note_dyn = _sum_note_curve(ev, "dynamic", tm, start_beat, t, n, sr)
+        if note_dyn is not None:
+            dyn_v = np.clip(note_dyn, 0.0, 1.0)
+        elif dyn_pts:
             dyn_v = dyn_env(dyn_pts, tm, start, n, sr)
         bright_vel = float(dyn_v[0]) if dyn_v is not None else vel
         cutoff = synth.vel_brightness_cutoff(bright_vel, freq, sr, vb_amount)

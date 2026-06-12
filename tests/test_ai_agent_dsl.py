@@ -172,6 +172,41 @@ def test_ir_decompiles_to_render_equivalent_dsl():
     assert again.assets[0].spec["layers"][0]["notes"] == spec["layers"][0]["notes"]
 
 
+def test_decompiler_emits_canonical_note_curve_lines():
+    res = AudioForge().compile("""
+asset curve_decompile {
+  kind: cue
+  duration: 2s
+  tempo: 120bpm
+  layer lead : notes {
+    osc: sine
+    notes: C4 @ 0b for 2b
+  }
+  master { peak: -1db }
+}
+""")
+    assert res.ok, [d.message for d in res.diagnostics]
+    spec = res.assets[0].spec
+    spec["layers"][0]["notes"][0]["curves"] = [{
+        "target": "pitch_cents",
+        "time_basis": "note_seconds",
+        "points": [[0.0, 0.0], [0.5, 120.0, "hold"], [1.0, 0.0]],
+    }]
+
+    dsl = spec_to_dsl(spec)
+
+    assert "curves:" in dsl
+    assert "note 0 pitch_cents" in dsl
+    assert "basis=note_seconds" in dsl
+    assert "0.5s=120c@hold" in dsl
+    again = AudioForge().compile(dsl)
+    assert again.ok, [d.message for d in again.diagnostics]
+    assert (
+        again.assets[0].spec["layers"][0]["notes"][0]["curves"]
+        == spec["layers"][0]["notes"][0]["curves"]
+    )
+
+
 def test_cli_exposes_agent_surfaces(tmp_path, capsys):
     src = tmp_path / "smart.af"
     src.write_text(SMART_SRC)

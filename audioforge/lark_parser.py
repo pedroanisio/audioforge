@@ -279,7 +279,11 @@ class _Builder:
                 lpar = _tokens(item, "LPAR")[0]
                 raise DSLError("expected ':', got '('", lpar.line)
             else:  # prop
-                lay.props[str(item.children[0])] = self._value_of(item)
+                key = str(item.children[0])
+                if key == "curves":
+                    lay.props.setdefault(key, []).append(self._value_of(item))
+                else:
+                    lay.props[key] = self._value_of(item)
         a.layers.append(lay)
 
     def _bare_note(self, item: Tree):

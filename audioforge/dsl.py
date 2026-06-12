@@ -1134,6 +1134,127 @@ def _apply_role_routing(spec: dict, ensemble: dict, space: dict):
             role, "af_harmony")
 
 
+def _event_freq_hz(ev: dict) -> float | None:
+    if "freq_hz" in ev:
+        return float(ev["freq_hz"])
+    if "note" not in ev:
+        return None
+    return 440.0 * 2.0 ** (
+        (theory.note_to_semis(ev["note"]) - theory.note_to_semis("A4")) / 12.0
+    )
+
+
+def _append_authored_expression(spec: dict, layer: dict, field: str, value):
+    semantic = spec.setdefault("_meta", {}).setdefault("semantic", {})
+    authored = semantic.setdefault("authored_expression", [])
+    if any(e.get("layer") == layer.get("name") and e.get("field") == field
+           for e in authored):
+        return
+    authored.append({
+        "layer": layer.get("name"),
+        "field": field,
+        "source": "legacy_performance_field",
+        "value": value,
+    })
+
+
+def _vibrato_curve(vibrato: dict, dur_s: float) -> dict:
+    rate_hz = float(vibrato.get("rate_hz", 5.0))
+    depth = float(vibrato.get("depth_cents", 12.0))
+    delay_s = float(vibrato.get("delay_s", 0.25))
+    fade_s = float(vibrato.get("fade_s", 0.35))
+    curve_rate = 250.0
+    n = max(1, int(math.ceil(max(dur_s, 0.0) * curve_rate)) + 1)
+    values = []
+    for idx in range(n):
+        t = idx / curve_rate
+        amount = max(0.0, min(1.0, (t - delay_s) / max(fade_s, 1e-3)))
+        cents = depth * amount * math.sin(2.0 * math.pi * rate_hz * t)
+        values.append(round(cents, 6))
+    return {
+        "target": "pitch_cents",
+        "source": "vibrato",
+        "time_basis": "note_seconds",
+        "t0": 0.0,
+        "rate_hz": curve_rate,
+        "values": values,
+    }
+
+
+def _glide_curve(prev_freq: float, freq: float, glide_s: float,
+                 dur_s: float) -> dict:
+    start_cents = 1200.0 * math.log2(prev_freq / freq)
+    end_s = round(min(float(glide_s), max(float(dur_s), 0.0)), 6)
+    if end_s <= 0.0:
+        end_s = round(float(glide_s), 6)
+    return {
+        "target": "pitch_cents",
+        "source": "glide_s",
+        "time_basis": "note_seconds",
+        "points": [[0.0, round(start_cents, 6)], [end_s, 0.0]],
+    }
+
+
+def _lower_legacy_performance_curves(spec: dict, diags: list[str]):
+    from .sequencer import TempoMap, TimelineMap
+
+    bpm = float(spec.get("bpm", 120.0))
+    tempo = TempoMap(spec.get("tempo_map") or [[0.0, bpm]])
+    timeline = TimelineMap(tempo, spec.get("holds"))
+    for layer in spec.get("layers", []):
+        if layer.get("type") not in ("notes", "instrument"):
+            continue
+        dynamic = layer.get("dynamic")
+        existing_dynamic_auto = [
+            au for au in layer.get("automation", [])
+            if isinstance(au, dict) and au.get("target") == "dynamic"
+        ]
+        if dynamic and existing_dynamic_auto:
+            for au in existing_dynamic_auto:
+                au.setdefault("time_basis", "layer_beats")
+            _append_authored_expression(spec, layer, "dynamic", dynamic)
+        elif dynamic:
+            layer.setdefault("automation", []).append({
+                "target": "dynamic",
+                "time_basis": "layer_beats",
+                "points": [[float(t), float(v)] for t, v in dynamic],
+            })
+            _append_authored_expression(spec, layer, "dynamic", dynamic)
+
+        vibrato = layer.get("vibrato")
+        glide_s = float(layer.get("glide_s", 0.0) or 0.0)
+        if vibrato:
+            _append_authored_expression(spec, layer, "vibrato", vibrato)
+        if glide_s > 0.0:
+            _append_authored_expression(spec, layer, "glide_s", glide_s)
+
+        prev_freq = None
+        prev_start = None
+        events = sorted(layer.get("notes", []),
+                        key=lambda e: (e["start_beat"], e.get("note", ""),
+                                       e.get("freq_hz", 0.0)))
+        for ev in events:
+            freq = _event_freq_hz(ev)
+            if freq is None:
+                continue
+            start = float(ev["start_beat"])
+            dur = float(ev["dur_beats"])
+            dur_s = max(0.0, timeline.sec(start + dur) - timeline.sec(start))
+            if (glide_s > 0.0 and prev_freq is not None
+                    and prev_start is not None and prev_start < start
+                    and abs(prev_freq - freq) > 1e-9):
+                ev.setdefault("curves", []).append(
+                    _glide_curve(prev_freq, freq, glide_s, dur_s))
+            if vibrato:
+                ev.setdefault("curves", []).append(_vibrato_curve(vibrato, dur_s))
+            prev_freq = freq
+            prev_start = start
+        if dynamic or vibrato or glide_s > 0.0:
+            diags.append(
+                f"layer '{layer.get('name')}': lowered legacy performance "
+                "fields to explicit curves")
+
+
 def compile_asset(a: Asset, variant=None) -> tuple[dict, list[str]]:
     diags: list[str] = []
     _apply_vary(a, variant)
@@ -1388,6 +1509,7 @@ def compile_asset(a: Asset, variant=None) -> tuple[dict, list[str]]:
         _apply_smart_directives(spec, smart_intent, diags)
     if structured_intent:
         _apply_structured_intent(spec, structured_intent, diags)
+    _lower_legacy_performance_curves(spec, diags)
 
     # advisory checks
     for lay in spec["layers"]:
@@ -1535,6 +1657,88 @@ def _expand_chords(notes: list[dict], arp: dict | None,
                         "note": theory.semis_to_note(int(order[k % len(order)])),
                         "start_beat": round(ev["start_beat"] + k * rate, 6),
                         "dur_beats": round(rate * gate, 6)})
+    return out
+
+
+def _parse_canonical_curve_specs(groups: list[list[Tok]],
+                                 line: int) -> list[tuple[int, dict]]:
+    out = []
+    for toks in groups:
+        if len(toks) < 7:
+            raise DSLError("curves: note N target basis=<basis> points", line)
+        i = 0
+        if toks[i].kind != "IDENT" or toks[i].text != "note":
+            raise DSLError("curves: expected 'note N target ...'", toks[i].line)
+        idx_tok = toks[i + 1]
+        if idx_tok.kind != "NUMBER" or idx_tok.unit is not None:
+            raise DSLError("curves: note index must be an integer", idx_tok.line)
+        note_idx = int(idx_tok.value)
+        target_tok = toks[i + 2]
+        if target_tok.kind != "IDENT":
+            raise DSLError("curves: target must be an identifier", target_tok.line)
+        if (toks[i + 3].text != "basis" or toks[i + 4].text != "="
+                or toks[i + 5].kind != "IDENT"):
+            raise DSLError("curves: expected basis=<time_basis>", toks[i + 3].line)
+        curve = {"target": target_tok.text, "time_basis": toks[i + 5].text}
+        i = 6
+        if i < len(toks) and toks[i].kind == "IDENT" and toks[i].text == "sampled":
+            i += 1
+            values = None
+            while i < len(toks):
+                if toks[i].text == ",":
+                    i += 1
+                    continue
+                key = toks[i]
+                if key.kind != "IDENT" or i + 2 >= len(toks) or toks[i + 1].text != "=":
+                    raise DSLError("curves sampled: expected key=value", key.line)
+                if key.text == "values":
+                    values = []
+                    i += 2
+                    while i < len(toks):
+                        if toks[i].text == ",":
+                            i += 1
+                            continue
+                        if toks[i].kind != "NUMBER":
+                            break
+                        values.append(float(toks[i].value))
+                        i += 1
+                    continue
+                val = toks[i + 2]
+                if val.kind != "NUMBER":
+                    raise DSLError("curves sampled: value must be numeric", val.line)
+                if key.text == "t0":
+                    curve["t0"] = float(val.value)
+                elif key.text == "rate":
+                    curve["rate_hz"] = float(val.value)
+                else:
+                    raise DSLError(f"curves sampled: unknown key '{key.text}'",
+                                   key.line)
+                i += 3
+            if values is None:
+                raise DSLError("curves sampled: missing values=", line)
+            curve["values"] = values
+        else:
+            points = []
+            while i < len(toks):
+                if toks[i].text == ",":
+                    i += 1
+                    continue
+                if (i + 2 >= len(toks) or toks[i].kind != "NUMBER"
+                        or toks[i + 1].text != "="
+                        or toks[i + 2].kind != "NUMBER"):
+                    raise DSLError("curves: expected time=value point",
+                                   toks[i].line)
+                point = [float(toks[i].value), float(toks[i + 2].value)]
+                i += 3
+                if i + 1 < len(toks) and toks[i].text == "@":
+                    if toks[i + 1].kind != "IDENT":
+                        raise DSLError("curves: shape after @ must be an identifier",
+                                       toks[i].line)
+                    point.append(toks[i + 1].text)
+                    i += 2
+                points.append(point)
+            curve["points"] = points
+        out.append((note_idx, curve))
     return out
 
 
@@ -1754,6 +1958,8 @@ def _compile_layer(lay: Layer, motifs: dict, scale, diags: list[str],
             i += 3
 
     notes = list(p.pop("notes", []))
+    curve_specs = (_parse_canonical_curve_specs(p.pop("curves"), line)
+                   if "curves" in p else [])
     next_slur = [max([e.get("slur", 0) or 0 for e in notes] + [0])]
     slur_group_ids: dict = {}
     for play in p.pop("plays", []):
@@ -1834,6 +2040,10 @@ def _compile_layer(lay: Layer, motifs: dict, scale, diags: list[str],
                      f"to {n_steps} alternating notes with {upper} "
                      f"(0.125b steps, key-aware)")
     notes = expanded
+    for note_idx, curve in curve_specs:
+        if note_idx < 0 or note_idx >= len(notes):
+            raise DSLError(f"curves: note index {note_idx} out of range", line)
+        notes[note_idx].setdefault("curves", []).append(curve)
     notes = _expand_chords(notes, arp, lay.name,
                            variant=variant)
     if notes:

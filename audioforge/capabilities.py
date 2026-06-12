@@ -8,9 +8,37 @@ from .schema import (AUTO_TARGETS, BIT_DEPTHS, FX_TYPES, KINDS, LAYER_TYPES,
 from .styles import list_style_packs
 from .version import ENGINE_VERSION, version_contract
 from .ir_schema import IR_SCHEMA_VERSION, ir_schema_metadata
+from .curves import (
+    CURVE_SHAPES,
+    CURVE_UNSUPPORTED_VOICE_CODE,
+    LAYER_TIME_BASES,
+    NOTE_TIME_BASES,
+    PERFORMANCE_CURVE_TARGETS,
+    PHYSICAL_MODEL_OSCILLATORS,
+    PITCH_CENTS_DEFAULT_LIMIT,
+    PITCH_CENTS_HARD_LIMIT,
+)
 
 
 CAPABILITY_SCHEMA_VERSION = "audioforge.capabilities/1"
+
+CURVE_SUPPORT_MATRIX = {
+    "notes:synth": {
+        "pitch_cents": "full",
+        "dynamic": "level_time_varying_brightness_onset_sampled",
+    },
+    "instrument:sampled": {
+        "pitch_cents": "full",
+        "dynamic": "full",
+    },
+    "physical_models": {
+        "voices": sorted(PHYSICAL_MODEL_OSCILLATORS),
+        "pitch_cents": "unsupported_until_staged",
+        "dynamic": "unsupported_until_mapped",
+        "diagnostic": CURVE_UNSUPPORTED_VOICE_CODE,
+        "initial_pitch_bound_cents": 400,
+    },
+}
 
 CLI_COMMANDS = [
     "batch",
@@ -158,6 +186,25 @@ def capability_manifest() -> dict:
         "grooves": sorted(GROOVE_TEMPLATES),
         "emotions": sorted(EMOTIONS),
         "automation_targets": sorted(AUTO_TARGETS),
+        "performance_curves": {
+            "targets": {
+                "pitch_cents": {
+                    "unit": "cents",
+                    "reference": "relative_to_base_pitch",
+                    "default_limit": PITCH_CENTS_DEFAULT_LIMIT,
+                    "hard_limit": PITCH_CENTS_HARD_LIMIT,
+                    "combination": "sum_in_cents",
+                },
+                "dynamic": {
+                    "unit": "normalized",
+                    "range": [0.0, 1.0],
+                    "combination": "one_per_scope",
+                },
+            },
+            "curve_shapes": sorted(CURVE_SHAPES),
+            "time_bases": sorted(NOTE_TIME_BASES | LAYER_TIME_BASES),
+            "support_matrix": CURVE_SUPPORT_MATRIX,
+        },
         "bit_depths": sorted(BIT_DEPTHS),
         "timing": {
             "tempo_map": "piecewise-linear [beat, bpm] points integrated exactly",
@@ -277,12 +324,24 @@ def capability_manifest() -> dict:
                 "Run validate without --no-resolve before render; clean "
                 "validation is the render-ready predicate."
             ),
+            "invalid_curve": (
+                "Use a supported curve target, time basis, point encoding, "
+                "and interpolation shape from performance_curves."
+            ),
+            "curve_unsupported_voice": (
+                "Move the curve to a supported voice, remove it, or wait for "
+                "the physical-model kernel stage advertised in the support matrix."
+            ),
         },
         "diagnostic_codes": {
             "unknown_property": {"repair_hint": "unknown_property"},
             "notes_first_event": {"repair_hint": "notes_first_event"},
             "resource_pin": {"repair_hint": "resource_pin"},
             "validate_render_ready": {"repair_hint": "validate_render_ready"},
+            "invalid_curve": {"repair_hint": "invalid_curve"},
+            CURVE_UNSUPPORTED_VOICE_CODE: {
+                "repair_hint": "curve_unsupported_voice"
+            },
             "lossy_articulation": {
                 "repair_hint": "Use MusicXML for notation metadata or accept MIDI loss."
             },
@@ -317,6 +376,7 @@ def capability_manifest_schema() -> dict:
             "repair_hints": {"type": "object"},
             "diagnostic_codes": {"type": "object"},
             "cli": {"type": "object"},
+            "performance_curves": {"type": "object"},
         },
         "additionalProperties": True,
     }

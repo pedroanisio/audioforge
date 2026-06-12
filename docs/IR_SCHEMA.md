@@ -6,12 +6,13 @@ fail if the checked-in JSON artifact drifts from that source.
 
 ## Versioning
 
-- Current IR schema version: `1.0`
+- Current IR schema version: `1.1`
 - Current policy: additive-compatible
 - Supported from: `0.9`, `1.0`
 
-IR schema `1.0` formalizes the existing compiled spec shape. Valid current
-specs do not require migration.
+IR schema `1.1` adds explicit performance curves for pitch and dynamics while
+preserving the `1.0` shape for specs that do not use curves. Valid `1.0` specs
+do not require migration.
 Experimental `0.9` fixtures can be migrated with
 `audioforge.ir_schema.migrate_ir_spec(spec, "0.9")`; that migration moves the
 legacy provenance sidecar from `metadata` to `_meta` without changing
@@ -39,6 +40,31 @@ DSL compiler. It records authored smart directives that have a safe inverse,
 motif definitions, layer `play` statements, authored note lists, and master
 property ownership so decompile can preserve authoring-level constructs without
 guessing from expanded render IR.
+
+## Performance Curves
+
+IR schema `1.1` defines one curve object for both note-scoped performance and
+layer automation:
+
+- `target`: `pitch_cents`, `dynamic`, or an existing automation target.
+- `time_basis`: `note_beats`, `note_seconds`, `layer_beats`, or
+  `layer_seconds`, constrained by scope.
+- Breakpoints: `points` as `[time, value]` or `[time, value, shape]`.
+- Sampled encoding: `t0`, `rate_hz`, and `values`; these expand to linear
+  breakpoints under the same evaluator.
+
+Interpolation is deterministic: `linear` is the default, `hold` keeps the
+previous value until the endpoint, and `pow:k` validates `k` in `[0.1, 10]`.
+Before the first point the first value holds; after the last point the final
+value holds; a single point is a constant curve.
+
+`pitch_cents` is relative to the note or layer base pitch, sums in cents when
+multiple in-scope pitch curves apply, and is render data. `dynamic` is
+normalized `[0, 1]`; a note-scoped dynamic curve replaces the layer dynamic
+for that note span. Expanded curve data is hash-included. Authored sugar such
+as legacy `vibrato`, `glide_s`, and `dynamic` breakpoints may be recorded in
+`_meta.semantic.authored_expression` for decompile, and that provenance remains
+hash-excluded.
 
 Structured intent lives under `intent.structured`:
 

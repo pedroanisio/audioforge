@@ -26,6 +26,15 @@ from __future__ import annotations
 
 import re
 
+from .curves import (
+    CURVE_UNSUPPORTED_VOICE_CODE,
+    LAYER_TIME_BASES,
+    NOTE_TIME_BASES,
+    PERFORMANCE_CURVE_TARGETS,
+    PHYSICAL_MODEL_OSCILLATORS,
+    CurveError,
+    validate_curve,
+)
 from . import theory
 
 KINDS = {"signature", "sfx", "loop", "jingle", "transition", "cue", "bed",
@@ -62,7 +71,8 @@ def fx_needs_native(fx: dict) -> bool:
         return True
     return t == "plate" and float(fx.get("mod", 0.0)) > 0.0
 BIT_DEPTHS = {16, 24}
-AUTO_TARGETS = {"gain_db", "cutoff_hz", "scan"}
+BASE_AUTOMATION_TARGETS = {"gain_db", "cutoff_hz", "scan"}
+AUTO_TARGETS = BASE_AUTOMATION_TARGETS | PERFORMANCE_CURVE_TARGETS
 
 # Single source of truth for tempo bounds (audit finding F3). The base `bpm` is
 # the asset's nominal tempo; a `tempo_map` carries time-varying tempo and is
@@ -164,22 +174,31 @@ def _validate_env(env, path):
     _num(env, "sustain", path, 0.0, 1.0)
 
 
-def _validate_automation(autos, path, fx_chain):
+def _validate_automation(autos, path, fx_chain, *, scope="layer",
+                         layer_type=None, osc=None):
     if not isinstance(autos, list):
         raise SpecError(f"{path}: automation must be a list")
     fx_chain = fx_chain if isinstance(fx_chain, list) else []
+    allowed_targets = set(BASE_AUTOMATION_TARGETS)
+    if scope == "layer":
+        allowed_targets |= PERFORMANCE_CURVE_TARGETS
     for i, au in enumerate(autos):
         p = f"{path}[{i}]"
         tgt = _req(au, "target", p)
-        if tgt not in AUTO_TARGETS:
-            raise SpecError(f"{p}.target: '{tgt}' invalid (allowed: {sorted(AUTO_TARGETS)})")
-        pts = _req(au, "points", p)
-        if not isinstance(pts, list) or len(pts) < 2:
-            raise SpecError(f"{p}.points: need at least 2 [time_s, value] pairs")
-        for j, pt in enumerate(pts):
-            if (not isinstance(pt, list) or len(pt) != 2
-                    or not all(isinstance(v, (int, float)) for v in pt)):
-                raise SpecError(f"{p}.points[{j}]: must be [time_s, value]")
+        try:
+            validate_curve(
+                au,
+                p,
+                allowed_targets=allowed_targets,
+                allowed_time_bases=LAYER_TIME_BASES,
+                min_points=2 if tgt in BASE_AUTOMATION_TARGETS else 1,
+            )
+        except CurveError as exc:
+            raise SpecError(str(exc)) from exc
+        if tgt == "pitch_cents" and osc in PHYSICAL_MODEL_OSCILLATORS:
+            raise SpecError(
+                f"{p}: {CURVE_UNSUPPORTED_VOICE_CODE}: pitch_cents curves "
+                f"are not yet supported for '{osc}'")
         if tgt == "cutoff_hz":
             # Must point at a real, cutoff-capable fx — not merely "some fx
             # chain exists" (audit F12).
@@ -231,6 +250,7 @@ def _validate_note_events(layer: dict, p: str):
     notes = _req(layer, "notes", p)
     if not isinstance(notes, list) or not notes:
         raise SpecError(f"{p}.notes: must be a non-empty list")
+    osc = layer.get("osc")
     for j, ev in enumerate(notes):
         ep = f"{p}.notes[{j}]"
         if "note" not in ev and "freq_hz" not in ev:
@@ -244,6 +264,31 @@ def _validate_note_events(layer: dict, p: str):
         s = ev.get("slur")
         if s is not None and (not isinstance(s, int) or s < 1):
             raise SpecError(f"{ep}.slur: positive integer group id")
+        curves = ev.get("curves")
+        if curves is not None:
+            if not isinstance(curves, list) or not curves:
+                raise SpecError(f"{ep}.curves: non-empty list")
+            dynamic_seen = False
+            for k, curve in enumerate(curves):
+                cp = f"{ep}.curves[{k}]"
+                target = curve.get("target") if isinstance(curve, dict) else None
+                if target == "dynamic":
+                    if dynamic_seen:
+                        raise SpecError(f"{cp}: duplicate dynamic curve in note scope")
+                    dynamic_seen = True
+                try:
+                    validate_curve(
+                        curve,
+                        cp,
+                        allowed_targets=PERFORMANCE_CURVE_TARGETS,
+                        allowed_time_bases=NOTE_TIME_BASES,
+                    )
+                except CurveError as exc:
+                    raise SpecError(str(exc)) from exc
+                if target == "pitch_cents" and osc in PHYSICAL_MODEL_OSCILLATORS:
+                    raise SpecError(
+                        f"{cp}: {CURVE_UNSUPPORTED_VOICE_CODE}: pitch_cents "
+                        f"curves are not yet supported for '{osc}'")
     dyn = layer.get("dynamic")
     if dyn is not None:
         if not isinstance(dyn, list) or not dyn:
@@ -410,7 +455,8 @@ def validate_spec(spec: dict) -> dict:
                                 f"— the stage is the staged layer's bus")
         if "automation" in layer:
             _validate_automation(layer["automation"], f"{p}.automation",
-                                 layer.get("fx"))
+                                 layer.get("fx"), scope="layer",
+                                 layer_type=t, osc=layer.get("osc"))
 
     for i, layer in enumerate(spec.get("layers", [])):
         p = f"layers[{i}]"
@@ -633,7 +679,7 @@ def validate_spec(spec: dict) -> dict:
         _validate_fx(master["fx"], "spec.master.fx")
     if "automation" in master:
         _validate_automation(master["automation"], "spec.master.automation",
-                             master.get("fx"))
+                             master.get("fx"), scope="master")
     _num(master, "target_peak_dbfs", "spec.master", -40.0, 0.0, required=False)
     _num(master, "target_lufs", "spec.master", -40.0, -5.0, required=False)
     _num(master, "stereo_width", "spec.master", 0.0, 1.0, required=False)

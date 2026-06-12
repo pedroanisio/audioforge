@@ -11,8 +11,13 @@
 # Both passes must succeed for the suite to be green (set -e fails loud).
 set -e
 cd "$(dirname "$0")/.."
+if [ -z "${PYTHON:-}" ] && [ -x ./.venv/bin/python ]; then
+  PYTHON=./.venv/bin/python
+else
+  PYTHON=${PYTHON:-python3}
+fi
 for t in determinism v2 v21 t2 t3 performance instruments mix compose \
          variation palette sampler dynamics performance_model stage contract; do
-  python3 "tests/test_$t.py"
+  "$PYTHON" "tests/test_$t.py"
 done
-python3 -m pytest -q
+"$PYTHON" -m pytest -q

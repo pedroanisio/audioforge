@@ -606,6 +606,77 @@ SDK operations and `tool_schemas()` publishes stable request/response skeletons.
 
 ---
 
+### G11. Continuous Performance Curves
+
+**Current state**
+
+IR schema 1.1 defines explicit curve objects for continuous performance data.
+`pitch_cents` and `dynamic` are published in the capability manifest with units,
+ranges, interpolation shapes, time bases, support matrix, and diagnostics.
+Legacy `vibrato`, `glide_s`, and authored dynamic breakpoints lower to explicit
+curves before render while `_meta.semantic.authored_expression` records the
+authoring form for decompile.
+
+Synth notes and sampled instruments consume note-scoped `pitch_cents` and
+`dynamic` curves. Sampled instruments use a time-varying source-read ratio with
+cumulative source position, including looped sustain regions. Physical-model
+pitch curves reject with `curve_unsupported_voice` until individual kernels are
+staged with bounds and golden renders.
+
+**Gap**
+
+Closed for the first AF-P1 landing. Remaining work is explicitly staged rather
+than silent: physical-model kernel support, richer authored curve syntax, and
+lossless symbolic export for curve families that fit a target format.
+
+**Definition of Ready**
+
+- Define canonical IR curve object, interpolation semantics, edge behavior,
+  sampled encoding, target ranges, and hash ownership.
+  **Implemented:** `audioforge.curves`, `audioforge.ir_schema`, and
+  `docs/IR_SCHEMA.md`.
+- Define compiler lowering for existing expressive fields.
+  **Implemented:** DSL lowering emits `pitch_cents` and `dynamic` curves while
+  retaining authored provenance in `_meta.semantic`.
+- Define renderer support matrix and unsupported diagnostics.
+  **Implemented:** `capability_manifest()["performance_curves"]` and
+  `curve_unsupported_voice`.
+- Define interop behavior.
+  **Implemented:** MIDI pitch-bend import becomes layer `pitch_cents`
+  automation; unsupported curve export emits lossy diagnostics.
+
+**Definition of Done**
+
+- Curve schema and validator accept valid breakpoint/sampled curves and reject
+  malformed or unsupported cases.
+  **Implemented:** `tests/test_curves.py`, `tests/test_ir_schema.py`, and
+  schema/docs drift tests.
+- Compiler lowering covers legacy vibrato, glide, and dynamic breakpoints.
+  **Implemented:** `tests/test_performance_curves_compile.py`.
+- Renderers consume curves as source-of-truth performance data.
+  **Implemented:** synth and sampled-instrument render tests, including looped
+  sampled sustain and note dynamic velocity-layer crossfade.
+- Hash policy is explicit.
+  **Implemented:** expanded curves are render data; `_meta.semantic` remains
+  hash-excluded by the IR schema metadata and determinism tests.
+- Decompile and interop do not silently drop curve semantics.
+  **Implemented:** decompile emits canonical note-curve lines when no authored
+  provenance exists; interop diagnostics report lossy pitch/dynamic projection.
+- Documentation and release notes are synchronized.
+  **Implemented:** `docs/DSL_SPEC.md`, `docs/IR_SCHEMA.md`,
+  `docs/INTEROP.md`, and `docs/RELEASE_NOTES.md`.
+
+**Required tests**
+
+- Curve evaluator and validator conformance tests.
+- Compiler lowering tests for legacy authored expression.
+- Synth and sampled renderer pitch/dynamic regressions.
+- Capability manifest support-matrix and diagnostic coverage.
+- Decompile canonical-curve visibility.
+- MIDI pitch-bend import and lossy interop diagnostics.
+
+---
+
 ## 5. Acceptance Criteria For The Strong Universality Claim
 
 AudioForge may claim "we can express all music with a Smart DSL" without

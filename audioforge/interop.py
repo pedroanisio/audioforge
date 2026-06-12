@@ -22,8 +22,8 @@ def interop_diagnostics(spec: dict, format: str) -> list[dict]:
             "code": "lossy_lyrics",
             "message": f"{format} exporter preserves notes but not lyric metadata",
         })
-    for layer in spec.get("layers", []):
-        for ev in layer.get("notes", []):
+    for layer_i, layer in enumerate(spec.get("layers", [])):
+        for note_i, ev in enumerate(layer.get("notes", [])):
             if ev.get("art") and format == "midi":
                 warnings.append({
                     "severity": "warning",
@@ -31,7 +31,49 @@ def interop_diagnostics(spec: dict, format: str) -> list[dict]:
                     "message": "MIDI export drops note articulation metadata",
                     "path": f"layer:{layer.get('name', layer.get('type'))}",
                 })
-                return warnings
+            for curve in ev.get("curves", []) or []:
+                target = curve.get("target")
+                if target == "pitch_cents":
+                    warnings.append({
+                        "severity": "warning",
+                        "code": "lossy_pitch_curve",
+                        "message": (
+                            f"{format} exporter does not project arbitrary "
+                            "AudioForge pitch_cents note curves"
+                        ),
+                        "path": f"layers[{layer_i}].notes[{note_i}].curves",
+                    })
+                elif target == "dynamic":
+                    warnings.append({
+                        "severity": "warning",
+                        "code": "lossy_dynamic_curve",
+                        "message": (
+                            f"{format} exporter preserves notes but not "
+                            "AudioForge through-note dynamic curves"
+                        ),
+                        "path": f"layers[{layer_i}].notes[{note_i}].curves",
+                    })
+        for curve_i, curve in enumerate(layer.get("automation", []) or []):
+            if curve.get("target") == "pitch_cents":
+                warnings.append({
+                    "severity": "warning",
+                    "code": "lossy_pitch_curve",
+                    "message": (
+                        f"{format} exporter does not project arbitrary "
+                        "AudioForge pitch_cents automation curves"
+                    ),
+                    "path": f"layers[{layer_i}].automation[{curve_i}]",
+                })
+            elif curve.get("target") == "dynamic":
+                warnings.append({
+                    "severity": "warning",
+                    "code": "lossy_dynamic_curve",
+                    "message": (
+                        f"{format} exporter preserves notes but not "
+                        "AudioForge dynamic automation curves"
+                    ),
+                    "path": f"layers[{layer_i}].automation[{curve_i}]",
+                })
     return warnings
 
 
@@ -135,6 +177,9 @@ def import_midi_bytes(data: bytes, asset_id: str = "imported_midi") -> dict:
     i = tick = 0
     bpm = 120.0
     active: dict[int, tuple[int, int]] = {}
+    rpn_msb = rpn_lsb = None
+    bend_range_cents = 200.0
+    pitch_points = []
     notes = []
     while i < len(track):
         delta, i = _read_vlq(track, i)
@@ -149,10 +194,10 @@ def import_midi_bytes(data: bytes, asset_id: str = "imported_midi") -> dict:
                 bpm = 60_000_000 / int.from_bytes(payload, "big")
             if meta == 0x2F:
                 break
-        elif status in (0x90, 0x80):
+        elif status & 0xF0 in (0x90, 0x80):
             note, vel = track[i], track[i + 1]
             i += 2
-            if status == 0x90 and vel:
+            if status & 0xF0 == 0x90 and vel:
                 active[note] = (tick, vel)
             elif note in active:
                 st, v = active.pop(note)
@@ -162,17 +207,44 @@ def import_midi_bytes(data: bytes, asset_id: str = "imported_midi") -> dict:
                     "dur_beats": round((tick - st) / division, 6),
                     "vel": round(v / 127.0, 4),
                 })
+        elif status & 0xF0 == 0xB0:
+            controller, value = track[i], track[i + 1]
+            i += 2
+            if controller == 101:
+                rpn_msb = value
+            elif controller == 100:
+                rpn_lsb = value
+            elif controller == 6 and rpn_msb == 0 and rpn_lsb == 0:
+                bend_range_cents = float(value) * 100.0
+            elif controller == 38 and rpn_msb == 0 and rpn_lsb == 0:
+                bend_range_cents = (
+                    int(bend_range_cents // 100.0) * 100.0 + float(value))
+        elif status & 0xF0 == 0xE0:
+            lsb, msb = track[i], track[i + 1]
+            i += 2
+            raw = (msb << 7) | lsb
+            delta = raw - 8192
+            denom = 8191.0 if delta >= 0 else 8192.0
+            cents = round((delta / denom) * bend_range_cents, 6)
+            pitch_points.append([round(tick / division, 6), cents])
         else:
             raise ValueError(f"unsupported MIDI event 0x{status:02x}")
     dur_beats = max((n["start_beat"] + n["dur_beats"] for n in notes),
                     default=1.0)
+    layer = {"name": "midi", "type": "notes", "osc": "sine",
+             "env": {"attack": 0.01, "decay": 0.1,
+                     "sustain": 0.8, "release": 0.1},
+             "notes": notes}
+    if pitch_points:
+        layer["automation"] = [{
+            "target": "pitch_cents",
+            "time_basis": "layer_beats",
+            "points": pitch_points,
+        }]
     return {
         "id": asset_id, "kind": "cue", "duration_s": round(dur_beats * 60 / bpm, 3),
         "bpm": round(bpm, 6),
-        "layers": [{"name": "midi", "type": "notes", "osc": "sine",
-                    "env": {"attack": 0.01, "decay": 0.1,
-                            "sustain": 0.8, "release": 0.1},
-                    "notes": notes}],
+        "layers": [layer],
         "master": {"target_peak_dbfs": -1.0},
     }
 
@@ -402,9 +474,19 @@ def import_musicxml(text: str, asset_id: str = "imported_musicxml") -> dict:
         alter = int(pitch.findtext("alter", default="0"))
         octave = pitch.findtext("octave")
         acc = "#" if alter > 0 else "b" if alter < 0 else ""
-        notes.append({"note": f"{step}{acc}{octave}",
-                      "start_beat": round(tick / divisions, 6),
-                      "dur_beats": round(dur / divisions, 6)})
+        dur_beats = round(dur / divisions, 6)
+        event = {"note": f"{step}{acc}{octave}",
+                 "start_beat": round(tick / divisions, 6),
+                 "dur_beats": dur_beats}
+        bend_alter = n.findtext(".//bend/bend-alter")
+        if bend_alter is not None:
+            event["curves"] = [{
+                "target": "pitch_cents",
+                "time_basis": "note_beats",
+                "points": [[0.0, 0.0],
+                           [dur_beats, round(float(bend_alter) * 100.0, 6)]],
+            }]
+        notes.append(event)
         tick += dur
     dur_beats = max((n["start_beat"] + n["dur_beats"] for n in notes),
                     default=1.0)

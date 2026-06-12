@@ -120,6 +120,30 @@ def test_manifest_cli_commands_cover_cli_parser():
     )
 
 
+def test_manifest_performance_curve_contract_is_published():
+    curves = M["performance_curves"]
+    assert set(curves["targets"]) == {"pitch_cents", "dynamic"}
+    assert set(curves["curve_shapes"]) == {"hold", "linear", "pow"}
+    assert {"note_beats", "note_seconds", "layer_seconds", "layer_beats"} <= set(
+        curves["time_bases"]
+    )
+    assert curves["targets"]["pitch_cents"]["unit"] == "cents"
+    assert curves["targets"]["pitch_cents"]["combination"] == "sum_in_cents"
+    assert curves["targets"]["dynamic"]["range"] == [0.0, 1.0]
+    sampled = curves["support_matrix"]["instrument:sampled"]
+    assert sampled["pitch_cents"] == "full"
+    assert sampled["dynamic"] == "full"
+    assert (
+        M["diagnostic_codes"]["curve_unsupported_voice"]["repair_hint"]
+        == "curve_unsupported_voice"
+    )
+    physical = curves["support_matrix"]["physical_models"]
+    assert physical["diagnostic"] == "curve_unsupported_voice"
+    assert {"bowed", "blown", "brass", "struck", "sympathetic"} <= set(
+        physical["voices"]
+    )
+
+
 if __name__ == "__main__":
     import sys
     sys.exit(pytest.main([__file__, "-q"]))

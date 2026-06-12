@@ -199,7 +199,8 @@ def render_region(region: Region, src: np.ndarray, src_sr: int,
                   midi_float: float, dur_n: int, sr: int,
                   src_offset_s: float = 0.0,
                   ramp_from_midi: float | None = None,
-                  ramp_s: float = 0.025) -> np.ndarray:
+                  ramp_s: float = 0.025,
+                  pitch_cents: np.ndarray | None = None) -> np.ndarray:
     """One region playing one note: pitch via fixed-kernel resampling, loop
     extension with equal-power overlap-add seam crossfades, ampeg envelope,
     volume. Output length = dur_n + release tail.
@@ -220,6 +221,19 @@ def render_region(region: Region, src: np.ndarray, src_sr: int,
         k = max(2, int(ramp_s * sr))
         rate = np.full(total_n, ratio)
         rate[:k] = r0 + (ratio - r0) * np.linspace(0.0, 1.0, k)
+    else:
+        rate = np.full(total_n, ratio)
+    if pitch_cents is not None:
+        cents = np.asarray(pitch_cents, dtype=np.float64)
+        if cents.size == 0:
+            cents = np.zeros(total_n, dtype=np.float64)
+        elif cents.size < total_n:
+            cents = np.pad(cents, (0, total_n - cents.size), mode="edge")
+        else:
+            cents = cents[:total_n]
+        rate = rate * (2.0 ** (cents / 1200.0))
+    if ((ramp_from_midi is not None and ramp_from_midi != midi_float)
+            or pitch_cents is not None):
         positions = np.cumsum(rate) - rate[0]
     else:
         positions = np.arange(total_n) * ratio
@@ -357,7 +371,7 @@ def render_instrument_track(track: dict, total_n: int, sr: int, tm,
       slightly (documented constants, fully deterministic);
     - `time_offset_s`/`midi_offset` are the per-player handles used by
       section multiplication."""
-    from .sequencer import dyn_env, dyn_gain
+    from .sequencer import _sum_note_curve, dyn_env, dyn_gain
     instrument = track["instrument"]
     default_art = track.get("articulation", "sustain")
     dyn_pts = track.get("dynamic")
@@ -412,7 +426,9 @@ def render_instrument_track(track: dict, total_n: int, sr: int, tm,
         sched.append({
             "midi": freq_to_midi(freq) + midi_offset, "vel": vel,
             "start": start, "dur_n": dur_n, "rng": ev_rng,
-            "art": ev.get("art", default_art), "slur": ev.get("slur")})
+            "art": ev.get("art", default_art), "slur": ev.get("slur"),
+            "event": ev, "start_beat": ev["start_beat"],
+            "start_time_s": t})
 
     # ---- phrasing arch over slur groups (documented constants) ------------
     if phrasing > 0.0:
@@ -474,13 +490,26 @@ def render_instrument_track(track: dict, total_n: int, sr: int, tm,
                          "ramp_from_midi": prev["midi"]}
         held_n = dur_n + (join_n if join_out else 0)
 
+        def note_curve(target: str, n: int, offset_n: int = 0):
+            env = _sum_note_curve(
+                s["event"], target, tm, s["start_beat"],
+                s["start_time_s"], offset_n + n, sr)
+            if env is None:
+                return None
+            return env[offset_n:offset_n + n]
+
         def render_hit(h_start, h_dur_n, h_vel, h_rng):
-            if dyn_pts:
+            note_offset_n = max(0, h_start - s["start"])
+            max_rel = max(shaped(r).ampeg_release for r in kreg)
+            full_n = h_dur_n + int(max_rel * sr)
+            note_dyn = note_curve("dynamic", full_n, note_offset_n)
+            if note_dyn is not None or dyn_pts:
                 bands = _vel_bands(kreg)
-                max_rel = max(shaped(r).ampeg_release for r in kreg)
-                full_n = h_dur_n + int(max_rel * sr)
-                v_env = np.clip(dyn_env(dyn_pts, tm, h_start, full_n, sr),
-                                0.0, 1.0)
+                if note_dyn is not None:
+                    v_env = np.clip(note_dyn, 0.0, 1.0)
+                else:
+                    v_env = np.clip(dyn_env(dyn_pts, tm, h_start, full_n, sr),
+                                    0.0, 1.0)
                 weights = _band_weight_envs([bb[0] for bb in bands],
                                             1.0 + v_env * 126.0)
                 sig = np.zeros(full_n)
@@ -490,9 +519,13 @@ def render_instrument_track(track: dict, total_n: int, sr: int, tm,
                     chosen = select_regions(regs, midi_i, int(c), h_rng)
                     for r in chosen:
                         srcb, src_sr = lib.audio(r.sample)
+                        pitch = note_curve(
+                            "pitch_cents",
+                            h_dur_n + int(shaped(r).ampeg_release * sr),
+                            note_offset_n)
                         part = render_region(shaped(r), srcb, src_sr,
                                              s["midi"], h_dur_n, sr,
-                                             **rr_kwargs)
+                                             pitch_cents=pitch, **rr_kwargs)
                         m = min(part.size, full_n)
                         sig[:m] += part[:m] * w[:m]
                 sig *= dyn_gain(v_env) * h_vel * extra_g
@@ -508,9 +541,13 @@ def render_instrument_track(track: dict, total_n: int, sr: int, tm,
                     + h_dur_n)
                 for r in chosen:
                     srcb, src_sr = lib.audio(r.sample)
+                    pitch = note_curve(
+                        "pitch_cents",
+                        h_dur_n + int(shaped(r).ampeg_release * sr),
+                        note_offset_n)
                     part = render_region(shaped(r), srcb, src_sr,
                                          s["midi"], h_dur_n, sr,
-                                         **rr_kwargs)
+                                         pitch_cents=pitch, **rr_kwargs)
                     sig[:part.size] += part
                 sig = sig * h_vel * extra_g
             if join_in:                       # suppressed attack fades in

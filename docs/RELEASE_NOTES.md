@@ -25,6 +25,15 @@ time (F4); the published JSON Schema no longer lists `lowpass`/`highpass`/
 automation must target a real cutoff-capable fx (F12). `swing` and `groove` are
 reclassified as render-affecting fields (F7).
 
+Performance-curve note: IR schema 1.1 adds explicit `pitch_cents` and
+`dynamic` curves. Legacy `vibrato`, `glide_s`, and authored dynamic breakpoints
+now lower to hash-included curve data before render; `_meta.semantic` keeps the
+authored expression only for provenance and decompile. Synth notes and sampled
+instrument notes consume these curves directly. Sampled pitch curves use a
+time-varying source-read ratio with cumulative source position, including
+looped sustain regions. Physical-model pitch curves still reject with
+`curve_unsupported_voice` until each kernel is staged.
+
 Determinism note: `ENGINE_VERSION` is folded into the `spec_hash` payload
 (`audioforge.determinism`). Re-rendering an unchanged spec under Engine 2.16.0
 therefore yields a different render hash than under 2.15.0 by design; provenance
@@ -40,8 +49,14 @@ consumers that pinned 2.15.0 hashes must re-pin against this engine.
   snapshot regression).
 - IR contract corrected to match the validator (audit findings F1–F8, F10–F14);
   see the Contract note above. The published `docs/ir.schema.json` is regenerated.
+- AF-P1 performance curves are explicit IR: `pitch_cents` and `dynamic` curves
+  validate under IR schema 1.1, publish support metadata in the capability
+  manifest, render in synth and sampled-instrument paths, and diagnose lossy
+  MIDI/MusicXML projections.
 - Backward compatible for authoring: no `.af` source migration required.
-- Render hashes recompute under the new engine version (see Determinism note).
+- Render hashes recompute under the new engine version and legacy performance
+  lowering may change compiled IR for assets that use `vibrato`, `glide_s`, or
+  authored dynamic breakpoints (see Determinism note).
 
 ### Engine 2.15.0 · DSL 1.8
 

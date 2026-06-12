@@ -168,6 +168,72 @@ def test_pitch_and_resampling(pin):
           f"resampling lands {cents:+.1f} cents from nominal")
 
 
+def test_pitch_curve_resamples_sampled_instrument(pin):
+    _, _, asset = _render_dsl(pin, "C4 @ 0b for 4b vel 0.4")
+    asset.set(
+        "layers.0.notes.0.curves",
+        [{
+            "target": "pitch_cents",
+            "time_basis": "note_seconds",
+            "points": [[0.0, 1200.0]],
+        }],
+    )
+
+    st, sr, _ = asset.render()
+    x = st.mean(axis=1)
+    f0 = _f0(x[sr // 4:sr * 2], lo=200, hi=650)
+    cents = 1200 * np.log2(f0 / 523.251)
+    assert abs(cents) < 10, f"{f0:.2f} Hz ({cents:+.1f}c)"
+    print("PASS  pitch curves: sampled instrument note-scoped +1200c "
+          "curve drives the time-varying resampler")
+
+
+def test_pitch_curve_resamples_looped_sampled_region(pin):
+    _, _, asset = _render_dsl(pin, "G4 @ 0b for 8b vel 0.6", dur=5)
+    asset.set(
+        "layers.0.notes.0.curves",
+        [{
+            "target": "pitch_cents",
+            "time_basis": "note_seconds",
+            "points": [[0.0, 1200.0]],
+        }],
+    )
+
+    st, sr, _ = asset.render()
+    x = st.mean(axis=1)
+    late = x[sr * 2:sr * 3]
+    f0 = _f0(late, lo=650, hi=900)
+    cents = 1200 * np.log2(f0 / 783.991)
+    assert abs(cents) < 12, f"{f0:.2f} Hz ({cents:+.1f}c)"
+    assert np.sqrt(np.mean(late ** 2)) > 0.005
+    print("PASS  pitch curves: looped sampled sustain follows +1200c "
+          "through source-coordinate loop extension")
+
+
+def test_note_dynamic_curve_crossfades_sampled_velocity_layers(pin):
+    _, _, asset = _render_dsl(pin, "C4 @ 0b for 4b vel 0.3")
+    asset.set(
+        "layers.0.notes.0.curves",
+        [{
+            "target": "dynamic",
+            "time_basis": "note_seconds",
+            "points": [[0.0, 0.0], [2.0, 1.0]],
+        }],
+    )
+
+    st, sr, _ = asset.render()
+    x = st.mean(axis=1)
+    c4 = 261.626
+    early = x[int(0.25 * sr):int(0.75 * sr)]
+    late = x[int(1.25 * sr):int(1.75 * sr)]
+    r_early = _partial(early, c4 * 3) / _partial(early, c4)
+    r_late = _partial(late, c4 * 3) / _partial(late, c4)
+    assert r_early < 0.08
+    assert r_late > 0.15
+    print(f"PASS  dynamic curves: note curve moves sampled velocity "
+          f"layers H3/H1 {r_early:.3f} -> {r_late:.3f}")
+
+
 def test_velocity_layers(pin):
     soft, sr, _ = _render_dsl(pin, "C4 @ 0b for 4b vel 0.3")
     loud, _, _ = _render_dsl(pin, "C4 @ 0b for 4b vel 0.9")

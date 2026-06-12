@@ -21,6 +21,7 @@ This module locks the consolidation in two ways:
 import hashlib
 import json
 import os
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -149,10 +150,16 @@ asset g {
 
 def _af_cases() -> dict[str, str]:
     cases = {}
-    for path in sorted(ROOT.rglob("*.af")):
-        if ".venv" in path.parts:
-            continue
-        cases[str(path.relative_to(ROOT))] = path.read_text()
+    result = subprocess.run(
+        ["git", "ls-files", "--", "*.af"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    for name in sorted(line for line in result.stdout.splitlines() if line):
+        path = ROOT / name
+        cases[name] = path.read_text()
     return cases
 
 

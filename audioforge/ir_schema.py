@@ -16,9 +16,15 @@ from .schema import (
     OSC_SHAPES,
     validate_spec,
 )
+from .curves import (
+    CURVE_SHAPES,
+    LAYER_TIME_BASES,
+    NOTE_TIME_BASES,
+    PERFORMANCE_CURVE_TARGETS,
+)
 from .version import ENGINE_VERSION
 
-IR_SCHEMA_VERSION = "1.0"
+IR_SCHEMA_VERSION = "1.1"
 
 SEMANTIC_FIELDS = [
     "intent",
@@ -82,11 +88,17 @@ def ir_schema_metadata() -> dict[str, Any]:
             "supported_from": ["0.9", "1.0"],
             "policy": "additive-compatible",
             "notes": (
-                "IR schema 1.0 formalizes the existing compiled spec shape. "
-                "No migration is required for valid current specs; future "
-                "schema revisions must preserve render hashes for provenance-"
-                "only metadata changes."
+                "IR schema 1.1 adds explicit performance curves for pitch "
+                "and dynamics. No migration is required for valid 1.0 specs; "
+                "curves are render data and therefore hash-included, while "
+                "provenance-only metadata changes remain hash-excluded."
             ),
+        },
+        "curves": {
+            "targets": sorted(PERFORMANCE_CURVE_TARGETS),
+            "shapes": sorted(CURVE_SHAPES),
+            "time_bases": sorted(NOTE_TIME_BASES | LAYER_TIME_BASES),
+            "hash_policy": "expanded curve data is render data",
         },
     }
 
@@ -133,24 +145,40 @@ def _array_items(item_schema: dict, *, min_items: int | None = None) -> dict:
 def ir_json_schema() -> dict[str, Any]:
     """Return the JSON Schema artifact published in ``docs/ir.schema.json``."""
     layer_ref = {"$ref": "#/$defs/layer"}
-    automation = {
+    point2 = {
+        "type": "array",
+        "prefixItems": [{"type": "number"}, {"type": "number"}],
+        "minItems": 2,
+        "maxItems": 2,
+    }
+    point3 = {
+        "type": "array",
+        "prefixItems": [
+            {"type": "number"},
+            {"type": "number"},
+            {"type": "string"},
+        ],
+        "minItems": 3,
+        "maxItems": 3,
+    }
+    curve = {
         "type": "object",
-        "required": ["target", "points"],
+        "required": ["target"],
         "properties": {
             "target": _string_enum(AUTO_TARGETS),
             "points": _array_items(
-                {
-                    "type": "array",
-                    "items": {"type": "number"},
-                    "minItems": 2,
-                    "maxItems": 2,
-                },
-                min_items=2,
+                {"oneOf": [point2, point3]},
+                min_items=1,
             ),
+            "time_basis": _string_enum(NOTE_TIME_BASES | LAYER_TIME_BASES),
+            "t0": _number(),
+            "rate_hz": _number(minimum=1e-9),
+            "values": _array_items({"type": "number"}, min_items=1),
             "fx_index": {"type": "integer", "minimum": 0},
         },
         "additionalProperties": True,
     }
+    automation = curve
     note_event = {
         "type": "object",
         "properties": {
@@ -162,6 +190,7 @@ def ir_json_schema() -> dict[str, Any]:
             "art": {"type": "string"},
             "slur": {"type": "integer", "minimum": 1},
             "generated": {"type": "string"},
+            "curves": _array_items({"$ref": "#/$defs/curve"}),
         },
         "required": ["start_beat", "dur_beats"],
         "additionalProperties": True,
@@ -231,6 +260,8 @@ def ir_json_schema() -> dict[str, Any]:
                 "minItems": 2,
                 "maxItems": 2,
             },
+            "curve_point": {"oneOf": [point2, point3]},
+            "curve": curve,
             "marker": {
                 "type": "object",
                 "required": ["name", "time_s"],

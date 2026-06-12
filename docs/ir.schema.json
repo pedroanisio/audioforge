@@ -13,28 +13,77 @@
               },
               "points": {
                 "items": {
-                  "items": {
-                    "type": "number"
-                  },
-                  "maxItems": 2,
-                  "minItems": 2,
-                  "type": "array"
+                  "oneOf": [
+                    {
+                      "maxItems": 2,
+                      "minItems": 2,
+                      "prefixItems": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ],
+                      "type": "array"
+                    },
+                    {
+                      "maxItems": 3,
+                      "minItems": 3,
+                      "prefixItems": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "string"
+                        }
+                      ],
+                      "type": "array"
+                    }
+                  ]
                 },
-                "minItems": 2,
+                "minItems": 1,
                 "type": "array"
+              },
+              "rate_hz": {
+                "minimum": 1e-09,
+                "type": "number"
+              },
+              "t0": {
+                "type": "number"
               },
               "target": {
                 "enum": [
                   "cutoff_hz",
+                  "dynamic",
                   "gain_db",
+                  "pitch_cents",
                   "scan"
                 ],
                 "type": "string"
+              },
+              "time_basis": {
+                "enum": [
+                  "layer_beats",
+                  "layer_seconds",
+                  "note_beats",
+                  "note_seconds"
+                ],
+                "type": "string"
+              },
+              "values": {
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 1,
+                "type": "array"
               }
             },
             "required": [
-              "target",
-              "points"
+              "target"
             ],
             "type": "object"
           },
@@ -63,6 +112,122 @@
         "name"
       ],
       "type": "object"
+    },
+    "curve": {
+      "additionalProperties": true,
+      "properties": {
+        "fx_index": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "points": {
+          "items": {
+            "oneOf": [
+              {
+                "maxItems": 2,
+                "minItems": 2,
+                "prefixItems": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "type": "array"
+              },
+              {
+                "maxItems": 3,
+                "minItems": 3,
+                "prefixItems": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "type": "array"
+              }
+            ]
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "rate_hz": {
+          "minimum": 1e-09,
+          "type": "number"
+        },
+        "t0": {
+          "type": "number"
+        },
+        "target": {
+          "enum": [
+            "cutoff_hz",
+            "dynamic",
+            "gain_db",
+            "pitch_cents",
+            "scan"
+          ],
+          "type": "string"
+        },
+        "time_basis": {
+          "enum": [
+            "layer_beats",
+            "layer_seconds",
+            "note_beats",
+            "note_seconds"
+          ],
+          "type": "string"
+        },
+        "values": {
+          "items": {
+            "type": "number"
+          },
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "target"
+      ],
+      "type": "object"
+    },
+    "curve_point": {
+      "oneOf": [
+        {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "type": "array"
+        },
+        {
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "type": "array"
+        }
+      ]
     },
     "env": {
       "additionalProperties": true,
@@ -176,28 +341,77 @@
               },
               "points": {
                 "items": {
-                  "items": {
-                    "type": "number"
-                  },
-                  "maxItems": 2,
-                  "minItems": 2,
-                  "type": "array"
+                  "oneOf": [
+                    {
+                      "maxItems": 2,
+                      "minItems": 2,
+                      "prefixItems": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ],
+                      "type": "array"
+                    },
+                    {
+                      "maxItems": 3,
+                      "minItems": 3,
+                      "prefixItems": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "string"
+                        }
+                      ],
+                      "type": "array"
+                    }
+                  ]
                 },
-                "minItems": 2,
+                "minItems": 1,
                 "type": "array"
+              },
+              "rate_hz": {
+                "minimum": 1e-09,
+                "type": "number"
+              },
+              "t0": {
+                "type": "number"
               },
               "target": {
                 "enum": [
                   "cutoff_hz",
+                  "dynamic",
                   "gain_db",
+                  "pitch_cents",
                   "scan"
                 ],
                 "type": "string"
+              },
+              "time_basis": {
+                "enum": [
+                  "layer_beats",
+                  "layer_seconds",
+                  "note_beats",
+                  "note_seconds"
+                ],
+                "type": "string"
+              },
+              "values": {
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 1,
+                "type": "array"
               }
             },
             "required": [
-              "target",
-              "points"
+              "target"
             ],
             "type": "object"
           },
@@ -254,6 +468,12 @@
             "properties": {
               "art": {
                 "type": "string"
+              },
+              "curves": {
+                "items": {
+                  "$ref": "#/$defs/curve"
+                },
+                "type": "array"
               },
               "dur_beats": {
                 "minimum": 0,
@@ -387,28 +607,77 @@
               },
               "points": {
                 "items": {
-                  "items": {
-                    "type": "number"
-                  },
-                  "maxItems": 2,
-                  "minItems": 2,
-                  "type": "array"
+                  "oneOf": [
+                    {
+                      "maxItems": 2,
+                      "minItems": 2,
+                      "prefixItems": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ],
+                      "type": "array"
+                    },
+                    {
+                      "maxItems": 3,
+                      "minItems": 3,
+                      "prefixItems": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "string"
+                        }
+                      ],
+                      "type": "array"
+                    }
+                  ]
                 },
-                "minItems": 2,
+                "minItems": 1,
                 "type": "array"
+              },
+              "rate_hz": {
+                "minimum": 1e-09,
+                "type": "number"
+              },
+              "t0": {
+                "type": "number"
               },
               "target": {
                 "enum": [
                   "cutoff_hz",
+                  "dynamic",
                   "gain_db",
+                  "pitch_cents",
                   "scan"
                 ],
                 "type": "string"
+              },
+              "time_basis": {
+                "enum": [
+                  "layer_beats",
+                  "layer_seconds",
+                  "note_beats",
+                  "note_seconds"
+                ],
+                "type": "string"
+              },
+              "values": {
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 1,
+                "type": "array"
               }
             },
             "required": [
-              "target",
-              "points"
+              "target"
             ],
             "type": "object"
           },
@@ -575,7 +844,7 @@
       "type": "object"
     }
   },
-  "$id": "https://audioforge.local/schemas/audioforge-ir-1.0.schema.json",
+  "$id": "https://audioforge.local/schemas/audioforge-ir-1.1.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": true,
   "properties": {
@@ -760,6 +1029,24 @@
   "title": "AudioForge Universal Music IR",
   "type": "object",
   "x-audioforge": {
+    "curves": {
+      "hash_policy": "expanded curve data is render data",
+      "shapes": [
+        "hold",
+        "linear",
+        "pow"
+      ],
+      "targets": [
+        "dynamic",
+        "pitch_cents"
+      ],
+      "time_bases": [
+        "layer_beats",
+        "layer_seconds",
+        "note_beats",
+        "note_seconds"
+      ]
+    },
     "engine_version": "2.16.0",
     "field_layers": {
       "provenance": [
@@ -803,14 +1090,14 @@
       "notation"
     ],
     "migration": {
-      "current": "1.0",
-      "notes": "IR schema 1.0 formalizes the existing compiled spec shape. No migration is required for valid current specs; future schema revisions must preserve render hashes for provenance-only metadata changes.",
+      "current": "1.1",
+      "notes": "IR schema 1.1 adds explicit performance curves for pitch and dynamics. No migration is required for valid 1.0 specs; curves are render data and therefore hash-included, while provenance-only metadata changes remain hash-excluded.",
       "policy": "additive-compatible",
       "supported_from": [
         "0.9",
         "1.0"
       ]
     },
-    "version": "1.0"
+    "version": "1.1"
   }
 }

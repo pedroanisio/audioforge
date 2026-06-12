@@ -27,6 +27,50 @@ def _note(ev: dict) -> str:
     return s
 
 
+def _curve_time_suffix(time_basis: str) -> str:
+    return "b" if time_basis.endswith("beats") else "s"
+
+
+def _curve_value_suffix(target: str) -> str:
+    return "c" if target == "pitch_cents" else ""
+
+
+def _curve_point(curve: dict, point: list) -> str:
+    target = curve["target"]
+    time_basis = curve.get("time_basis", "note_beats")
+    t_suf = _curve_time_suffix(time_basis)
+    v_suf = _curve_value_suffix(target)
+    out = f"{_fmt_num(point[0])}{t_suf}={_fmt_num(point[1])}{v_suf}"
+    if len(point) > 2:
+        out += f"@{point[2]}"
+    return out
+
+
+def _note_curve_lines(events: list[dict],
+                      suppressed_targets: set[str] | None = None) -> list[str]:
+    suppressed_targets = suppressed_targets or set()
+    lines = []
+    for idx, ev in enumerate(events):
+        for curve in ev.get("curves", []) or []:
+            target = curve["target"]
+            if target in suppressed_targets:
+                continue
+            basis = curve.get("time_basis", "note_beats")
+            prefix = f"curves: note {idx} {target} basis={basis}"
+            if "points" in curve:
+                pts = ", ".join(_curve_point(curve, p)
+                                for p in curve["points"])
+                lines.append(f"{prefix} {pts}")
+            else:
+                values = ",".join(_fmt_num(v) for v in curve["values"])
+                lines.append(
+                    f"{prefix} sampled t0={_fmt_num(curve['t0'])}"
+                    f"{_curve_time_suffix(basis)} "
+                    f"rate={_fmt_num(curve['rate_hz'])}hz "
+                    f"values={values}")
+    return lines
+
+
 def _notes_list(events: list[dict]) -> str:
     parts = []
     emitted_slurs = set()
@@ -279,6 +323,17 @@ def spec_to_dsl(spec: dict) -> str:
     """
     lines = [f"asset {spec['id']} {{"]
     semantic = spec.get("_meta", {}).get("semantic", {})
+    authored_curve_targets: dict[str, set[str]] = {}
+    for item in semantic.get("authored_expression", []) or []:
+        lname = item.get("layer")
+        field = item.get("field")
+        if not lname:
+            continue
+        targets = authored_curve_targets.setdefault(lname, set())
+        if field == "dynamic":
+            targets.add("dynamic")
+        elif field in {"vibrato", "glide_s"}:
+            targets.add("pitch_cents")
     smart_preserved = bool(semantic.get("smart_directives"))
     preserve_authored_layers = smart_preserved or not spec.get("intent", {}).get("style")
     semantic_layers = semantic.get("layers", {}) if preserve_authored_layers else {}
@@ -385,6 +440,9 @@ def spec_to_dsl(spec: dict) -> str:
             lines.append(f"    notes: {_notes_list(layer_semantic['notes'])}")
         elif "notes" in layer:
             lines.append(f"    notes: {_notes_list(layer['notes'])}")
+        suppressed = authored_curve_targets.get(layer.get("name", ""), set())
+        for curve_line in _note_curve_lines(layer.get("notes", []), suppressed):
+            lines.append(f"    {curve_line}")
         for play in layer_semantic.get("plays", []):
             lines.append(f"    {_play_stmt(play)}")
         if "pattern" in layer:

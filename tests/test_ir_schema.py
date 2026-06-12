@@ -80,6 +80,9 @@ def test_published_ir_schema_matches_runtime_source():
     assert runtime["x-audioforge"]["field_layers"]["render"]
     assert runtime["x-audioforge"]["field_layers"]["provenance"] == ["_meta"]
     assert runtime["properties"]["layers"]["items"]["$ref"] == "#/$defs/layer"
+    assert "curve" in runtime["$defs"]
+    note_schema = runtime["$defs"]["layer"]["properties"]["notes"]["items"]
+    assert note_schema["properties"]["curves"]["items"]["$ref"] == "#/$defs/curve"
 
 
 def test_ir_schema_validates_representative_generated_spec():
@@ -127,6 +130,8 @@ def test_ir_schema_metadata_declares_hash_boundaries():
     assert "intent" in metadata["field_layers"]["semantic"]
     assert "holds" in metadata["field_layers"]["semantic"]
     assert "layers" in metadata["field_layers"]["render"]
+    assert metadata["curves"]["targets"] == ["dynamic", "pitch_cents"]
+    assert metadata["curves"]["hash_policy"] == "expanded curve data is render data"
 
     with_meta = copy.deepcopy(spec)
     with_meta["_meta"]["lines"] = {"pad": 21}
