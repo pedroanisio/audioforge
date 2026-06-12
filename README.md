@@ -81,6 +81,8 @@ Design rule: **the DSL is sugar; the JSON IR is truth.** Emotion tags, intensity
 
 `audioforge.sdk.AudioForge` is the integration surface: `compile / load_file / load_spec` → `AudioAsset` with `validate / set / mutated / render / preview / export`. Compilation never raises on user input — agents get structured `Diagnostic`s with line numbers.
 
+**Sound match** (`audioforge.match`, `scripts/sound_match.py`): give a target sample, get back an editable `.af` patch by offline analysis-by-synthesis — the engine is its own forward model, and the emitted patch is independently re-rendered to report a *verified* confidence, not an asserted one. See [docs/SOUND_MATCH.md](docs/SOUND_MATCH.md).
+
 Five extension points (`audioforge.plugins`): oscillators, fx, drum voices, exporters, validators. Plugins receive an injected seeded RNG and must use no other entropy; plugin names live in specs, so spec hashing covers plugin selection automatically. See `examples/custom_plugin.py`.
 
 ## The validate/render contract (v2.14)

@@ -1,11 +1,22 @@
 """Best-effort canonical IR -> .af decompiler."""
 from __future__ import annotations
 
+import math
+
+from . import theory
+
 
 def _fmt_num(v) -> str:
     if isinstance(v, int) or float(v).is_integer():
         return str(int(v))
     return f"{float(v):.6g}"
+
+
+def _freq_to_note(freq_hz: float) -> str:
+    """Nearest-semitone note name for a layer-level `freq_hz` (the tone DSL
+    exposes only `note:`, so a raw frequency round-trips lossily to a note)."""
+    midi = 69 + 12.0 * math.log2(max(float(freq_hz), 1e-6) / 440.0)
+    return theory.semis_to_note(int(round(midi)) - 12)
 
 
 def _note(ev: dict) -> str:
@@ -310,6 +321,19 @@ def decompile_diagnostics(spec: dict) -> list[str]:
                     "authored motifs/play statements are unavailable"
                 )
                 break
+    for layer in spec.get("layers", []):
+        if "notes" in layer or layer.get("note") is not None:
+            continue
+        f = layer.get("freq_hz")
+        if f is None:
+            continue
+        midi = 69 + 12.0 * math.log2(max(float(f), 1e-6) / 440.0)
+        if abs(midi - round(midi)) > 1e-6:
+            warnings.append(
+                f"lossy decompile: layer '{layer.get('name', '?')}' freq_hz "
+                f"{f} is not a semitone; the tone DSL exposes only note:, so it "
+                f"is quantised to {_freq_to_note(f)} (≤ 50 cents)"
+            )
     return warnings
 
 
@@ -397,6 +421,13 @@ def spec_to_dsl(spec: dict) -> str:
         for k in ("osc", "voice", "color", "shape", "model", "instrument"):
             if k in layer:
                 lines.append(f"    {k}: {layer[k]}")
+        # tone/grain layer pitch (the `note`/`freq_hz` layer property, distinct
+        # from a `notes:` event list) — emitted so the patch round-trips.
+        if "notes" not in layer:
+            if layer.get("note") is not None:
+                lines.append(f"    note: {layer['note']}")
+            elif "freq_hz" in layer:
+                lines.append(f"    note: {_freq_to_note(layer['freq_hz'])}")
         if "gain_db" in layer:
             lines.append(f"    gain: {_fmt_num(layer['gain_db'])}db")
         if "pan" in layer:
