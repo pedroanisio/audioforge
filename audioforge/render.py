@@ -212,8 +212,66 @@ def _layer_signal(layer: dict, total_n: int, sr: int, tm, swing: float,
     return out
 
 
+def _resolve_jobs(jobs: int | None) -> int:
+    """Worker count for layer-parallel rendering. ``None`` -> the
+    ``AUDIOFORGE_JOBS`` env var (default 1 = serial). Always >= 1.
+
+    Parallelism is deterministic by construction: each layer's signal is a
+    pure function of (layer, index, spec-hash) with per-layer seeded RNG, and
+    results are summed back in layer order — so any job count yields
+    byte-identical audio. See ``_layer_signals``.
+    """
+    if jobs is None:
+        import os
+        try:
+            jobs = int(os.environ.get("AUDIOFORGE_JOBS", "1"))
+        except ValueError:
+            jobs = 1
+    return max(1, int(jobs))
+
+
+def _layer_signals(spec: dict, total_n: int, sr: int, tm, swing: float,
+                   root: str, groove, report: dict, jobs: int):
+    """Render every layer's full-length signal, optionally across threads.
+
+    Returns ``(prepped_layers, signals)`` in spec order. Layer signals are
+    order-independent (seeded per-layer RNG keyed by index); the caller sums
+    them back in order, so the result is identical for any ``jobs``. The hot
+    work (synthesis, sampling, FX) is largely in GIL-releasing numpy/scipy C,
+    so threads give real speedup without breaking determinism or needing the
+    libraries re-loaded per process. ``report`` is write-only metadata and is
+    shared across threads (it never feeds back into the audio)."""
+    layers = spec["layers"]
+    prepped = [({**ly, "_library": spec["library"]}
+                if ly.get("type") == "instrument" else ly) for ly in layers]
+    n = len(prepped)
+    parallel = jobs > 1 and n > 1
+    if parallel:
+        # Pre-load libraries serially so concurrent load_library() (disk read
+        # + manifest re-hash) cannot race on the shared cache.
+        from .library import load_library
+        for ly in prepped:
+            if ly.get("type") == "instrument":
+                ref = ly["_library"]
+                key = (ref["name"], ref["manifest_sha256"])
+                if key not in _layer_library_cache:
+                    _layer_library_cache[key] = load_library(ref)
+
+    def _one(i):
+        return _layer_signal(prepped[i], total_n, sr, tm, swing, root, i,
+                             groove=groove, report=report)
+
+    if parallel:
+        from concurrent.futures import ThreadPoolExecutor
+        with ThreadPoolExecutor(max_workers=min(jobs, n)) as ex:
+            sigs = list(ex.map(_one, range(n)))
+    else:
+        sigs = [_one(i) for i in range(n)]
+    return prepped, sigs
+
+
 def _premaster(spec: dict, root: str, sr: int, master: dict,
-               return_stems: bool):
+               return_stems: bool, jobs: int = 1):
     """Layers -> buses -> master fx/automation/width/DC; no loudness yet."""
     total_n = int(spec["duration_s"] * sr)
     bpm = float(spec.get("bpm", 120.0))
@@ -236,11 +294,13 @@ def _premaster(spec: dict, root: str, sr: int, master: dict,
     _premaster_reports[id(spec)] = report
     stage_tail_in = np.zeros(total_n)
     groove = spec.get("groove")
-    for i, layer in enumerate(spec["layers"]):
-        if layer["type"] == "instrument":
-            layer = {**layer, "_library": spec["library"]}
-        sig = _layer_signal(layer, total_n, sr, tm, swing, root, i,
-                            groove=groove, report=report)
+    # Layer signals computed first (optionally in parallel); the seat/stage/bus
+    # accumulation below stays serial and in spec order, so the mix sum is
+    # byte-identical regardless of `jobs`.
+    prepped, sigs = _layer_signals(spec, total_n, sr, tm, swing, root,
+                                   groove, report, jobs)
+    for i, layer in enumerate(prepped):
+        sig = sigs[i]
         seat = layer.get("seat")
         if seat is not None and spec.get("stage") is not None:
             from .stage import direct_tap, early_tap
@@ -400,14 +460,19 @@ def _finish(left, right, sr, master, spec, root, stems, return_stems):
     return stereo, sr, meta
 
 
-def render(spec: dict, return_stems: bool = False):
+def render(spec: dict, return_stems: bool = False, jobs: int | None = None):
     """Returns (stereo float64 array [n,2] in -1..1, sample_rate, meta)
-    or, with return_stems=True, (..., stems)."""
+    or, with return_stems=True, (..., stems).
+
+    ``jobs`` renders layers across that many threads (``None`` -> the
+    ``AUDIOFORGE_JOBS`` env var, default 1). Output is byte-identical for any
+    ``jobs`` — the determinism contract is preserved."""
+    jobs = _resolve_jobs(jobs)
     spec = validate_spec(spec)
     root = spec_hash(spec)
     sr = int(spec.get("sample_rate", 48000))
     master = _master_with_intensity(spec)
-    left, right, stems = _premaster(spec, root, sr, master, return_stems)
+    left, right, stems = _premaster(spec, root, sr, master, return_stems, jobs)
     return _finish(left, right, sr, master, spec, root, stems, return_stems)
 
 
@@ -489,13 +554,14 @@ def _write_wav(path: Path, stereo: np.ndarray, sr: int, bits: int, root: str,
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def render_to_wav(spec: dict, out_dir: str | Path, stems: bool = False) -> dict:
+def render_to_wav(spec: dict, out_dir: str | Path, stems: bool = False,
+                  jobs: int | None = None) -> dict:
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     if stems:
-        stereo, sr, meta, stem_map = render(spec, return_stems=True)
+        stereo, sr, meta, stem_map = render(spec, return_stems=True, jobs=jobs)
     else:
-        stereo, sr, meta = render(spec)
+        stereo, sr, meta = render(spec, jobs=jobs)
     bits = meta["bit_depth"]
     root = meta["spec_hash"]
 

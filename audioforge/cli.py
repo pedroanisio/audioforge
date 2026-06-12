@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import tempfile
 from pathlib import Path
@@ -52,6 +53,9 @@ def main(argv=None) -> int:
     p.add_argument("--preset", default=None)
     p.add_argument("--variant", default=None)
     p.add_argument("--intensity", type=float, default=None)
+    p.add_argument("--jobs", type=int, default=None,
+                   help="render layers across N threads (deterministic; "
+                        "default 1 / $AUDIOFORGE_JOBS)")
     p.add_argument("--analyze", action="store_true")
 
     p = sub.add_parser("pack"); p.add_argument("spec")
@@ -207,6 +211,8 @@ def main(argv=None) -> int:
                                              asset_id=args.id),
                              indent=2, sort_keys=True))
         elif args.cmd == "render":
+            if args.jobs is not None:
+                os.environ["AUDIOFORGE_JOBS"] = str(args.jobs)
             for a in _assets(args.spec, variant=args.variant):
                 if args.intensity is not None:
                     a = a.with_intensity(args.intensity)
