@@ -13,3 +13,6 @@ af-external-lib.tar
 .agent-tasks/
 drift-risk-map.md
 drift-risk-map.svg
+af-latest.tar
+compositions/
+_temp/

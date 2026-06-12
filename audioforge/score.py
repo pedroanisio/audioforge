@@ -178,6 +178,44 @@ _ARC = "#c9c9d0"
 _RIB = "#b5544f"
 
 
+def _clamp_lines(lines: list[str], max_lines: int) -> list[str]:
+    """Clamp a wrapped text block to at most ``max_lines`` lines so it cannot
+    overrun its allotted column and collide with whatever sits below it. When
+    truncation happens the last kept line gets an ellipsis so the reader knows
+    the blurb continues (the full text lives in the source .af header)."""
+    if max_lines < 1:
+        return []
+    if len(lines) <= max_lines:
+        return list(lines)
+    kept = list(lines[:max_lines])
+    kept[-1] = kept[-1].rstrip(" .·–—") + " …"
+    return kept
+
+
+def _declutter(ys: list[float], min_gap: float) -> list[float]:
+    """Spread label anchor positions so consecutive ones differ by at least
+    ``min_gap``, preserving each item's identity. Resolves vertical overlap of
+    labels for sources seated at near-identical azimuth/distance.
+
+    Returns a list parallel to ``ys`` (input order) with adjusted positions.
+    Items are processed in ascending order and pushed upward only as needed,
+    then the whole block is recentred on the original mean so it does not
+    drift off one edge."""
+    n = len(ys)
+    if n <= 1:
+        return list(ys)
+    order = sorted(range(n), key=lambda i: ys[i])
+    adj = [0.0] * n
+    prev = None
+    for i in order:
+        y = ys[i] if prev is None else max(ys[i], prev + min_gap)
+        adj[i] = y
+        prev = y
+    # recentre to keep the cluster around its original centroid
+    shift = (sum(ys) - sum(adj)) / n
+    return [a + shift for a in adj]
+
+
 def _layout(n_staves, bars_per_sys):
     beats = bars_per_sys * BEATS_PER_BAR
     width = PAGE_W - LM - RM
@@ -398,16 +436,30 @@ def _stage_plot(ax, rx, ry, rw, rh, staves, stage):
                           [lx, ly]], closed=True, facecolor=_INK, zorder=4))
     ax.text(lx, ly - 0.17, "listener", fontproperties=_SERIF, fontsize=5.5,
             color=_FAINT, ha="center", va="top")
+    # Place the seat dots, then declutter the labels per side (left/right) so
+    # sources at near-identical azimuth/distance do not overprint each other.
+    placed = []
     for s in seats:
         a = math.radians(s["seat"]["az_deg"])
         r = s["seat"]["dist_m"] * sc
         px, py = lx + r * math.sin(a), ly + r * math.cos(a)
         ax.add_patch(Ellipse((px, py), 0.05, 0.05, facecolor=_ACCENT,
                              edgecolor="white", lw=0.5, zorder=5))
-        ha = "left" if s["seat"]["az_deg"] >= 0 else "right"
-        dx = 0.05 if ha == "left" else -0.05
-        ax.text(px + dx, py, s["label"], fontproperties=_SERIF, fontsize=5.6,
-                color=_INK, ha=ha, va="center", zorder=6)
+        side = "left" if s["seat"]["az_deg"] >= 0 else "right"
+        placed.append({"label": s["label"], "px": px, "py": py, "side": side})
+    for side in ("left", "right"):
+        grp = [p for p in placed if p["side"] == side]
+        if not grp:
+            continue
+        new_y = _declutter([p["py"] for p in grp], 0.115)
+        for p, ly2 in zip(grp, new_y):
+            ha = "left" if p["side"] == "left" else "right"
+            dx = 0.06 if ha == "left" else -0.06
+            if abs(ly2 - p["py"]) > 0.015:      # nudged: draw a faint leader
+                ax.add_line(Line2D([p["px"], p["px"] + dx], [p["py"], ly2],
+                                   color=_ARC, lw=0.4, zorder=4))
+            ax.text(p["px"] + dx, ly2, p["label"], fontproperties=_SERIF,
+                    fontsize=5.4, color=_INK, ha=ha, va="center", zorder=6)
     cap = "Stage"
     if stage:
         dims = stage.get("dims")
@@ -514,9 +566,17 @@ def _title_page(pdf, title, subtitle, meta, program, staves, spec):
             if head and head == head.upper() and len(head) <= 40:
                 lines = lines[1:]
         flow = re.sub(r"\s+", " ", " ".join(lines)).strip()
-        ax.text(colL, top, textwrap.fill(flow, 56), fontproperties=_SERIF,
-                fontsize=8.6, color="#2b2b2b", ha="left", va="top",
-                linespacing=1.62)
+        # Clamp the blurb to the space between `top` and the footer caption so
+        # a long source header cannot overrun and collide with it.
+        p_size, p_wrap, p_lsp = 7.8, 60, 1.55
+        prog_floor = 0.95                       # safe gap above the footer line
+        line_h = p_size * p_lsp / 72.0          # 1 data unit == 1 inch here
+        max_lines = max(4, int((top - prog_floor) / line_h))
+        wrapped = _clamp_lines(textwrap.fill(flow, p_wrap).split("\n"),
+                               max_lines)
+        ax.text(colL, top, "\n".join(wrapped), fontproperties=_SERIF,
+                fontsize=p_size, color="#2b2b2b", ha="left", va="top",
+                linespacing=p_lsp)
     rw = PAGE_W - RM - colR
     if any(s["seat"] for s in staves):
         _stage_plot(ax, colR, 2.95, rw, top - 2.95 + 0.15, staves,
@@ -537,6 +597,54 @@ def _title_page(pdf, title, subtitle, meta, program, staves, spec):
     plt.close(fig)
 
 
+# --------------------------------------------------------- family layout ----
+_FAMILY_ORDER = ("Strings", "Woodwinds", "Brass", "Percussion")
+_FAMILY_KEYS = {
+    "Strings":   ("violin", "viola", "cello", "contrabass", "doublebass",
+                  "double bass"),
+    "Woodwinds": ("flute", "piccolo", "oboe", "english horn", "cor anglais",
+                  "clarinet", "bassoon", "contrabassoon", "sax", "recorder"),
+    "Brass":     ("trumpet", "cornet", "horn", "fhorn", "french horn",
+                  "trombone", "tuba", "euphonium"),
+}
+
+
+def _family_of(st) -> str:
+    """Classify a staff into an orchestral family from its instrument/source
+    and layer name. Anything unmatched (timpani, mallets, harp, drums, synths)
+    falls to Percussion — the catch-all study-score group."""
+    key = f"{st.get('source', '')} {st.get('name', '')}".lower()
+    for fam in ("Strings", "Woodwinds", "Brass"):
+        if any(w in key for w in _FAMILY_KEYS[fam]):
+            # 'bassoon'/'contrabass' both contain 'bass' — keyword order above
+            # already disambiguates (woodwind keys are checked on their own
+            # words), so a direct membership test is safe here.
+            return fam
+    return "Percussion"
+
+
+def _group_families(staves):
+    """Partition staves into families, preserving spec order within each and a
+    fixed family order overall. Returns a list of (family_name, [staves]) for
+    non-empty families only."""
+    buckets = {fam: [] for fam in _FAMILY_ORDER}
+    for st in staves:
+        buckets[_family_of(st)].append(st)
+    return [(fam, buckets[fam]) for fam in _FAMILY_ORDER if buckets[fam]]
+
+
+def _family_geo(n_staves, bars_per_system):
+    """Layout geometry for a single family page: a few staves spread to fill
+    the page so each gets a tall, well-separated lane (wide-range parts like
+    the harp no longer collide with neighbours or the footer)."""
+    geo = dict(_layout(n_staves, bars_per_system))
+    avail = geo["usable"] - HEAD - 0.30
+    block = max(0.58, min(1.55, avail / max(1, n_staves)))
+    geo["block"] = block
+    geo["sys_h"] = HEAD + n_staves * block
+    return geo
+
+
 # ------------------------------------------------------------- entry --------
 def _render_asset(pdf, spec, title, subtitle, program, bars_per_system):
     """Render one asset (title page + score systems) into an open PdfPages."""
@@ -551,8 +659,9 @@ def _render_asset(pdf, spec, title, subtitle, program, bars_per_system):
 
     total_beats = max([n["beat"] + n["dur"] for st in staves for n in st["notes"]]
                       + [spec.get("duration_s", 0) * bpm / 60.0])
-    geo = _layout(len(staves), bars_per_system)
-    n_sys = max(1, math.ceil(total_beats / geo["beats"]))
+    families = _group_families(staves)
+    beats_per_sys = _layout(len(staves), bars_per_system)["beats"]
+    n_sys = max(1, math.ceil(total_beats / beats_per_sys))
 
     title = title or _title_from_id(spec.get("id", "untitled"))
     if subtitle is None:
@@ -565,25 +674,35 @@ def _render_asset(pdf, spec, title, subtitle, program, bars_per_system):
             f"{int(dur // 60)}'{int(dur % 60):02d}\"   ·   {len(staves)} staves")
 
     _title_page(pdf, title, subtitle, meta, program, staves, spec)
-    s = 0
-    while s < n_sys:
-        fig, ax = _new_page()
-        ax.text(PAGE_W - RM, PAGE_H - 0.3, title, fontproperties=_SERIF,
-                fontsize=8, style="italic", color=_FAINT, ha="right")
-        ax.text(LM, 0.26, "proportional · bar length = duration · "
-                "space = silence", fontproperties=_SERIF, fontsize=6.5,
-                style="italic", color=_FAINT, ha="left")
-        n_here = min(geo["per_page"], n_sys - s)
-        stack_h = n_here * geo["sys_h"] + (n_here - 1) * SYS_GAP
-        y_top = PAGE_H - TM - max(0.0, (geo["usable"] - stack_h) / 2)
-        for _ in range(n_here):
-            b0, b1 = s * geo["beats"], (s + 1) * geo["beats"]
-            _system(ax, staves, b0, b1, y_top, markers, bpm, total_beats,
+    # Study-score layout: each time-window is engraved once per instrument
+    # family, on its own page, so a few staves get roomy, well-separated lanes
+    # instead of 17 staves merging into one over-packed grid. A family page is
+    # skipped for windows in which that family has no note onset.
+    for s in range(n_sys):
+        b0, b1 = s * beats_per_sys, (s + 1) * beats_per_sys
+        bar0 = int(b0 // BEATS_PER_BAR) + 1
+        bar1 = int(math.ceil(b1 / BEATS_PER_BAR))
+        for fam_name, fam_staves in families:
+            if not any(b0 - 1e-6 <= n["beat"] < b1 - 1e-6
+                       for st in fam_staves for n in st["notes"]):
+                continue
+            geo = _family_geo(len(fam_staves), bars_per_system)
+            fig, ax = _new_page()
+            ax.text(LM - 0.70, PAGE_H - 0.34, fam_name, fontproperties=_SERIF,
+                    fontsize=12, color=_ACCENT, ha="left", va="center")
+            ax.text(LM - 0.70, PAGE_H - 0.56, f"bars {bar0}–{bar1}",
+                    fontproperties=_SERIF, fontsize=8, style="italic",
+                    color=_FAINT, ha="left", va="center")
+            ax.text(PAGE_W - RM, PAGE_H - 0.3, title, fontproperties=_SERIF,
+                    fontsize=8, style="italic", color=_FAINT, ha="right")
+            ax.text(LM, 0.26, "proportional · bar length = duration · "
+                    "space = silence", fontproperties=_SERIF, fontsize=6.5,
+                    style="italic", color=_FAINT, ha="left")
+            y_top = PAGE_H - TM - max(0.0, (geo["usable"] - geo["sys_h"]) / 2)
+            _system(ax, fam_staves, b0, b1, y_top, markers, bpm, total_beats,
                     curve, keyexp, ktype, geo)
-            y_top -= geo["sys_h"] + SYS_GAP
-            s += 1
-        pdf.savefig(fig)
-        plt.close(fig)
+            pdf.savefig(fig)
+            plt.close(fig)
     return True
 
 

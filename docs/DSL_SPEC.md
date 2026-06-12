@@ -462,12 +462,14 @@ The executable grammar lives in `audioforge.lark_parser` as a Lark grammar and i
 audioforge validate spec.af
 audioforge compile  spec.af
 audioforge decompile spec.(af|json)
+audioforge repair   spec.af [--analysis FILE] [--feedback "…"]
 audioforge capabilities
 audioforge grammar  [--format ebnf|gbnf]
 audioforge export-midi spec.(af|json) -o out.mid
 audioforge import-midi out.mid [--id ID]
 audioforge export-musicxml spec.(af|json) -o out.musicxml
 audioforge import-musicxml out.musicxml [--id ID]
+audioforge score    spec.(af|json) [-o out.pdf] [--title T] [--bars N]
 audioforge render   spec.(af|json) [-o dir] [--preset P] [--stems] [--variant T] [--intensity K] [--analyze]
 audioforge pack     spec.af [--variants N] [-o dir] [--preset P]
 audioforge campaign spec.af [-o dir] [--preset P] [--intensity K]
