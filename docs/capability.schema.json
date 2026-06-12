@@ -24,6 +24,9 @@
     "layer_types": {
       "type": "object"
     },
+    "note_scope_targets": {
+      "type": "object"
+    },
     "performance_curves": {
       "type": "object"
     },
@@ -37,6 +40,9 @@
       "const": "audioforge.capabilities/1"
     },
     "smart_directives": {
+      "type": "object"
+    },
+    "techniques": {
       "type": "object"
     }
   },

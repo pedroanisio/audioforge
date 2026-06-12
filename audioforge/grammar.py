@@ -44,7 +44,9 @@ bus              = "bus" IDENT "{" { property | automation } "}" ;
 stage            = "stage" "{" { property } "}" ;
 cutdowns         = "cutdowns" "{" { property } "}" ;
 note_entry       = note_event | "slur" "(" note_event { "," note_event } ")" ;
-note_event       = PITCH "@" NUMBER "b" "for" NUMBER "b" [ "vel" NUMBER ] [ "art" IDENT ] [ "voicing" IDENT ] ;
+note_event       = PITCH "@" NUMBER "b" "for" NUMBER "b" { note_mod } ;
+note_mod         = "vel" NUMBER | "art" IDENT | "voicing" IDENT | "tech" IDENT [ "(" tech_args ")" ] | "cutoff" "(" NUMBER "hz" ")" | "level" "(" NUMBER "db" ")" | "scan" "(" NUMBER ")" | "string" NUMBER | "fret" ( NUMBER | "x" ) ;
+tech_args        = IDENT "=" ( NUMBER | IDENT | STRING ) { "," IDENT "=" ( NUMBER | IDENT | STRING ) } ;
 breakpoint       = NUMBER "s" "=" NUMBER [ UNIT ] ;
 hold_event       = NUMBER "b" "=" NUMBER "s" ;
 transform        = "legato" | "invert" | "retrograde" | "stretch" NUMBER | "diatonic" SIGNED_NUMBER | "transpose" SIGNED_NUMBER "st" | "vel" NUMBER ;
@@ -99,7 +101,9 @@ bus ::= "bus" ws ident ws "{" ws (property | automation)* "}" ws
 stage ::= "stage" ws "{" ws property* "}" ws
 cutdowns ::= "cutdowns" ws "{" ws property* "}" ws
 note-entry ::= note-event | "slur(" ws note-event ("," ws note-event)+ ws ")"
-note-event ::= pitch ws "@" ws number "b" ws "for" ws number "b" (ws "vel" ws number)? (ws "art" ws ident)? (ws "voicing" ws ident)?
+note-event ::= pitch ws "@" ws number "b" ws "for" ws number "b" (ws note-mod)*
+note-mod ::= ("vel" ws number) | ("art" ws ident) | ("voicing" ws ident) | ("tech" ws ident ("(" tech-args ")")?) | ("cutoff(" ws number "hz" ws ")") | ("level(" ws number "db" ws ")") | ("scan(" ws number ws ")") | ("string" ws number) | ("fret" ws (number | "x"))
+tech-args ::= ident ws "=" ws (number | ident | string) ("," ws ident ws "=" ws (number | ident | string))*
 breakpoint ::= number "s" ws "=" ws number unit?
 hold-event ::= number "b" ws "=" ws number "s"
 transform ::= "legato" | "invert" | "retrograde" | ("stretch" ws number) | ("diatonic" ws signed-number) | ("transpose" ws signed-number "st") | ("vel" ws number)
@@ -113,6 +117,7 @@ note ::= [A-Ga-g] ("#" | "b")? "-"? [0-9]
 pitch ::= note [a-z] [a-z0-9]*
        | note
 ident ::= [A-Za-z_][A-Za-z0-9_#]*
+string ::= "\"" [^"\n]* "\""
 number ::= "-"? [0-9]+ ("." [0-9]+)?
 signed-number ::= ("+" | "-")? [0-9]+ ("." [0-9]+)?
 unit ::= "s" | "b" | "bpm" | "db" | "hz" | "st" | "c" | "deg" | "m"

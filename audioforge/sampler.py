@@ -594,6 +594,9 @@ def render_instrument_track(track: dict, total_n: int, sr: int, tm,
             note_offset_n = max(0, h_start - s["start"])
             max_rel = max(shaped(r).ampeg_release for r in kreg)
             full_n = h_dur_n + int(max_rel * sr)
+            note_gain_db = note_curve("gain_db", full_n, note_offset_n)
+            note_gain = (10.0 ** (note_gain_db / 20.0)
+                         if note_gain_db is not None else None)
             note_dyn = note_curve("dynamic", full_n, note_offset_n)
             if note_dyn is not None or dyn_pts:
                 bands = _vel_bands(kreg)
@@ -635,6 +638,8 @@ def render_instrument_track(track: dict, total_n: int, sr: int, tm,
                         m = min(part.size, full_n)
                         sig[:m] += part[:m] * w[:m]
                 sig *= dyn_gain(v_env) * h_vel * extra_g
+                if note_gain is not None:
+                    sig *= note_gain
             else:
                 v127 = int(np.clip(round(h_vel * 127), 1, 127))
                 chosen = None
@@ -667,6 +672,8 @@ def render_instrument_track(track: dict, total_n: int, sr: int, tm,
                                          pitch_cents=pitch, **rr_kwargs)
                     sig[:part.size] += part
                 sig = sig * h_vel * extra_g
+                if note_gain is not None:
+                    sig *= note_gain
             if join_in:                       # suppressed attack fades in
                 f = min(join_n, sig.size)
                 sig[:f] *= np.sin(np.linspace(0, np.pi / 2, f))

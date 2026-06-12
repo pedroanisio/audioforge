@@ -9,7 +9,7 @@ import numpy as np
 
 from . import synth
 from .curves import evaluate_curve
-from .fx import filter_fx
+from .fx import filter_auto_fx, filter_fx
 
 
 # ---------------------------------------------------------------- drum voices
@@ -340,10 +340,6 @@ def render_note_track(track: dict, total_n: int, sr: int, tm: "TempoMap",
         if n <= 0:
             continue
         shape = track.get("osc", "sine")
-        voice = _voice_params(track)
-        if "_scan_env" in voice:           # per-note slice of the scan ride
-            voice = dict(voice)
-            voice["_scan_env"] = voice["_scan_env"][start:start + n]
         # Explicit note curves are the render contract. Legacy glide/vibrato
         # remain as a fallback for pre-curve IR during the migration window.
         pitch_cents = _sum_note_curve(ev, "pitch_cents", tm, start_beat, t,
@@ -360,6 +356,14 @@ def render_note_track(track: dict, total_n: int, sr: int, tm: "TempoMap",
                     float(vib.get("depth_cents", 12.0)),
                     float(vib.get("delay_s", 0.25)))
                 ratio = v_env if ratio is None else ratio * v_env
+        voice = _voice_params(track)
+        note_scan = _sum_note_curve(ev, "scan", tm, start_beat, t, n, sr)
+        if note_scan is not None:
+            voice = dict(voice)
+            voice["_scan_env"] = np.clip(note_scan, 0.0, 1.0)
+        elif "_scan_env" in voice:           # per-note slice of the scan ride
+            voice = dict(voice)
+            voice["_scan_env"] = voice["_scan_env"][start:start + n]
         if ratio is not None and shape not in ("pluck", "modal"):
             det = 2.0 ** (track.get("detune_cents", 0.0) / 1200.0)
             sig = synth.osc_dynamic(shape, freq * det * ratio, n, sr,
@@ -383,11 +387,20 @@ def render_note_track(track: dict, total_n: int, sr: int, tm: "TempoMap",
         cutoff = synth.vel_brightness_cutoff(bright_vel, freq, sr, vb_amount)
         if cutoff is not None:
             sig = filter_fx(sig, sr, "lowpass", cutoff, 0.7071)
+        note_cutoff = _sum_note_curve(ev, "cutoff_hz", tm, start_beat, t,
+                                      n, sr)
+        if note_cutoff is not None:
+            sig = filter_auto_fx(sig, sr, "lowpass",
+                                 np.clip(note_cutoff, 10.0, sr / 2.0 - 1.0),
+                                 0.7071)
         env = synth.adsr(n, sr, env_p["attack"], env_p["decay"],
                          env_p["sustain"], env_p["release"])
         contrib = gain * vel * sig * env
         if dyn_v is not None:
             contrib = contrib * dyn_gain(dyn_v)
+        note_gain_db = _sum_note_curve(ev, "gain_db", tm, start_beat, t, n, sr)
+        if note_gain_db is not None:
+            contrib = contrib * (10.0 ** (note_gain_db / 20.0))
         out[start:start + n] += contrib
         prev_freq, prev_start = freq, start_beat
     return out

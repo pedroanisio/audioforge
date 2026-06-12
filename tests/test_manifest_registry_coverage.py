@@ -21,7 +21,8 @@ pytest.importorskip("numpy")
 from audioforge import capability_manifest  # noqa: E402
 from audioforge.capabilities import capability_manifest_schema  # noqa: E402
 from audioforge.schema import (AUTO_TARGETS, BIT_DEPTHS, FX_TYPES, KINDS,  # noqa: E402
-                               LAYER_TYPES, OSC_SHAPES)
+                               LAYER_TYPES, NOTE_SCOPE_TARGETS, OSC_SHAPES,
+                               TECHNIQUES)
 from audioforge.dsl import (ARTICULATIONS, DYNAMIC_MARKS, EMOTIONS,  # noqa: E402
                             GROOVE_TEMPLATES, INTENT_METADATA_FIELDS,
                             INTENT_RENDER_FIELDS)
@@ -122,7 +123,9 @@ def test_manifest_cli_commands_cover_cli_parser():
 
 def test_manifest_performance_curve_contract_is_published():
     curves = M["performance_curves"]
-    assert set(curves["targets"]) == {"pitch_cents", "dynamic"}
+    assert set(curves["targets"]) == set(NOTE_SCOPE_TARGETS)
+    assert set(curves["note_scope_targets"]) == set(NOTE_SCOPE_TARGETS)
+    assert set(M["note_scope_targets"]["targets"]) == set(NOTE_SCOPE_TARGETS)
     assert set(curves["curve_shapes"]) == {"hold", "linear", "pow"}
     assert {"note_beats", "note_seconds", "layer_seconds", "layer_beats"} <= set(
         curves["time_bases"]
@@ -133,6 +136,8 @@ def test_manifest_performance_curve_contract_is_published():
     sampled = curves["support_matrix"]["instrument:sampled"]
     assert sampled["pitch_cents"] == "full"
     assert sampled["dynamic"] == "full"
+    assert sampled["gain_db"] == "full"
+    assert sampled["cutoff_hz"] == "unsupported_no_per_voice_filter"
     assert (
         M["diagnostic_codes"]["curve_unsupported_voice"]["repair_hint"]
         == "curve_unsupported_voice"
@@ -142,6 +147,36 @@ def test_manifest_performance_curve_contract_is_published():
     assert {"bowed", "blown", "brass", "struck", "sympathetic"} <= set(
         physical["voices"]
     )
+
+
+def test_manifest_expressive_techniques_match_runtime_registry():
+    assert set(M["techniques"]) == set(TECHNIQUES)
+    for name, entry in TECHNIQUES.items():
+        manifest_entry = M["techniques"][name]
+        assert manifest_entry["lowers_to"] == entry["lowers_to"]
+        assert manifest_entry["params"] == entry["params"]
+        assert manifest_entry["support"] == entry["support"]
+        assert manifest_entry["doc"] == entry["doc"]
+
+
+def test_manifest_expressive_diagnostics_are_published():
+    for code in (
+        "note_curve_unsupported_target",
+        "note_curve_unsupported_voice",
+        "scan_requires_morph_osc",
+        "duplicate_note_timbre_curve",
+        "technique_unknown",
+        "technique_unsupported_voice",
+        "technique_param_out_of_range",
+        "technique_layer_override",
+        "technique_fallback",
+        "tuning_required_for_string_fret",
+        "string_out_of_tuning",
+        "fret_out_of_range",
+        "string_fret_pitch_conflict",
+        "position_timbre_unsupported",
+    ):
+        assert M["diagnostic_codes"][code]["repair_hint"] == code
 
 
 if __name__ == "__main__":

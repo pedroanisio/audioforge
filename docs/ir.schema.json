@@ -456,6 +456,10 @@
         "instrument": {
           "type": "string"
         },
+        "max_fret": {
+          "minimum": 0,
+          "type": "integer"
+        },
         "name": {
           "type": "string"
         },
@@ -483,6 +487,17 @@
                 "minimum": 1,
                 "type": "number"
               },
+              "fret": {
+                "oneOf": [
+                  {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "const": "x"
+                  }
+                ]
+              },
               "generated": {
                 "type": "string"
               },
@@ -496,6 +511,10 @@
               "start_beat": {
                 "minimum": 0,
                 "type": "number"
+              },
+              "string": {
+                "minimum": 1,
+                "type": "integer"
               },
               "vel": {
                 "maximum": 1,
@@ -556,6 +575,13 @@
         "start_s": {
           "minimum": 0,
           "type": "number"
+        },
+        "tuning": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
         },
         "type": {
           "enum": [
@@ -844,7 +870,7 @@
       "type": "object"
     }
   },
-  "$id": "https://audioforge.local/schemas/audioforge-ir-1.1.schema.json",
+  "$id": "https://audioforge.local/schemas/audioforge-ir-1.2.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": true,
   "properties": {
@@ -1055,8 +1081,11 @@
         "pow"
       ],
       "targets": [
+        "cutoff_hz",
         "dynamic",
-        "pitch_cents"
+        "gain_db",
+        "pitch_cents",
+        "scan"
       ],
       "time_bases": [
         "layer_beats",
@@ -1109,8 +1138,8 @@
       "notation"
     ],
     "migration": {
-      "current": "1.1",
-      "notes": "IR schema 1.1 adds explicit performance curves for pitch and dynamics. No migration is required for valid 1.0 specs; curves are render data and therefore hash-included, while provenance-only metadata changes remain hash-excluded.",
+      "current": "1.2",
+      "notes": "IR schema 1.2 extends note-scope curves with timbre targets and adds hash-included fretted/stringed instrument mechanics. No migration is required for valid 1.0/1.1 specs; curves and string/fret/tuning fields are render data and therefore hash-included, while provenance-only metadata changes remain hash-excluded.",
       "policy": "additive-compatible",
       "supported_from": [
         "0.9",
@@ -1122,6 +1151,6 @@
       "policy_field": "routing",
       "schema": "audioforge.render-plan/1"
     },
-    "version": "1.1"
+    "version": "1.2"
   }
 }

@@ -1,0 +1,15 @@
+# AF-P3/G13 rejection fixture: one note cannot carry duplicate timbre curves.
+
+asset expressive_duplicate_cutoff {
+  kind: cue
+  duration: 1s
+  tempo: 120bpm
+  layer lead : notes {
+    osc: morph
+    env: a=0.001s d=0.01s s=0.8 r=0.02s
+    notes: A4 @ 0b for 1b
+    curves: note 0 cutoff_hz basis=note_beats 0b=1000
+    curves: note 0 cutoff_hz basis=note_beats 0b=2000
+  }
+  master { peak: -1db }
+}

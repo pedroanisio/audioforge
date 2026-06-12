@@ -723,6 +723,104 @@ does not live in the authored DSL or IR, but its policy inputs do.
 
 ---
 
+### G13. Expressive Performance Techniques And Note-Scope Timbre
+
+AF-P3/G13 is the next staged expressive-performance gap after G11 performance
+curves and G12 render plans. It is reserved for **Engine 2.17.0 / DSL 1.11**;
+DSL 1.10 remains reserved for the richer G11 curve-sugar authoring surface.
+
+The normative implementation contract is
+`docs/doc-requirements-architecture-expressive-performance-techniques-done.md`.
+This gap entry records the roadmap linkage only; if it conflicts with that
+done requirements-architecture document, the done document wins and this entry
+must be updated in the same change.
+
+**Status:** Done-validated requirements architecture; implementation landed.
+
+**Current state**
+
+- G11 is present: IR schema 1.1 validates `pitch_cents` and `dynamic` note
+  curves through `audioforge.curves` and `audioforge.ir_schema`.
+- The renderer already consumes G11 curves in synth and sampled-instrument paths.
+- The capability manifest publishes `performance_curves` and
+  `curve_unsupported_voice` diagnostics.
+- The DSL now has first-class `tech NAME(...)` note modifiers, note-scope
+  `cutoff_hz` / `gain_db` / `scan` curve escape hatches, and
+  `tuning` / `string` / `fret` instrument-mechanics fields.
+
+**Closed gap**
+
+AudioForge can now author and validate how a note is produced as explicit IR.
+The bounded AF-P3/G13 scope that closed this gap is:
+
+- R1: note-scope timbre curves on `cutoff_hz`, `gain_db`, and `scan`.
+- R2: a single-source technique registry whose named techniques lower
+  deterministically to explicit IR primitives.
+- R3: fretted/stringed instrument mechanics with hash-included `tuning`,
+  `string`, and `fret`; `string` + `fret` derive pitch authoritatively.
+
+The renderer must never receive a private "technique" concept. Smart authoring
+syntax is allowed only when it lowers before render into explicit, diffable,
+hash-owned IR.
+
+**Out of scope**
+
+- True per-string multisampled timbre.
+- Fingering optimization or automatic tab generation.
+- General ornaments beyond the source contract technique set.
+- Real-time or MPE input.
+- Learned technique generation.
+- Speculative DSP kernels. New kernels are allowed only when necessary and
+  viable under the DSP Kernel Policy in the source contract.
+
+**Definition of Ready**
+
+- Version target reserved: Engine 2.17.0 / DSL 1.11.
+- Done architecture exists and remains the normative source of truth.
+- G11 dependency is present on HEAD.
+- Acceptance fixture coverage is the source contract fixture set in
+  `static/fixtures/expressive_techniques.af` plus rejection fixtures for every
+  canonical diagnostic code.
+- Unknown note suffix hardening is assigned as a prerequisite before the P4
+  grammar landing.
+- Full gate passes on HEAD before the first runtime implementation change.
+- Coordination task is open and target files are locked for each editing slice.
+- R3 tuning constants remain the source contract starting model unless P2
+  records a ratified adjustment in the source contract.
+
+**Definition of Done**
+
+- IR 1.2 accepts supported note-scope timbre curves and rejects unsupported
+  targets, unsupported voices, duplicate timbre curves, and `scan` without
+  `osc: morph`.
+- `TECHNIQUES` is the single runtime source for technique names, params, support
+  matrix, docs, and deterministic lowering metadata.
+- Techniques lower to explicit hash-included IR, while authored technique
+  provenance stays hash-excluded under `_meta.semantic.authored_expression`.
+- `tuning`, `string`, and `fret` validate, derive pitch, reject feasibility and
+  pitch conflicts with canonical diagnostics, and decompile round-trip.
+- The capability manifest, generated schemas, grammar artifacts, DSL docs,
+  release notes, and tests are synchronized with runtime constants.
+- The acceptance fixture compiles and its lead-layer IR matches a checked-in
+  golden snapshot; rejection fixtures fail with exact diagnostic codes.
+- Existing valid IR 1.1 no-feature specs remain valid and render-identical.
+- `./scripts/run_tests.sh` passes, including drift, compiler, validator,
+  renderer, decompile, support-matrix, and acceptance coverage.
+
+**Required tests**
+
+- Unit tests for `NOTE_SCOPE_TARGETS`, `TECHNIQUES`, curve validation,
+  duplicate timbre-curve rejection, `scan`/`morph` gating, technique params, and
+  R3 feasibility.
+- Compiler tests for every approved technique and every `cutoff()` / `level()` /
+  `scan()` escape hatch.
+- Renderer tests for note-scope `cutoff_hz`, `gain_db`, and `scan` behavior and
+  no-curve fast-path preservation.
+- Drift tests proving manifest/schema/docs/grammar artifacts match runtime.
+- Acceptance and rejection fixture tests for all canonical diagnostic codes.
+
+---
+
 ## 5. Acceptance Criteria For The Strong Universality Claim
 
 AudioForge may claim "we can express all music with a Smart DSL" without

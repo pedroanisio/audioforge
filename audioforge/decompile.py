@@ -22,6 +22,26 @@ def _note(ev: dict) -> str:
         s += f" vel {_fmt_num(ev['vel'])}"
     if "art" in ev:
         s += f" art {ev['art']}"
+    tech = ev.get("technique") or ev.get("tech")
+    if tech:
+        params = ev.get("tech_params") or {}
+        if params:
+            body = ", ".join(
+                f"{k}={_fmt_num(v) if isinstance(v, (int, float)) else v}"
+                for k, v in sorted(params.items())
+            )
+            s += f" tech {tech}({body})"
+        else:
+            s += f" tech {tech}"
+    for mod in ev.get("curve_mods", []) or []:
+        name = mod["name"]
+        value = mod["value"]
+        suffix = "hz" if name == "cutoff" else "db" if name == "level" else ""
+        s += f" {name}({_fmt_num(value)}{suffix})"
+    if "string" in ev:
+        s += f" string {int(ev['string'])}"
+    if "fret" in ev:
+        s += f" fret {ev['fret']}"
     if "generated" in ev:
         s += f" gen {ev['generated']}"
     return s
@@ -47,13 +67,17 @@ def _curve_point(curve: dict, point: list) -> str:
 
 
 def _note_curve_lines(events: list[dict],
-                      suppressed_targets: set[str] | None = None) -> list[str]:
+                      suppressed_targets: set[str] | None = None,
+                      suppressed_by_index: dict[int, set[str]] | None = None
+                      ) -> list[str]:
     suppressed_targets = suppressed_targets or set()
+    suppressed_by_index = suppressed_by_index or {}
     lines = []
     for idx, ev in enumerate(events):
         for curve in ev.get("curves", []) or []:
             target = curve["target"]
-            if target in suppressed_targets:
+            if (target in suppressed_targets
+                    or target in suppressed_by_index.get(idx, set())):
                 continue
             basis = curve.get("time_basis", "note_beats")
             prefix = f"curves: note {idx} {target} basis={basis}"
@@ -88,6 +112,39 @@ def _notes_list(events: list[dict]) -> str:
         else:
             parts.append(_note(ev))
     return ", ".join(parts)
+
+
+_CURVE_MOD_TARGETS = {
+    "cutoff": "cutoff_hz",
+    "level": "gain_db",
+    "scan": "scan",
+}
+
+_TECHNIQUE_CURVE_TARGETS = {
+    "palm_mute": {"cutoff_hz", "gain_db"},
+    "dead_note": {"cutoff_hz", "gain_db"},
+    "accent": {"dynamic"},
+    "harmonic": {"pitch_cents"},
+    "sul_ponticello": {"cutoff_hz"},
+    "sul_tasto": {"cutoff_hz"},
+}
+
+
+def _semantic_curve_suppression(events: list[dict]) -> dict[int, set[str]]:
+    out: dict[int, set[str]] = {}
+    for idx, ev in enumerate(events):
+        targets: set[str] = set()
+        for mod in ev.get("curve_mods", []) or []:
+            target = _CURVE_MOD_TARGETS.get(mod.get("name"))
+            if target:
+                targets.add(target)
+        tech = ev.get("technique") or ev.get("tech")
+        targets.update(_TECHNIQUE_CURVE_TARGETS.get(tech, set()))
+        if "string" in ev and "fret" in ev and ev.get("fret") != "x":
+            targets.add("cutoff_hz")
+        if targets:
+            out[idx] = targets
+    return out
 
 
 def _play_stmt(play: dict) -> str:
@@ -397,6 +454,10 @@ def spec_to_dsl(spec: dict) -> str:
         for k in ("osc", "voice", "color", "shape", "model", "instrument"):
             if k in layer:
                 lines.append(f"    {k}: {layer[k]}")
+        if "tuning" in layer:
+            lines.append("    tuning: " + ", ".join(layer["tuning"]))
+        if "max_fret" in layer:
+            lines.append(f"    max_fret: {int(layer['max_fret'])}")
         if "gain_db" in layer:
             lines.append(f"    gain: {_fmt_num(layer['gain_db'])}db")
         if "pan" in layer:
@@ -441,7 +502,10 @@ def spec_to_dsl(spec: dict) -> str:
         elif "notes" in layer:
             lines.append(f"    notes: {_notes_list(layer['notes'])}")
         suppressed = authored_curve_targets.get(layer.get("name", ""), set())
-        for curve_line in _note_curve_lines(layer.get("notes", []), suppressed):
+        semantic_suppressed = _semantic_curve_suppression(
+            layer_semantic.get("notes", []))
+        for curve_line in _note_curve_lines(layer.get("notes", []), suppressed,
+                                           semantic_suppressed):
             lines.append(f"    {curve_line}")
         for play in layer_semantic.get("plays", []):
             lines.append(f"    {_play_stmt(play)}")

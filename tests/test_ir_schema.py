@@ -130,7 +130,13 @@ def test_ir_schema_metadata_declares_hash_boundaries():
     assert "intent" in metadata["field_layers"]["semantic"]
     assert "holds" in metadata["field_layers"]["semantic"]
     assert "layers" in metadata["field_layers"]["render"]
-    assert metadata["curves"]["targets"] == ["dynamic", "pitch_cents"]
+    assert metadata["curves"]["targets"] == [
+        "cutoff_hz",
+        "dynamic",
+        "gain_db",
+        "pitch_cents",
+        "scan",
+    ]
     assert metadata["curves"]["hash_policy"] == "expanded curve data is render data"
 
     with_meta = copy.deepcopy(spec)
@@ -162,3 +168,16 @@ def test_ir_schema_migration_contract_is_explicit():
 
     with pytest.raises(ValueError, match="unsupported"):
         migrate_ir_spec(spec, "0.1")
+
+
+def test_ir_schema_publishes_note_scope_timbre_and_r3_fields():
+    schema = ir_json_schema()
+    curve_targets = set(schema["$defs"]["curve"]["properties"]["target"]["enum"])
+    note_props = schema["$defs"]["layer"]["properties"]["notes"]["items"]["properties"]
+    layer_props = schema["$defs"]["layer"]["properties"]
+
+    assert {"cutoff_hz", "gain_db", "scan"} <= curve_targets
+    assert note_props["string"] == {"type": "integer", "minimum": 1}
+    assert "fret" in note_props
+    assert layer_props["tuning"]["items"] == {"type": "string"}
+    assert layer_props["max_fret"] == {"type": "integer", "minimum": 0}

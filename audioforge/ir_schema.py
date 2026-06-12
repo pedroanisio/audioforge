@@ -12,6 +12,7 @@ from .schema import (
     FX_TYPES,
     KINDS,
     LAYER_TYPES,
+    NOTE_SCOPE_TARGETS,
     NOISE_COLORS,
     OSC_SHAPES,
     ROUTING_FALLBACK_MODES,
@@ -21,11 +22,10 @@ from .curves import (
     CURVE_SHAPES,
     LAYER_TIME_BASES,
     NOTE_TIME_BASES,
-    PERFORMANCE_CURVE_TARGETS,
 )
 from .version import ENGINE_VERSION
 
-IR_SCHEMA_VERSION = "1.1"
+IR_SCHEMA_VERSION = "1.2"
 
 SEMANTIC_FIELDS = [
     "intent",
@@ -90,14 +90,16 @@ def ir_schema_metadata() -> dict[str, Any]:
             "supported_from": ["0.9", "1.0"],
             "policy": "additive-compatible",
             "notes": (
-                "IR schema 1.1 adds explicit performance curves for pitch "
-                "and dynamics. No migration is required for valid 1.0 specs; "
-                "curves are render data and therefore hash-included, while "
-                "provenance-only metadata changes remain hash-excluded."
+                "IR schema 1.2 extends note-scope curves with timbre targets "
+                "and adds hash-included fretted/stringed instrument mechanics. "
+                "No migration is required for valid 1.0/1.1 specs; curves and "
+                "string/fret/tuning fields are render data and therefore "
+                "hash-included, while provenance-only metadata changes remain "
+                "hash-excluded."
             ),
         },
         "curves": {
-            "targets": sorted(PERFORMANCE_CURVE_TARGETS),
+            "targets": sorted(NOTE_SCOPE_TARGETS),
             "shapes": sorted(CURVE_SHAPES),
             "time_bases": sorted(NOTE_TIME_BASES | LAYER_TIME_BASES),
             "hash_policy": "expanded curve data is render data",
@@ -199,6 +201,13 @@ def ir_json_schema() -> dict[str, Any]:
             "slur": {"type": "integer", "minimum": 1},
             "generated": {"type": "string"},
             "curves": _array_items({"$ref": "#/$defs/curve"}),
+            "string": {"type": "integer", "minimum": 1},
+            "fret": {
+                "oneOf": [
+                    {"type": "integer", "minimum": 0},
+                    {"const": "x"},
+                ],
+            },
         },
         "required": ["start_beat", "dur_beats"],
         "additionalProperties": True,
@@ -372,6 +381,8 @@ def ir_json_schema() -> dict[str, Any]:
                     "sha256": {"type": "string"},
                     "instrument": {"type": "string"},
                     "articulation": {"type": "string"},
+                    "tuning": _array_items({"type": "string"}, min_items=1),
+                    "max_fret": {"type": "integer", "minimum": 0},
                     "seat": {"type": "object", "additionalProperties": True},
                     "section": {"type": "object", "additionalProperties": True},
                     "role": {"type": "string"},

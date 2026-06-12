@@ -3,12 +3,15 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from audioforge import AudioForge, DSL_VERSION, ENGINE_VERSION, spec_hash  # noqa: E402
 from audioforge.analysis import analyze_audio  # noqa: E402
 from audioforge.capabilities import capability_manifest  # noqa: E402
 from audioforge.decompile import decompile_diagnostics, spec_to_dsl  # noqa: E402
+from audioforge.dsl import DSLError, compile_dsl  # noqa: E402
 from audioforge.grammar import dsl_ebnf, dsl_gbnf  # noqa: E402
 from audioforge.cli import main as cli_main  # noqa: E402
 
@@ -66,6 +69,28 @@ asset intent_ready {
   master { peak: -0.2db }
 }
 """
+
+
+def test_unknown_note_modifier_reports_line_cited_dsl_error():
+    src = """
+asset bad_note_suffix {
+  kind: cue
+  duration: 1s
+  tempo: 120bpm
+  layer lead : notes {
+    osc: sine
+    notes: C4 @ 0b for 1b wat
+  }
+  master { peak: -1db }
+}
+"""
+    with pytest.raises(DSLError, match=r"line 8: notes: malformed note entry"):
+        compile_dsl(src)
+
+    result = AudioForge().compile(src)
+    assert not result.ok
+    assert result.diagnostics
+    assert "line 8: notes: malformed note entry" in result.diagnostics[0].message
 
 
 def test_capability_manifest_is_machine_readable_and_current():
@@ -205,6 +230,47 @@ asset curve_decompile {
         again.assets[0].spec["layers"][0]["notes"][0]["curves"]
         == spec["layers"][0]["notes"][0]["curves"]
     )
+
+
+def test_expressive_technique_note_mods_compile_and_decompile():
+    src = """
+asset expressive_p4 {
+  kind: cue
+  duration: 3s
+  tempo: 120bpm
+  layer lead : notes {
+    osc: morph
+    tuning: E2, A2, D3, G3, B3, E4
+    max_fret: 24
+    env: a=0.001s d=0.02s s=0.8 r=0.05s
+    notes: E2 @ 0b for 1b string 1 fret 0 tech palm_mute,
+           A2 @ 1b for 1b string 2 fret 0 cutoff(1800hz) level(-3db),
+           E4 @ 2b for 1b string 6 fret 0 tech accent(strength=0.8) scan(0.75)
+  }
+  master { peak: -1db }
+}
+"""
+    res = AudioForge().compile(src)
+    assert res.ok, [d.message for d in res.diagnostics]
+    spec = res.assets[0].spec
+    layer = spec["layers"][0]
+    assert layer["tuning"] == ["E2", "A2", "D3", "G3", "B3", "E4"]
+    assert layer["max_fret"] == 24
+    notes = layer["notes"]
+    assert notes[0]["note"] == "E2"
+    assert notes[0]["string"] == 1 and notes[0]["fret"] == 0
+    assert {c["target"] for c in notes[0]["curves"]} >= {"cutoff_hz", "gain_db"}
+    assert {c["target"] for c in notes[1]["curves"]} >= {"cutoff_hz", "gain_db"}
+    assert {c["target"] for c in notes[2]["curves"]} >= {"dynamic", "scan"}
+
+    dsl = spec_to_dsl(spec)
+    assert "tuning: E2, A2, D3, G3, B3, E4" in dsl
+    assert "max_fret: 24" in dsl
+    assert "tech palm_mute string 1 fret 0" in dsl
+    assert "cutoff(1800hz) level(-3db)" in dsl
+    assert "tech accent(strength=0.8) scan(0.75) string 6 fret 0" in dsl
+    again = AudioForge().compile(dsl)
+    assert again.ok, [d.message for d in again.diagnostics]
 
 
 def test_cli_exposes_agent_surfaces(tmp_path, capsys):

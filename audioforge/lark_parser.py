@@ -71,6 +71,15 @@ note_mod: "vel" NUMBER     -> nm_vel
         | "voicing" IDENT  -> nm_voicing
         | "art" IDENT      -> nm_art
         | "gen" IDENT      -> nm_gen
+        | "tech" IDENT [LPAR tech_args RPAR] -> nm_tech
+        | "cutoff" LPAR NUMBER RPAR -> nm_cutoff
+        | "level" LPAR NUMBER RPAR -> nm_level
+        | "scan" LPAR NUMBER RPAR -> nm_scan
+        | "string" NUMBER -> nm_string
+        | "fret" (NUMBER | IDENT) -> nm_fret
+
+tech_args: tech_arg (COMMA tech_arg)*
+tech_arg: IDENT EQ (NUMBER | IDENT | STRING)
 
 play_stmt: "play" IDENT AT NUMBER play_mod*
 play_in_slur: "play" IDENT AT NUMBER play_mod*
@@ -378,6 +387,53 @@ class _Builder:
                 raise DSLError(f"unknown voicing '{v}' "
                                f"(available: {self._theory.VOICINGS})", note_line)
             ev["voicing"] = v
+        elif data == "nm_tech":
+            ev["technique"] = str(mod.children[0])
+            params = {}
+            for arg in _subtrees(mod):
+                if arg.data != "tech_args":
+                    continue
+                for item in _subtrees(arg):
+                    key = str(item.children[0])
+                    val = _tok(item.children[-1])
+                    params[key] = val.value if val.kind == "NUMBER" else val.text
+            if params:
+                ev["tech_params"] = params
+        elif data in {"nm_cutoff", "nm_level", "nm_scan"}:
+            target = {
+                "nm_cutoff": "cutoff",
+                "nm_level": "level",
+                "nm_scan": "scan",
+            }[data]
+            value = _tok(_tokens(mod, "NUMBER")[0])
+            if target == "cutoff" and value.unit not in (None, "hz"):
+                raise DSLError("cutoff() expects hertz, e.g. cutoff(2500hz)",
+                               value.line)
+            if target == "level" and value.unit not in (None, "db"):
+                raise DSLError("level() expects dB, e.g. level(-3db)",
+                               value.line)
+            if target == "scan" and value.unit is not None:
+                raise DSLError("scan() expects a unitless 0..1 value",
+                               value.line)
+            ev.setdefault("curve_mods", []).append(
+                {"name": target, "value": float(value.value)}
+            )
+        elif data == "nm_string":
+            tok = _tok(_tokens(mod, "NUMBER")[0])
+            if tok.unit is not None:
+                raise DSLError("string expects a unitless index", tok.line)
+            ev["string"] = int(tok.value)
+        elif data == "nm_fret":
+            child = mod.children[0]
+            tok = _tok(child)
+            if tok.kind == "NUMBER":
+                if tok.unit is not None:
+                    raise DSLError("fret expects a unitless index or x", tok.line)
+                ev["fret"] = int(tok.value)
+            elif tok.kind == "IDENT" and tok.text == "x":
+                ev["fret"] = "x"
+            else:
+                raise DSLError("fret expects a unitless index or x", tok.line)
 
     # note lists & slurs ----------------------------------------------
     def notes(self, stmt: Tree) -> list[dict]:

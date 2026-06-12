@@ -1,0 +1,23 @@
+# AF-P3/G13 acceptance fixture: expressive techniques, note-scope timbre,
+# and fretted/stringed mechanics lower to explicit IR.
+
+asset expressive_techniques {
+  kind: cue
+  duration: 4s
+  tempo: 120bpm
+  key: E minor
+
+  layer lead : notes {
+    osc: morph
+    tuning: E2, A2, D3, G3, B3, E4
+    max_fret: 24
+    env: a=0.002s d=0.04s s=0.75 r=0.08s
+    gain: -8db
+    notes: E2 @ 0b for 0.75b string 1 fret 0 tech palm_mute,
+           A2 @ 1b for 0.75b string 2 fret 0 cutoff(1800hz) level(-3db),
+           E4 @ 2b for 0.75b string 6 fret 0 tech accent(strength=0.8) scan(0.75),
+           E4 @ 3b for 0.5b string 6 fret x
+  }
+
+  master { peak: -1db }
+}

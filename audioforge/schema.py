@@ -33,6 +33,7 @@ from .curves import (
     PERFORMANCE_CURVE_TARGETS,
     PHYSICAL_MODEL_OSCILLATORS,
     CurveError,
+    curve_points,
     validate_curve,
 )
 from . import theory
@@ -73,6 +74,129 @@ def fx_needs_native(fx: dict) -> bool:
 BIT_DEPTHS = {16, 24}
 BASE_AUTOMATION_TARGETS = {"gain_db", "cutoff_hz", "scan"}
 AUTO_TARGETS = BASE_AUTOMATION_TARGETS | PERFORMANCE_CURVE_TARGETS
+NOTE_SCOPE_TIMBRE_TARGETS = {"cutoff_hz", "gain_db", "scan"}
+NOTE_SCOPE_TARGETS = PERFORMANCE_CURVE_TARGETS | NOTE_SCOPE_TIMBRE_TARGETS
+NOTE_SCOPE_TARGET_RANGES = {
+    "cutoff_hz": (10.0, 24000.0),
+    "gain_db": (-120.0, 24.0),
+    "scan": (0.0, 1.0),
+}
+NOTE_SCOPE_SUPPORT = {
+    "notes:synth": {
+        "pitch_cents": "supported",
+        "dynamic": "supported",
+        "gain_db": "supported",
+        "cutoff_hz": "supported",
+        "scan": "morph_only",
+    },
+    "instrument:sampled": {
+        "pitch_cents": "supported",
+        "dynamic": "supported",
+        "gain_db": "supported",
+        "cutoff_hz": "unsupported",
+        "scan": "unsupported",
+    },
+    "physical_models": {
+        "pitch_cents": "unsupported",
+        "dynamic": "supported",
+        "gain_db": "supported",
+        "cutoff_hz": "unsupported",
+        "scan": "unsupported",
+    },
+}
+
+NOTE_CURVE_UNSUPPORTED_TARGET_CODE = "note_curve_unsupported_target"
+NOTE_CURVE_UNSUPPORTED_VOICE_CODE = "note_curve_unsupported_voice"
+SCAN_REQUIRES_MORPH_OSC_CODE = "scan_requires_morph_osc"
+DUPLICATE_NOTE_TIMBRE_CURVE_CODE = "duplicate_note_timbre_curve"
+TECHNIQUE_UNKNOWN_CODE = "technique_unknown"
+TECHNIQUE_UNSUPPORTED_VOICE_CODE = "technique_unsupported_voice"
+TECHNIQUE_PARAM_OUT_OF_RANGE_CODE = "technique_param_out_of_range"
+TECHNIQUE_LAYER_OVERRIDE_CODE = "technique_layer_override"
+TECHNIQUE_FALLBACK_CODE = "technique_fallback"
+TUNING_REQUIRED_FOR_STRING_FRET_CODE = "tuning_required_for_string_fret"
+STRING_OUT_OF_TUNING_CODE = "string_out_of_tuning"
+FRET_OUT_OF_RANGE_CODE = "fret_out_of_range"
+STRING_FRET_PITCH_CONFLICT_CODE = "string_fret_pitch_conflict"
+POSITION_TIMBRE_UNSUPPORTED_CODE = "position_timbre_unsupported"
+EXPRESSIVE_DIAGNOSTIC_CODES = {
+    NOTE_CURVE_UNSUPPORTED_TARGET_CODE,
+    NOTE_CURVE_UNSUPPORTED_VOICE_CODE,
+    SCAN_REQUIRES_MORPH_OSC_CODE,
+    DUPLICATE_NOTE_TIMBRE_CURVE_CODE,
+    CURVE_UNSUPPORTED_VOICE_CODE,
+    TECHNIQUE_UNKNOWN_CODE,
+    TECHNIQUE_UNSUPPORTED_VOICE_CODE,
+    TECHNIQUE_PARAM_OUT_OF_RANGE_CODE,
+    TECHNIQUE_LAYER_OVERRIDE_CODE,
+    TECHNIQUE_FALLBACK_CODE,
+    TUNING_REQUIRED_FOR_STRING_FRET_CODE,
+    STRING_OUT_OF_TUNING_CODE,
+    FRET_OUT_OF_RANGE_CODE,
+    STRING_FRET_PITCH_CONFLICT_CODE,
+    POSITION_TIMBRE_UNSUPPORTED_CODE,
+}
+
+TECHNIQUES = {
+    "accent": {
+        "lowers_to": ["dynamic"],
+        "params": {
+            "strength": {"type": "number", "range": [0.0, 1.0], "default": 0.5},
+        },
+        "support": {"synth": True, "sampled": True, "physical": False},
+        "doc": "Add dynamic emphasis by strength-scaled explicit dynamic/gain data.",
+    },
+    "dead_note": {
+        "lowers_to": ["curve:gain_db", "curve:cutoff_hz"],
+        "params": {},
+        "support": {"synth": True, "sampled": True, "physical": False},
+        "doc": "Clamp duration and reduce gain; synth also emits a low cutoff curve.",
+    },
+    "harmonic": {
+        "lowers_to": ["curve:pitch_cents", "fx:peak"],
+        "params": {
+            "partial": {"type": "enum", "enum": [2, 3, 4], "default": 2},
+        },
+        "support": {"synth": True, "sampled": False, "physical": False},
+        "doc": "Transpose to an allowed partial and add bell-like emphasis.",
+    },
+    "let_ring": {
+        "lowers_to": ["gain_db"],
+        "params": {},
+        "support": {"synth": True, "sampled": True, "physical": False},
+        "doc": "Suppress short-note clamping and preserve a longer release.",
+    },
+    "palm_mute": {
+        "lowers_to": ["curve:cutoff_hz", "curve:gain_db"],
+        "params": {},
+        "support": {"synth": True, "sampled": True, "physical": False},
+        "doc": "Clamp duration, reduce gain, and darken synth voices with cutoff.",
+    },
+    "staccatissimo": {
+        "lowers_to": ["gain_db"],
+        "params": {},
+        "support": {"synth": True, "sampled": True, "physical": False},
+        "doc": "Clamp duration to a very short explicit note length.",
+    },
+    "sul_ponticello": {
+        "lowers_to": ["curve:cutoff_hz", "fx:peak"],
+        "params": {},
+        "support": {"synth": True, "sampled": False, "physical": False},
+        "doc": "Brighten synth notes with a high cutoff and peak emphasis.",
+    },
+    "sul_tasto": {
+        "lowers_to": ["curve:cutoff_hz"],
+        "params": {},
+        "support": {"synth": True, "sampled": False, "physical": False},
+        "doc": "Darken synth notes with a low cutoff curve.",
+    },
+    "tenuto": {
+        "lowers_to": ["gain_db"],
+        "params": {},
+        "support": {"synth": True, "sampled": True, "physical": False},
+        "doc": "Preserve full-length sustain and slight legato emphasis.",
+    },
+}
 
 # Single source of truth for tempo bounds (audit finding F3). The base `bpm` is
 # the asset's nominal tempo; a `tempo_map` carries time-varying tempo and is
@@ -252,10 +376,57 @@ def _validate_note_events(layer: dict, p: str):
     if not isinstance(notes, list) or not notes:
         raise SpecError(f"{p}.notes: must be a non-empty list")
     osc = layer.get("osc")
+    layer_type = layer.get("type")
+    tuning = layer.get("tuning")
+    if tuning is not None:
+        if not isinstance(tuning, list) or not tuning:
+            raise SpecError(f"{p}.tuning: non-empty list of open pitch names")
+        for idx, pitch in enumerate(tuning):
+            if not isinstance(pitch, str) or not theory.NOTE_RE.match(pitch):
+                raise SpecError(f"{p}.tuning[{idx}]: expected pitch name")
+    max_fret = layer.get("max_fret", 24)
+    if not isinstance(max_fret, int) or max_fret < 0:
+        raise SpecError(f"{p}.max_fret: non-negative integer")
     for j, ev in enumerate(notes):
         ep = f"{p}.notes[{j}]"
-        if "note" not in ev and "freq_hz" not in ev:
+        has_string_fret = "string" in ev or "fret" in ev
+        if "note" not in ev and "freq_hz" not in ev and not has_string_fret:
             raise SpecError(f"{ep}: needs 'note' or 'freq_hz'")
+        if has_string_fret:
+            if tuning is None:
+                raise SpecError(
+                    f"{ep}: {TUNING_REQUIRED_FOR_STRING_FRET_CODE}: "
+                    "string/fret notes require layer.tuning")
+            string_idx = ev.get("string")
+            if not isinstance(string_idx, int) or isinstance(string_idx, bool):
+                raise SpecError(
+                    f"{ep}.string: {STRING_OUT_OF_TUNING_CODE}: "
+                    "expected 1-based integer string index")
+            if string_idx < 1 or string_idx > len(tuning):
+                raise SpecError(
+                    f"{ep}.string: {STRING_OUT_OF_TUNING_CODE}: "
+                    f"{string_idx} outside 1..{len(tuning)}")
+            fret = ev.get("fret")
+            if fret != "x":
+                if not isinstance(fret, int) or isinstance(fret, bool):
+                    raise SpecError(
+                        f"{ep}.fret: {FRET_OUT_OF_RANGE_CODE}: "
+                        "expected integer fret or 'x'")
+                if fret < 0 or fret > max_fret:
+                    raise SpecError(
+                        f"{ep}.fret: {FRET_OUT_OF_RANGE_CODE}: "
+                        f"{fret} outside 0..{max_fret}")
+                derived = theory.note_to_semis(tuning[string_idx - 1]) + fret
+                if "note" in ev and theory.note_to_semis(ev["note"]) != derived:
+                    raise SpecError(
+                        f"{ep}.note: {STRING_FRET_PITCH_CONFLICT_CODE}: "
+                        "explicit note disagrees with string/fret pitch")
+                if "freq_hz" in ev:
+                    expected_hz = 440.0 * (2.0 ** ((derived - 57) / 12.0))
+                    if abs(float(ev["freq_hz"]) - expected_hz) > 1e-6:
+                        raise SpecError(
+                            f"{ep}.freq_hz: {STRING_FRET_PITCH_CONFLICT_CODE}: "
+                            "explicit frequency disagrees with string/fret pitch")
         _num(ev, "start_beat", ep, 0.0)
         _num(ev, "dur_beats", ep, 1e-3)
         art = ev.get("art")
@@ -270,18 +441,29 @@ def _validate_note_events(layer: dict, p: str):
             if not isinstance(curves, list) or not curves:
                 raise SpecError(f"{ep}.curves: non-empty list")
             dynamic_seen = False
+            timbre_seen: set[str] = set()
             for k, curve in enumerate(curves):
                 cp = f"{ep}.curves[{k}]"
                 target = curve.get("target") if isinstance(curve, dict) else None
+                if target not in NOTE_SCOPE_TARGETS:
+                    raise SpecError(
+                        f"{cp}: {NOTE_CURVE_UNSUPPORTED_TARGET_CODE}: "
+                        f"target {target!r} is not one of {sorted(NOTE_SCOPE_TARGETS)}")
                 if target == "dynamic":
                     if dynamic_seen:
                         raise SpecError(f"{cp}: duplicate dynamic curve in note scope")
                     dynamic_seen = True
+                if target in NOTE_SCOPE_TIMBRE_TARGETS:
+                    if target in timbre_seen:
+                        raise SpecError(
+                            f"{cp}: {DUPLICATE_NOTE_TIMBRE_CURVE_CODE}: "
+                            f"duplicate {target} curve in note scope")
+                    timbre_seen.add(target)
                 try:
                     validate_curve(
                         curve,
                         cp,
-                        allowed_targets=PERFORMANCE_CURVE_TARGETS,
+                        allowed_targets=NOTE_SCOPE_TARGETS,
                         allowed_time_bases=NOTE_TIME_BASES,
                     )
                 except CurveError as exc:
@@ -290,6 +472,28 @@ def _validate_note_events(layer: dict, p: str):
                     raise SpecError(
                         f"{cp}: {CURVE_UNSUPPORTED_VOICE_CODE}: pitch_cents "
                         f"curves are not yet supported for '{osc}'")
+                if (layer_type == "instrument"
+                        and target in {"cutoff_hz", "scan"}):
+                    raise SpecError(
+                        f"{cp}: {NOTE_CURVE_UNSUPPORTED_VOICE_CODE}: {target} "
+                        "curves are not supported for sampled instruments")
+                if (osc in PHYSICAL_MODEL_OSCILLATORS
+                        and target in {"cutoff_hz", "scan"}):
+                    raise SpecError(
+                        f"{cp}: {NOTE_CURVE_UNSUPPORTED_VOICE_CODE}: {target} "
+                        f"curves are not supported for '{osc}'")
+                if target == "scan" and osc != "morph":
+                    raise SpecError(
+                        f"{cp}: {SCAN_REQUIRES_MORPH_OSC_CODE}: scan curves "
+                        "require osc 'morph'")
+                if target in NOTE_SCOPE_TARGET_RANGES:
+                    lo, hi = NOTE_SCOPE_TARGET_RANGES[target]
+                    for pi, point in enumerate(curve_points(curve)):
+                        value = float(point[1])
+                        if value < lo or value > hi:
+                            raise SpecError(
+                                f"{cp}.points[{pi}]: {target} value {value} "
+                                f"outside {lo:g}..{hi:g}")
     dyn = layer.get("dynamic")
     if dyn is not None:
         if not isinstance(dyn, list) or not dyn:
