@@ -535,6 +535,7 @@ The executable grammar lives in `audioforge.lark_parser` as a Lark grammar and i
 ```
 audioforge validate spec.af
 audioforge compile  spec.af
+audioforge expand   spec.af [-o out.af]            # inline content-pinned imports
 audioforge plan     spec.(af|json) [-o file] [--explain]
 audioforge decompile spec.(af|json)
 audioforge repair   spec.af [--analysis FILE] [--feedback "…"]

@@ -49,6 +49,7 @@ CLI_COMMANDS = [
     "capabilities",
     "compile",
     "decompile",
+    "expand",
     "export-midi",
     "export-musicxml",
     "grammar",
