@@ -155,4 +155,4 @@ tests/               determinism suite + v2 suite (DSL, SDK, plugins,
 * Determinism is guaranteed within an environment; cross-platform float reproducibility is *checked* by the `verify` gate rather than assumed.
 * The engine is synthesis-only. Recorded material would enter cleanly as a content-addressed sample layer (hash the sample into the spec) — designed-for but not implemented.
 
-Requires Python 3.10+, numpy, scipy. Engine 2.14.0 · DSL 1.7.
+Requires Python 3.10+, numpy, scipy. Engine 2.15.0 · DSL 1.8.

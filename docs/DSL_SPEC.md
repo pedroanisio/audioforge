@@ -1,6 +1,6 @@
 # AudioForge DSL Specification
 
-**DSL 1.7 · Engine 2.14.0**
+**DSL 1.8 · Engine 2.15.0**
 
 The `.af` DSL is the authoring surface for humans and AI agents. It compiles to a JSON spec — the deterministic intermediate representation (IR) that the engine renders. Everything expressive in the DSL (emotion tags, intensity curves, motifs, chords, transforms, groove templates, `vary()` choices) is **expanded at compile time** into explicit JSON parameters, so the IR is always the single, inspectable ground truth for what will be rendered. Under the same engine version, same DSL text → same IR → same spec hash → byte-identical audio.
 

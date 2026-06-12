@@ -1,8 +1,8 @@
 """Version contract for public AudioForge runtime surfaces."""
 from __future__ import annotations
 
-ENGINE_VERSION = "2.14.0"
-DSL_VERSION = "1.7"
+ENGINE_VERSION = "2.15.0"
+DSL_VERSION = "1.8"
 VERSION_SOURCE = "audioforge.version"
 
 
