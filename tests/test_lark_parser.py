@@ -1,16 +1,21 @@
+"""Behavior of the single Lark front end (`audioforge.lark_parser`).
+
+Byte-level AST regression across the full construct battery and every `.af`
+fixture lives in `test_lark_single_path.py` (golden snapshot). This module
+covers the parser's externally promised behavior: it is the runtime dependency,
+it produces line-numbered diagnostics, it validates intent fields at parse time,
+and it is the authoritative source the published grammar derives from.
+"""
 import tomllib
 from pathlib import Path
 
 import pytest
 
-from audioforge.dsl import DSLError, Parser, compile_dsl, tokenize
+from audioforge.dsl import DSLError, compile_dsl
+from audioforge.lark_parser import parse_assets
 
 
 ROOT = Path(__file__).resolve().parents[1]
-AF_CORPUS = (
-    sorted((ROOT / "static" / "fixtures").glob("*.af"))
-    + sorted((ROOT / "static" / "samples").glob("*.af"))
-)
 
 
 SRC = """
@@ -69,40 +74,6 @@ def test_lark_is_runtime_dependency():
     assert any(dep.partition(">=")[0] == "lark" for dep in data["project"]["dependencies"])
 
 
-def test_lark_parser_matches_legacy_ast_shape():
-    from audioforge.lark_parser import parse_assets
-
-    legacy = Parser(tokenize(SRC)).parse()
-    parsed = parse_assets(SRC)
-
-    assert parsed == legacy
-
-
-def test_lark_tokenizer_matches_legacy_token_stream():
-    from audioforge.lark_parser import lark_tokenize
-
-    legacy = [(t.kind, t.text, t.line, t.value, t.unit) for t in tokenize(SRC)]
-    parsed = [(t.kind, t.text, t.line, t.value, t.unit) for t in lark_tokenize(SRC)]
-
-    assert parsed == legacy
-
-
-@pytest.mark.parametrize("path", AF_CORPUS, ids=lambda p: str(p.relative_to(ROOT)))
-def test_lark_parser_matches_legacy_ast_for_checked_in_af_corpus(path):
-    from audioforge.lark_parser import parse_assets
-
-    src = path.read_text()
-
-    try:
-        legacy = Parser(tokenize(src)).parse()
-    except DSLError as exc:
-        with pytest.raises(DSLError) as parsed:
-            parse_assets(src)
-        assert str(parsed.value) == str(exc)
-    else:
-        assert parse_assets(src) == legacy
-
-
 def test_compile_dsl_uses_lark_parser(monkeypatch):
     import audioforge.dsl as dsl
 
@@ -123,30 +94,12 @@ def test_compile_dsl_uses_lark_parser(monkeypatch):
     assert isinstance(diags, list)
 
 
-def test_compile_dsl_does_not_use_legacy_regex_tokenizer(monkeypatch):
-    import audioforge.dsl as dsl
-
-    def fail_tokenize(_src):
-        raise AssertionError("legacy tokenizer should not be used by compile_dsl")
-
-    monkeypatch.setattr(dsl, "tokenize", fail_tokenize)
-
-    specs, _diags = compile_dsl(SRC)
-
-    assert specs[0]["id"] == "lark_ready"
-
-
 def test_lark_parser_reports_line_numbered_errors():
-    from audioforge.lark_parser import parse_assets
-    from audioforge.dsl import DSLError
-
     with pytest.raises(DSLError, match=r"line 3:"):
         parse_assets("asset bad {\n  layer x : notes {\n    notes:\n  }\n}\n")
 
 
 def test_intent_block_accepts_typed_and_metadata_fields():
-    from audioforge.lark_parser import parse_assets
-
     parsed = parse_assets(SRC)
 
     intent = parsed[0].intent
@@ -162,9 +115,6 @@ def test_intent_block_accepts_typed_and_metadata_fields():
 
 
 def test_intent_block_rejects_unknown_fields_at_parse_time():
-    from audioforge.lark_parser import parse_assets
-    from audioforge.dsl import DSLError
-
     with pytest.raises(DSLError, match="unknown intent field 'moodish'"):
         parse_assets(
             """
@@ -180,10 +130,7 @@ asset bad_intent {
         )
 
 
-def test_lark_parser_rejects_unbalanced_blocks_before_legacy_parse():
-    from audioforge.lark_parser import parse_assets
-    from audioforge.dsl import DSLError
-
+def test_lark_parser_rejects_unbalanced_blocks():
     with pytest.raises(DSLError, match=r"line 1: invalid DSL syntax"):
         parse_assets("asset bad {\n  kind: cue\n")
 
@@ -200,4 +147,7 @@ def test_exported_grammar_and_docs_name_lark_as_authoritative_source():
 
     gaps = (ROOT / "docs" / "DSL_GAP_SPEC.md").read_text()
     assert "hand-rolled parser to `lark`" not in gaps
-    assert "Lark-backed syntax gate" in gaps
+    # Lark is named as the single parser, with the published artifacts derived
+    # from it (the legacy recursive-descent parser is gone — audit F9).
+    assert "Single Lark grammar/parser" in gaps
+    assert "audioforge.lark_parser" in gaps

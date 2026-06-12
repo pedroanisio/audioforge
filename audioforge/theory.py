@@ -27,6 +27,11 @@ CHORD_QUALITIES = {
     "7sus4": (0, 5, 7, 10), "dom7sus4": (0, 5, 7, 10),
     "maj7#11": (0, 4, 7, 11, 18), "maj7s11": (0, 4, 7, 11, 18),
 }
+# Canonical pitch spelling: letter, optional accidental, optional sign, exactly
+# one octave digit. Single source of truth for both the DSL note grammar and the
+# IR validator's tone-pitch check (audit finding F13) so they cannot diverge.
+NOTE_RE = re.compile(r"^[A-Ga-g][#b]?-?\d$")
+
 _QUALITY_ALT = sorted(CHORD_QUALITIES, key=len, reverse=True)
 CHORD_RE = re.compile(
     r"^([A-Ga-g][#b]?-?\d)(" + "|".join(re.escape(q) for q in _QUALITY_ALT) + r")$")

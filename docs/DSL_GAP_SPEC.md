@@ -21,7 +21,7 @@ extension or hardening task.
 
 | Area | Current state |
 |------|---------------|
-| DSL parser | Lark-backed syntax gate via `audioforge.lark_parser`, with published EBNF/GBNF artifacts exposed by `audioforge grammar`. |
+| DSL parser | Single Lark grammar/parser (`audioforge.lark_parser.LARK_GRAMMAR`); `parse_assets` walks its tree straight into the AST. The legacy regex tokenizer and recursive-descent parser were removed (audit finding F9). The Lark-backed parser remains the syntax gate, and the published EBNF/GBNF artifacts (`audioforge grammar`) are derived from it. |
 | Current reference spec | `docs/DSL_SPEC.md` documents the implemented `.af` surface. |
 | Smart directives | `style:`, `perform:`, `ensemble:`, `voicing:`, and `space:` parse at asset scope and expand into explicit render IR under `audioforge.dsl._apply_smart_directives`. |
 | Structured intent | `intent {}` parses into `spec["intent"]["structured"]`, separates render-affecting typed fields from metadata-only fields, and expands deterministic layer/master IR for density, contour, and texture. |

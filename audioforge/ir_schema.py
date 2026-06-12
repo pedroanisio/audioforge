@@ -7,6 +7,8 @@ from typing import Any
 from .schema import (
     AUTO_TARGETS,
     BIT_DEPTHS,
+    BPM_MAX,
+    BPM_MIN,
     FX_TYPES,
     KINDS,
     LAYER_TYPES,
@@ -27,7 +29,6 @@ SEMANTIC_FIELDS = [
     "key_map",
     "tempo_map",
     "holds",
-    "groove",
     "markers",
     "cutdowns",
     "stage",
@@ -42,6 +43,11 @@ RENDER_FIELDS = [
     "sample_rate",
     "bit_depth",
     "bpm",
+    # `swing` and `groove` shape per-16th timing and accents — they change the
+    # rendered audio (and therefore the render hash), so they are render-layer
+    # fields, not semantic sugar (audit finding F7).
+    "swing",
+    "groove",
     "loop_safe",
     "layers",
     "buses",
@@ -176,7 +182,10 @@ def ir_json_schema() -> dict[str, Any]:
             "duration_s": _number(minimum=0.05, maximum=600.0),
             "sample_rate": {"type": "integer", "minimum": 8000, "maximum": 192000},
             "bit_depth": {"type": "integer", "enum": sorted(BIT_DEPTHS)},
-            "bpm": _number(minimum=20.0, maximum=400.0),
+            # Base tempo bounds single-sourced from the validator (audit F3); the
+            # time-varying `tempo_map` keeps its own, looser ceiling.
+            "bpm": _number(minimum=float(BPM_MIN), maximum=float(BPM_MAX)),
+            "swing": _number(minimum=0.0, maximum=0.5),
             "layers": _array_items(layer_ref, min_items=1),
             "buses": _array_items({"$ref": "#/$defs/bus"}),
             "master": {"$ref": "#/$defs/master"},
@@ -329,19 +338,24 @@ def ir_json_schema() -> dict[str, Any]:
                 "properties": {
                     "attack": _number(minimum=0, maximum=60),
                     "decay": _number(minimum=0, maximum=60),
-                    "sustain": _number(minimum=0, maximum=60),
+                    "sustain": _number(minimum=0, maximum=1),  # level, not time (F4)
                     "release": _number(minimum=0, maximum=60),
                 },
                 "additionalProperties": True,
             },
             "fx": {
+                # The engine has no `lowpass`/`highpass`/`bandpass` fx *types* —
+                # filters are `{"type":"filter","mode":...}`. The published schema
+                # used to list those bare names, accepting IR the validator
+                # rejects (audit finding F2). The real filter shape is documented
+                # here instead via `mode`/`cutoff_hz`.
                 "type": "object",
                 "required": ["type"],
-                "properties": {"type": _string_enum(FX_TYPES | {
-                    "lowpass",
-                    "highpass",
-                    "bandpass",
-                })},
+                "properties": {
+                    "type": _string_enum(FX_TYPES),
+                    "mode": _string_enum({"lowpass", "highpass", "bandpass"}),
+                    "cutoff_hz": _number(minimum=10, maximum=24000),
+                },
                 "additionalProperties": True,
             },
             "bus": {

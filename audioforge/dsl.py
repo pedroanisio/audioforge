@@ -17,9 +17,12 @@ import re
 from dataclasses import dataclass, field
 
 from . import theory
+from .ir_schema import INTENT_RENDER_ENUMS
 from .lark_parser import parse_assets
+from .schema import IR_ARTICULATIONS, BPM_MIN, TEMPO_MAP_BPM_MAX
 from .synth import NOTE_OFFSETS
 from .styles import STYLE_PACKS
+from .theory import NOTE_RE
 from .version import DSL_VERSION, ENGINE_VERSION
 
 
@@ -29,74 +32,33 @@ class DSLError(ValueError):
         self.line = line
 
 
-# --------------------------------------------------------------------- lexer
-TOKEN_RE = re.compile(r"""
-    (?P<COMMENT>\#[^\n]*)
-  | (?P<STRING>"[^"\n]*")
-  | (?P<NUMBER>[+-]?\d+(\.\d+)?(?P<UNIT>s|b|bpm|db|hz|st|c|deg|m)?\b)
-  | (?P<IDENT>[A-Za-z_][A-Za-z0-9_#]*)
-  | (?P<PUNCT>[{}():,@=.])
-  | (?P<NL>\n)
-  | (?P<WS>[ \t\r]+)
-""", re.VERBOSE)
-
-NOTE_RE = re.compile(r"^[A-Ga-g][#b]?-?\d$")
-
-INTENT_RENDER_FIELDS = {
-    "density": {"sparse", "balanced", "dense"},
-    "contour": {"flat", "arch", "rise", "fall"},
-    "texture": {"neutral", "smooth", "airy", "warm", "bright"},
-}
+# `lark_parser.LARK_GRAMMAR` is the one executable grammar and `parse_assets`
+# the one parser. `Tok`/`Layer`/`Asset` below are the AST shapes that grammar's
+# tree-walker produces and the compiler consumes; `NOTE_RE` is shared pitch
+# validation. The old regex lexer and recursive-descent parser were removed when
+# Lark became the single path (audit finding F9).
+# Render-affecting intent vocabulary is single-sourced from the published IR
+# schema (audit finding F5); the compiler holds it as {field: set} for fast
+# membership checks. `NOTE_RE` (pitch spelling) is imported from `theory` so the
+# DSL and the IR validator share one definition (audit finding F13).
+INTENT_RENDER_FIELDS = {field: set(values)
+                        for field, values in INTENT_RENDER_ENUMS.items()}
 INTENT_METADATA_FIELDS = {"affect", "avoid", "repair", "style_text"}
 INTENT_FIELDS = set(INTENT_RENDER_FIELDS) | INTENT_METADATA_FIELDS
 
 
 @dataclass
 class Tok:
-    kind: str       # NUMBER | IDENT | PUNCT | NL | EOF
+    """A property-value token, as produced by the Lark tree-walker and consumed
+    by the compiler. `kind` is one of NUMBER | IDENT | STRING | PUNCT."""
+    kind: str
     text: str
     line: int
     value: float | None = None
     unit: str | None = None
 
 
-def tokenize(src: str) -> list[Tok]:
-    toks: list[Tok] = []
-    line = 1
-    pos = 0
-    while pos < len(src):
-        m = TOKEN_RE.match(src, pos)
-        if not m:
-            raise DSLError(f"unexpected character {src[pos]!r}", line)
-        pos = m.end()
-        kind = m.lastgroup if m.lastgroup != "UNIT" else "NUMBER"
-        for k in ("COMMENT", "STRING", "NUMBER", "IDENT", "PUNCT", "NL",
-                  "WS"):
-            if m.group(k) is not None:
-                kind = k
-                break
-        text = m.group(kind)
-        if kind == "WS" or kind == "COMMENT":
-            continue
-        if kind == "NL":
-            line += 1
-            if toks and toks[-1].kind != "NL":
-                toks.append(Tok("NL", "\n", line - 1))
-            continue
-        if kind == "STRING":
-            toks.append(Tok("STRING", text[1:-1], line))
-            continue
-        if kind == "NUMBER":
-            unit = m.group("UNIT")
-            num = float(text[:-len(unit)]) if unit else float(text)
-            toks.append(Tok("NUMBER", text, line, num, unit))
-        else:
-            toks.append(Tok(kind, text, line))
-    toks.append(Tok("EOF", "", line))
-    return toks
-
-
-# -------------------------------------------------------------------- parser
+# -------------------------------------------------------------------- AST
 @dataclass
 class Layer:
     name: str
@@ -120,476 +82,14 @@ class Asset:
     line: int = 0
 
 
-class Parser:
-    _slur_counter = 0   # shadowed per instance in __init__
-
-    def __init__(self, toks: list[Tok]):
-        self._slur_counter = 0
-        self._pending_plays: list[dict] = []
-        self.toks = toks
-        self.i = 0
-
-    def peek(self) -> Tok:
-        return self.toks[self.i]
-
-    def next(self) -> Tok:
-        t = self.toks[self.i]
-        self.i += 1
-        return t
-
-    def skip_nl(self):
-        while self.peek().kind == "NL":
-            self.next()
-
-    def expect(self, kind: str, text: str | None = None) -> Tok:
-        t = self.next()
-        if t.kind != kind or (text is not None and t.text != text):
-            want = text or kind
-            raise DSLError(f"expected {want!r}, got {t.text!r}", t.line)
-        return t
-
-    # value helpers ----------------------------------------------------
-    def _seconds(self, t: Tok) -> float:
-        if t.kind != "NUMBER":
-            raise DSLError(f"expected a time, got {t.text!r}", t.line)
-        if t.unit in (None, "s"):
-            return t.value
-        raise DSLError(f"expected seconds, got unit '{t.unit}'", t.line)
-
-    def _scalar(self, t: Tok):
-        """NUMBER (unit-normalized) or IDENT as string."""
-        if t.kind == "NUMBER":
-            return t.value
-        if t.kind == "IDENT":
-            return t.text
-        raise DSLError(f"expected a value, got {t.text!r}", t.line)
-
-    # statements --------------------------------------------------------
-    def parse(self) -> list[Asset]:
-        assets = []
-        self.skip_nl()
-        while self.peek().kind != "EOF":
-            assets.append(self.asset())
-            self.skip_nl()
-        if not assets:
-            raise DSLError("no 'asset' block found", 1)
-        return assets
-
-    def asset(self) -> Asset:
-        kw = self.expect("IDENT")
-        if kw.text != "asset":
-            raise DSLError(f"expected 'asset', got {kw.text!r}", kw.line)
-        name = self.expect("IDENT")
-        a = Asset(id=name.text, line=name.line)
-        self.expect("PUNCT", "{")
-        self.skip_nl()
-        while not (self.peek().kind == "PUNCT" and self.peek().text == "}"):
-            t = self.peek()
-            if t.kind != "IDENT":
-                raise DSLError(f"unexpected {t.text!r} in asset body", t.line)
-            if t.text == "marker":
-                self.marker(a)
-            elif t.text == "motif":
-                self.motif(a)
-            elif t.text == "layer":
-                a.layers.append(self.layer())
-            elif t.text == "stage":
-                self.stage(a)
-            elif t.text == "cutdowns":
-                self.cutdowns(a)
-            elif t.text == "bus":
-                self.bus(a)
-            elif t.text == "master":
-                self.master(a)
-            elif t.text == "intent":
-                self.intent(a)
-            else:
-                k, v = self.prop_line()
-                a.props[k] = v
-            self.skip_nl()
-        self.expect("PUNCT", "}")
-        return a
-
-    def marker(self, a: Asset):
-        self.next()  # 'marker'
-        name = self.expect("IDENT").text
-        self.expect("PUNCT", "@")
-        t = self.next()
-        a.markers.append({"name": name, "time_s": self._seconds(t)})
-
-    def motif(self, a: Asset):
-        self.next()  # 'motif'
-        name = self.expect("IDENT").text
-        self.expect("PUNCT", "{")
-        self.skip_nl()
-        events = []
-        while not (self.peek().kind == "PUNCT" and self.peek().text == "}"):
-            events.append(self.note_event())
-            self.skip_nl()
-        self.expect("PUNCT", "}")
-        a.motifs[name] = events
-
-    def intent(self, a: Asset):
-        self.next()  # 'intent'
-        if a.intent:
-            raise DSLError("asset may contain only one intent block",
-                           self.peek().line)
-        self.expect("PUNCT", "{")
-        self.skip_nl()
-        while not (self.peek().kind == "PUNCT" and self.peek().text == "}"):
-            key, vals = self.prop_line()
-            if key not in INTENT_FIELDS:
-                raise DSLError(f"unknown intent field '{key}'",
-                               vals[0].line if vals else self.peek().line)
-            a.intent[key] = vals
-            self.skip_nl()
-        self.expect("PUNCT", "}")
-
-    def note_event(self) -> dict:
-        t = self.next()
-        ev: dict = {}
-        if t.kind == "IDENT" and NOTE_RE.match(t.text):
-            ev["note"] = t.text
-        elif t.kind == "IDENT" and theory.parse_chord(t.text):
-            root, quality = theory.parse_chord(t.text)
-            ev["chord_root"] = root
-            ev["chord"] = quality
-        elif t.kind == "NUMBER" and t.unit == "hz":
-            ev["freq_hz"] = t.value
-        elif t.kind == "IDENT" and t.text == "play":
-            raise DSLError(
-                "play is a layer-body statement (one per line), not a "
-                "notes: entry — write it on its own line inside the layer, "
-                "or use slur( play … ) for a slurred motif group", t.line)
-        elif t.kind == "NL":
-            raise DSLError(
-                "notes: needs its first event on the same line "
-                "(continue across lines with trailing commas); play "
-                "statements are layer-body lines, not notes: entries",
-                t.line)
-        else:
-            raise DSLError(f"expected a note (e.g. C4), chord (e.g. C3min7) "
-                           f"or NNNhz, got {t.text!r}", t.line)
-        self.expect("PUNCT", "@")
-        b = self.next()
-        if b.unit not in (None, "b"):
-            raise DSLError("note start must be in beats (e.g. 2b)", b.line)
-        ev["start_beat"] = b.value
-        kw = self.expect("IDENT")
-        if kw.text != "for":
-            raise DSLError(f"expected 'for', got {kw.text!r}", kw.line)
-        d = self.next()
-        if d.unit not in (None, "b"):
-            raise DSLError("note duration must be in beats", d.line)
-        ev["dur_beats"] = d.value
-        while self.peek().kind == "IDENT" and self.peek().text in (
-                "vel", "voicing", "art", "gen"):
-            kw = self.next().text
-            if kw == "vel":
-                ev["vel"] = self.next().value
-            elif kw == "art":
-                a = self.expect("IDENT").text
-                if a not in ARTICULATIONS:
-                    raise DSLError(f"unknown articulation '{a}' "
-                                   f"(available: {sorted(ARTICULATIONS)})",
-                                   t.line)
-                ev["art"] = a
-            elif kw == "gen":
-                ev["generated"] = self.expect("IDENT").text
-            else:
-                v = self.expect("IDENT").text
-                if v not in theory.VOICINGS:
-                    raise DSLError(f"unknown voicing '{v}' "
-                                   f"(available: {theory.VOICINGS})", t.line)
-                ev["voicing"] = v
-        return ev
-
-    def prop_line(self) -> tuple[str, object]:
-        """name ':' values... NL — values are kept raw for the compiler."""
-        key = self.expect("IDENT").text
-        self.expect("PUNCT", ":")
-        vals: list[Tok | tuple] = []
-        depth = 0
-        while True:
-            t = self.peek()
-            if t.kind == "EOF":
-                break
-            if t.kind == "NL":
-                trailing_comma = (vals and vals[-1].kind == "PUNCT"
-                                  and vals[-1].text == ",")
-                if depth > 0 or trailing_comma:
-                    self.next()
-                    continue
-                break
-            if t.kind == "PUNCT" and t.text == "}" and depth == 0:
-                break
-            if t.kind == "PUNCT" and t.text == "(":
-                depth += 1
-            if t.kind == "PUNCT" and t.text == ")":
-                depth -= 1
-            vals.append(self.next())
-        return key, vals
-
-    def layer(self) -> Layer:
-        self.next()  # 'layer'
-        name = self.expect("IDENT")
-        self.expect("PUNCT", ":")
-        ltype = self.expect("IDENT").text
-        lay = Layer(name=name.text, type=ltype, line=name.line)
-        self.expect("PUNCT", "{")
-        self.skip_nl()
-        while not (self.peek().kind == "PUNCT" and self.peek().text == "}"):
-            t = self.peek()
-            if t.kind != "IDENT":
-                raise DSLError(f"unexpected {t.text!r} in layer body", t.line)
-            if t.text == "notes":
-                self.next(); self.expect("PUNCT", ":")
-                lay.props.setdefault("notes", []).extend(self.note_list())
-                if self._pending_plays:
-                    lay.props.setdefault("plays", []).extend(
-                        self._pending_plays)
-                    self._pending_plays = []
-            elif t.text == "play":
-                self.next()
-                lay.props.setdefault("plays", []).append(self.play_stmt())
-            elif t.text == "auto":
-                self.next()
-                tgt = self.expect("IDENT").text
-                self.expect("PUNCT", ":")
-                lay.props.setdefault("auto", []).append(
-                    (tgt, self.breakpoint_list()))
-            else:
-                k, v = self.prop_line()
-                lay.props[k] = v
-            self.skip_nl()
-        self.expect("PUNCT", "}")
-        return lay
-
-    def _one_or_slur(self) -> list[dict]:
-        if self.peek().kind == "IDENT" and self.peek().text == "slur":
-            self.next()
-            self.expect("PUNCT", "(")
-            self.skip_nl()
-            if self.peek().kind == "IDENT" and self.peek().text == "play":
-                # slur of motif expansions: the whole group joins legato
-                self._slur_counter += 1
-                gid = self._slur_counter
-                while True:
-                    self.expect("IDENT")          # 'play'
-                    st = self.play_stmt()
-                    st["slur_group"] = gid
-                    self._pending_plays.append(st)
-                    self.skip_nl()
-                    if self.peek().kind == "PUNCT" \
-                            and self.peek().text == ",":
-                        self.next()
-                        self.skip_nl()
-                        continue
-                    break
-                self.expect("PUNCT", ")")
-                return []
-            group = [self.note_event()]
-            while self.peek().kind == "PUNCT" and self.peek().text == ",":
-                self.next()
-                self.skip_nl()
-                group.append(self.note_event())
-            self.expect("PUNCT", ")")
-            if len(group) < 2:
-                raise DSLError("slur(...) needs at least two notes",
-                               self.peek().line)
-            self._slur_counter += 1
-            for ev in group:
-                ev["slur"] = self._slur_counter
-            return group
-        return [self.note_event()]
-
-    def note_list(self) -> list[dict]:
-        events = list(self._one_or_slur())
-        while self.peek().kind == "PUNCT" and self.peek().text == ",":
-            self.next()
-            self.skip_nl()
-            events.extend(self._one_or_slur())
-        return events
-
-    def play_stmt(self) -> dict:
-        name = self.expect("IDENT").text
-        self.expect("PUNCT", "@")
-        at = self.next()
-        st = {"motif": name, "at_beat": at.value, "transpose_st": 0.0,
-              "vel_scale": 1.0, "line": at.line}
-        while self.peek().kind == "IDENT" and self.peek().text in (
-                "legato", "art",
-                "transpose", "vel", "invert", "retrograde", "stretch",
-                "diatonic"):
-            kw = self.next().text
-            if kw == "art":
-                st["art"] = self.expect("IDENT").text
-            elif kw == "legato":
-                st["legato"] = True
-            elif kw == "invert":
-                st["invert"] = True
-            elif kw == "retrograde":
-                st["retrograde"] = True
-            elif kw == "stretch":
-                st["stretch"] = self.next().value
-            elif kw == "diatonic":
-                st["diatonic"] = int(self.next().value)
-            elif kw == "transpose":
-                v = self.next()
-                if v.unit != "st":
-                    raise DSLError("transpose needs semitones, e.g. +12st",
-                                   v.line)
-                st["transpose_st"] = v.value
-            else:
-                st["vel_scale"] = self.next().value
-        return st
-
-    def breakpoint_list(self) -> list[tuple]:
-        pts = []
-        while True:
-            t = self.next()
-            time_s = self._seconds(t)
-            self.expect("PUNCT", "=")
-            v = self.next()
-            if v.kind != "NUMBER":
-                raise DSLError("breakpoint value must be a number", v.line)
-            pts.append((time_s, v.value, v.unit))
-            if self.peek().kind == "PUNCT" and self.peek().text == ",":
-                self.next()
-                self.skip_nl()        # comma-newline continuation (DSL §1)
-                continue
-            break
-        if len(pts) < 2:
-            raise DSLError("automation needs at least two breakpoints", t.line)
-        return pts
-
-    def stage(self, a: Asset):
-        self.next()  # 'stage'
-        self.expect("PUNCT", "{")
-        self.skip_nl()
-        st: dict = {"mics": {"tree": 0.7, "close": 0.2, "ambient": 0.3},
-                    "dims": [18.0, 26.0, 10.0]}
-        while not (self.peek().kind == "PUNCT" and self.peek().text == "}"):
-            k = self.expect("IDENT").text
-            self.expect("PUNCT", ":")
-            if k == "hall":
-                t = self.next()
-                if t.kind != "STRING" or "@" not in t.text:
-                    raise DSLError('stage hall: "<ir.wav>@<sha256>" '
-                                   '(content-addressed)', t.line)
-                f, sha = t.text.rsplit("@", 1)
-                st["hall_file"], st["hall_sha256"] = f, sha
-            elif k == "mics":
-                while self.peek().kind == "IDENT":
-                    m = self.next().text
-                    if m not in ("tree", "close", "ambient"):
-                        raise DSLError(f"unknown mic '{m}' (tree/close/"
-                                       f"ambient)", self.peek().line)
-                    self.expect("PUNCT", "=")
-                    st["mics"][m] = float(self.next().value)
-                    if self.peek().kind == "PUNCT" \
-                            and self.peek().text == ",":
-                        self.next()
-            elif k == "size":
-                dims = [self.next()]
-                for _ in range(2):
-                    self.expect("PUNCT", ",")
-                    dims.append(self.next())
-                for d in dims:
-                    if d.unit not in (None, "m"):
-                        raise DSLError("stage size: W, L, H in meters",
-                                       d.line)
-                st["dims"] = [float(d.value) for d in dims]
-            else:
-                raise DSLError(f"unknown stage property '{k}'",
-                               self.peek().line)
-            self.skip_nl()
-        self.expect("PUNCT", "}")
-        if "hall_file" not in st:
-            raise DSLError("stage block needs a hall: \"ir@sha\" pin",
-                           a.line)
-        a.stage = st
-
-    def cutdowns(self, a: Asset):
-        self.next()  # 'cutdowns'
-        self.expect("PUNCT", "{")
-        self.skip_nl()
-        while not (self.peek().kind == "PUNCT" and self.peek().text == "}"):
-            length = self.next()
-            if length.kind != "NUMBER":
-                raise DSLError("cutdown line: '15s: keep As to Bs, ...'",
-                               length.line)
-            self.expect("PUNCT", ":")
-            cd = {"length_s": length.value, "segments": []}
-            while self.peek().kind != "NL":
-                t = self.next()
-                if t.kind == "PUNCT" and t.text == ",":
-                    continue
-                if t.kind == "IDENT" and t.text == "keep":
-                    a_t = self.next()
-                    to = self.expect("IDENT")
-                    if to.text != "to":
-                        raise DSLError("keep As to Bs", to.line)
-                    b_t = self.next()
-                    cd["segments"].append([a_t.value, b_t.value])
-                elif t.kind == "IDENT" and t.text == "fade":
-                    cd["fade_s"] = self.next().value
-                else:
-                    raise DSLError(f"unexpected {t.text!r} in cutdown line",
-                                   t.line)
-            if not cd["segments"]:
-                raise DSLError("cutdown needs at least one 'keep'",
-                               length.line)
-            a.cutdowns.append(cd)
-            self.skip_nl()
-        self.expect("PUNCT", "}")
-
-    def bus(self, a: Asset):
-        self.next()  # 'bus'
-        name = self.expect("IDENT").text
-        b: dict = {"name": name, "line": self.peek().line}
-        self.expect("PUNCT", "{")
-        self.skip_nl()
-        while not (self.peek().kind == "PUNCT" and self.peek().text == "}"):
-            t = self.peek()
-            if t.kind == "IDENT" and t.text == "auto":
-                self.next()
-                tgt = self.expect("IDENT").text
-                self.expect("PUNCT", ":")
-                b.setdefault("auto", []).append(
-                    (tgt, self.breakpoint_list()))
-            else:
-                k, v = self.prop_line()
-                b[k] = v
-            self.skip_nl()
-        self.expect("PUNCT", "}")
-        a.buses.append(b)
-
-    def master(self, a: Asset):
-        self.next()  # 'master'
-        self.expect("PUNCT", "{")
-        self.skip_nl()
-        while not (self.peek().kind == "PUNCT" and self.peek().text == "}"):
-            t = self.peek()
-            if t.kind == "IDENT" and t.text == "auto":
-                self.next()
-                tgt = self.expect("IDENT").text
-                self.expect("PUNCT", ":")
-                a.master.setdefault("auto", []).append(
-                    (tgt, self.breakpoint_list()))
-            else:
-                k, v = self.prop_line()
-                a.master[k] = v
-            self.skip_nl()
-        self.expect("PUNCT", "}")
-
-
 # ------------------------------------------------------------------ compiler
 EMOTIONS = {"tension", "awe", "sadness", "triumph", "suspense", "intimacy",
             "urgency", "calm", "fear", "wonder", "cinematic_intensity"}
 
-ARTICULATIONS = {"sustain", "staccato", "spiccato", "pizzicato",
-                 "tremolo", "marcato", "legato", "trill"}
+# Authoring articulations are the IR validator's set plus `trill`, which is
+# authoring-only and compiles away. Deriving the relationship structurally keeps
+# the two sets from drifting (audit finding F6).
+ARTICULATIONS = IR_ARTICULATIONS | {"trill"}
 
 # dynamic marks -> 0..1 (documented; raw numbers are accepted alongside)
 DYNAMIC_MARKS = {"ppp": 0.10, "pp": 0.22, "p": 0.35, "mp": 0.48,
@@ -745,7 +245,7 @@ def _env_from_toks(toks: list[Tok], line: int) -> dict:
     """'a=0.01s d=0.1s s=0.7 r=0.2s' -> ADSR dict."""
     names = {"a": "attack", "d": "decay", "s": "sustain", "r": "release"}
     env, i = {}, 0
-    while i + 2 < len(toks) + 1 and i < len(toks):
+    while i + 1 < len(toks):   # at least two tokens (key, value) remain
         k = toks[i]
         if k.kind != "IDENT" or k.text not in names:
             raise DSLError("env expects 'a= d= s= r='", k.line)
@@ -1300,13 +800,13 @@ def _apply_rubato_tempo_map(spec: dict, perform: dict,
             x = (beat - start) / dur
             bpm = _tempo_at(base_points, beat) * _rubato_multiplier(
                 shape, x, amount)
-            compiled[beat] = round(max(20.0, min(400.0, bpm)), 6)
+            compiled[beat] = round(max(BPM_MIN, min(TEMPO_MAP_BPM_MAX, bpm)), 6)
         for key in ("peak_beat", "cadence_beat"):
             beat = round(float(ph[key]), 6)
             x = (beat - start) / dur
             bpm = _tempo_at(base_points, beat) * _rubato_multiplier(
                 shape, x, amount)
-            compiled[beat] = round(max(20.0, min(400.0, bpm)), 6)
+            compiled[beat] = round(max(BPM_MIN, min(TEMPO_MAP_BPM_MAX, bpm)), 6)
     points = [[b, compiled[b]] for b in sorted(compiled)]
     if points[0][0] != 0.0:
         points.insert(0, [0.0, _tempo_at(base_points, 0.0)])
@@ -1787,7 +1287,7 @@ def compile_asset(a: Asset, variant=None) -> tuple[dict, list[str]]:
     if "intensity" in p:
         toks = take("intensity")
         pts, i = [], 0
-        while i + 2 < len(toks) + 1 and i < len(toks):
+        while i + 1 < len(toks):   # at least two tokens (key, value) remain
             if toks[i].kind == "PUNCT":
                 i += 1
                 continue
@@ -1964,7 +1464,6 @@ def _apply_vary(a, variant):
     for lay in a.layers:
         fix(lay.props, f"layer:{lay.name}")
     for b in a.buses:
-        fix({k: v for k, v in b.items()}, f"bus:{b.get('name')}")
         for key, val in list(b.items()):
             if isinstance(val, list) and val and hasattr(val[0], "kind"):
                 b[key] = _resolve_vary(
@@ -2126,7 +1625,7 @@ def _compile_layer(lay: Layer, motifs: dict, scale, diags: list[str],
         else:
             d, i = {}, 0
             keymap = {"time": ("timing_s", None), "vel": ("vel", None)}
-            while i + 2 < len(toks) + 1 and i < len(toks):
+            while i + 1 < len(toks):   # at least two tokens (key, value) remain
                 k = toks[i].text
                 if k not in keymap or toks[i+1].text != "=":
                     raise DSLError("humanize expects a 0..1 amount or "
@@ -2138,7 +1637,7 @@ def _compile_layer(lay: Layer, motifs: dict, scale, diags: list[str],
         toks = p.pop("vibrato")
         d, i = {}, 0
         keymap = {"rate": "rate_hz", "depth": "depth_cents", "delay": "delay_s"}
-        while i + 2 < len(toks) + 1 and i < len(toks):
+        while i + 1 < len(toks):   # at least two tokens (key, value) remain
             k = toks[i].text
             if k not in keymap or toks[i+1].text != "=":
                 raise DSLError("vibrato expects 'rate=… depth=…c delay=…s'",
@@ -2197,7 +1696,7 @@ def _compile_layer(lay: Layer, motifs: dict, scale, diags: list[str],
         i = 0
         keymap = {"size": ("size", None), "spread": ("spread", None),
                   "detune": ("detune_c", "c"), "timing": ("timing_s", "s")}
-        while i + 2 < len(toks) + 1 and i < len(toks):
+        while i + 1 < len(toks):   # at least two tokens (key, value) remain
             t = toks[i]
             if (t.kind != "IDENT" or t.text not in keymap
                     or i + 2 >= len(toks) + 1
@@ -2244,7 +1743,7 @@ def _compile_layer(lay: Layer, motifs: dict, scale, diags: list[str],
         arp = {"pattern": toks[0].text, "rate_beats": 0.25, "octaves": 1,
                "gate": 0.85}
         i = 1
-        while i + 2 < len(toks) + 1 and i < len(toks):
+        while i + 1 < len(toks):   # at least two tokens (key, value) remain
             k = toks[i].text
             if k not in ("rate", "octaves", "gate") or toks[i + 1].text != "=":
                 raise DSLError("arp options: rate=…b octaves=N gate=0..1",

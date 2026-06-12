@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "audioforge"
-version = "2.15.0"
+version = "2.16.0"
 description = "Deterministic audio-asset generation engine — compiles the .af DSL to reproducible WAV + manifests."
 readme = "README.md"
 requires-python = ">=3.10"

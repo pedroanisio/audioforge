@@ -83,7 +83,7 @@
           "type": "number"
         },
         "sustain": {
-          "maximum": 60,
+          "maximum": 1,
           "minimum": 0,
           "type": "number"
         }
@@ -99,9 +99,21 @@
     "fx": {
       "additionalProperties": true,
       "properties": {
-        "type": {
+        "cutoff_hz": {
+          "maximum": 24000,
+          "minimum": 10,
+          "type": "number"
+        },
+        "mode": {
           "enum": [
             "bandpass",
+            "highpass",
+            "lowpass"
+          ],
+          "type": "string"
+        },
+        "type": {
+          "enum": [
             "comp",
             "convolve",
             "delay",
@@ -110,10 +122,8 @@
             "filter",
             "gain",
             "hall",
-            "highpass",
             "highshelf",
             "ladder",
-            "lowpass",
             "lowshelf",
             "mbcomp",
             "peak",
@@ -597,7 +607,7 @@
       "type": "integer"
     },
     "bpm": {
-      "maximum": 400.0,
+      "maximum": 300.0,
       "minimum": 20.0,
       "type": "number"
     },
@@ -723,6 +733,11 @@
       "additionalProperties": true,
       "type": "object"
     },
+    "swing": {
+      "maximum": 0.5,
+      "minimum": 0.0,
+      "type": "number"
+    },
     "tempo_map": {
       "items": {
         "$ref": "#/$defs/point"
@@ -745,7 +760,7 @@
   "title": "AudioForge Universal Music IR",
   "type": "object",
   "x-audioforge": {
-    "engine_version": "2.14.0",
+    "engine_version": "2.16.0",
     "field_layers": {
       "provenance": [
         "_meta"
@@ -757,6 +772,8 @@
         "sample_rate",
         "bit_depth",
         "bpm",
+        "swing",
+        "groove",
         "loop_safe",
         "layers",
         "buses",
@@ -773,7 +790,6 @@
         "key_map",
         "tempo_map",
         "holds",
-        "groove",
         "markers",
         "cutdowns",
         "stage",

@@ -38,7 +38,7 @@ from . import theory
 try:
     from .determinism import ENGINE_VERSION
 except Exception:
-    ENGINE_VERSION = "2.15.0"
+    ENGINE_VERSION = "2.16.0"
 
 # ----------------------------------------------------------------- fonts ----
 _NOTO = None

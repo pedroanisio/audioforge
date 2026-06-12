@@ -1,7 +1,12 @@
 """Constrained-generation grammar artifacts for the .af DSL.
 
-Generated from audioforge/lark_parser.py as the executable grammar source.
-The EBNF/GBNF below are publishing forms kept aligned with that parser.
+`audioforge.lark_parser.LARK_GRAMMAR` is the single executable grammar and the
+source of truth. `dsl_ebnf()` embeds it verbatim (so the published EBNF cannot
+drift from the parser — guarded by tests/test_grammar_token_sync), with a
+human-readable rendering and a self-contained terminal table above it. `dsl_gbnf()`
+is the GBNF publishing form for grammar-constrained LLM sampling; it is a
+deliberately *stricter-or-equal* subset of the language (looser than the parser
+would steer a sampler into guaranteed-invalid output — audit finding F8).
 """
 from __future__ import annotations
 
@@ -45,6 +50,21 @@ hold_event       = NUMBER "b" "=" NUMBER "s" ;
 transform        = "legato" | "invert" | "retrograde" | "stretch" NUMBER | "diatonic" SIGNED_NUMBER | "transpose" SIGNED_NUMBER "st" | "vel" NUMBER ;
 value_list       = VALUE { VALUE | "," | "(" | ")" | "=" | "@" } ;
 newline          = "\n" ;
+
+(* Terminals (audit finding F14 — the EBNF is now self-contained) *)
+IDENT            = letter , { letter | digit | "_" | "#" } ;
+NUMBER           = [ "+" | "-" ] , digit , { digit } , [ "." , digit , { digit } ] , [ UNIT ] ;
+SIGNED_NUMBER    = ( "+" | "-" ) , digit , { digit } , [ "." , digit , { digit } ] ;
+UNIT             = "s" | "b" | "bpm" | "db" | "hz" | "st" | "c" | "deg" | "m" ;
+PITCH            = note | chord ;
+note             = letter_AG , [ "#" | "b" ] , [ "-" ] , digit ;        (* one octave digit; mirrors theory.NOTE_RE *)
+chord            = note , chord_quality ;                               (* e.g. C3min7 — see theory.parse_chord *)
+VALUE            = IDENT | NUMBER | STRING ;
+STRING           = '"' , { ? any char except '"' or newline ? } , '"' ;
+letter           = ? A-Z a-z ? ;
+letter_AG        = ? A-G a-g ? ;
+digit            = ? 0-9 ? ;
+chord_quality    = ? a chord-quality token recognised by theory.parse_chord ? ;
 """
 
 
@@ -83,8 +103,15 @@ note-event ::= pitch ws "@" ws number "b" ws "for" ws number "b" (ws "vel" ws nu
 breakpoint ::= number "s" ws "=" ws number unit?
 hold-event ::= number "b" ws "=" ws number "s"
 transform ::= "legato" | "invert" | "retrograde" | ("stretch" ws number) | ("diatonic" ws signed-number) | ("transpose" ws signed-number "st") | ("vel" ws number)
+# A property body is any run of non-brace, non-newline characters. This is the
+# one deliberately loose production (free-form values the compiler interprets);
+# every rigid micro-grammar (note/chord/breakpoint) is given an explicit rule.
 value-list ::= ([^\n{}]+)
-pitch ::= [A-Ga-g] ("#" | "b")? "-"? [0-9]+ [A-Za-z0-9#b]*
+# Pitch: exactly one octave digit (mirrors theory.NOTE_RE — audit F8b/F13), with
+# an optional lowercase chord-quality suffix (theory.parse_chord) for note events.
+note ::= [A-Ga-g] ("#" | "b")? "-"? [0-9]
+pitch ::= note [a-z] [a-z0-9]*
+       | note
 ident ::= [A-Za-z_][A-Za-z0-9_#]*
 number ::= "-"? [0-9]+ ("." [0-9]+)?
 signed-number ::= ("+" | "-")? [0-9]+ ("." [0-9]+)?

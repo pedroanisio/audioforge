@@ -38,7 +38,7 @@ def _base_spec():
     }), "at least 2"),
     (lambda s: s["layers"][0].update({
         "automation": [{"target": "cutoff_hz", "points": [[0, 100], [1, 200]]}],
-    }), "requires an fx chain"),
+    }), "out of range"),
     (lambda s: s.update({"buses": {"name": "main"}}), "buses"),
     (lambda s: s.update({"stage": {"hall_file": "hall.wav", "hall_sha256": "x"}}),
      "stage"),

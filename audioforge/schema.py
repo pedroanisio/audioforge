@@ -26,6 +26,8 @@ from __future__ import annotations
 
 import re
 
+from . import theory
+
 KINDS = {"signature", "sfx", "loop", "jingle", "transition", "cue", "bed",
          "soundtrack"}
 LAYER_TYPES = {"tone", "sweep", "noise", "drums", "notes",
@@ -61,6 +63,22 @@ def fx_needs_native(fx: dict) -> bool:
     return t == "plate" and float(fx.get("mod", 0.0)) > 0.0
 BIT_DEPTHS = {16, 24}
 AUTO_TARGETS = {"gain_db", "cutoff_hz", "scan"}
+
+# Single source of truth for tempo bounds (audit finding F3). The base `bpm` is
+# the asset's nominal tempo; a `tempo_map` carries time-varying tempo and is
+# deliberately allowed to exceed the base ceiling (e.g. an accelerando), so it
+# has its own, looser maximum.
+BPM_MIN, BPM_MAX = 20, 300
+TEMPO_MAP_BPM_MIN, TEMPO_MAP_BPM_MAX = 20.0, 400.0
+
+# Fx targets whose `cutoff_hz` automation is meaningful (audit finding F12).
+CUTOFF_CAPABLE_FX = {"filter", "ladder"}
+
+# Articulations the IR validator accepts. `trill` is authoring-only — it compiles
+# away in the DSL — so the DSL set is a structural superset (see dsl.ARTICULATIONS,
+# audit finding F6); keeping the relationship structural prevents silent drift.
+IR_ARTICULATIONS = {"sustain", "staccato", "spiccato", "pizzicato",
+                    "tremolo", "marcato", "legato"}
 
 
 def _osc_ok(name: str) -> bool:
@@ -138,13 +156,18 @@ def _validate_fx(chain, path):
 
 
 def _validate_env(env, path):
-    for k in ("attack", "decay", "sustain", "release"):
+    # attack/decay/release are times in seconds; sustain is a level in 0..1
+    # (the DSL `s=0.7`, style packs and synth all treat it that way) — bounding
+    # it like a time let nonsense such as `sustain: 37` through (audit F4).
+    for k in ("attack", "decay", "release"):
         _num(env, k, path, 0.0, 60.0)
+    _num(env, "sustain", path, 0.0, 1.0)
 
 
-def _validate_automation(autos, path, has_fx):
+def _validate_automation(autos, path, fx_chain):
     if not isinstance(autos, list):
         raise SpecError(f"{path}: automation must be a list")
+    fx_chain = fx_chain if isinstance(fx_chain, list) else []
     for i, au in enumerate(autos):
         p = f"{path}[{i}]"
         tgt = _req(au, "target", p)
@@ -158,10 +181,19 @@ def _validate_automation(autos, path, has_fx):
                     or not all(isinstance(v, (int, float)) for v in pt)):
                 raise SpecError(f"{p}.points[{j}]: must be [time_s, value]")
         if tgt == "cutoff_hz":
+            # Must point at a real, cutoff-capable fx — not merely "some fx
+            # chain exists" (audit F12).
             idx = au.get("fx_index", 0)
-            if not has_fx:
-                raise SpecError(f"{p}: cutoff_hz automation requires an fx chain "
-                                f"with a filter at fx_index {idx}")
+            if not (isinstance(idx, int) and 0 <= idx < len(fx_chain)):
+                raise SpecError(
+                    f"{p}: cutoff_hz automation fx_index {idx} is out of range "
+                    f"for an fx chain of length {len(fx_chain)}")
+            ftype = fx_chain[idx].get("type")
+            if ftype not in CUTOFF_CAPABLE_FX:
+                raise SpecError(
+                    f"{p}: cutoff_hz automation targets fx_index {idx} of type "
+                    f"'{ftype}', which has no cutoff (need one of "
+                    f"{sorted(CUTOFF_CAPABLE_FX)})")
 
 
 _VOICE_RANGES = {
@@ -195,10 +227,6 @@ def _validate_new_voices(layer: dict, p: str):
     _num(layer, "bow_position", p, 0.05, 0.45, required=False)
 
 
-ARTICULATIONS = {"sustain", "staccato", "spiccato", "pizzicato",
-                 "tremolo", "marcato", "legato"}     # trill compiles away
-
-
 def _validate_note_events(layer: dict, p: str):
     notes = _req(layer, "notes", p)
     if not isinstance(notes, list) or not notes:
@@ -210,9 +238,9 @@ def _validate_note_events(layer: dict, p: str):
         _num(ev, "start_beat", ep, 0.0)
         _num(ev, "dur_beats", ep, 1e-3)
         art = ev.get("art")
-        if art is not None and art not in ARTICULATIONS:
+        if art is not None and art not in IR_ARTICULATIONS:
             raise SpecError(f"{ep}.art: '{art}' is not one of "
-                            f"{sorted(ARTICULATIONS)}")
+                            f"{sorted(IR_ARTICULATIONS)}")
         s = ev.get("slur")
         if s is not None and (not isinstance(s, int) or s < 1):
             raise SpecError(f"{ep}.slur: positive integer group id")
@@ -309,7 +337,12 @@ def validate_spec(spec: dict) -> dict:
     if not isinstance(layers, list) or not layers:
         raise SpecError("spec.layers: must be a non-empty list")
 
-    uses_grid = False
+    # Compute grid usage once, up front — `instrument` layers are validated in a
+    # second pass below, so deferring this let an instrument-only spec skip the
+    # `bpm` requirement entirely (audit finding F1).
+    GRID_LAYER_TYPES = {"drums", "notes", "instrument"}
+    uses_grid = any(isinstance(l, dict) and l.get("type") in GRID_LAYER_TYPES
+                    for l in layers)
     for i, layer in enumerate(layers):
         p = f"spec.layers[{i}]"
         t = _req(layer, "type", p)
@@ -321,8 +354,9 @@ def validate_spec(spec: dict) -> dict:
             _validate_fx(layer["fx"], f"{p}.fx")
         if t == "tone":
             nt = layer.get("note")
-            if nt is not None and not re.fullmatch(
-                    r"[A-Ga-g][#b]?-?\d+", str(nt)):
+            # Shared single-octave-digit pitch grammar (audit F13): the local
+            # multi-digit regex here once diverged from the DSL's NOTE_RE.
+            if nt is not None and not theory.NOTE_RE.match(str(nt)):
                 raise SpecError(
                     f"{p}.note: tone layers take a single pitch (e.g. Bb2)."
                     f" '{nt}' looks like a chord — use a notes layer with a"
@@ -344,7 +378,6 @@ def validate_spec(spec: dict) -> dict:
                 raise SpecError(f"{p}.color: invalid")
             _validate_env(_req(layer, "env", p), f"{p}.env")
         elif t == "drums":
-            uses_grid = True
             if not _voice_ok(_req(layer, "voice", p)):
                 raise SpecError(f"{p}.voice: invalid drum voice")
             _validate_performance(layer, p)
@@ -356,7 +389,6 @@ def validate_spec(spec: dict) -> dict:
             if not pat or any(c not in "xX." for c in pat):
                 raise SpecError(f"{p}.pattern: only 'x', 'X', '.' allowed")
         elif t == "notes":
-            uses_grid = True
             _num(layer, "phrasing", p, 0.0, 1.0, required=False)
             if not _osc_ok(layer.get("osc", "sine")):
                 raise SpecError(f"{p}.osc: invalid shape")
@@ -378,10 +410,7 @@ def validate_spec(spec: dict) -> dict:
                                 f"— the stage is the staged layer's bus")
         if "automation" in layer:
             _validate_automation(layer["automation"], f"{p}.automation",
-                                 "fx" in layer)
-
-    if uses_grid:
-        _num(spec, "bpm", "spec", 20, 300)
+                                 layer.get("fx"))
 
     for i, layer in enumerate(spec.get("layers", [])):
         p = f"layers[{i}]"
@@ -412,13 +441,12 @@ def validate_spec(spec: dict) -> dict:
             if not layer.get("instrument"):
                 raise SpecError(f"{p}.instrument: required (name in the "
                                 f"library manifest)")
-            uses_grid = True
             _validate_note_events(layer, p)
             _validate_performance(layer, p)
             art = layer.get("articulation", "sustain")
-            if art not in ARTICULATIONS:
+            if art not in IR_ARTICULATIONS:
                 raise SpecError(f"{p}.articulation: '{art}' is not one of "
-                                f"{sorted(ARTICULATIONS)}")
+                                f"{sorted(IR_ARTICULATIONS)}")
             _validate_orchestration(layer, p)
             sec = layer.get("section")
             if sec is not None:
@@ -551,8 +579,9 @@ def validate_spec(spec: dict) -> dict:
         for b, v in tmap:
             if b < last:
                 raise SpecError("spec.tempo_map: beats must ascend")
-            if not (20.0 <= v <= 400.0):
-                raise SpecError(f"spec.tempo_map: bpm {v} outside 20..400")
+            if not (TEMPO_MAP_BPM_MIN <= v <= TEMPO_MAP_BPM_MAX):
+                raise SpecError(f"spec.tempo_map: bpm {v} outside "
+                                f"{TEMPO_MAP_BPM_MIN:g}..{TEMPO_MAP_BPM_MAX:g}")
             last = b
         if tmap[0][0] != 0.0:
             raise SpecError("spec.tempo_map: first point must be at beat 0")
@@ -604,10 +633,17 @@ def validate_spec(spec: dict) -> dict:
         _validate_fx(master["fx"], "spec.master.fx")
     if "automation" in master:
         _validate_automation(master["automation"], "spec.master.automation",
-                             "fx" in master)
+                             master.get("fx"))
     _num(master, "target_peak_dbfs", "spec.master", -40.0, 0.0, required=False)
     _num(master, "target_lufs", "spec.master", -40.0, -5.0, required=False)
     _num(master, "stereo_width", "spec.master", 0.0, 1.0, required=False)
+
+    # Grid-using specs (drums/notes/instrument) require a base tempo. Checked at
+    # the end so each layer's own diagnostics surface first, and so an
+    # instrument-only spec — validated in the second layer pass above — can no
+    # longer slip through without a bpm (audit finding F1).
+    if uses_grid:
+        _num(spec, "bpm", "spec", BPM_MIN, BPM_MAX)
 
     if spec.get("loop_safe"):
         if not spec.get("bpm"):

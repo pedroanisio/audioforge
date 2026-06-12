@@ -19,6 +19,7 @@ def test_library_aware_orchestration_validates_ranges_and_techniques():
         "id": "orch_ok",
         "kind": "cue",
         "duration_s": 2,
+        "bpm": 120,  # instrument layers use the beat grid (audit F1)
         "library": {"name": "test", "manifest_sha256": "a" * 64},
         "layers": [{
             "name": "vln",
