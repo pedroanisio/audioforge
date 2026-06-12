@@ -25,7 +25,7 @@ from .curves import (
 )
 from .version import ENGINE_VERSION
 
-IR_SCHEMA_VERSION = "1.1"
+IR_SCHEMA_VERSION = "1.2"
 
 SEMANTIC_FIELDS = [
     "intent",
@@ -87,13 +87,16 @@ def ir_schema_metadata() -> dict[str, Any]:
         "hash_excluded_top_level": list(HASH_EXCLUDED_TOP_LEVEL),
         "migration": {
             "current": IR_SCHEMA_VERSION,
-            "supported_from": ["0.9", "1.0"],
+            "supported_from": ["0.9", "1.0", "1.1"],
             "policy": "additive-compatible",
             "notes": (
                 "IR schema 1.1 adds explicit performance curves for pitch "
-                "and dynamics. No migration is required for valid 1.0 specs; "
-                "curves are render data and therefore hash-included, while "
-                "provenance-only metadata changes remain hash-excluded."
+                "and dynamics. 1.2 raises master.stereo_width's ceiling from "
+                "1.0 to 2.0, enabling M/S widening beyond the as-mixed image "
+                "(mid preserved, so the mono sum is unchanged). No migration "
+                "is required for valid 1.0/1.1 specs; curves are render data "
+                "and therefore hash-included, while provenance-only metadata "
+                "changes remain hash-excluded."
             ),
         },
         "curves": {
@@ -424,7 +427,7 @@ def ir_json_schema() -> dict[str, Any]:
                     "automation": _array_items(automation),
                     "target_peak_dbfs": _number(minimum=-40, maximum=0),
                     "target_lufs": _number(minimum=-40, maximum=-5),
-                    "stereo_width": _number(minimum=0, maximum=1),
+                    "stereo_width": _number(minimum=0, maximum=2),
                     "fade_in_s": _number(minimum=0),
                     "fade_out_s": _number(minimum=0),
                 },

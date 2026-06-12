@@ -403,7 +403,8 @@ def _premaster(spec: dict, root: str, sr: int, master: dict,
         left = left * m_gain_env
         right = right * m_gain_env
 
-    # stereo width: 0 = mono, 1 = as mixed
+    # stereo width: 0 = mono, 1 = as mixed, >1 = M/S widened (side scaled while
+    # mid is preserved, so the mono sum is unchanged and silence stays silent)
     width = float(master.get("stereo_width", 1.0))
     mid = 0.5 * (left + right)
     side = 0.5 * (left - right) * width

@@ -694,7 +694,9 @@ def validate_spec(spec: dict) -> dict:
                              master.get("fx"), scope="master")
     _num(master, "target_peak_dbfs", "spec.master", -40.0, 0.0, required=False)
     _num(master, "target_lufs", "spec.master", -40.0, -5.0, required=False)
-    _num(master, "stereo_width", "spec.master", 0.0, 1.0, required=False)
+    # 0 = mono, 1 = as-mixed, >1 = M/S widened (side scaled, mid preserved so
+    # the mono sum is unchanged). Capped at 2.0 — the conventional widener max.
+    _num(master, "stereo_width", "spec.master", 0.0, 2.0, required=False)
 
     # Grid-using specs (drums/notes/instrument) require a base tempo. Checked at
     # the end so each layer's own diagnostics surface first, and so an

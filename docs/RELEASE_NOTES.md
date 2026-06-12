@@ -25,6 +25,14 @@ time (F4); the published JSON Schema no longer lists `lowpass`/`highpass`/
 automation must target a real cutoff-capable fx (F12). `swing` and `groove` are
 reclassified as render-affecting fields (F7).
 
+Stereo-width note: IR schema 1.2 raises `master.stereo_width`'s ceiling from
+`1.0` to `2.0`. The render path already scaled the side signal by `width`; the
+schema previously clamped it to `[0, 1]`, so an author could collapse toward
+mono but never widen past the as-mixed image. Widening preserves the mid (the
+mono sum is unchanged) and is zero in silence (no noise-floor cost). Backward
+compatible: every valid `1.0`/`1.1` spec is unchanged and re-renders
+byte-identically (the engine version is untouched).
+
 Performance-curve note: IR schema 1.1 adds explicit `pitch_cents` and
 `dynamic` curves. Legacy `vibrato`, `glide_s`, and authored dynamic breakpoints
 now lower to hash-included curve data before render; `_meta.semantic` keeps the

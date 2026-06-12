@@ -698,7 +698,7 @@
           "type": "array"
         },
         "stereo_width": {
-          "maximum": 1,
+          "maximum": 2,
           "minimum": 0,
           "type": "number"
         },
@@ -844,7 +844,7 @@
       "type": "object"
     }
   },
-  "$id": "https://audioforge.local/schemas/audioforge-ir-1.1.schema.json",
+  "$id": "https://audioforge.local/schemas/audioforge-ir-1.2.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": true,
   "properties": {
@@ -1109,12 +1109,13 @@
       "notation"
     ],
     "migration": {
-      "current": "1.1",
-      "notes": "IR schema 1.1 adds explicit performance curves for pitch and dynamics. No migration is required for valid 1.0 specs; curves are render data and therefore hash-included, while provenance-only metadata changes remain hash-excluded.",
+      "current": "1.2",
+      "notes": "IR schema 1.1 adds explicit performance curves for pitch and dynamics. 1.2 raises master.stereo_width's ceiling from 1.0 to 2.0, enabling M/S widening beyond the as-mixed image (mid preserved, so the mono sum is unchanged). No migration is required for valid 1.0/1.1 specs; curves are render data and therefore hash-included, while provenance-only metadata changes remain hash-excluded.",
       "policy": "additive-compatible",
       "supported_from": [
         "0.9",
-        "1.0"
+        "1.0",
+        "1.1"
       ]
     },
     "render_plan": {
@@ -1122,6 +1123,6 @@
       "policy_field": "routing",
       "schema": "audioforge.render-plan/1"
     },
-    "version": "1.1"
+    "version": "1.2"
   }
 }

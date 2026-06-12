@@ -1,0 +1,233 @@
+{
+  "spec": "static/samples/reference_piano_pro.af",
+  "method": "Same MIDI rendered two ways. Delivery levels are raw; all other metrics are measured after RMS-normalising both renders to -20 dBFS for a fair equal-loudness comparison.",
+  "renders": {
+    "audioforge": {
+      "wav": "compare/reference_piano_pro.wav",
+      "renderer": "AudioForge native synthesis",
+      "delivery": {
+        "peak_dbfs": -1.11,
+        "true_peak_dbtp": -1.0,
+        "rms_dbfs": -20.24
+      }
+    },
+    "fluidr3_pro": {
+      "wav": "compare/reference_piano_pro_fluidr3.wav",
+      "renderer": "FluidSynth + FluidR3_GM.sf2 (GM grand piano)",
+      "delivery": {
+        "peak_dbfs": -16.208,
+        "true_peak_dbtp": -16.2,
+        "rms_dbfs": -35.602
+      }
+    }
+  },
+  "audioforge": {
+    "duration_s": 26.0,
+    "sample_rate": 48000,
+    "peak_dbfs": -0.87,
+    "true_peak_dbtp": -0.76,
+    "rms_dbfs": -20.0,
+    "crest_db": 19.13,
+    "noise_floor_dbfs": -55.776,
+    "dynamic_range_db": 24.121,
+    "dc_offset_dbfs": -96.376,
+    "spectral_centroid_hz": 2711.788,
+    "spectral_rolloff85_hz": 5185.547,
+    "spectral_rolloff99_hz": 13394.531,
+    "ultrasonic_share_db": -23.778,
+    "stereo_correlation": -0.120148,
+    "stereo_width": 1.120148,
+    "side_mid_db": 1.045,
+    "bands": {
+      "sub_20_60": 0.006645,
+      "low_60_250": 0.054392,
+      "lowmid_250_2k": 0.488195,
+      "highmid_2k_6k": 0.336546,
+      "high_6k_16k": 0.10762,
+      "ultra_16k_nyq": 0.00419
+    },
+    "meta": {
+      "directions": {
+        "true_peak_dbtp": "neutral",
+        "noise_floor_dbfs": "lower_is_cleaner",
+        "dynamic_range_db": "higher_is_more_dynamic",
+        "crest_db": "higher_is_more_dynamic",
+        "dc_offset_dbfs": "lower_is_cleaner",
+        "ultrasonic_share_db": "descriptive"
+      },
+      "notes": "true_peak via 4x oversampling (BS.1770-4); noise_floor = 5th percentile of 43 ms frame RMS; dynamic_range = p95-p20 of frame RMS. Production-consistent measurements, not certified meters."
+    }
+  },
+  "fluidr3_pro": {
+    "duration_s": 27.668,
+    "sample_rate": 48000,
+    "peak_dbfs": -0.606,
+    "true_peak_dbtp": -0.599,
+    "rms_dbfs": -20.0,
+    "crest_db": 19.394,
+    "noise_floor_dbfs": -110.459,
+    "dynamic_range_db": 15.889,
+    "dc_offset_dbfs": -95.479,
+    "spectral_centroid_hz": 1577.076,
+    "spectral_rolloff85_hz": 3328.125,
+    "spectral_rolloff99_hz": 7564.453,
+    "ultrasonic_share_db": -35.735,
+    "stereo_correlation": 0.220939,
+    "stereo_width": 0.779061,
+    "side_mid_db": -1.94,
+    "bands": {
+      "sub_20_60": 0.004213,
+      "low_60_250": 0.206861,
+      "lowmid_250_2k": 0.490202,
+      "highmid_2k_6k": 0.268494,
+      "high_6k_16k": 0.029563,
+      "ultra_16k_nyq": 0.000267
+    },
+    "meta": {
+      "directions": {
+        "true_peak_dbtp": "neutral",
+        "noise_floor_dbfs": "lower_is_cleaner",
+        "dynamic_range_db": "higher_is_more_dynamic",
+        "crest_db": "higher_is_more_dynamic",
+        "dc_offset_dbfs": "lower_is_cleaner",
+        "ultrasonic_share_db": "descriptive"
+      },
+      "notes": "true_peak via 4x oversampling (BS.1770-4); noise_floor = 5th percentile of 43 ms frame RMS; dynamic_range = p95-p20 of frame RMS. Production-consistent measurements, not certified meters."
+    }
+  },
+  "comparison": {
+    "labels": {
+      "a": "audioforge",
+      "b": "fluidr3_pro"
+    },
+    "metrics": {
+      "duration_s": {
+        "audioforge": 26.0,
+        "fluidr3_pro": 27.668,
+        "delta_b_minus_a": 1.668,
+        "direction": "descriptive",
+        "favours": null
+      },
+      "peak_dbfs": {
+        "audioforge": -0.87,
+        "fluidr3_pro": -0.606,
+        "delta_b_minus_a": 0.264,
+        "direction": "descriptive",
+        "favours": null
+      },
+      "true_peak_dbtp": {
+        "audioforge": -0.76,
+        "fluidr3_pro": -0.599,
+        "delta_b_minus_a": 0.161,
+        "direction": "neutral",
+        "favours": null
+      },
+      "rms_dbfs": {
+        "audioforge": -20.0,
+        "fluidr3_pro": -20.0,
+        "delta_b_minus_a": 0.0,
+        "direction": "descriptive",
+        "favours": null
+      },
+      "crest_db": {
+        "audioforge": 19.13,
+        "fluidr3_pro": 19.394,
+        "delta_b_minus_a": 0.264,
+        "direction": "higher_is_more_dynamic",
+        "favours": "fluidr3_pro"
+      },
+      "noise_floor_dbfs": {
+        "audioforge": -55.776,
+        "fluidr3_pro": -110.459,
+        "delta_b_minus_a": -54.683,
+        "direction": "lower_is_cleaner",
+        "favours": "fluidr3_pro"
+      },
+      "dynamic_range_db": {
+        "audioforge": 24.121,
+        "fluidr3_pro": 15.889,
+        "delta_b_minus_a": -8.232,
+        "direction": "higher_is_more_dynamic",
+        "favours": "audioforge"
+      },
+      "dc_offset_dbfs": {
+        "audioforge": -96.376,
+        "fluidr3_pro": -95.479,
+        "delta_b_minus_a": 0.897,
+        "direction": "lower_is_cleaner",
+        "favours": "audioforge"
+      },
+      "spectral_centroid_hz": {
+        "audioforge": 2711.788,
+        "fluidr3_pro": 1577.076,
+        "delta_b_minus_a": -1134.712,
+        "direction": "descriptive",
+        "favours": null
+      },
+      "spectral_rolloff85_hz": {
+        "audioforge": 5185.547,
+        "fluidr3_pro": 3328.125,
+        "delta_b_minus_a": -1857.422,
+        "direction": "descriptive",
+        "favours": null
+      },
+      "spectral_rolloff99_hz": {
+        "audioforge": 13394.531,
+        "fluidr3_pro": 7564.453,
+        "delta_b_minus_a": -5830.078,
+        "direction": "descriptive",
+        "favours": null
+      },
+      "ultrasonic_share_db": {
+        "audioforge": -23.778,
+        "fluidr3_pro": -35.735,
+        "delta_b_minus_a": -11.957,
+        "direction": "descriptive",
+        "favours": null
+      },
+      "stereo_correlation": {
+        "audioforge": -0.12,
+        "fluidr3_pro": 0.221,
+        "delta_b_minus_a": 0.3411,
+        "direction": "descriptive",
+        "favours": null
+      },
+      "stereo_width": {
+        "audioforge": 1.12,
+        "fluidr3_pro": 0.779,
+        "delta_b_minus_a": -0.3411,
+        "direction": "descriptive",
+        "favours": null
+      },
+      "side_mid_db": {
+        "audioforge": 1.045,
+        "fluidr3_pro": -1.94,
+        "delta_b_minus_a": -2.985,
+        "direction": "descriptive",
+        "favours": null
+      }
+    },
+    "bands": {
+      "audioforge": {
+        "sub_20_60": 0.006645,
+        "low_60_250": 0.054392,
+        "lowmid_250_2k": 0.488195,
+        "highmid_2k_6k": 0.336546,
+        "high_6k_16k": 0.10762,
+        "ultra_16k_nyq": 0.00419
+      },
+      "fluidr3_pro": {
+        "sub_20_60": 0.004213,
+        "low_60_250": 0.206861,
+        "lowmid_250_2k": 0.490202,
+        "highmid_2k_6k": 0.268494,
+        "high_6k_16k": 0.029563,
+        "ultra_16k_nyq": 0.000267
+      }
+    },
+    "scored_metric_wins": {
+      "audioforge": 2,
+      "fluidr3_pro": 2
+    }
+  }
+}

@@ -474,7 +474,7 @@ Emotion never invents notes or changes timing — only spatial/spectral framing,
 
 ## 16. Master block, loudness, mastering order
 
-`width:` (0..1), `peak:` (dBFS true-peak ceiling), `lufs:` (integrated target), `fadein:`/`fadeout:` (s), `fx:`, `auto gain:`.
+`width:` (0..2 — M/S side scale: 0 = mono, 1 = as-mixed, >1 widens beyond the mix; the mid is preserved so the mono sum is unchanged), `peak:` (dBFS true-peak ceiling), `lufs:` (integrated target), `fadein:`/`fadeout:` (s), `fx:`, `auto gain:`.
 
 The master stage runs: **fx chain → gain automation → DC blocker (~8 Hz, always on) → LUFS gain + lookahead true-peak limiter (4× oversampled, stereo-linked, iterative makeup) → seeded dither → quantize**. `lufs:` uses a BS.1770-style measurement (K-weighting, gated 400 ms blocks); the manifest reports `measured_lufs`, `applied_gain_db`, max gain reduction, and `final_lufs`. Without `lufs:`, output is peak-normalized to `peak:`. 16-bit exports use high-pass TPDF dither; 24-bit flat TPDF. `loopsafe: on` fails compilation on non-whole-beat durations.
 

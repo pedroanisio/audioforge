@@ -6,13 +6,15 @@ fail if the checked-in JSON artifact drifts from that source.
 
 ## Versioning
 
-- Current IR schema version: `1.1`
+- Current IR schema version: `1.2`
 - Current policy: additive-compatible
-- Supported from: `0.9`, `1.0`
+- Supported from: `0.9`, `1.0`, `1.1`
 
 IR schema `1.1` adds explicit performance curves for pitch and dynamics while
-preserving the `1.0` shape for specs that do not use curves. Valid `1.0` specs
-do not require migration.
+preserving the `1.0` shape for specs that do not use curves. IR schema `1.2`
+raises `master.stereo_width`'s ceiling from `1.0` to `2.0`, enabling M/S
+widening beyond the as-mixed image (the mid is preserved, so the mono sum is
+unchanged). Valid `1.0`/`1.1` specs do not require migration.
 Experimental `0.9` fixtures can be migrated with
 `audioforge.ir_schema.migrate_ir_spec(spec, "0.9")`; that migration moves the
 legacy provenance sidecar from `metadata` to `_meta` without changing

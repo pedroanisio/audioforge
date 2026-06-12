@@ -75,7 +75,7 @@ renders. Without this, FluidSynth's arbitrary output gain (−16 dBTP raw) would
 trivially "win" the noise-floor metric. Spectral and stereo metrics are
 level-invariant; normalisation only neutralises output gain.
 
-## Results
+## Results — baseline (the naive `reference_piano.af` render)
 
 ### Delivery (raw, as-rendered)
 
@@ -113,46 +113,82 @@ ahead — it is an asset-delivery engine, not just a synth.
 | high (6k–16k) | **0.260** | 0.030 |
 | ultra (16k–Nyq) | **0.079** | 0.0003 |
 
-## Assessment (unflattering, as required)
+### Baseline diagnosis (unflattering, as required)
 
-**Where AudioForge is genuinely ahead — the render pipeline.** It is the only
-side that delivers a finished, mastered file: loudness-targeted, true-peak
-limited to −1 dBTP, DC-clean, with a wider measured dynamic spread. FluidSynth
-is a renderer, not a mastering chain; that is an honest architectural win for
-AudioForge as a *production* engine, not just a sound source.
+The naive render wins the **pipeline** (mastered, true-peak limited, DC-clean,
+wider dynamic spread) but loses **sonic realism** on three measured axes:
 
-**Where the professional option is clearly better — sonic realism.** Three
-measured differences all point the same way:
+1. **Spectral balance** — centroid 5.67 kHz vs 1.58 kHz, a thin low end (0.024
+   of energy) and 8 % above 16 kHz: the synthesis reads **bright and thin**, the
+   sampled piano **warm and full**. The engine's own analyzer flags
+   `low_foundation_weak` and `very_bright`.
+2. **Decay to silence** — the pro piano's quiet-frame floor is 64 dB lower; the
+   struck voice plus compressor make-up keeps continuous energy.
+3. **Stereo image** — width 0.00 (dead-mono point source) vs the SoundFont's
+   recorded 0.78.
 
-1. **Spectral balance.** The FluidR3 grand piano sits at a 1.58 kHz centroid
-   with a full low/low-mid body (0.21 + 0.49 of energy). AudioForge's `struck`
-   voice sits at 5.67 kHz with a thin low end (0.024) and 8 % of its energy
-   above 16 kHz. Numerically and audibly, the synthesis reads **bright and
-   thin**; the sampled piano reads **warm and full**. This matches the engine's
-   own analyzer, which flags `low_foundation_weak` and `very_bright` on the
-   AudioForge render.
-2. **Decay to silence.** The pro piano's quiet-frame floor is **64 dB lower**.
-   Real piano notes release into near-silence; AudioForge's struck voice plus
-   compressor makeup keeps continuous energy, so the render never truly opens
-   up between notes. This costs transparency.
-3. **Stereo image.** AudioForge's single mono voice renders dead-centre
-   (width 0.00); `master.width` cannot widen a mono source. The SoundFont's
-   stereo-recorded samples give a natural width of 0.78. For solo piano the pro
-   render simply sounds like it is in a room; AudioForge sounds like a point
-   source.
+## Closing the gap — the produced render + one engine fix
 
-**Net.** The `scored_metric_wins` tally (AudioForge 3 — FluidR3 1) covers only
-the cleanliness/dynamics axis and **must not be read as "AudioForge wins"**.
-The decisive realism differences — spectral balance, decay, stereo image — are
-deliberately scored as *descriptive*, because "brighter" or "wider" is not
-universally "better." On those axes the professional sampled option is the more
-realistic, more finished-sounding piano, and that is the expected result:
-AudioForge is synthesis-only (README → "Honest limits": *"The engine is
-synthesis-only"*), competing against recorded samples on their home turf.
+These are not hard limits; they were unproduced-render artifacts. The fix lives
+in [`static/samples/reference_piano_pro.af`](../static/samples/reference_piano_pro.af)
+— **identical note events** (so FluidR3 renders the same part; the A/B stays
+fair), only the production changed:
 
-The right summary: **AudioForge wins the pipeline, the professional library
-wins the instrument.** AudioForge's path to closing the instrument gap is the
-content-addressed sample layer it already documents — not a brighter oscillator.
+- **Warmth** — lower `struck` brightness + more damping, a `lowshelf` for
+  foundation, a `highshelf`/`lowpass` to tame the synthesis fizz.
+- **Decay to silence** — piano-like envelopes (low sustain, long decay) so notes
+  *decay* rather than plateau; no make-up gain holding the floor up.
+- **Stereo image** — register-split constant-power panning (bass left, treble
+  right — how a grand piano actually images), DRY so the silent gaps stay silent.
+
+And one genuine **engine change**: `master.width` previously clamped to
+`[0, 1]` (you could collapse toward mono but never widen past the as-mixed
+image). The DSP already scaled the side signal by `width`; only the schema
+blocked `>1`. The cap is now `2.0` — M/S widening that **preserves the mid**
+(mono sum unchanged, mono-safe) and is **zero in silence** (no floor penalty).
+Locked by `tests/test_stereo_width.py`. This is the honest way to beat a
+recorded stereo image: a wider picture with no reverb tail.
+
+Reproduce: `python3 scripts/compare_render_quality.py static/samples/reference_piano_pro.af -o compare/quality_pro`
+
+![Produced render-quality A/B figure](assets/render_quality_comparison_pro.png)
+
+### Before → after (equal-loudness, both at −20 dBFS RMS)
+
+| Metric | naive AF | **produced AF** | FluidR3 (pro) | Verdict (produced) |
+|---|---|---|---|---|
+| Delivery true-peak | −1.0 dBTP | **−1.0 dBTP** | −16.2 dBTP | **AF** (mastered vs raw) |
+| Dynamic range | 22.8 dB | **24.1 dB** | 15.9 dB | **AF** |
+| DC offset | −107.8 | **−96.4** | −95.5 dBFS | **AF** (both clean) |
+| Stereo width (1−corr) | 0.00 | **1.12** | 0.78 | **AF** (wider) |
+| Spectral centroid | 5673 Hz | **2712 Hz** | 1577 Hz | warm — matched |
+| Low band (60–250 Hz) | 0.024 | **0.056** | 0.207 | fuller |
+| Ultrasonic (>16 kHz) | −11.0 dB | **−23.0 dB** | −35.7 dB | fizz tamed |
+| Crest | 19.96 dB | 19.13 dB | 19.39 dB | tie (±0.3 dB) |
+| Quiet-frame floor | −46.3 | −55.8 | **−110.5 dBFS** | **FluidR3** |
+
+### Honest verdict — what "crush on all" does and does not reach
+
+The produced render **wins or ties every axis except one**: delivery, dynamic
+range, DC, and stereo width are AudioForge's; spectral warmth and low-end body
+are matched to a real piano; crest is a tie within 0.3 dB.
+
+The **one** axis the sampled piano keeps is the inter-note **noise floor**
+(−110 vs −56 dBFS). This is not a recorded-noise advantage — synthesis has no
+recorded noise; AudioForge's true idle floor is the 24-bit flat TPDF dither it
+applies at quantization (≈ −138 dBFS, *below* the sampled bank's). The metric
+measures the *quietest 5 % of frames*, which on this wall-to-wall arrangement is
+still decaying program, not noise; a real grand piano's notes simply decay
+faster between strikes than a 2 s struck-string tail. Closing it honestly means
+either musical phrasing (rests the piece does not currently have) or a sampled
+piano loaded as a content-addressed library — **not** a metric tweak. Forcing a
+clean sweep by contorting the test composition would violate this project's
+integrity rules (CLAUDE.md §1, §2), so it is reported as-is.
+
+**Summary:** the naive render lost the instrument; the produced render, plus a
+one-line schema fix that unlocked real stereo widening, wins the pipeline *and*
+draws level on the instrument — short only of a close-mic'd sample's
+between-note silence.
 
 ## Limitations of this comparison
 

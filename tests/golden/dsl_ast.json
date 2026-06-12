@@ -16,5 +16,7 @@
   "static/fixtures/bwv949.af": "sha256:5b8e49c369b73ba8735203b27a534e308fc6fbaf853890c5e64f5c0ab6cf6215",
   "static/fixtures/cancoes_sertao.af": "sha256:63fd720ef8742bf0b51f66ae787ade2b3a97eab10123bcdfa74585e12d3edc39",
   "static/fixtures/unser_leben.af": "sha256:074c7282fb370962e8a522c2b18f08cc5f23d24fd64204b37fb02edfec1c525a",
+  "static/samples/reference_piano.af": "sha256:9aef596e387b3d738d96f7aadd2b9d5e87c61365b200e224d722a6c5ceb4e3ff",
+  "static/samples/reference_piano_pro.af": "sha256:6f05735ee1442a20cd71af751ed0447d8abbdc2d4b1dbc5eee0c3e9acb900f40",
   "static/samples/transition_sweep.af": "sha256:978a13065959f6845bc4df0784317461f8d7233f3c9f4c9035d077039becd5ff"
 }
