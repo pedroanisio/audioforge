@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import dataclasses
 import re
+import time
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -293,13 +294,17 @@ _FALLBACKS = {
 }
 
 
-def resolve_articulation(lib, instrument: str, art: str):
-    """-> (regions, mods, fallback_description|None). Loud failure if even
-    the fallback chain finds nothing."""
+def resolve_articulation_detail(lib, instrument: str, art: str) -> dict:
+    """Resolve sampled or synthetic-fallback articulation with evidence."""
     inst = lib.manifest["instruments"].get(instrument, {})
     available = set(inst.get("articulations", {}))
     if art in available:
-        return lib.regions(instrument, art), {}, None
+        return {
+            "regions": lib.regions(instrument, art),
+            "mods": {},
+            "resolved_articulation": art,
+            "fallback": None,
+        }
     if art not in _FALLBACKS:
         raise ValueError(f"instrument '{instrument}': articulation '{art}' "
                          f"is not sampled and has no fallback "
@@ -307,11 +312,33 @@ def resolve_articulation(lib, instrument: str, art: str):
     bases, mods, desc = _FALLBACKS[art]
     for base in bases:
         if base in available:
-            return (lib.regions(instrument, base), dict(mods),
-                    f"'{art}' -> {desc} (base: '{base}')")
+            return {
+                "regions": lib.regions(instrument, base),
+                "mods": dict(mods),
+                "resolved_articulation": base,
+                "fallback": {
+                    "requested_articulation": art,
+                    "base_articulation": base,
+                    "description": desc,
+                    "family": "synthetic_articulation_fallback",
+                    "mods": dict(mods),
+                },
+            }
     raise ValueError(
         f"instrument '{instrument}': articulation '{art}' unavailable and "
         f"no fallback base exists (sampled: {sorted(available)})")
+
+
+def resolve_articulation(lib, instrument: str, art: str):
+    """-> (regions, mods, fallback_description|None). Loud failure if even
+    the fallback chain finds nothing."""
+    detail = resolve_articulation_detail(lib, instrument, art)
+    fallback = detail["fallback"]
+    fb = None
+    if fallback:
+        fb = (f"'{art}' -> {fallback['description']} "
+              f"(base: '{fallback['base_articulation']}')")
+    return detail["regions"], detail["mods"], fb
 
 
 # --- dynamics: velocity-band crossfade (P2) ---------------------------------
@@ -356,7 +383,8 @@ def render_instrument_track(track: dict, total_n: int, sr: int, tm,
                             rng_factory, lib, groove: dict | None = None,
                             report: dict | None = None,
                             time_offset_s: float = 0.0,
-                            midi_offset: float = 0.0) -> np.ndarray:
+                            midi_offset: float = 0.0,
+                            plan_segments: list[dict] | None = None) -> np.ndarray:
     """Instrument layer: the same scheduling semantics as note tracks
     (groove slots, tempo map, seeded humanize, velocity clip), each note
     rendered through the library's SFZ regions instead of a synth voice.
@@ -378,6 +406,53 @@ def render_instrument_track(track: dict, total_n: int, sr: int, tm,
     join_w = float(track.get("legato_s", 0.05))
     phrasing = float(track.get("phrasing", 0.0))
     art_cache: dict[str, tuple] = {}
+    plan_by_note = {
+        int(seg["note_index"]): seg
+        for seg in (plan_segments or [])
+        if seg.get("layer") == track.get("name", "?")
+        and seg.get("layer_type") == "instrument"
+        and "note_index" in seg
+    }
+
+    def planned_regions(segment: dict | None, identities: list[dict] | None,
+                        candidates: list[Region]) -> list[Region] | None:
+        if segment is None or identities is None:
+            return None
+        by_identity = {
+            (r.sample, r.lokey, r.hikey, r.lovel, r.hivel,
+             r.seq_length, r.seq_position): r
+            for r in candidates
+        }
+        out = []
+        for item in identities:
+            key = (
+                item["sample"],
+                item["key_range"][0],
+                item["key_range"][1],
+                item["velocity_range"][0],
+                item["velocity_range"][1],
+                item["seq_length"],
+                item["seq_position"],
+            )
+            region = by_identity.get(key)
+            if region is None:
+                raise ValueError(
+                    f"render plan segment {segment.get('id')}: selected region "
+                    f"{item.get('sample')} is not available in current library")
+            out.append(region)
+        return out
+
+    def replay_planned_selection_rng(candidates: list[Region], midi: int,
+                                     vel127: int, rng) -> None:
+        """Preserve legacy RNG stream while selection comes from the plan."""
+        rr_sets = set()
+        for r in candidates:
+            if (r.lokey <= midi <= r.hikey and r.lovel <= vel127 <= r.hivel
+                    and r.seq_length > 1):
+                rr_sets.add((r.lokey, r.hikey, r.lovel, r.hivel,
+                             r.seq_length))
+        for key in sorted(rr_sets):
+            rng.integers(0, key[4])
 
     def articulation(name):
         if name not in art_cache:
@@ -387,6 +462,21 @@ def render_instrument_track(track: dict, total_n: int, sr: int, tm,
                     f"{track.get('name', '?')}/{instrument}", {})[name] = fb
             art_cache[name] = (regs, mods)
         return art_cache[name]
+
+    def articulation_from_plan(segment: dict | None, name: str):
+        if segment is None:
+            return articulation(name)
+        decision = segment.get("decision", {})
+        if decision.get("requested_articulation") != name:
+            raise ValueError(
+                f"render plan segment {segment.get('id')}: requested "
+                "articulation drifted")
+        resolved = decision.get("resolved_articulation")
+        if not resolved:
+            raise ValueError(
+                f"render plan segment {segment.get('id')}: missing "
+                "resolved_articulation")
+        return lib.regions(instrument, resolved), dict(decision.get("mods", {}))
 
     env_gain = 10.0 ** (track.get("gain_db", 0.0) / 20.0)
     hum = track.get("humanize")
@@ -428,7 +518,7 @@ def render_instrument_track(track: dict, total_n: int, sr: int, tm,
             "start": start, "dur_n": dur_n, "rng": ev_rng,
             "art": ev.get("art", default_art), "slur": ev.get("slur"),
             "event": ev, "start_beat": ev["start_beat"],
-            "start_time_s": t})
+            "start_time_s": t, "note_index": j})
 
     # ---- phrasing arch over slur groups (documented constants) ------------
     if phrasing > 0.0:
@@ -456,6 +546,7 @@ def render_instrument_track(track: dict, total_n: int, sr: int, tm,
     # ---- pass 2: render with join awareness --------------------------------
     join_n = int(join_w * sr)
     for k, s in enumerate(sched):
+        seg_t0 = time.perf_counter_ns()
         s["vel"] = float(np.clip(s["vel"], 0.05, 1.3))
         prev = sched[k - 1] if k > 0 else None
         nxt = sched[k + 1] if k + 1 < len(sched) else None
@@ -463,7 +554,8 @@ def render_instrument_track(track: dict, total_n: int, sr: int, tm,
                    and prev["slur"] == s["slur"])
         join_out = (nxt is not None and s["slur"]
                     and nxt["slur"] == s["slur"])
-        regions, mods = articulation(s["art"])
+        plan_segment = plan_by_note.get(int(s["note_index"]))
+        regions, mods = articulation_from_plan(plan_segment, s["art"])
         clamp_n = (int(mods["dur_clamp_s"] * sr)
                    if mods.get("dur_clamp_s") else None)
         dur_n = s["dur_n"]
@@ -513,10 +605,24 @@ def render_instrument_track(track: dict, total_n: int, sr: int, tm,
                 weights = _band_weight_envs([bb[0] for bb in bands],
                                             1.0 + v_env * 126.0)
                 sig = np.zeros(full_n)
+                planned_bands = {}
+                if plan_segment is not None:
+                    for item in plan_segment["decision"]["velocity"].get("bands", []):
+                        planned_bands[tuple(item["velocity_range"])] = item
                 for (c, lo, hi, regs), w in zip(bands, weights):
                     if w.max() < 1e-3:
                         continue
-                    chosen = select_regions(regs, midi_i, int(c), h_rng)
+                    planned = planned_bands.get((lo, hi))
+                    chosen = planned_regions(
+                        plan_segment,
+                        planned.get("selected_regions") if planned else None,
+                        regs,
+                    )
+                    if chosen is None:
+                        chosen = select_regions(regs, midi_i, int(c), h_rng)
+                    else:
+                        replay_planned_selection_rng(regs, midi_i, int(c),
+                                                     h_rng)
                     for r in chosen:
                         srcb, src_sr = lib.audio(r.sample)
                         pitch = note_curve(
@@ -531,7 +637,18 @@ def render_instrument_track(track: dict, total_n: int, sr: int, tm,
                 sig *= dyn_gain(v_env) * h_vel * extra_g
             else:
                 v127 = int(np.clip(round(h_vel * 127), 1, 127))
-                chosen = select_regions(kreg, midi_i, v127, h_rng)
+                chosen = None
+                if plan_segment is not None:
+                    velocity = plan_segment["decision"]["velocity"]
+                    chosen = planned_regions(
+                        plan_segment,
+                        velocity.get("selected_regions"),
+                        kreg,
+                    )
+                if chosen is None:
+                    chosen = select_regions(kreg, midi_i, v127, h_rng)
+                else:
+                    replay_planned_selection_rng(kreg, midi_i, v127, h_rng)
                 if not chosen:
                     raise ValueError(
                         f"instrument '{instrument}': no region at velocity "
@@ -574,12 +691,18 @@ def render_instrument_track(track: dict, total_n: int, sr: int, tm,
                 t_off += max(interval, 1)
         else:
             render_hit(s["start"], held_n, s["vel"], s["rng"])
+        if report is not None and plan_segment is not None:
+            elapsed_ms = (time.perf_counter_ns() - seg_t0) / 1_000_000.0
+            report.setdefault("plan_segment_actual_ms", {})[
+                plan_segment["id"]
+            ] = round(elapsed_ms, 6)
     return out
 
 
 def render_section(layer: dict, total_n: int, sr: int, tm, rng, lib,
                    groove: dict | None = None,
-                   report: dict | None = None) -> np.ndarray:
+                   report: dict | None = None,
+                   plan_segments: list[dict] | None = None) -> np.ndarray:
     """Ensemble multiplication: N seeded virtual players from one part —
     independent timing offsets, micro-detune, round-robin pools, and a
     stereo position across the spread. All jitter derives from the spec
@@ -608,7 +731,8 @@ def render_section(layer: dict, total_n: int, sr: int, tm, rng, lib,
             layer, total_n, sr, tm,
             lambda sub, _p=p: rng(f"player{_p}:{sub}"), lib,
             groove=groove, report=report if p == 0 else None,
-            time_offset_s=dt, midi_offset=dmidi)
+            time_offset_s=dt, midi_offset=dmidi,
+            plan_segments=plan_segments if p == 0 else None)
         theta = (pos + 1.0) * np.pi / 4.0
         out[:, 0] += np.cos(theta) * mono * scale
         out[:, 1] += np.sin(theta) * mono * scale

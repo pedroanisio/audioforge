@@ -79,6 +79,8 @@ def interop_diagnostics(spec: dict, format: str) -> list[dict]:
 
 def export_session_bundle(spec: dict, outdir: str | Path) -> dict:
     """Write a deterministic, manifest-backed session/stems bundle skeleton."""
+    from .plan import build_render_plan, dumps_plan
+
     out = Path(outdir)
     out.mkdir(parents=True, exist_ok=True)
     spec_path = out / f"{spec['id']}.spec.json"
@@ -87,6 +89,21 @@ def export_session_bundle(spec: dict, outdir: str | Path) -> dict:
     midi_path = out / f"{spec['id']}.mid"
     midi_bytes = export_midi_bytes(spec)
     midi_path.write_bytes(midi_bytes)
+    plan_result = None
+    plan_path = None
+    plan_text = None
+    plan_warning = None
+    try:
+        plan_result = build_render_plan(spec)
+        plan_path = out / f"{spec['id']}.plan.json"
+        plan_text = dumps_plan(plan_result.plan)
+        plan_path.write_text(plan_text)
+    except Exception as exc:
+        plan_warning = {
+            "severity": "warning",
+            "code": "render_plan_unavailable",
+            "message": f"session bundle omitted render plan: {exc}",
+        }
     manifest = {
         "schema": "audioforge.session-bundle/1",
         "id": spec["id"],
@@ -101,6 +118,13 @@ def export_session_bundle(spec: dict, outdir: str | Path) -> dict:
         },
         "warnings": interop_diagnostics(spec, "midi"),
     }
+    if plan_result is not None and plan_path is not None and plan_text is not None:
+        manifest["plan_hash"] = plan_result.plan_hash
+        manifest["files"]["plan"] = str(plan_path)
+        manifest["sha256"]["plan"] = hashlib.sha256(
+            plan_text.encode()).hexdigest()
+    if plan_warning is not None:
+        manifest["warnings"].append(plan_warning)
     (out / "session.manifest.json").write_text(
         json.dumps(manifest, indent=2, sort_keys=True) + "\n"
     )

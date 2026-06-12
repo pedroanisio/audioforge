@@ -14,6 +14,7 @@ from .schema import (
     LAYER_TYPES,
     NOISE_COLORS,
     OSC_SHAPES,
+    ROUTING_FALLBACK_MODES,
     validate_spec,
 )
 from .curves import (
@@ -39,6 +40,7 @@ SEMANTIC_FIELDS = [
     "cutdowns",
     "stage",
     "library",
+    "routing",
     "notation",
 ]
 
@@ -99,6 +101,12 @@ def ir_schema_metadata() -> dict[str, Any]:
             "shapes": sorted(CURVE_SHAPES),
             "time_bases": sorted(NOTE_TIME_BASES | LAYER_TIME_BASES),
             "hash_policy": "expanded curve data is render data",
+        },
+        "render_plan": {
+            "schema": "audioforge.render-plan/1",
+            "policy_field": "routing",
+            "hash_policy": "routing policy is render data; derived route "
+                           "decisions live outside the IR",
         },
     }
 
@@ -238,6 +246,14 @@ def ir_json_schema() -> dict[str, Any]:
             "cutdowns": _array_items({"type": "object", "additionalProperties": True}),
             "stage": {"type": "object", "additionalProperties": True},
             "library": {"type": "object", "additionalProperties": True},
+            "routing": {
+                "type": "object",
+                "properties": {
+                    "fallbacks": _string_enum(ROUTING_FALLBACK_MODES),
+                    "stretch_warn_semitones": _number(minimum=0.0),
+                },
+                "additionalProperties": False,
+            },
             "notation": {"type": "object", "additionalProperties": True},
             "loop_safe": {"type": "boolean"},
             "variant": {"type": ["string", "integer"]},

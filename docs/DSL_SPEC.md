@@ -134,6 +134,16 @@ Motifs may contain chord symbols; transforms move the chord root and preserve th
 
 **Validate means render-ready (since 2.14).** `validate` runs the structural schema check *plus* a resource-binding resolve pass: libraries located and manifest-verified, instruments and articulations resolved, sample/IR files found and hash-checked, native kernels probed. `OK: valid — render-ready` is a true predicate for "will render"; resource problems are reported as line-cited diagnostics, and `render` refuses with the same structured list rather than a raw traceback (`--no-resolve` gives the pure structural check). Timeline issues that still render, such as note events extending past the asset duration, are reported as warnings with paths. Pins that are one repeated hex character (e.g. all zeros) are reported distinctly as **unbound placeholders**. Source line numbers travel in a `_meta` sidecar that is **excluded from the spec hash** — the same music reformatted hashes identically.
 
+**Render plans (since 2.16).** `audioforge plan spec.af` writes a derived
+`audioforge.render-plan/1` artifact after validation/resource resolution and
+before rendering. The plan records sampled routes, synthetic articulation
+fallbacks, synth/native routes, evidence, diagnostics, and reserved cost fields;
+it is not authored DSL. The hash-included authored policy lives under
+`routing`: `fallbacks: allow|warn|forbid` and `stretch_warn_semitones: N`.
+`audioforge render --plan file.plan.json` recomputes the plan and refuses stale
+spec, engine, library, catalog, or policy inputs before audio is computed.
+Render manifests record `plan_hash`, and exports write `<id>.plan.json`.
+
 **Note events** (in `notes:` lists and motifs): `PITCH @ START for DUR [vel V] [voicing NAME] [art NAME]`, where `PITCH` is a note, frequency, or chord symbol. Note lists may wrap consecutive notes in `slur( …, … )` — the group shares a slur id in the IR. `slur( play m @ 0b, play m @ 4b … )` is also valid (since 2.14): the motif expansions join as **one** slur group; `play motif @ Nb legato` remains the single-motif shorthand. `notes:` needs its first event on the same line and continues across lines with trailing commas; `play` is a layer-body statement, one per line — the parser now says exactly this when the shapes are confused. Automation (`auto target:`) honors the same comma-newline continuation rule as every property list (fixed in 2.14). Articulations: `sustain staccato spiccato pizzicato tremolo marcato legato trill` — `trill` expands at compile time into alternating notes with the key-aware diatonic upper neighbor (0.125 b steps, reported in diagnostics). Chord voicings: `close` (default) `drop2 drop3 spread open wide inv1 inv2`. A chord expands to simultaneous notes — or to a sequence if the layer has an `arp:` (§6).
 
 ---
@@ -491,6 +501,7 @@ The executable grammar lives in `audioforge.lark_parser` as a Lark grammar and i
 ```
 audioforge validate spec.af
 audioforge compile  spec.af
+audioforge plan     spec.(af|json) [-o file] [--explain]
 audioforge decompile spec.(af|json)
 audioforge repair   spec.af [--analysis FILE] [--feedback "…"]
 audioforge capabilities

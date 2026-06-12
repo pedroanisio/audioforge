@@ -31,7 +31,7 @@ def _response(ok: bool, *, artifacts=None, diagnostics=None) -> dict:
 
 
 def tool_schemas() -> dict:
-    ops = ["compile", "validate", "render", "analyze", "decompile",
+    ops = ["compile", "validate", "plan", "render", "analyze", "decompile",
            "import", "export", "repair"]
     return {
         name: {
@@ -55,6 +55,17 @@ def run_tool(operation: str, request: dict) -> dict:
         if operation == "validate":
             validate_spec(request["spec"])
             return _response(True)
+        if operation == "plan":
+            from .plan import build_render_plan
+            result = build_render_plan(request["spec"])
+            return _response(
+                True,
+                artifacts=[{
+                    "plan": result.plan,
+                    "plan_hash": result.plan_hash,
+                }],
+                diagnostics=result.diagnostics,
+            )
         if operation == "decompile":
             spec = request["spec"]
             return _response(

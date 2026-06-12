@@ -57,6 +57,15 @@ def main(argv=None) -> int:
                    help="render layers across N threads (deterministic; "
                         "default 1 / $AUDIOFORGE_JOBS)")
     p.add_argument("--analyze", action="store_true")
+    p.add_argument("--plan", default=None,
+                   help="execute a precomputed render-plan JSON after "
+                        "recompute verification")
+    p.add_argument("--explain", action="store_true",
+                   help="print the render plan routing table and exit")
+
+    p = sub.add_parser("plan"); p.add_argument("spec")
+    p.add_argument("-o", "--out", default=None)
+    p.add_argument("--explain", action="store_true")
 
     p = sub.add_parser("pack"); p.add_argument("spec")
     p.add_argument("-o", "--out", default="pack_out")
@@ -147,6 +156,19 @@ def main(argv=None) -> int:
                 "analysis": analysis,
                 "feedback": args.feedback,
             }), indent=2, sort_keys=True))
+        elif args.cmd == "plan":
+            from .plan import dumps_plan, explain_plan
+            for a in _assets(args.spec):
+                result = a.plan()
+                if args.explain:
+                    print(explain_plan(result["plan"]))
+                else:
+                    text = dumps_plan(result["plan"])
+                    if args.out:
+                        Path(args.out).write_text(text)
+                        print(f"plan -> {args.out}")
+                    else:
+                        print(text, end="")
         elif args.cmd == "capabilities":
             from .capabilities import capability_manifest
             print(json.dumps(capability_manifest(), indent=2,
@@ -213,11 +235,22 @@ def main(argv=None) -> int:
         elif args.cmd == "render":
             if args.jobs is not None:
                 os.environ["AUDIOFORGE_JOBS"] = str(args.jobs)
+            if args.explain:
+                from .plan import explain_plan
+                for a in _assets(args.spec, variant=args.variant):
+                    if args.intensity is not None:
+                        a = a.with_intensity(args.intensity)
+                    print(explain_plan(a.plan()["plan"]))
+                return 0
             for a in _assets(args.spec, variant=args.variant):
                 if args.intensity is not None:
                     a = a.with_intensity(args.intensity)
+                kwargs = {}
+                if args.plan:
+                    kwargs["plan_path"] = args.plan
                 meta = a.export(args.out, preset=args.preset,
-                                stems=args.stems, analyze=args.analyze)
+                                stems=args.stems, analyze=args.analyze,
+                                **kwargs)
                 print(json.dumps(meta, indent=2))
         elif args.cmd == "pack":
             from .sdk import AudioForge

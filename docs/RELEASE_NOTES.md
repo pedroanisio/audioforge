@@ -34,6 +34,16 @@ time-varying source-read ratio with cumulative source position, including
 looped sustain regions. Physical-model pitch curves still reject with
 `curve_unsupported_voice` until each kernel is staged.
 
+Render-plan note: AF-P2 adds derived `audioforge.render-plan/1` artifacts.
+`audioforge plan` and `AudioAsset.plan()` expose sampled routes, synthetic
+articulation fallbacks, synth/native routes, evidence, diagnostics, and
+reserved cost fields before render. `routing.fallbacks` and
+`routing.stretch_warn_semitones` are hash-included policy inputs. Render
+manifests now stamp `plan_hash` and exports write `<id>.plan.json`; session
+bundles include the plan artifact. `render --plan` recomputes and refuses stale
+plans before audio computation. The first landing keeps audio behavior
+unchanged while formalizing current routing decisions.
+
 Determinism note: `ENGINE_VERSION` is folded into the `spec_hash` payload
 (`audioforge.determinism`). Re-rendering an unchanged spec under Engine 2.16.0
 therefore yields a different render hash than under 2.15.0 by design; provenance
@@ -53,6 +63,9 @@ consumers that pinned 2.15.0 hashes must re-pin against this engine.
   validate under IR schema 1.1, publish support metadata in the capability
   manifest, render in synth and sampled-instrument paths, and diagnose lossy
   MIDI/MusicXML projections.
+- AF-P2 render plans are first-class derived artifacts: manifests stamp
+  `plan_hash`, exports and session bundles include `.plan.json`, and CLI/SDK/
+  agent surfaces can generate, explain, and stale-verify plans.
 - Backward compatible for authoring: no `.af` source migration required.
 - Render hashes recompute under the new engine version and legacy performance
   lowering may change compiled IR for assets that use `vibrato`, `glide_s`, or

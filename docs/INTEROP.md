@@ -22,7 +22,8 @@ Session bundles are produced by `export_session_bundle(spec, outdir)` and write:
 
 - `<id>.spec.json`
 - `<id>.mid`
+- `<id>.plan.json`
 - `session.manifest.json`
 
 The manifest uses schema `audioforge.session-bundle/1`, records the spec hash,
-file paths, file SHA-256 values, and interop warnings.
+the render `plan_hash`, file paths, file SHA-256 values, and interop warnings.

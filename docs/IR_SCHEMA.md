@@ -23,7 +23,8 @@ render-affecting fields.
 The schema divides top-level fields into three ownership layers:
 
 - Semantic intent: `intent`, `emotion`, `intensity_curve`, `score`, `key`,
-  `key_map`, `tempo_map`, `groove`, `markers`, `cutdowns`, `stage`, `library`.
+  `key_map`, `tempo_map`, `groove`, `markers`, `cutdowns`, `stage`, `library`,
+  `routing`.
 - Expanded render data: `id`, `kind`, `duration_s`, `sample_rate`,
   `bit_depth`, `bpm`, `loop_safe`, `layers`, `buses`, `master`, `variant`,
   `intensity_scale`.
@@ -40,6 +41,18 @@ DSL compiler. It records authored smart directives that have a safe inverse,
 motif definitions, layer `play` statements, authored note lists, and master
 property ownership so decompile can preserve authoring-level constructs without
 guessing from expanded render IR.
+
+## Render-Plan Policy
+
+`routing` is authored render policy and is hash-included. It currently supports:
+
+- `fallbacks`: `allow`, `warn`, or `forbid`.
+- `stretch_warn_semitones`: optional non-negative warning threshold.
+
+Derived route decisions do not live in the IR. They are emitted as
+`audioforge.render-plan/1` artifacts by `audioforge.plan`, keyed by
+`plan_hash`, and stamped into render manifests. Rendering with `--plan` performs
+recompute verification before audio is computed.
 
 ## Performance Curves
 

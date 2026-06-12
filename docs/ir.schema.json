@@ -990,6 +990,24 @@
       "additionalProperties": true,
       "type": "object"
     },
+    "routing": {
+      "additionalProperties": false,
+      "properties": {
+        "fallbacks": {
+          "enum": [
+            "allow",
+            "forbid",
+            "warn"
+          ],
+          "type": "string"
+        },
+        "stretch_warn_semitones": {
+          "minimum": 0.0,
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
     "sample_rate": {
       "maximum": 192000,
       "minimum": 8000,
@@ -1081,6 +1099,7 @@
         "cutdowns",
         "stage",
         "library",
+        "routing",
         "notation"
       ]
     },
@@ -1097,6 +1116,11 @@
         "0.9",
         "1.0"
       ]
+    },
+    "render_plan": {
+      "hash_policy": "routing policy is render data; derived route decisions live outside the IR",
+      "policy_field": "routing",
+      "schema": "audioforge.render-plan/1"
     },
     "version": "1.1"
   }

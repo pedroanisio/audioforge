@@ -677,6 +677,52 @@ lossless symbolic export for curve families that fit a target format.
 
 ---
 
+### G12. First-Class Render Plan
+
+Routing decisions must be inspectable before audio is rendered. The render plan
+is a derived artifact between validation/resource resolution and rendering; it
+does not live in the authored DSL or IR, but its policy inputs do.
+
+**Status:** Phase 1 implemented, Phase 2 verification entry point implemented.
+
+**Implemented**
+
+- `audioforge.plan` publishes schema `audioforge.render-plan/1`, canonical plan
+  JSON, `plan_hash`, validation, stale-plan verification, and explain helpers.
+- `routing.fallbacks` (`allow`, `warn`, `forbid`) and
+  `routing.stretch_warn_semitones` are validated as hash-included IR policy.
+- Plans cover sampled instrument note segments, synthetic articulation
+  fallbacks, and synth/native note segments with route decisions, evidence,
+  diagnostics, and reserved cost fields.
+- Render manifests include `plan_hash`, `plan_file`, and `plan_sha256`; exports
+  write `<id>.plan.json`.
+- `export_session_bundle()` includes the plan file and its SHA-256 in
+  `session.manifest.json`.
+- CLI surfaces: `audioforge plan`, `audioforge plan --explain`,
+  `audioforge render --plan`, and `audioforge render --explain`.
+- SDK and agent surfaces: `AudioAsset.plan()` and `run_tool("plan", ...)`.
+- Capability manifest advertises render-plan routes, policy fields, artifact
+  hash policy, and diagnostics.
+- Verified-plan renders consume planned articulation fallback mods and selected
+  sampled regions for static velocity and dynamic-crossfade paths.
+- Render manifests write `plan_segment_actual_ms` keyed by segment id.
+
+**Remaining staged work**
+
+- Direct low-level sampler calls without `plan_segments` keep the legacy
+  derivation path for focused unit tests and debugging. The normal render and
+  `render --plan` paths are plan-authoritative after verification.
+- Reserved `inpaint` routes still fail until the F3 inpainting route lands.
+
+**Required tests**
+
+- Planner contract, evidence, policy, stale-plan, CLI, SDK, agent-tool,
+  manifest, bundle, capability-manifest, and schema drift tests.
+- Phase 2 must add byte-identical plan-consuming sampler tests before deleting
+  legacy derivation.
+
+---
+
 ## 5. Acceptance Criteria For The Strong Universality Claim
 
 AudioForge may claim "we can express all music with a Smart DSL" without

@@ -67,7 +67,8 @@ _premaster_reports: dict = {}     # transient: id(spec) -> render report
 def _layer_signal(layer: dict, total_n: int, sr: int, tm, swing: float,
                   root: str, idx: int,
                   groove: dict | None = None,
-                  report: dict | None = None) -> np.ndarray:
+                  report: dict | None = None,
+                  render_plan: dict | None = None) -> np.ndarray:
     t = layer["type"]
     name = layer.get("name", f"layer{idx}")
     rng = lambda sub="": rng_for(root, f"{idx}:{name}", t, sub)  # noqa: E731
@@ -136,14 +137,23 @@ def _layer_signal(layer: dict, total_n: int, sr: int, tm, swing: float,
             lib = load_library(ref)
             _layer_library_cache[key] = lib
         sec = layer.get("section")
+        plan_segments = None
+        if render_plan is not None:
+            lname = layer.get("name", f"layer{idx}")
+            plan_segments = [
+                seg for seg in render_plan.get("segments", [])
+                if seg.get("layer") == lname
+            ]
         if sec:
             from .sampler import render_section
             sig = render_section(layer, dur_n, sr, tm, rng, lib,
-                                 groove=groove, report=report)
+                                 groove=groove, report=report,
+                                 plan_segments=plan_segments)
         else:
             sig = render_instrument_track(layer, dur_n, sr, tm,
                                           lambda sub: rng(sub), lib,
-                                          groove=groove, report=report)
+                                          groove=groove, report=report,
+                                          plan_segments=plan_segments)
         if lib.ignored_opcodes and report is not None:
             report["sampler_ignored_opcodes"] = sorted(lib.ignored_opcodes)
     elif t == "foley":
@@ -231,7 +241,8 @@ def _resolve_jobs(jobs: int | None) -> int:
 
 
 def _layer_signals(spec: dict, total_n: int, sr: int, tm, swing: float,
-                   root: str, groove, report: dict, jobs: int):
+                   root: str, groove, report: dict, jobs: int,
+                   render_plan: dict | None = None):
     """Render every layer's full-length signal, optionally across threads.
 
     Returns ``(prepped_layers, signals)`` in spec order. Layer signals are
@@ -259,7 +270,8 @@ def _layer_signals(spec: dict, total_n: int, sr: int, tm, swing: float,
 
     def _one(i):
         return _layer_signal(prepped[i], total_n, sr, tm, swing, root, i,
-                             groove=groove, report=report)
+                             groove=groove, report=report,
+                             render_plan=render_plan)
 
     if parallel:
         from concurrent.futures import ThreadPoolExecutor
@@ -271,7 +283,8 @@ def _layer_signals(spec: dict, total_n: int, sr: int, tm, swing: float,
 
 
 def _premaster(spec: dict, root: str, sr: int, master: dict,
-               return_stems: bool, jobs: int = 1):
+               return_stems: bool, jobs: int = 1,
+               render_plan: dict | None = None):
     """Layers -> buses -> master fx/automation/width/DC; no loudness yet."""
     total_n = int(spec["duration_s"] * sr)
     bpm = float(spec.get("bpm", 120.0))
@@ -298,7 +311,7 @@ def _premaster(spec: dict, root: str, sr: int, master: dict,
     # accumulation below stays serial and in spec order, so the mix sum is
     # byte-identical regardless of `jobs`.
     prepped, sigs = _layer_signals(spec, total_n, sr, tm, swing, root,
-                                   groove, report, jobs)
+                                   groove, report, jobs, render_plan)
     for i, layer in enumerate(prepped):
         sig = sigs[i]
         seat = layer.get("seat")
@@ -403,7 +416,8 @@ def _premaster(spec: dict, root: str, sr: int, master: dict,
     return left, right, stems
 
 
-def _finish(left, right, sr, master, spec, root, stems, return_stems):
+def _finish(left, right, sr, master, spec, root, stems, return_stems,
+            render_plan_hash: str | None = None):
     # loudness stage: LUFS target if requested, else peak normalize
     loudness_report = None
     if "target_lufs" in master:
@@ -446,6 +460,8 @@ def _finish(left, right, sr, master, spec, root, stems, return_stems):
         "markers": spec.get("markers", []),
         "emotion": spec.get("emotion", {}),
     }
+    if render_plan_hash is not None:
+        meta["plan_hash"] = render_plan_hash
     if loudness_report:
         meta["loudness"] = loudness_report
     rep = _premaster_reports.pop(id(spec), None)
@@ -460,7 +476,16 @@ def _finish(left, right, sr, master, spec, root, stems, return_stems):
     return stereo, sr, meta
 
 
-def render(spec: dict, return_stems: bool = False, jobs: int | None = None):
+def _plan_for_render(spec: dict, render_plan: dict | None = None):
+    from .plan import build_render_plan, verify_plan_for_spec
+
+    if render_plan is not None:
+        return verify_plan_for_spec(spec, render_plan)
+    return build_render_plan(spec)
+
+
+def render(spec: dict, return_stems: bool = False, jobs: int | None = None,
+           render_plan: dict | None = None):
     """Returns (stereo float64 array [n,2] in -1..1, sample_rate, meta)
     or, with return_stems=True, (..., stems).
 
@@ -469,11 +494,14 @@ def render(spec: dict, return_stems: bool = False, jobs: int | None = None):
     ``jobs`` — the determinism contract is preserved."""
     jobs = _resolve_jobs(jobs)
     spec = validate_spec(spec)
+    plan_result = _plan_for_render(spec, render_plan)
     root = spec_hash(spec)
     sr = int(spec.get("sample_rate", 48000))
     master = _master_with_intensity(spec)
-    left, right, stems = _premaster(spec, root, sr, master, return_stems, jobs)
-    return _finish(left, right, sr, master, spec, root, stems, return_stems)
+    left, right, stems = _premaster(spec, root, sr, master, return_stems,
+                                    jobs, plan_result.plan)
+    return _finish(left, right, sr, master, spec, root, stems, return_stems,
+                   plan_result.plan_hash)
 
 
 def _master_with_intensity(spec: dict) -> dict:
@@ -555,19 +583,31 @@ def _write_wav(path: Path, stereo: np.ndarray, sr: int, bits: int, root: str,
 
 
 def render_to_wav(spec: dict, out_dir: str | Path, stems: bool = False,
-                  jobs: int | None = None) -> dict:
+                  jobs: int | None = None,
+                  render_plan: dict | None = None) -> dict:
+    from .plan import dumps_plan
+
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+    plan_result = _plan_for_render(spec, render_plan)
     if stems:
-        stereo, sr, meta, stem_map = render(spec, return_stems=True, jobs=jobs)
+        stereo, sr, meta, stem_map = render(
+            spec, return_stems=True, jobs=jobs, render_plan=plan_result.plan)
     else:
-        stereo, sr, meta = render(spec, jobs=jobs)
+        stereo, sr, meta = render(
+            spec, jobs=jobs, render_plan=plan_result.plan)
     bits = meta["bit_depth"]
     root = meta["spec_hash"]
 
     wav_path = out_dir / f"{spec['id']}.wav"
     meta["output_sha256"] = _write_wav(wav_path, stereo, sr, bits, root, "dither")
     meta["file"] = wav_path.name
+
+    plan_path = out_dir / f"{spec['id']}.plan.json"
+    plan_text = dumps_plan(plan_result.plan)
+    plan_path.write_text(plan_text)
+    meta["plan_file"] = plan_path.name
+    meta["plan_sha256"] = hashlib.sha256(plan_text.encode("utf-8")).hexdigest()
 
     if stems:
         stem_dir = out_dir / f"{spec['id']}_stems"

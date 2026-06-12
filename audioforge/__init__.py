@@ -19,6 +19,9 @@ from .plugins import (register_drum_voice, register_exporter, register_fx,
 from .render import render, render_to_wav, verify
 from .repair import apply_repair, plan_repair
 from .agent_tools import run_tool, tool_schemas
+from .plan import (RENDER_PLAN_SCHEMA_VERSION, build_render_plan,
+                   explain_plan, plan_hash, validate_render_plan,
+                   verify_plan_for_spec)
 from .schema import SpecError, validate_spec
 from .sdk import AudioAsset, AudioForge, CompileResult, Diagnostic
 from .styles import list_style_packs, style_pack
@@ -34,6 +37,8 @@ __all__ = [
     "capability_manifest", "capability_manifest_schema",
     "dsl_ebnf", "dsl_gbnf", "analyze_audio",
     "spec_to_dsl", "plan_repair", "apply_repair", "run_tool", "tool_schemas",
+    "RENDER_PLAN_SCHEMA_VERSION", "build_render_plan", "plan_hash",
+    "validate_render_plan", "verify_plan_for_spec", "explain_plan",
     "export_midi_bytes", "import_midi_bytes", "export_musicxml",
     "import_musicxml", "list_style_packs", "style_pack",
     "version_banner", "version_contract",

@@ -18,6 +18,9 @@ from .curves import (
     PITCH_CENTS_DEFAULT_LIMIT,
     PITCH_CENTS_HARD_LIMIT,
 )
+from .plan import (PLAN_DIAGNOSTIC_CODES, RENDER_PLAN_ROUTES,
+                   RENDER_PLAN_SCHEMA_VERSION)
+from .schema import ROUTING_FALLBACK_MODES
 
 
 CAPABILITY_SCHEMA_VERSION = "audioforge.capabilities/1"
@@ -54,6 +57,7 @@ CLI_COMMANDS = [
     "ingest",
     "libgen",
     "pack",
+    "plan",
     "render",
     "repair",
     "score",
@@ -205,6 +209,26 @@ def capability_manifest() -> dict:
             "time_bases": sorted(NOTE_TIME_BASES | LAYER_TIME_BASES),
             "support_matrix": CURVE_SUPPORT_MATRIX,
         },
+        "render_plan": {
+            "schema": RENDER_PLAN_SCHEMA_VERSION,
+            "routes": sorted(RENDER_PLAN_ROUTES),
+            "policy": {
+                "fallbacks": {
+                    "enum": sorted(ROUTING_FALLBACK_MODES),
+                    "default": "allow",
+                },
+                "stretch_warn_semitones": {
+                    "type": "number",
+                    "minimum": 0,
+                    "default": None,
+                },
+            },
+            "diagnostic_codes": sorted(PLAN_DIAGNOSTIC_CODES),
+            "artifact": {
+                "extension": ".plan.json",
+                "hash": "sha256(canonical_plan_json_without_plan_hash_field)",
+            },
+        },
         "bit_depths": sorted(BIT_DEPTHS),
         "timing": {
             "tempo_map": "piecewise-linear [beat, bpm] points integrated exactly",
@@ -332,6 +356,14 @@ def capability_manifest() -> dict:
                 "Move the curve to a supported voice, remove it, or wait for "
                 "the physical-model kernel stage advertised in the support matrix."
             ),
+            "render_plan_stale": (
+                "Regenerate the plan from the current spec, engine version, "
+                "library pin, catalog facts, and routing policy before rendering."
+            ),
+            "render_plan_policy": (
+                "Adjust spec.routing or choose sampled articulations that satisfy "
+                "the active render-plan policy."
+            ),
         },
         "diagnostic_codes": {
             "unknown_property": {"repair_hint": "unknown_property"},
@@ -341,6 +373,23 @@ def capability_manifest() -> dict:
             "invalid_curve": {"repair_hint": "invalid_curve"},
             CURVE_UNSUPPORTED_VOICE_CODE: {
                 "repair_hint": "curve_unsupported_voice"
+            },
+            "render_plan_stale": {"repair_hint": "render_plan_stale"},
+            "render_plan_schema": {"repair_hint": "render_plan_stale"},
+            "render_plan_missing_evidence": {
+                "repair_hint": "render_plan_stale"
+            },
+            "render_plan_policy_fallback_forbid": {
+                "repair_hint": "render_plan_policy"
+            },
+            "render_plan_policy_fallback_warn": {
+                "repair_hint": "render_plan_policy"
+            },
+            "render_plan_stretch_warn": {
+                "repair_hint": "render_plan_policy"
+            },
+            "render_plan_inpaint_unavailable": {
+                "repair_hint": "Inpainting is reserved and cannot be routed until F3 lands."
             },
             "lossy_articulation": {
                 "repair_hint": "Use MusicXML for notation metadata or accept MIDI loss."
@@ -377,6 +426,7 @@ def capability_manifest_schema() -> dict:
             "diagnostic_codes": {"type": "object"},
             "cli": {"type": "object"},
             "performance_curves": {"type": "object"},
+            "render_plan": {"type": "object"},
         },
         "additionalProperties": True,
     }

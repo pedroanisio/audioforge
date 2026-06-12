@@ -180,13 +180,24 @@ class AudioAsset:
                 raise
             raise SpecError(f"render failed: {e}") from e
 
+    def plan(self) -> dict:
+        """Return the deterministic render-plan artifact and hash."""
+        from .plan import build_render_plan
+        result = build_render_plan(self._resolved(self.spec))
+        return {
+            "plan": result.plan,
+            "plan_hash": result.plan_hash,
+            "diagnostics": result.diagnostics,
+        }
+
     def preview(self, out_dir: str | Path) -> dict:
         """Fast low-resolution render for iterative listening."""
         return self.export(out_dir, preset="web_preview", id_suffix="__preview")
 
     def export(self, out_dir: str | Path, preset: str | None = None,
                stems: bool = False, id_suffix: str | None = None,
-               analyze: bool = False) -> dict:
+               analyze: bool = False,
+               plan_path: str | Path | None = None) -> dict:
         spec = copy.deepcopy(self.spec)
         if preset:
             if preset not in EXPORT_PRESETS:
@@ -200,7 +211,16 @@ class AudioAsset:
         elif id_suffix:
             spec["id"] = spec["id"] + id_suffix
         try:
-            meta = render_to_wav(self._resolved(spec), out_dir, stems=stems)
+            render_plan = None
+            if plan_path is not None:
+                from .plan import load_plan_json
+                render_plan = load_plan_json(Path(plan_path).read_text())
+            if render_plan is None:
+                meta = render_to_wav(self._resolved(spec), out_dir,
+                                     stems=stems)
+            else:
+                meta = render_to_wav(self._resolved(spec), out_dir,
+                                     stems=stems, render_plan=render_plan)
         except (ValueError, RuntimeError) as e:
             if isinstance(e, SpecError):
                 raise

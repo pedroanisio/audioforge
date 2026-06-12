@@ -89,6 +89,7 @@ CUTOFF_CAPABLE_FX = {"filter", "ladder"}
 # audit finding F6); keeping the relationship structural prevents silent drift.
 IR_ARTICULATIONS = {"sustain", "staccato", "spiccato", "pizzicato",
                     "tremolo", "marcato", "legato"}
+ROUTING_FALLBACK_MODES = {"allow", "warn", "forbid"}
 
 
 def _osc_ok(name: str) -> bool:
@@ -377,6 +378,17 @@ def validate_spec(spec: dict) -> dict:
     if bd not in BIT_DEPTHS:
         raise SpecError(f"spec.bit_depth: {bd} invalid (allowed 16, 24)")
     _num(spec, "swing", "spec", 0.0, 0.5, required=False)
+    routing = spec.get("routing")
+    if routing is not None:
+        if not isinstance(routing, dict):
+            raise SpecError("spec.routing: object")
+        fallbacks = routing.get("fallbacks", "allow")
+        if fallbacks not in ROUTING_FALLBACK_MODES:
+            raise SpecError(
+                "spec.routing.fallbacks: expected one of "
+                f"{sorted(ROUTING_FALLBACK_MODES)}")
+        _num(routing, "stretch_warn_semitones", "spec.routing",
+             0.0, 128.0, required=False)
 
     layers = _req(spec, "layers", "spec")
     if not isinstance(layers, list) or not layers:

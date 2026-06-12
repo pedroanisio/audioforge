@@ -51,6 +51,36 @@ class _Asset:
             }
         ]
 
+    def plan(self):
+        return {
+            "plan_hash": "p" * 64,
+            "plan": {
+                "schema": "audioforge.render-plan/1",
+                "spec_hash": "s" * 64,
+                "engine_version": ENGINE_VERSION,
+                "catalog_pin": None,
+                "libraries": [],
+                "policy_effective": {
+                    "fallbacks": "allow",
+                    "stretch_warn_semitones": None,
+                },
+                "segments": [{
+                    "id": "seg:fake:0",
+                    "layer": "fake",
+                    "layer_type": "notes",
+                    "note_index": 0,
+                    "span": {"start_beat": 0.0, "dur_beats": 1.0},
+                    "route": "synth_native",
+                    "decision": {"voice": "sine"},
+                    "evidence": {"layer_type": "notes"},
+                    "diagnostics": [],
+                    "cost": {"estimated_ms": None},
+                }],
+                "diagnostics": [],
+            },
+            "diagnostics": [],
+        }
+
 
 def test_cli_version_reports_runtime_contract(capsys):
     assert cli.main(["--version"]) == 0
@@ -75,6 +105,23 @@ def test_cli_validate_compile_decompile_and_grammar(monkeypatch, capsys, tmp_pat
 
     assert cli.main(["grammar", "--format", "gbnf"]) == 0
     assert "root ::=" in capsys.readouterr().out
+
+
+def test_cli_plan_and_render_explain(monkeypatch, capsys, tmp_path):
+    monkeypatch.setattr(cli, "_assets", lambda *args, **kwargs: [_Asset()])
+    spec = tmp_path / "fake.af"
+    spec.write_text("asset fake {\n  kind: cue\n}\n")
+    plan_path = tmp_path / "fake.plan.json"
+
+    assert cli.main(["plan", str(spec), "-o", str(plan_path)]) == 0
+    assert "plan ->" in capsys.readouterr().out
+    assert json.loads(plan_path.read_text())["schema"] == "audioforge.render-plan/1"
+
+    assert cli.main(["plan", str(spec), "--explain"]) == 0
+    assert "segment layer route decision" in capsys.readouterr().out
+
+    assert cli.main(["render", str(spec), "--explain"]) == 0
+    assert "seg:fake:0" in capsys.readouterr().out
 
 
 def test_cli_validate_reports_errors(monkeypatch, capsys, tmp_path):
