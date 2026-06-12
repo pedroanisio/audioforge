@@ -12,6 +12,27 @@ from .ir_schema import IR_SCHEMA_VERSION, ir_schema_metadata
 
 CAPABILITY_SCHEMA_VERSION = "audioforge.capabilities/1"
 
+CLI_COMMANDS = [
+    "batch",
+    "campaign",
+    "capabilities",
+    "compile",
+    "decompile",
+    "export-midi",
+    "export-musicxml",
+    "grammar",
+    "import-midi",
+    "import-musicxml",
+    "ingest",
+    "libgen",
+    "pack",
+    "render",
+    "repair",
+    "score",
+    "validate",
+    "verify",
+]
+
 
 def _param(kind: str, *, unit: str | None = None, default=None,
            minimum=None, maximum=None, enum=None, description: str = ""):
@@ -204,6 +225,9 @@ def capability_manifest() -> dict:
             "cli": ["export-midi", "export-musicxml",
                     "import-midi", "import-musicxml"],
         },
+        "cli": {
+            "commands": list(CLI_COMMANDS),
+        },
         "examples": {
             "smart_directives": (
                 "style: cinematic\n"
@@ -292,6 +316,7 @@ def capability_manifest_schema() -> dict:
             "intent_blocks": {"type": "object"},
             "repair_hints": {"type": "object"},
             "diagnostic_codes": {"type": "object"},
+            "cli": {"type": "object"},
         },
         "additionalProperties": True,
     }
