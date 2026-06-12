@@ -1,0 +1,429 @@
+# =============================================================================
+# AudioForge DSL 1.7 · Engine 2.14.0
+#
+# "Fable" — Symphony in C, in four movements
+# An ode to Anthropic Fable
+#
+# Original composition (not a transcription of any existing score).
+# generated_by: Claude Opus 4.8 via Claude Code
+# date: 2026-06-11
+#
+# This is a SYNTHESIS-ONLY realization: every voice is a built-in NumPy
+# oscillator (sine / saw / triangle / pad / organ / pluck / modal). No sampled
+# `instrument:` layers, no `library:` pin, no native-kernel voices
+# (bowed/blown/brass/struck/sympathetic) — so it renders deterministically on
+# any machine with numpy + scipy, no C compiler, no content library.
+#
+# DESIGN
+# ------
+# One germinal "fable_theme" (a rising, story-telling line in C major) is
+# stated, questioned, played-with, and finally apotheosized across four
+# movements, developed by the engine's compile-time transforms
+# (transpose / diatonic / invert / retrograde / stretch).
+#
+#   I.   The Kindling             — Allegro    (C major, bright)
+#   II.  The Listening            — Adagio     (A-minor colour, contemplative)
+#   III. The Play of Counterpoint — Scherzo    (diminution + a counter-voice)
+#   IV.  Fable, Entire            — Maestoso    (C major, full ensemble, apotheosis)
+#
+# Tempo held at 100 bpm (1 beat = 0.6 s) so beat->second mapping is linear and
+# the movement boundaries below are exact.
+#
+# DSL NOTE: `notes:` is an inline comma-separated event list whose first event
+# sits on the `notes:` line; `play <motif>` statements are standalone body
+# lines (no `notes:` header). Both may appear in one layer body.
+# =============================================================================
+
+asset fable_symphony {
+
+  kind:       soundtrack
+  duration:   168s                       # 280 beats @ 100 bpm + ring-out
+  samplerate: 48000
+  bitdepth:   24
+  tempo:      100bpm
+  key:        C major
+
+  # Emotional arc of an ode: wonder kindling into awe, with a tender centre
+  emotion:    wonder=0.65, awe=0.55, calm=0.30,
+              cinematic_intensity=0.45, tension=0.20
+
+  # Terraced intensity: spark -> first light -> hush -> play -> apotheosis -> rest
+  intensity:  0s=0.30, 20s=0.55, 38s=0.30, 60s=0.45,
+              77s=0.55, 100s=0.85, 115s=0.70, 140s=0.95,
+              150s=1.0, 163s=0.80, 168s=0.40
+
+  # ---------------------------------------------------------------------------
+  # Movement markers (real seconds — independent of the tempo grid)
+  # ---------------------------------------------------------------------------
+  marker mvt1_the_kindling   @ 0s
+  marker mvt2_the_listening  @ 38s
+  marker mvt3_counterpoint   @ 77s
+  marker mvt4_fable_entire   @ 115s
+  marker coda                @ 150s
+
+  # ===========================================================================
+  # MOTIFS — the germinal material
+  # ===========================================================================
+
+  # THE FABLE THEME — a rising story-line: tonic arpeggio up to the octave,
+  # then a gentle turn back. 4 beats. Everything else is this, transformed.
+  motif fable_theme {
+    G3 @ 0b    for 0.5b vel 0.70    # pickup — "once..."
+    C4 @ 0.5b  for 0.5b vel 0.78
+    E4 @ 1b    for 0.5b vel 0.80
+    G4 @ 1.5b  for 0.5b vel 0.82
+    C5 @ 2b    for 1b   vel 0.88    # arrival on the octave
+    B4 @ 3b    for 0.5b vel 0.78    # the turn
+    G4 @ 3.5b  for 0.5b vel 0.74
+  }
+
+  # THE LISTENING — the slow question of Movement II. A-minor colour.
+  motif listening {
+    A4 @ 0b    for 1b    vel 0.62   # "...why?"
+    C5 @ 1b    for 0.75b vel 0.66
+    B4 @ 1.75b for 0.5b  vel 0.62
+    A4 @ 2b    for 1b    vel 0.58
+    E4 @ 3b    for 1b    vel 0.55   # the unhurried wait
+  }
+
+  # Harmonic beds, one per movement (chord symbols = root+octave+quality)
+  motif prog_I   { C3maj @ 0b for 2b  G3maj @ 2b for 2b  A3min7 @ 4b for 2b  F3maj7 @ 6b for 2b }
+  motif prog_II  { A3min7 @ 0b for 4b  F3maj7 @ 4b for 4b  C3maj7 @ 8b for 4b  G3sus4 @ 12b for 4b }
+  motif prog_III { C3maj @ 0b for 1b  A3min7 @ 1b for 1b  D3min7 @ 2b for 1b  G37 @ 3b for 1b }
+  motif prog_IV  { C3maj @ 0b for 2b  F3maj7 @ 2b for 2b  G37 @ 4b for 2b  C3maj @ 6b for 2b }
+
+  # Bass roots, one per movement
+  motif bass_I   { C2 @ 0b for 2b  G2 @ 2b for 2b  A2 @ 4b for 2b  F2 @ 6b for 2b }
+  motif bass_II  { A2 @ 0b for 4b  F2 @ 4b for 4b  C2 @ 8b for 4b  G2 @ 12b for 4b }
+  motif bass_III { C2 @ 0b for 1b  A2 @ 1b for 1b  D2 @ 2b for 1b  G2 @ 3b for 1b }
+  motif bass_IV  { C2 @ 0b for 2b  F2 @ 2b for 2b  G2 @ 4b for 2b  C2 @ 6b for 2b }
+
+  # ===========================================================================
+  # BUSES
+  # ===========================================================================
+
+  bus orchestra {
+    gain: -1db
+    fx: hall(rt60=2.4, damp=0.38, mix=0.22),
+        comp(threshold=-18, ratio=2.0, attack=0.02, release=0.20, knee=8)
+  }
+
+  bus rhythm {
+    gain: -2db
+    fx: reverb(decay=1.2, mix=0.12)
+  }
+
+  # ===========================================================================
+  # HARMONY BED — warm PADsynth ensemble carrying the chords of each movement
+  # ===========================================================================
+  layer harmony : notes {
+    osc:       pad
+    bandwidth: 38c
+    harmonics: 40
+    env:       a=0.6s d=0.3s s=0.85 r=1.6s
+    dynamic:   0b=mp, 192b=f, 256b=ff
+    gain:      -7db
+    bus:       orchestra
+    fx:        lowpass(3600hz, q=0.6), reverb(decay=2.6, mix=0.20)
+
+    # I. The Kindling (beats 0-64)
+    play prog_I @ 0b   vel 0.72
+    play prog_I @ 8b   vel 0.74
+    play prog_I @ 16b  vel 0.78
+    play prog_I @ 24b  vel 0.80
+    play prog_I @ 32b  vel 0.82
+    play prog_I @ 40b  vel 0.80
+    play prog_I @ 48b  vel 0.78
+    play prog_I @ 56b  vel 0.74
+    # II. The Listening (beats 64-128)
+    play prog_II @ 64b  vel 0.58
+    play prog_II @ 80b  vel 0.60
+    play prog_II @ 96b  vel 0.64
+    play prog_II @ 112b vel 0.60
+    # III. Counterpoint (beats 128-192)
+    play prog_III @ 128b vel 0.70
+    play prog_III @ 132b vel 0.70
+    play prog_III @ 136b vel 0.72
+    play prog_III @ 140b vel 0.72
+    play prog_III @ 144b vel 0.74
+    play prog_III @ 148b vel 0.74
+    play prog_III @ 152b vel 0.76
+    play prog_III @ 156b vel 0.76
+    play prog_III @ 160b vel 0.78
+    play prog_III @ 164b vel 0.78
+    play prog_III @ 168b vel 0.80
+    play prog_III @ 172b vel 0.80
+    play prog_III @ 176b vel 0.82
+    play prog_III @ 180b vel 0.82
+    play prog_III @ 184b vel 0.84
+    play prog_III @ 188b vel 0.84
+    # IV. Fable, Entire (beats 192-272)
+    play prog_IV @ 192b vel 0.86
+    play prog_IV @ 200b vel 0.88
+    play prog_IV @ 208b vel 0.90
+    play prog_IV @ 216b vel 0.92
+    play prog_IV @ 224b vel 0.94
+    play prog_IV @ 232b vel 0.96
+    play prog_IV @ 240b vel 0.98
+    play prog_IV @ 248b vel 1.0
+    play prog_IV @ 256b vel 0.95
+    play prog_IV @ 264b vel 0.85
+  }
+
+  # ===========================================================================
+  # MELODY — the singing lead (filtered saw "strings") carrying the Fable theme
+  # ===========================================================================
+  layer melody : notes {
+    osc:       saw
+    env:       a=0.05s d=0.18s s=0.72 r=0.5s
+    velbright: 0.6
+    vibrato:   rate=5.0 depth=12c delay=0.35s
+    phrasing:  0.6
+    glide:     0.04s
+    gain:      -8db
+    bus:       orchestra
+    fx:        lowpass(2600hz, q=0.7), reverb(decay=2.0, mix=0.22)
+
+    # the last, held light at the very end of the finale
+    notes: C6 @ 264b for 8b vel 0.85 art sustain
+
+    # I. The Kindling — statement and brightening repetitions
+    play fable_theme @ 8b   vel 0.78
+    play fable_theme @ 16b  vel 0.82
+    play fable_theme @ 24b  transpose +12st  vel 0.80
+    play fable_theme @ 32b  diatonic +2      vel 0.84
+    play fable_theme @ 40b  vel 0.86
+    play fable_theme @ 48b  transpose +12st  vel 0.82
+    # II. The Listening — the slow question, stretched and tender
+    play listening @ 66b  stretch 1.5  vel 0.60
+    play listening @ 76b  stretch 1.5  diatonic +1  vel 0.62
+    play listening @ 88b  stretch 1.5  vel 0.64
+    play listening @ 100b stretch 1.25 invert       vel 0.60
+    play listening @ 112b stretch 1.5  vel 0.58
+    # III. Counterpoint — the theme in quick diminution, playful
+    play fable_theme @ 130b stretch 0.5  vel 0.78
+    play fable_theme @ 134b stretch 0.5  diatonic +1      vel 0.78
+    play fable_theme @ 138b stretch 0.5  retrograde       vel 0.76
+    play fable_theme @ 144b stretch 0.5  transpose +12st  vel 0.80
+    play fable_theme @ 150b stretch 0.5  invert           vel 0.76
+    play fable_theme @ 156b stretch 0.5  diatonic +2      vel 0.80
+    play fable_theme @ 164b stretch 0.5  vel 0.82
+    play fable_theme @ 172b stretch 0.5  transpose +12st  vel 0.84
+    play fable_theme @ 180b stretch 0.5  diatonic +3      vel 0.84
+    play fable_theme @ 186b stretch 0.5  vel 0.86
+    # IV. Fable, Entire — grandeur, then augmentation at the apex
+    play fable_theme @ 192b transpose +12st  vel 0.90
+    play fable_theme @ 200b transpose +12st  vel 0.92
+    play fable_theme @ 208b diatonic +2  transpose +12st  vel 0.94
+    play fable_theme @ 216b transpose +12st  vel 0.96
+    play fable_theme @ 224b transpose +12st  vel 0.98
+    play fable_theme @ 232b stretch 2.0  transpose +12st  vel 1.0
+    play fable_theme @ 248b stretch 2.0  transpose +12st  vel 0.95
+  }
+
+  # ===========================================================================
+  # COUNTER-VOICE — a second line conversing with the melody in Mvts III & IV
+  # ===========================================================================
+  layer counter : notes {
+    osc:       triangle
+    env:       a=0.04s d=0.15s s=0.6 r=0.4s
+    velbright: 0.5
+    phrasing:  0.55
+    gain:      -12db
+    bus:       orchestra
+    fx:        lowpass(3200hz, q=0.7), reverb(decay=1.8, mix=0.18)
+
+    # III. enters in canon, two beats behind the melody, inverted
+    play fable_theme @ 132b stretch 0.5  invert            vel 0.66
+    play fable_theme @ 136b stretch 0.5  diatonic -2       vel 0.66
+    play fable_theme @ 140b stretch 0.5  retrograde invert vel 0.64
+    play fable_theme @ 146b stretch 0.5  diatonic -1       vel 0.68
+    play fable_theme @ 152b stretch 0.5  invert            vel 0.66
+    play fable_theme @ 158b stretch 0.5  diatonic -3       vel 0.68
+    play fable_theme @ 166b stretch 0.5  vel 0.70
+    play fable_theme @ 174b stretch 0.5  invert            vel 0.72
+    play fable_theme @ 182b stretch 0.5  diatonic -2       vel 0.72
+    # IV. countersubject under the augmented theme
+    play fable_theme @ 194b stretch 0.5  diatonic -2  vel 0.74
+    play fable_theme @ 202b stretch 0.5  vel 0.76
+    play fable_theme @ 210b stretch 0.5  invert       vel 0.78
+    play fable_theme @ 218b stretch 0.5  diatonic -1  vel 0.80
+    play fable_theme @ 226b stretch 0.5  vel 0.82
+  }
+
+  # ===========================================================================
+  # HARP — plucked-string arpeggios (Karplus-Strong), shimmer over the bed
+  # ===========================================================================
+  layer harp : notes {
+    osc:        pluck
+    damping:    0.45
+    brightness: 0.62
+    pluckpos:   0.26
+    env:        a=0.001s d=0.6s s=0.0 r=0.2s
+    arp:        up rate=0.25b octaves=2 gate=0.9
+    gain:       -13db
+    bus:        rhythm
+    fx:         highpass(160hz), reverb(decay=1.6, mix=0.18)
+
+    # I. arpeggiated harmony, entering as the theme takes hold
+    play prog_I @ 16b  vel 0.62
+    play prog_I @ 24b  vel 0.64
+    play prog_I @ 32b  vel 0.66
+    play prog_I @ 40b  vel 0.66
+    play prog_I @ 48b  vel 0.64
+    play prog_I @ 56b  vel 0.62
+    # II. sparse, slow rolls under the question
+    play prog_II @ 64b  vel 0.50
+    play prog_II @ 80b  vel 0.52
+    play prog_II @ 96b  vel 0.54
+    play prog_II @ 112b vel 0.50
+    # III. quick figuration drives the scherzo
+    play prog_III @ 128b vel 0.62
+    play prog_III @ 136b vel 0.64
+    play prog_III @ 144b vel 0.66
+    play prog_III @ 152b vel 0.68
+    play prog_III @ 160b vel 0.70
+    play prog_III @ 168b vel 0.72
+    play prog_III @ 176b vel 0.74
+    play prog_III @ 184b vel 0.76
+    # IV. full sweeping arpeggios
+    play prog_IV @ 192b vel 0.74
+    play prog_IV @ 208b vel 0.78
+    play prog_IV @ 224b vel 0.82
+    play prog_IV @ 240b vel 0.84
+    play prog_IV @ 256b vel 0.76
+  }
+
+  # ===========================================================================
+  # BELLS — modal resonators (struck partials): the "spark" and climax peals
+  # ===========================================================================
+  layer bells : notes {
+    osc:       modal
+    material:  bell
+    modedecay: 2.2s
+    env:       a=0.001s d=2.0s s=0.0 r=0.4s
+    gain:      -16db
+    bus:       rhythm
+    fx:        highpass(220hz), reverb(decay=3.0, mix=0.28)
+
+    notes: C5 @ 0b for 4b vel 0.80, G5 @ 32b for 4b vel 0.62,
+           C6 @ 192b for 4b vel 0.78, G5 @ 200b for 4b vel 0.70,
+           E6 @ 224b for 4b vel 0.82, C6 @ 232b for 8b vel 0.88,
+           G6 @ 248b for 8b vel 0.80, C6 @ 264b for 8b vel 0.74
+  }
+
+  # ===========================================================================
+  # ORGAN — fanfare grandeur: opens Movement I, returns to anchor Movement IV
+  # ===========================================================================
+  layer organ : notes {
+    osc:    organ
+    env:    a=0.08s d=0.0s s=1.0 r=0.6s
+    gain:   -14db
+    bus:    orchestra
+    fx:     lowpass(3000hz), reverb(decay=2.2, mix=0.18)
+
+    # I. the opening chord that lights the hall
+    play prog_I @ 0b  vel 0.60
+    play prog_I @ 8b  vel 0.58
+    # IV. the cathedral of harmony beneath the finale
+    play prog_IV @ 208b vel 0.66
+    play prog_IV @ 216b vel 0.70
+    play prog_IV @ 224b vel 0.74
+    play prog_IV @ 232b vel 0.80
+    play prog_IV @ 240b vel 0.82
+    play prog_IV @ 248b vel 0.84
+    play prog_IV @ 256b vel 0.74
+    play prog_IV @ 264b vel 0.64
+  }
+
+  # ===========================================================================
+  # BASS — the tonal foundation (deep sine), one root line per movement
+  # ===========================================================================
+  layer bass : notes {
+    osc:    sine
+    env:    a=0.06s d=0.2s s=0.85 r=0.6s
+    gain:   -9db
+    bus:    rhythm
+    fx:     lowpass(900hz), saturate(amount=0.06, warmth=0.4)
+
+    # the final pedal, ringing out under the close
+    notes: C1 @ 264b for 12b vel 0.80 art sustain
+
+    # I
+    play bass_I @ 0b   vel 0.74
+    play bass_I @ 8b   vel 0.74
+    play bass_I @ 16b  vel 0.76
+    play bass_I @ 24b  vel 0.78
+    play bass_I @ 32b  vel 0.80
+    play bass_I @ 40b  vel 0.78
+    play bass_I @ 48b  vel 0.76
+    play bass_I @ 56b  vel 0.74
+    # II
+    play bass_II @ 64b  vel 0.62
+    play bass_II @ 80b  vel 0.64
+    play bass_II @ 96b  vel 0.66
+    play bass_II @ 112b vel 0.62
+    # III
+    play bass_III @ 128b vel 0.72
+    play bass_III @ 136b vel 0.74
+    play bass_III @ 144b vel 0.76
+    play bass_III @ 152b vel 0.76
+    play bass_III @ 160b vel 0.78
+    play bass_III @ 168b vel 0.80
+    play bass_III @ 176b vel 0.80
+    play bass_III @ 184b vel 0.82
+    # IV
+    play bass_IV @ 192b vel 0.84
+    play bass_IV @ 200b vel 0.86
+    play bass_IV @ 208b vel 0.88
+    play bass_IV @ 216b vel 0.90
+    play bass_IV @ 224b vel 0.92
+    play bass_IV @ 232b vel 0.94
+    play bass_IV @ 240b vel 0.96
+    play bass_IV @ 248b vel 0.94
+    play bass_IV @ 256b vel 0.86
+  }
+
+  # ===========================================================================
+  # ROOM AIR — faint granular pink-noise air, the breath of the hall
+  # ===========================================================================
+  layer room_air : grain {
+    source:      pink
+    srcdur:      3.5s
+    grainsize:   0.16s
+    density:     10
+    pitchspread: 35c
+    scatter:     0.4
+    gain:        -30db
+    start:       0s
+    env:         a=2.0s d=0.0s s=1.0 r=3.0s
+    fx:          lowpass(700hz), highpass(70hz)
+
+    auto gain: 0s=-36db, 100s=-28db, 150s=-24db, 168s=-40db
+  }
+
+  # ===========================================================================
+  # MASTER
+  # ===========================================================================
+  master {
+    width:   0.78
+    lufs:    -16
+    peak:    -1.0
+    fadein:  1.2s
+    fadeout: 5.0s
+
+    fx: fdn(rt60=2.8, rt60_high=1.2, crossover=2400, mix=0.16),
+        comp(threshold=-17, ratio=2.0, attack=0.02, release=0.25, knee=9, makeup=1),
+        highpass(30hz),
+        lowshelf(110hz, gain=-1.0),
+        highshelf(9000hz, gain=+0.8),
+        mbcomp(threshold=-20, ratio=1.8, low=170, high=2700)
+  }
+
+}
+
+# =============================================================================
+# Render targets:
+#   audioforge validate compositions/fable_symphony.af
+#   audioforge render   compositions/fable_symphony.af --preset cinematic_master -o renders
+# =============================================================================

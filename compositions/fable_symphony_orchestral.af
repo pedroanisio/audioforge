@@ -1,0 +1,513 @@
+# =============================================================================
+# AudioForge DSL 1.7 · Engine 2.14.0
+#
+# "Fable" — Symphony in C, in four movements  (ORCHESTRAL realization)
+# An ode to Anthropic Fable
+#
+# Original composition (not a transcription of any existing score).
+# generated_by: Claude Opus 4.8 via Claude Code
+# date: 2026-06-11
+#
+# Scored for the full Versilian Studios Chamber Orchestra, Community Edition
+# (VSCO-2-CE, CC0 / public-domain sample set), resolved on disk:
+#     library: vsco2-ce @ 97beb25c…
+# Sampled sections: violins / violas / cellos / contrabasses (sus, spiccato,
+# pizzicato), flute, oboe, clarinet, bassoon, French horn, trumpet, tuba,
+# timpani, glockenspiel, tubular bells, and harp.
+#
+# Same germinal `fable_theme` as the synthesis version, now distributed across
+# the orchestra and developed with the engine's compile-time transforms
+# (transpose / diatonic / invert / retrograde / stretch).
+#
+#   I.   The Kindling             — Allegro    trumpet fanfare, strings, timpani
+#   II.  The Listening            — Adagio     solo oboe over hushed strings
+#   III. The Play of Counterpoint — Scherzo    spiccato strings, pizz bass, winds
+#   IV.  Fable, Entire            — Maestoso    full tutti, horns, bells, organ-weight
+#
+# Tempo held at 100 bpm (1 beat = 0.6 s); movement boundaries are exact.
+# Each VSCO instrument exposes a single 'sustain' articulation — pizz/spic
+# timbres are SEPARATE instruments (ViolinEnsPizz, ViolinEnsSpic, …), so the
+# articulation is chosen by instrument, not by per-note `art`.
+# =============================================================================
+
+asset fable_symphony_orchestral {
+
+  kind:       soundtrack
+  duration:   168s
+  samplerate: 48000
+  bitdepth:   24
+  tempo:      100bpm
+  key:        C major
+
+  emotion:    wonder=0.65, awe=0.55, calm=0.30,
+              cinematic_intensity=0.50, tension=0.20
+
+  intensity:  0s=0.30, 20s=0.55, 38s=0.30, 60s=0.45,
+              77s=0.55, 100s=0.85, 115s=0.70, 140s=0.95,
+              150s=1.0, 163s=0.80, 168s=0.40
+
+  # The resolved chamber-orchestra library (real on-disk pin)
+  library:    "VSCO-2-CE-1.1.0@ff140e8b5c5d6916ccf8088b0fc7dfb632f434d056aa764400905fdbd5824b0e"
+
+  marker mvt1_the_kindling   @ 0s
+  marker mvt2_the_listening  @ 38s
+  marker mvt3_counterpoint   @ 77s
+  marker mvt4_fable_entire   @ 115s
+  marker coda                @ 150s
+
+  # ===========================================================================
+  # MOTIFS
+  # ===========================================================================
+  motif fable_theme {
+    G3 @ 0b    for 0.5b vel 0.70
+    C4 @ 0.5b  for 0.5b vel 0.78
+    E4 @ 1b    for 0.5b vel 0.80
+    G4 @ 1.5b  for 0.5b vel 0.82
+    C5 @ 2b    for 1b   vel 0.88
+    B4 @ 3b    for 0.5b vel 0.78
+    G4 @ 3.5b  for 0.5b vel 0.74
+  }
+
+  motif listening {
+    A4 @ 0b    for 1b    vel 0.62
+    C5 @ 1b    for 0.75b vel 0.66
+    B4 @ 1.75b for 0.5b  vel 0.62
+    A4 @ 2b    for 1b    vel 0.58
+    E4 @ 3b    for 1b    vel 0.55
+  }
+
+  motif prog_I   { C3maj @ 0b for 2b  G3maj @ 2b for 2b  A3min7 @ 4b for 2b  F3maj7 @ 6b for 2b }
+  motif prog_II  { A3min7 @ 0b for 4b  F3maj7 @ 4b for 4b  C3maj7 @ 8b for 4b  G3sus4 @ 12b for 4b }
+  motif prog_III { C3maj @ 0b for 1b  A3min7 @ 1b for 1b  D3min7 @ 2b for 1b  G37 @ 3b for 1b }
+  motif prog_IV  { C3maj @ 0b for 2b  F3maj7 @ 2b for 2b  G37 @ 4b for 2b  C3maj @ 6b for 2b }
+
+  motif bass_I   { C2 @ 0b for 2b  G2 @ 2b for 2b  A2 @ 4b for 2b  F2 @ 6b for 2b }
+  motif bass_II  { A2 @ 0b for 4b  F2 @ 4b for 4b  C2 @ 8b for 4b  G2 @ 12b for 4b }
+  motif bass_III { C2 @ 0b for 1b  A2 @ 1b for 1b  D2 @ 2b for 1b  G2 @ 3b for 1b }
+  motif bass_IV  { C2 @ 0b for 2b  F2 @ 2b for 2b  G2 @ 4b for 2b  C2 @ 6b for 2b }
+
+  # ===========================================================================
+  # BUSES — one per orchestral choir, into the master hall
+  # ===========================================================================
+  bus strings {
+    gain: -1db
+    fx: hall(rt60=2.6, damp=0.35, mix=0.20),
+        comp(threshold=-18, ratio=2.0, attack=0.03, release=0.22, knee=8)
+  }
+  bus winds {
+    gain: -2db
+    fx: hall(rt60=2.4, damp=0.40, mix=0.18)
+  }
+  bus brass {
+    gain: -2db
+    fx: hall(rt60=2.6, damp=0.30, mix=0.18),
+        comp(threshold=-16, ratio=2.2, attack=0.02, release=0.18, knee=6)
+  }
+  bus perc {
+    gain: -3db
+    fx: reverb(decay=1.8, mix=0.16)
+  }
+
+  # ===========================================================================
+  # STRINGS
+  # ===========================================================================
+
+  # Violins — carry the theme (sustain) in I, II, IV
+  layer violins : instrument {
+    instrument:   "ViolinEnsSusVib"
+    articulation: sustain
+    dynamic:      0b=mp, 64b=p, 192b=f, 256b=ff
+    vibrato:      rate=5.0 depth=14c delay=0.35s
+    phrasing:     0.6
+    humanize:     time=0.010s vel=0.06
+    gain:         0db
+    bus:          strings
+
+    # I. The Kindling — statement and brightening
+    play fable_theme @ 8b   vel 0.78
+    play fable_theme @ 16b  vel 0.82
+    play fable_theme @ 24b  transpose +12st  vel 0.80
+    play fable_theme @ 32b  diatonic +2      vel 0.84
+    play fable_theme @ 40b  vel 0.86
+    play fable_theme @ 48b  transpose +12st  vel 0.82
+    # II. The Listening — high sustained answer beneath the oboe
+    play listening @ 80b  stretch 1.5  transpose +12st  vel 0.42
+    play listening @ 104b stretch 1.5  transpose +12st  vel 0.46
+    # IV. Fable, Entire — grandeur and augmentation
+    play fable_theme @ 192b transpose +12st  vel 0.90
+    play fable_theme @ 200b transpose +12st  vel 0.92
+    play fable_theme @ 208b transpose +12st  vel 0.94
+    play fable_theme @ 216b transpose +12st  vel 0.96
+    play fable_theme @ 224b transpose +12st  vel 0.98
+    play fable_theme @ 232b stretch 2.0  transpose +12st  vel 1.0
+    play fable_theme @ 248b stretch 2.0  transpose +12st  vel 0.95
+  }
+
+  # Violins (spiccato) — the playful diminution of Movement III
+  layer violins_spic : instrument {
+    instrument:   "ViolinEnsSpic"
+    articulation: sustain
+    dynamic:      128b=mp, 176b=mf
+    humanize:     time=0.012s vel=0.08
+    gain:         -1db
+    bus:          strings
+
+    play fable_theme @ 130b stretch 0.5  vel 0.78
+    play fable_theme @ 134b stretch 0.5  diatonic +1      vel 0.78
+    play fable_theme @ 138b stretch 0.5  retrograde       vel 0.76
+    play fable_theme @ 144b stretch 0.5  transpose +12st  vel 0.80
+    play fable_theme @ 150b stretch 0.5  diatonic +1      vel 0.76
+    play fable_theme @ 156b stretch 0.5  diatonic +2      vel 0.80
+    play fable_theme @ 164b stretch 0.5  vel 0.82
+    play fable_theme @ 172b stretch 0.5  transpose +12st  vel 0.84
+    play fable_theme @ 180b stretch 0.5  diatonic +3      vel 0.84
+    play fable_theme @ 186b stretch 0.5  vel 0.86
+  }
+
+  # Violas — the inner harmonic bed (chords of each movement)
+  layer violas : instrument {
+    instrument:   "ViolaEnsSusVib"
+    articulation: sustain
+    dynamic:      0b=mp, 64b=p, 192b=mf, 256b=f
+    vibrato:      rate=4.8 depth=12c delay=0.4s
+    humanize:     time=0.012s vel=0.07
+    gain:         -3db
+    bus:          strings
+
+    play prog_I @ 0b   vel 0.62
+    play prog_I @ 8b   vel 0.64
+    play prog_I @ 16b  vel 0.66
+    play prog_I @ 24b  vel 0.68
+    play prog_I @ 32b  vel 0.70
+    play prog_I @ 40b  vel 0.68
+    play prog_I @ 48b  vel 0.66
+    play prog_I @ 56b  vel 0.62
+    play prog_II @ 64b  vel 0.48
+    play prog_II @ 80b  vel 0.50
+    play prog_II @ 96b  vel 0.54
+    play prog_II @ 112b vel 0.50
+    play prog_IV @ 192b vel 0.74
+    play prog_IV @ 208b vel 0.80
+    play prog_IV @ 224b vel 0.86
+    play prog_IV @ 240b vel 0.90
+    play prog_IV @ 256b vel 0.78
+  }
+
+  # Cellos — chords an octave below the violas; warmth and counter-line
+  layer cellos : instrument {
+    instrument:   "CelloEnsSusVib"
+    articulation: sustain
+    dynamic:      0b=mp, 64b=p, 192b=mf, 256b=f
+    vibrato:      rate=4.6 depth=12c delay=0.45s
+    humanize:     time=0.013s vel=0.07
+    gain:         -2db
+    bus:          strings
+
+    play prog_I @ 0b   transpose -12st  vel 0.60
+    play prog_I @ 16b  transpose -12st  vel 0.64
+    play prog_I @ 32b  transpose -12st  vel 0.68
+    play prog_I @ 48b  transpose -12st  vel 0.62
+    play prog_II @ 64b  transpose -12st  vel 0.48
+    play prog_II @ 96b  transpose -12st  vel 0.52
+    # IV. cello counter-melody under the augmented theme
+    play fable_theme @ 194b invert  vel 0.70
+    play fable_theme @ 210b diatonic -2  vel 0.72
+    play fable_theme @ 226b invert  vel 0.74
+    play prog_IV @ 240b transpose -12st  vel 0.80
+    play prog_IV @ 256b transpose -12st  vel 0.70
+  }
+
+  # Contrabasses — the tonal foundation (sustain, in I/II/IV)
+  layer contrabass : instrument {
+    instrument:   "ContrabassSusVB"
+    articulation: sustain
+    dynamic:      0b=mp, 64b=p, 192b=f, 256b=ff
+    humanize:     time=0.014s vel=0.07
+    gain:         -2db
+    bus:          strings
+
+    play bass_I @ 0b   vel 0.72
+    play bass_I @ 8b   vel 0.72
+    play bass_I @ 16b  vel 0.74
+    play bass_I @ 24b  vel 0.76
+    play bass_I @ 32b  vel 0.78
+    play bass_I @ 40b  vel 0.76
+    play bass_I @ 48b  vel 0.74
+    play bass_I @ 56b  vel 0.72
+    play bass_II @ 64b  vel 0.56
+    play bass_II @ 80b  vel 0.58
+    play bass_II @ 96b  vel 0.60
+    play bass_II @ 112b vel 0.56
+    play bass_IV @ 192b vel 0.84
+    play bass_IV @ 208b vel 0.88
+    play bass_IV @ 224b vel 0.92
+    play bass_IV @ 240b vel 0.96
+    play bass_IV @ 256b vel 0.84
+  }
+
+  # Contrabasses (pizzicato) — the walking foundation of the scherzo
+  layer contrabass_pizz : instrument {
+    instrument:   "ContrabassPizz"
+    articulation: sustain
+    dynamic:      128b=mp, 176b=mf
+    humanize:     time=0.012s vel=0.08
+    gain:         -2db
+    bus:          strings
+
+    play bass_III @ 128b vel 0.72
+    play bass_III @ 136b vel 0.74
+    play bass_III @ 144b vel 0.76
+    play bass_III @ 152b vel 0.76
+    play bass_III @ 160b vel 0.78
+    play bass_III @ 168b vel 0.80
+    play bass_III @ 176b vel 0.80
+    play bass_III @ 184b vel 0.82
+  }
+
+  # ===========================================================================
+  # WOODWINDS
+  # ===========================================================================
+
+  # Flute — doubles the violins an octave up in I and IV; sparkle in III
+  layer flute : instrument {
+    instrument:   "FluteSusVib"
+    articulation: sustain
+    dynamic:      0b=p, 32b=mf, 192b=f
+    vibrato:      rate=5.4 depth=16c delay=0.3s
+    phrasing:     0.6
+    humanize:     time=0.011s vel=0.06
+    gain:         -4db
+    bus:          winds
+
+    play fable_theme @ 32b  transpose +12st  vel 0.62
+    play fable_theme @ 40b  transpose +12st  vel 0.66
+    # III. high diminution doublings
+    play fable_theme @ 144b stretch 0.5  transpose +12st  vel 0.58
+    play fable_theme @ 172b stretch 0.5  transpose +12st  vel 0.62
+    play fable_theme @ 180b stretch 0.5  transpose +12st  vel 0.62
+    # IV. brilliance over the apotheosis
+    play fable_theme @ 208b transpose +12st  vel 0.70
+    play fable_theme @ 224b transpose +12st  vel 0.74
+    play fable_theme @ 232b stretch 2.0  transpose +12st  vel 0.78
+  }
+
+  # Oboe — the solo voice of Movement II: the slow, plaintive question
+  layer oboe : instrument {
+    instrument:   "OboeSusVib"
+    articulation: sustain
+    dynamic:      64b=mp, 96b=mf, 128b=p
+    vibrato:      rate=5.0 depth=18c delay=0.35s
+    phrasing:     0.7
+    humanize:     time=0.012s vel=0.07
+    gain:         -3db
+    bus:          winds
+
+    play listening @ 66b  stretch 1.5  vel 0.66
+    play listening @ 76b  stretch 1.5  diatonic +1  vel 0.68
+    play listening @ 88b  stretch 1.5  vel 0.70
+    play listening @ 100b stretch 1.25 invert       vel 0.64
+    play listening @ 112b stretch 1.5  vel 0.60
+    # IV. doubles the theme's arrival
+    play fable_theme @ 200b transpose +12st  vel 0.66
+    play fable_theme @ 216b transpose +12st  vel 0.70
+  }
+
+  # Clarinet — inner counter-line in II & III, harmony in IV
+  layer clarinet : instrument {
+    instrument:   "ClarinetSus"
+    articulation: sustain
+    dynamic:      64b=p, 128b=mp, 192b=mf
+    vibrato:      rate=4.6 depth=10c delay=0.4s
+    humanize:     time=0.013s vel=0.07
+    gain:         -5db
+    bus:          winds
+
+    # II. a soft countersubject below the oboe
+    play listening @ 70b  stretch 1.5  diatonic -2  vel 0.46
+    play listening @ 92b  stretch 1.5  invert  diatonic -2  vel 0.48
+    # III. trades the diminution with the strings
+    play fable_theme @ 132b stretch 0.5  diatonic -2  vel 0.60
+    play fable_theme @ 152b stretch 0.5  diatonic -1  vel 0.60
+    play fable_theme @ 168b stretch 0.5  diatonic -1  vel 0.62
+    # IV. harmonic filler (up an octave to stay in clarinet's chalumeau-plus range)
+    play prog_IV @ 208b transpose +12st  vel 0.50
+    play prog_IV @ 240b transpose +12st  vel 0.54
+  }
+
+  # Bassoon — low woodwind doubling the bass and a tenor counter in IV
+  layer bassoon : instrument {
+    instrument:   "BassoonSus"
+    articulation: sustain
+    dynamic:      0b=p, 128b=mp, 192b=mf
+    humanize:     time=0.014s vel=0.07
+    gain:         -4db
+    bus:          winds
+
+    play bass_I @ 0b   vel 0.50
+    play bass_I @ 32b  vel 0.54
+    play bass_III @ 128b vel 0.56
+    play bass_III @ 160b vel 0.60
+    play fable_theme @ 202b invert  vel 0.58
+    play fable_theme @ 234b stretch 2.0  invert  vel 0.62
+  }
+
+  # ===========================================================================
+  # BRASS
+  # ===========================================================================
+
+  # Trumpet — the kindling fanfare (I) and the apex of the finale (IV)
+  layer trumpet : instrument {
+    instrument:   "TrumpetSus"
+    articulation: sustain
+    dynamic:      0b=mf, 8b=p, 192b=f, 232b=ff
+    humanize:     time=0.010s vel=0.06
+    gain:         -5db
+    bus:          brass
+
+    # I. the opening call — the theme that lights the hall
+    play fable_theme @ 0b   vel 0.72
+    play fable_theme @ 4b   diatonic +4  vel 0.64
+    # IV. the theme blazes at the apex
+    play fable_theme @ 216b vel 0.84
+    play fable_theme @ 224b vel 0.88
+    play fable_theme @ 232b stretch 2.0  vel 0.94
+    play fable_theme @ 248b stretch 2.0  vel 0.86
+  }
+
+  # French horns — warm chordal weight; theme grandeur in IV
+  layer horns : instrument {
+    instrument:   "FHornSus"
+    articulation: sustain
+    dynamic:      0b=p, 48b=mf, 192b=f, 248b=ff
+    humanize:     time=0.013s vel=0.07
+    gain:         -3db
+    bus:          brass
+
+    # I. swelling pads at the first climax
+    play prog_I @ 32b  vel 0.54
+    play prog_I @ 40b  vel 0.58
+    play prog_I @ 48b  vel 0.54
+    # IV. the noble statement of the theme
+    play fable_theme @ 192b vel 0.74
+    play fable_theme @ 200b vel 0.78
+    play fable_theme @ 208b vel 0.82
+    play prog_IV @ 232b vel 0.86
+    play prog_IV @ 248b vel 0.90
+    play prog_IV @ 256b vel 0.78
+  }
+
+  # Tuba — the deep pedal of the finale
+  layer tuba : instrument {
+    instrument:   "TubaSus"
+    articulation: sustain
+    dynamic:      192b=f, 248b=ff
+    humanize:     time=0.015s vel=0.07
+    gain:         -4db
+    bus:          brass
+
+    play bass_IV @ 192b vel 0.74
+    play bass_IV @ 208b vel 0.80
+    play bass_IV @ 224b vel 0.86
+    play bass_IV @ 240b vel 0.92
+    play bass_IV @ 256b vel 0.80
+  }
+
+  # ===========================================================================
+  # PERCUSSION
+  # ===========================================================================
+
+  # Timpani — structural thunder at movement pillars and the apotheosis
+  layer timpani : instrument {
+    instrument:   "Timpani"
+    articulation: sustain
+    dynamic:      0b=mf, 192b=f, 232b=ff
+    humanize:     time=0.008s vel=0.06
+    gain:         -4db
+    bus:          perc
+
+    notes: C2 @ 0b for 1b vel 0.78, G2 @ 2b for 1b vel 0.64,
+           C2 @ 32b for 1b vel 0.70, G2 @ 56b for 1b vel 0.62,
+           C2 @ 192b for 1b vel 0.82, G2 @ 196b for 1b vel 0.74,
+           C2 @ 200b for 1b vel 0.84, C2 @ 232b for 2b vel 0.92,
+           G2 @ 240b for 1b vel 0.84, C2 @ 248b for 2b vel 0.94,
+           C2 @ 264b for 2b vel 0.80
+  }
+
+  # Glockenspiel — the single kindling spark, then high sparkle
+  layer glockenspiel : instrument {
+    instrument:   "Glockenspiel"
+    articulation: sustain
+    dynamic:      0b=mf, 192b=f
+    gain:         -8db
+    bus:          perc
+
+    notes: C6 @ 0b for 2b vel 0.74, G5 @ 32b for 2b vel 0.58,
+           C6 @ 192b for 2b vel 0.66, E6 @ 208b for 2b vel 0.66,
+           G6 @ 224b for 2b vel 0.70, C7 @ 232b for 4b vel 0.74,
+           C6 @ 264b for 4b vel 0.60
+  }
+
+  # Tubular bells — the crowning peals of the finale
+  layer tubular : instrument {
+    instrument:   "TubularBells"
+    articulation: sustain
+    dynamic:      192b=f, 232b=ff
+    gain:         -7db
+    bus:          perc
+
+    notes: C5 @ 192b for 4b vel 0.72, G4 @ 200b for 4b vel 0.66,
+           C5 @ 232b for 8b vel 0.84, G5 @ 248b for 8b vel 0.78,
+           C5 @ 264b for 8b vel 0.70
+  }
+
+  # Harp — arpeggiated shimmer across the whole arc
+  layer harp : instrument {
+    instrument:   "Harp"
+    articulation: sustain
+    humanize:     time=0.010s vel=0.08
+    gain:         -5db
+    bus:          perc
+
+    play prog_I @ 16b  vel 0.58
+    play prog_I @ 24b  vel 0.60
+    play prog_I @ 32b  vel 0.62
+    play prog_I @ 40b  vel 0.62
+    play prog_I @ 48b  vel 0.60
+    play prog_II @ 64b  vel 0.46
+    play prog_II @ 96b  vel 0.50
+    play prog_III @ 128b vel 0.58
+    play prog_III @ 144b vel 0.62
+    play prog_III @ 160b vel 0.64
+    play prog_III @ 176b vel 0.66
+    play prog_IV @ 192b vel 0.66
+    play prog_IV @ 208b vel 0.70
+    play prog_IV @ 224b vel 0.74
+    play prog_IV @ 240b vel 0.78
+    play prog_IV @ 256b vel 0.66
+  }
+
+  # ===========================================================================
+  # MASTER
+  # ===========================================================================
+  master {
+    width:   0.82
+    lufs:    -16
+    peak:    -1.0
+    fadein:  1.2s
+    fadeout: 5.0s
+
+    fx: fdn(rt60=3.0, rt60_high=1.2, crossover=2400, mix=0.16),
+        comp(threshold=-17, ratio=2.0, attack=0.02, release=0.25, knee=9, makeup=1),
+        highpass(30hz),
+        lowshelf(110hz, gain=-1.0),
+        highshelf(9000hz, gain=+0.6),
+        mbcomp(threshold=-20, ratio=1.8, low=170, high=2700)
+  }
+
+}
+
+# =============================================================================
+# Render targets:
+#   audioforge validate compositions/fable_symphony_orchestral.af
+#   audioforge render   compositions/fable_symphony_orchestral.af -o renders
+# =============================================================================
