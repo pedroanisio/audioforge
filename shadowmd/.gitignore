@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.hypothesis/
+
+# Editors / OS
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# ShadowMD scratch (never commit a real control dir from examples)
+**/.shadowmd/tmp/
