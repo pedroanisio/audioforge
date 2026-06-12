@@ -157,4 +157,4 @@ tests/               determinism suite + v2 suite (DSL, SDK, plugins,
 * Determinism is guaranteed within an environment; cross-platform float reproducibility is *checked* by the `verify` gate rather than assumed.
 * The engine is synthesis-only. Recorded material would enter cleanly as a content-addressed sample layer (hash the sample into the spec) — designed-for but not implemented. A measured A/B against a professional sample-based renderer (FluidSynth + FluidR3_GM) shows a properly-produced AudioForge render winning delivery, dynamic range, DC, and stereo width and matching the warm/full spectral balance — short only of a close-mic'd sample's between-note silence: [docs/RENDER_QUALITY_COMPARISON.md](docs/RENDER_QUALITY_COMPARISON.md) (`scripts/compare_render_quality.py`).
 
-Requires Python 3.10+, numpy, scipy. Engine 2.16.0 · DSL 1.9.
+Requires Python 3.10+, numpy, scipy. Engine 2.16.0 · DSL 1.10.

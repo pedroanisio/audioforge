@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 ENGINE_VERSION = "2.16.0"
-DSL_VERSION = "1.9"
+DSL_VERSION = "1.10"
 VERSION_SOURCE = "audioforge.version"
 
 

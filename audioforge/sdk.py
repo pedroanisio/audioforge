@@ -303,18 +303,29 @@ class AudioForge:
 
     export_presets = EXPORT_PRESETS
 
-    def compile(self, dsl_text: str, variant=None) -> CompileResult:
+    def compile(self, dsl_text: str, variant=None,
+                base_dir: str | Path | None = None) -> CompileResult:
         """DSL -> assets. Never raises on user input: errors become
         diagnostics an agent can read and act on. `variant` resolves
-        vary() choice sets and reseeds every stochastic path."""
+        vary() choice sets and reseeds every stochastic path. `base_dir`
+        is the directory `import` directives resolve against (set
+        automatically by `load_file`)."""
+        from .includes import has_imports, resolve_includes
         result = CompileResult()
+        imports_manifest: list = []
         try:
+            if has_imports(dsl_text):
+                resolved = resolve_includes(dsl_text, base_dir)
+                dsl_text = resolved.source
+                imports_manifest = resolved.imports
             specs, warns = compile_dsl(dsl_text, variant=variant)
         except DSLError as e:
             result.diagnostics.append(Diagnostic("error", str(e)))
             return result
         result.diagnostics.extend(Diagnostic("warning", w) for w in warns)
         for spec in specs:
+            if imports_manifest:
+                spec.setdefault("_meta", {})["imports"] = imports_manifest
             try:
                 validate_spec(spec)
                 result.assets.append(AudioAsset(spec))
@@ -365,7 +376,7 @@ class AudioForge:
     def load_file(self, path: str | Path) -> CompileResult:
         path = Path(path)
         if path.suffix == ".af":
-            return self.compile(path.read_text())
+            return self.compile(path.read_text(), base_dir=path.parent)
         asset = AudioAsset(validate_spec(json.loads(path.read_text())))
         return CompileResult(assets=[asset])
 

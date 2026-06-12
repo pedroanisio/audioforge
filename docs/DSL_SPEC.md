@@ -1,6 +1,6 @@
 # AudioForge DSL Specification
 
-**DSL 1.9 · Engine 2.16.0**
+**DSL 1.10 · Engine 2.16.0**
 
 The `.af` DSL is the authoring surface for humans and AI agents. It compiles to a JSON spec — the deterministic intermediate representation (IR) that the engine renders. Everything expressive in the DSL (emotion tags, intensity curves, motifs, chords, transforms, groove templates, `vary()` choices) is **expanded at compile time** into explicit JSON parameters, so the IR is always the single, inspectable ground truth for what will be rendered. Under the same engine version, same DSL text → same IR → same spec hash → byte-identical audio.
 
@@ -482,7 +482,41 @@ Export presets (SDK/CLI `--preset`): `social_video` 48k/16/−14 · `broadcast` 
 
 ---
 
-## 17. Determinism, manifests, versioning
+## 17. Includes (content-pinned imports, since DSL 1.10)
+
+Reusable `motif`/`bus` definitions live in `.afi` fragment files and are pulled
+into a `.af` with a SHA-256-pinned `import`, before any `asset`:
+
+```
+import "stdlib/rock_buses.afi" @ sha256:ab3f…
+import "ourband/riffs.afi"     @ sha256:9c21…
+
+asset song { … play riff @ 0b … }      # imported motif used like a local one
+```
+
+Resolution is **pure substitution that runs before the parser** — it reads,
+verifies, de-duplicates, and inlines; it never computes. The rules that keep it
+safe and reproducible:
+
+- **Pinned** — the SHA-256 must match the file's bytes or compilation refuses
+  (loud and local). The same discipline as `library:`/`sample` pins.
+- **Reproducible** — the *resolved* source is what compiles, so an imported
+  patch is byte-identical to the same patch written inline: same `spec_hash`,
+  same audio. Import pins are recorded as provenance in `_meta.imports`
+  (hash-excluded); rendered identity comes from the expanded events.
+- **Acyclic** — the import graph is a DAG; cycles refuse. Diamonds (a fragment
+  reached by two paths, same pin) de-duplicate to one inclusion.
+- **Flat with collision detection** — two definitions of the same name refuse.
+  Namespacing (`import … as ns`, `ns.name`) is a deliberate follow-up that
+  needs a grammar change (`docs/adr/0001-dsl-extensions.md`).
+- **Materialisable** — `audioforge expand spec.af [-o out.af]` writes the single
+  fully-resolved file, so an agent can always read exactly what will render.
+
+Imports require a file context (`load_file` / CLI), not a bare compiled string.
+
+---
+
+## 18. Determinism, manifests, versioning
 
 Every render is keyed to the spec content hash; `ENGINE_VERSION` folds into it, so any engine change that could alter bytes changes all hashes — stale caches can never masquerade as current renders. Manifests record spec hash, output SHA-256, loudness report, markers, variant/intensity tags, and cutdown lineage. `audioforge render --analyze` also writes deterministic analysis features and actionable recommendations (`low_foundation_weak`, `mono_image`, `very_bright`, etc.) into the manifest for agent critique loops. `audioforge verify spec manifest` re-renders and compares output hashes — the CI reproducibility gate. Cross-platform float reproducibility is *checked* by that gate per environment, not assumed.
 

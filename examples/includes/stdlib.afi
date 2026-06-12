@@ -1,0 +1,14 @@
+# Reusable motif vocabulary — pull into any .af with a pinned import.
+# Pure definitions only (no asset wrapper); resolved by substitution.
+motif four_on_floor {
+  C2 @ 0b for 1b vel 0.95
+  C2 @ 1b for 1b vel 0.9
+  C2 @ 2b for 1b vel 0.95
+  C2 @ 3b for 1b vel 0.9
+}
+motif rise_lick {
+  C4 @ 0b for 0.5b vel 0.7
+  E4 @ 0.5b for 0.5b vel 0.74
+  G4 @ 1b for 0.5b vel 0.8
+  C5 @ 1.5b for 0.5b vel 0.86
+}

@@ -157,9 +157,15 @@ def _af_cases() -> dict[str, str]:
         capture_output=True,
         text=True,
     )
+    from audioforge.includes import has_imports, resolve_includes
     for name in sorted(line for line in result.stdout.splitlines() if line):
         path = ROOT / name
-        cases[name] = path.read_text()
+        src = path.read_text()
+        # `import` directives are resolved (pure substitution) before the parser
+        # sees them, so the golden pins the *resolved* AST, not a parse error.
+        if has_imports(src):
+            src = resolve_includes(src, path.parent).source
+        cases[name] = src
     return cases
 
 

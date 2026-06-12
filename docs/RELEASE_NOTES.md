@@ -3,10 +3,23 @@
 ## Current Runtime Contract
 
 - Engine 2.16.0
-- DSL 1.9
+- DSL 1.10
 - Version source of truth: `audioforge.version`
 
-Migration note: DSL 1.9 is the current documented authoring contract and is
+Includes note: DSL 1.10 adds content-pinned `import` directives — reusable
+`motif`/`bus` fragments (`.afi`) pulled in by SHA-256 pin
+(`import "lib.afi" @ sha256:…`). Resolution is pure substitution before
+parsing: the pin is verified (mismatch refuses), the import graph must be
+acyclic, diamonds de-duplicate, and the resolved source is what compiles — so an
+imported patch is byte-identical to the same patch written inline (same
+`spec_hash`, same audio). Import pins are recorded as provenance in
+`_meta.imports` (hash-excluded); rendered identity comes from the expanded
+events. `audioforge expand` materialises the single resolved file. Namespacing
+(`import … as ns`) is a deliberate follow-up (see `docs/adr/0001-dsl-extensions.md`).
+Backward compatible: no existing `.af` parses differently and every spec
+re-renders byte-identically (the engine version is untouched).
+
+Migration note: DSL 1.10 is the current documented authoring contract and is
 backward compatible — every `.af` asset valid under DSL 1.8 (and 1.0-compatible)
 parses to an identical AST and requires no source migration. The DSL parser was
 consolidated onto a single Lark grammar (`audioforge.lark_parser.LARK_GRAMMAR`);
