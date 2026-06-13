@@ -49,6 +49,9 @@ SFZ = """
 <region> key=g4 sample=g4_sus.wav lovel=1 hivel=127
          loop_mode=loop_continuous loop_start=4410 loop_end=39690
          loop_crossfade=0.02
+<group> lokey=69 hikey=69 pitch_keycenter=69
+<region> sample=a4_rr1.wav lorand=0 hirand=0.5
+<region> sample=a4_rr2.wav lorand=0.5 hirand=1
 """
 
 
@@ -63,6 +66,10 @@ def build_library(root: Path) -> str:
     _write(root / "wavs/c4_loud_rr2.wav",
            _tone(c4, 2.0, ((1, 1.0), (3, 0.5), (5, 0.3), (13, 0.35))))
     _write(root / "wavs/g4_sus.wav", _tone(g4, 1.0))   # 1 s; loop extends it
+    a4 = 440.0                                          # random round-robin pair
+    _write(root / "wavs/a4_rr1.wav", _tone(a4, 2.0, ((1, 1.0), (3, 0.5))))
+    _write(root / "wavs/a4_rr2.wav",
+           _tone(a4, 2.0, ((1, 1.0), (3, 0.5), (13, 0.35))))   # 13th marker
     (root / "testviolin.sfz").write_text(SFZ)
     m = libmod.generate_manifest(root, name="minilib", version="1.0.0",
                                  license_str="CC0-1.0")
@@ -95,13 +102,16 @@ def _partial(x, freq, sr=ENG_SR, width=15):
 
 def test_parse_and_inheritance():
     regions, ignored = sampler.parse_sfz(SFZ)
-    assert len(regions) == 4
+    assert len(regions) == 6
     assert all(r.ampeg_release == 0.12 for r in regions)   # <global> inherited
     assert regions[0].sample == "wavs/c4_soft.wav"          # default_path
     g = regions[3]
     assert (g.lokey, g.hikey, g.pitch_keycenter) == (67, 67, 67)  # key=g4
     assert g.loop_mode == "loop_continuous" and g.loop_end == 39690
     assert "unknown_opcode" in ignored                      # loud, not silent
+    # random round-robin pair parsed with its [lorand, hirand) sub-ranges
+    assert (regions[4].lorand, regions[4].hirand) == (0.0, 0.5)
+    assert (regions[5].lorand, regions[5].hirand) == (0.5, 1.0)
     print("PASS  sfz: inheritance, default_path, key shorthand, loop "
           "opcodes, unknown opcodes reported")
 
@@ -269,6 +279,32 @@ def test_round_robin_seeded(pin):
           f"re-render identical, variant tag re-realizes")
 
 
+def test_round_robin_random_lorand_hirand(pin):
+    """`lorand`/`hirand` random round-robins must pick ONE region per note
+    (seeded), not stack every variant. The A4 pair splits [0,1) in half;
+    a4_rr2 carries a 13th-partial marker, so a stacked render would show the
+    marker on every note (set size 1) while a real RR shows both."""
+    notes = ", ".join(f"A4 @ {b}b for 0.9b vel 0.9" for b in range(8))
+    marker = 440.0 * 13
+
+    def rr_pattern(variant=None):
+        x, sr, _ = _render_dsl(pin, notes, variant=variant)
+        out = []
+        for b in range(8):
+            seg = x[int(b * 0.5 * sr):int((b * 0.5 + 0.42) * sr)]
+            out.append(_partial(seg, marker) / max(_partial(seg, 440.0),
+                                                   1e-9) > 0.05)
+        return tuple(out)
+
+    p1, p1b = rr_pattern(), rr_pattern()
+    variants = [rr_pattern(v) for v in ("alt", "alt2", "bravo")]
+    assert len(set(p1)) == 2          # both random RRs actually appear
+    assert p1 == p1b                  # re-render identical (seeded)
+    assert any(p != p1 for p in variants)   # variant tag re-realizes
+    print(f"PASS  random RR (lorand/hirand): {''.join('2' if v else '1' for v in p1)}, "
+          f"seeded, re-render identical, variant re-realizes")
+
+
 def test_loop_extension(pin):
     x, sr, _ = _render_dsl(pin, "G4 @ 0b for 8b vel 0.6", dur=5)
     # source is 1 s; the note holds 4 s — RMS must persist well past 1 s
@@ -310,6 +346,7 @@ if __name__ == "__main__":
         test_pitch_and_resampling(pin)
         test_velocity_layers(pin)
         test_round_robin_seeded(pin)
+        test_round_robin_random_lorand_hirand(pin)
         test_loop_extension(pin)
         test_hash_discipline(pin)
     print("\nAll Tier S (P1) tests passed.")

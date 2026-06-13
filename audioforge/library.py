@@ -29,6 +29,7 @@ import numpy as np
 from .sampler import parse_sfz
 
 _LIBRARY_PATHS: list[Path] = [Path("libraries")]
+DEFAULT_APPROVED_CATALOG_PATH = Path("_catalog/approved")
 
 
 def add_library_path(path) -> None:
@@ -37,11 +38,69 @@ def add_library_path(path) -> None:
         _LIBRARY_PATHS.insert(0, p)
 
 
+def add_approved_catalog_path(
+    path: str | Path = DEFAULT_APPROVED_CATALOG_PATH,
+) -> Path:
+    """Register the reviewed sample-catalog root and return it as a Path."""
+    p = Path(path)
+    add_library_path(p)
+    return p
+
+
+def _library_candidates(base: Path, name: str) -> list[Path]:
+    """Candidate manifest roots under a search path.
+
+    Standard libraries live at ``base/name``. Reviewed sample catalogs use
+    ``base/<instrument>/<version>`` so registering ``_catalog/approved`` must
+    also inspect one bounded level below each instrument directory.
+    """
+    out: list[Path] = []
+    seen: set[Path] = set()
+
+    def add(path: Path) -> None:
+        if path not in seen:
+            seen.add(path)
+            out.append(path)
+
+    named = base / name
+    add(named)
+    if named.is_dir():
+        for child in sorted(named.iterdir()):
+            if child.is_dir():
+                add(child)
+    if base.is_dir():
+        for child in sorted(base.iterdir()):
+            if not child.is_dir():
+                continue
+            add(child)
+            for grandchild in sorted(child.iterdir()):
+                if grandchild.is_dir():
+                    add(grandchild)
+    return out
+
+
 def _canonical_manifest_hash(m: dict) -> str:
+    from .sample_catalog.constants import SAMPLE_CATALOG_BUILDER_VERSION
+
+    def hash_region(region: dict) -> dict:
+        out = dict(region)
+        out.pop("library_pin", None)
+        return out
+
     core = {"name": m["name"], "version": m.get("version", ""),
             "license": m.get("license", ""),
             "files": sorted([[f["path"], f["sha256"]] for f in m["files"]]),
             "instruments": m["instruments"]}
+    if m.get("builder_version") == SAMPLE_CATALOG_BUILDER_VERSION:
+        core.update({
+            "builder_version": m.get("builder_version"),
+            "catalog_state": m.get("catalog_state"),
+            "license_evidence_hash": m.get("license_evidence_hash"),
+            "analysis_summary": m.get("analysis_summary", {}),
+            "catalog_diagnostics": m.get("catalog_diagnostics", {}),
+            "review": m.get("review", {}),
+            "regions": [hash_region(r) for r in m.get("regions", [])],
+        })
     blob = json.dumps(core, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(blob.encode()).hexdigest()
 
@@ -100,6 +159,133 @@ def _decode_wav_bytes(data: bytes, ext: str = "") -> tuple[np.ndarray, int]:
     if ch > 1:
         x = x.reshape(-1, ch).mean(axis=1)
     return x, sr
+
+
+def _verify_approved_sample_catalog(root: Path, manifest: dict) -> None:
+    from .sample_catalog.constants import (
+        LICENSE_BUNDLE_SCHEMA,
+        LICENSE_EVIDENCE_SCHEMA,
+        SAMPLE_CATALOG_BUILDER_VERSION,
+    )
+
+    if manifest.get("builder_version") != SAMPLE_CATALOG_BUILDER_VERSION:
+        raise ValueError(
+            f"library '{manifest['name']}': unsupported sample catalog "
+            f"builder version {manifest.get('builder_version')!r}")
+    from .sample_catalog.licenses import (
+        decide_license,
+        evidence_hash,
+        validate_evidence_hash,
+        validate_final_evidence_source,
+    )
+    from .sample_catalog.manifest import (
+        audit_region_mechanics,
+        validate_catalog_diagnostics,
+        validate_region_coverages,
+        validate_region_library_pins,
+        validate_region_sample_identities,
+        validate_approved_review_metadata,
+    )
+
+    licenses = root / "LICENSES.json"
+    if not licenses.is_file():
+        raise ValueError(
+            f"library '{manifest['name']}': approved catalog is missing "
+            "LICENSES.json")
+    bundle = json.loads(licenses.read_text())
+    if (bundle.get("schema") != LICENSE_BUNDLE_SCHEMA
+            or not isinstance(bundle.get("evidence"), list)
+            or not bundle["evidence"]):
+        raise ValueError(
+            f"library '{manifest['name']}': approved catalog license "
+            "evidence bundle is malformed")
+    actual_bundle_hash = evidence_hash({
+        "schema": bundle["schema"],
+        "evidence": bundle["evidence"],
+    })
+    if actual_bundle_hash != manifest.get("license_evidence_hash"):
+        raise ValueError(
+            f"library '{manifest['name']}': approved catalog license "
+            "evidence hash mismatch")
+    for item in manifest.get("files", []):
+        rel = item.get("path")
+        sha = item.get("sha256")
+        if not rel or not sha:
+            raise ValueError(
+                f"library '{manifest['name']}': approved catalog has "
+                "malformed file hash entry")
+        path = root / rel
+        if not path.is_file():
+            raise ValueError(
+                f"library '{manifest['name']}': approved catalog is missing "
+                f"pinned file '{rel}'")
+        actual = hashlib.sha256(path.read_bytes()).hexdigest()
+        if actual != sha:
+            raise ValueError(
+                f"library '{manifest['name']}': hash mismatch for '{rel}'\n"
+                f"  pinned:  {sha}\n  on disk: {actual}\n"
+                "The file changed since the manifest was generated.")
+    evidence_ids = set()
+    for item in bundle["evidence"]:
+        if item.get("schema") != LICENSE_EVIDENCE_SCHEMA:
+            raise ValueError(
+                f"library '{manifest['name']}': approved catalog has "
+                f"unsupported license evidence schema "
+                f"{item.get('schema')!r}")
+        validate_evidence_hash(item)
+        validate_final_evidence_source(item)
+        decision = decide_license(
+            license_name=item.get("license_name", ""),
+            license_url=item.get("license_url", ""),
+            rights_text=item.get("rights_text", ""),
+            source_url=item.get("source_url", ""),
+            source_id=item.get("source_id", ""),
+        )
+        if not decision.accepted:
+            raise ValueError(
+                f"library '{manifest['name']}': approved catalog has "
+                f"unsupported or unclear license evidence "
+                f"{item.get('evidence_hash', '')}")
+        evidence_ids.add(item["evidence_hash"])
+    for region in manifest.get("regions", []):
+        sample = region.get("sample")
+        if not sample:
+            raise ValueError(
+                f"library '{manifest['name']}': approved catalog region "
+                "is missing sample path")
+        pinned_sha = next(
+            (item.get("sha256") for item in manifest.get("files", [])
+             if item.get("path") == sample),
+            None,
+        )
+        if not pinned_sha:
+            raise ValueError(
+                f"library '{manifest['name']}': approved catalog region "
+                f"{sample} is not pinned in manifest files")
+        if region.get("sample_sha256") != pinned_sha:
+            raise ValueError(
+                f"library '{manifest['name']}': approved catalog region "
+                f"{sample} sample_sha256 does not match manifest files")
+        evidence_id = region.get("source_evidence_id")
+        if not evidence_id:
+            raise ValueError(
+                f"library '{manifest['name']}': approved catalog region "
+                f"{sample} is missing "
+                "source_evidence_id")
+        if evidence_id not in evidence_ids:
+            raise ValueError(
+                f"library '{manifest['name']}': approved catalog region "
+                f"{sample} references unknown "
+                "source evidence")
+    audit_region_mechanics(manifest)
+    validate_region_coverages(manifest)
+    validate_catalog_diagnostics(manifest, root)
+    validate_approved_review_metadata(manifest)
+    try:
+        validate_region_sample_identities(manifest, root)
+        validate_region_library_pins(manifest)
+    except ValueError as e:
+        raise ValueError(f"library '{manifest['name']}': {e}") from e
 
 
 class Library:
@@ -165,7 +351,7 @@ class Library:
         return self._audio_cache[rel]
 
 
-def load_library(ref) -> Library:
+def load_library(ref, *, require_approved: bool = False) -> Library:
     """Resolve `"name@manifest_hash"` (or a {name, manifest_sha256} dict)
     against the library search paths. The manifest is re-hashed on load —
     a tampered manifest cannot pass — and must match the pinned hash."""
@@ -177,8 +363,7 @@ def load_library(ref) -> Library:
         name, pin = ref["name"], ref["manifest_sha256"]
     tried = []
     for base in _LIBRARY_PATHS:
-        for cand in ([base / name] + (sorted(base.iterdir())
-                                      if base.is_dir() else [])):
+        for cand in _library_candidates(base, name):
             mp = Path(cand) / "library.manifest.json"
             if not mp.is_file():
                 continue
@@ -193,6 +378,18 @@ def load_library(ref) -> Library:
                     f"(file edited without regeneration?)")
             if not actual.startswith(pin):
                 continue                  # allow short pins, full preferred
+            if require_approved:
+                state = m.get("catalog_state")
+                evidence = m.get("license_evidence_hash")
+                if state != "approved":
+                    raise ValueError(
+                        f"library '{name}': approved catalog required "
+                        f"(catalog_state={state!r})")
+                if not evidence:
+                    raise ValueError(
+                        f"library '{name}': approved catalog is missing "
+                        "license_evidence_hash")
+                _verify_approved_sample_catalog(Path(cand), m)
             return Library(Path(cand), m)
     raise ValueError(
         f"library '{name}@{pin[:12]}…' not found in "

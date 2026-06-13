@@ -52,7 +52,8 @@ _INT_OPS = {"key", "lokey", "hikey", "pitch_keycenter", "lovel", "hivel",
             "seq_length", "seq_position", "loop_start", "loop_end",
             "transpose"}
 _FLOAT_OPS = {"ampeg_attack", "ampeg_decay", "ampeg_sustain",
-              "ampeg_release", "loop_crossfade", "tune", "volume"}
+              "ampeg_release", "loop_crossfade", "tune", "volume",
+              "lorand", "hirand"}
 _STR_OPS = {"sample", "loop_mode", "default_path"}
 _KNOWN = _INT_OPS | _FLOAT_OPS | _STR_OPS
 
@@ -77,6 +78,8 @@ class Region:
     hivel: int = 127
     seq_length: int = 1
     seq_position: int = 1
+    lorand: float = 0.0               # random round-robin range [lorand, hirand)
+    hirand: float = 1.0
     ampeg_attack: float = 0.001
     ampeg_decay: float = 0.0
     ampeg_sustain: float = 100.0      # SFZ: percent
@@ -150,25 +153,41 @@ def parse_sfz(text: str) -> tuple[list[Region], set[str]]:
 def select_regions(regions: list[Region], midi: int, vel127: int,
                    rng) -> list[Region]:
     """All regions matching key+velocity; round-robin sets collapse to one
-    seeded pick. The rng is the per-note RNG (root includes the variant
-    tag), so repeated notes vary, re-renders are identical, and pack
-    variants re-realize — the v2.8 lesson, applied from day one."""
+    seeded pick. Two SFZ round-robin mechanisms are honoured: positional
+    `seq_length`/`seq_position`, and random `lorand`/`hirand` (a region wins
+    when a seeded uniform draw falls in its [lorand, hirand) sub-range). The
+    rng is the per-note RNG (root includes the variant tag), so repeated
+    notes vary, re-renders are identical, and pack variants re-realize — the
+    v2.8 lesson, applied from day one. Regions with neither mechanism stack
+    (true layering, e.g. multiple mics)."""
     hits = [r for r in regions
             if r.lokey <= midi <= r.hikey and r.lovel <= vel127 <= r.hivel]
     if not hits:
         return []
-    out, rr_sets = [], {}
+    out, seq_sets, rand_sets = [], {}, {}
     for r in hits:
         if r.seq_length > 1:
-            rr_sets.setdefault((r.lokey, r.hikey, r.lovel, r.hivel,
-                                r.seq_length), []).append(r)
+            seq_sets.setdefault((r.lokey, r.hikey, r.lovel, r.hivel,
+                                 r.seq_length), []).append(r)
+        elif r.lorand > 0.0 or r.hirand < 1.0:
+            rand_sets.setdefault((r.lokey, r.hikey, r.lovel, r.hivel),
+                                 []).append(r)
         else:
             out.append(r)
-    for key, pool in sorted(rr_sets.items()):
+    # Positional round-robins: rotate by a seeded index.
+    for key, pool in sorted(seq_sets.items()):
         pool.sort(key=lambda r: r.seq_position)
         pick = 1 + int(rng.integers(0, key[4]))
         chosen = [r for r in pool if r.seq_position == pick]
         out.extend(chosen if chosen else pool[:1])
+    # Random round-robins: one seeded uniform draw per slot selects the region
+    # whose [lorand, hirand) contains it (first match wins on overlap; the
+    # last region covers any gap so a note is never dropped).
+    for key, pool in sorted(rand_sets.items()):
+        pool.sort(key=lambda r: (r.lorand, r.sample))
+        u = float(rng.random())
+        chosen = next((r for r in pool if r.lorand <= u < r.hirand), pool[-1])
+        out.append(chosen)
     return out
 
 

@@ -15,6 +15,10 @@
   "stage_cutdowns": "AST::[Asset(id='f', props={'kind': [Tok(kind='IDENT', text='cue', line=2, value=None, unit=None)], 'duration': [Tok(kind='NUMBER', text='30s', line=3, value=30.0, unit='s')]}, intent={}, markers=[], motifs={}, layers=[Layer(name='t', type='tone', props={'osc': [Tok(kind='IDENT', text='sine', line=13, value=None, unit=None), Tok(kind='IDENT', text='note', line=13, value=None, unit=None), Tok(kind='PUNCT', text=':', line=13, value=None, unit=None), Tok(kind='IDENT', text='C4', line=13, value=None, unit=None)]}, line=13)], buses=[], cutdowns=[{'length_s': 15.0, 'segments': [[0.0, 15.0]], 'fade_s': 1.0}, {'length_s': 10.0, 'segments': [[5.0, 15.0]]}], stage={'mics': {'tree': 0.8, 'close': 0.3, 'ambient': 0.4}, 'dims': [20.0, 30.0, 12.0], 'hall_file': 'cathedral.wav', 'hall_sha256': 'abc123'}, master={}, line=1)]",
   "static/fixtures/bwv949.af": "sha256:5b8e49c369b73ba8735203b27a534e308fc6fbaf853890c5e64f5c0ab6cf6215",
   "static/fixtures/cancoes_sertao.af": "sha256:63fd720ef8742bf0b51f66ae787ade2b3a97eab10123bcdfa74585e12d3edc39",
+  "static/fixtures/expressive_techniques.af": "sha256:c75261711ffea2bd32a59abd9de8664a6ea92fe58a525c40cf69a9228b1ff759",
+  "static/fixtures/rejections/expressive_duplicate_cutoff.af": "sha256:5e6141bb190f609778f42cd4741836570c4b5b808dad8562eb718d6b460aee59",
+  "static/fixtures/rejections/expressive_physical_pitch_curve.af": "sha256:8bc44ef2822ca278cf7ca80a160b3ae51281be38433069246eabd8f76268c198",
+  "static/fixtures/rejections/expressive_scan_non_morph.af": "sha256:6284bc255c62648b107ad7263b62e078322aa1ed32c9c4fdc2d6471d0c4d8fea",
   "static/fixtures/unser_leben.af": "sha256:074c7282fb370962e8a522c2b18f08cc5f23d24fd64204b37fb02edfec1c525a",
   "static/samples/transition_sweep.af": "sha256:978a13065959f6845bc4df0784317461f8d7233f3c9f4c9035d077039becd5ff"
 }

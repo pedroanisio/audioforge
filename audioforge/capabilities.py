@@ -29,6 +29,17 @@ from .schema import (
     ROUTING_FALLBACK_MODES,
     TECHNIQUES,
 )
+from .sample_catalog.constants import (
+    ANALYSIS_SCHEMA,
+    CANDIDATE_SCHEMA,
+    LICENSE_BUNDLE_SCHEMA,
+    LICENSE_EVIDENCE_SCHEMA,
+    SAMPLE_CATALOG_COMMANDS,
+    SAMPLE_CATALOG_BUILDER_VERSION,
+)
+from .sample_catalog.licenses import ACCEPTED_LICENSES
+from .sample_catalog.sfz import GENERATED_SFZ_OPCODES
+from .sample_catalog.sources import SOURCE_ADAPTERS, SOURCE_ADAPTER_CLI_NAMES
 
 
 CAPABILITY_SCHEMA_VERSION = "audioforge.capabilities/1"
@@ -77,6 +88,7 @@ CLI_COMMANDS = [
     "plan",
     "render",
     "repair",
+    "sample-catalog",
     "score",
     "validate",
     "verify",
@@ -279,6 +291,38 @@ def capability_manifest() -> dict:
             "artifact": {
                 "extension": ".plan.json",
                 "hash": "sha256(canonical_plan_json_without_plan_hash_field)",
+            },
+        },
+        "sample_catalog": {
+            "builder_version": SAMPLE_CATALOG_BUILDER_VERSION,
+            "artifact_schemas": {
+                "analysis": ANALYSIS_SCHEMA,
+                "candidate": CANDIDATE_SCHEMA,
+                "license_bundle": LICENSE_BUNDLE_SCHEMA,
+                "license_evidence": LICENSE_EVIDENCE_SCHEMA,
+                "library_manifest_builder": SAMPLE_CATALOG_BUILDER_VERSION,
+            },
+            "accepted_licenses": sorted(ACCEPTED_LICENSES),
+            "commands": list(SAMPLE_CATALOG_COMMANDS),
+            "source_adapters": sorted(SOURCE_ADAPTERS),
+            "cli_sources": sorted(SOURCE_ADAPTER_CLI_NAMES),
+            "storage_root": "_catalog",
+            "approved_layout": "_catalog/approved/<instrument>/<version>/",
+            "generated_sfz_subset": {
+                "validator": "audioforge.sampler.parse_sfz",
+                "opcodes": sorted(GENERATED_SFZ_OPCODES),
+                "forbidden": ["#include", "$define", "filters", "lfo", "cc"],
+            },
+            "review_gate": {
+                "candidate_state": "candidate",
+                "approved_state": "approved",
+                "required_for_approval": [
+                    "LICENSES.json",
+                    "license_evidence_hash",
+                    "review.status=approved",
+                    "review.reviewer",
+                    "manifest_sha256",
+                ],
             },
         },
         "bit_depths": sorted(BIT_DEPTHS),

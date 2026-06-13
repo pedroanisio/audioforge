@@ -459,7 +459,7 @@ through `interop_diagnostics()` as `lossy_pitch_curve` or
 
 **Single files.** Sample and IR files resolve against registered search paths (default `./samples`; add with `audioforge.samples.add_sample_path(dir)` or in-memory `register_sample(name, bytes)`). `audioforge ingest dir/` hashes and catalogs every WAV and prints paste-ready, hash-pinned layer snippets.
 
-**Instrument libraries.** A library is a directory of WAV + SFZ files plus a `library.manifest.json` pinning every byte and the instrument→SFZ mapping (the manifest hash covers both — remapping an instrument changes audio, so it changes the hash). `audioforge libgen dir/ --name N --license L` generates it; specs pin it with `library: "name@manifest_sha256"`, which folds into the spec hash; every sample is byte-verified at first load and mismatches refuse with both hashes named. Libraries resolve against `./libraries` plus `audioforge.library.add_library_path(dir)`.
+**Instrument libraries.** A library is a directory of WAV + SFZ files plus a `library.manifest.json` pinning every byte and the instrument→SFZ mapping (the manifest hash covers both — remapping an instrument changes audio, so it changes the hash). `audioforge libgen dir/ --name N --license L` generates it; specs pin it with `library: "name@manifest_sha256"`, which folds into the spec hash; every sample is byte-verified at first load and mismatches refuse with both hashes named. Libraries resolve against `./libraries` plus `audioforge.library.add_library_path(dir)`. Reviewed sample catalogs under `_catalog/approved/<instrument>/<version>/` can be registered with `audioforge.library.add_approved_catalog_path()`.
 
 **Articulations (since 2.11).** Per note (`art spiccato`) or per layer (`articulation:`). If the library samples the articulation, its SFZ map is selected; otherwise a documented synthetic fallback applies and is **recorded in the render manifest** (`articulation_fallbacks`) — loud, not silent: staccato/spiccato = sustain clamped to 0.18/0.12 s; pizzicato = shortest available articulation clamped to 0.10 s; marcato = +2.5 dB, hard attack; tremolo = seeded ~12 Hz re-trigger train; legato = sustain until the legato-join mechanism described in Performance & rhythm.
 
@@ -526,6 +526,7 @@ audioforge pack     spec.af [--variants N] [-o dir] [--preset P]
 audioforge campaign spec.af [-o dir] [--preset P] [--intensity K]
 audioforge ingest   samples_dir/ [-o catalog.json]
 audioforge libgen   library_dir/ [--name N] [--version V] [--license L]
+audioforge sample-catalog search|resolve-openverse|download|analyze|build-sfz|audit-license|review ...
 audioforge batch    specs_dir/ [-o dir]
 audioforge verify   spec manifest
 ```
