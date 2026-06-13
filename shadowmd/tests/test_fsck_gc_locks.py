@@ -87,12 +87,24 @@ def test_lock_contention(repo):
         pass
 
 
-def test_stale_lock_cleared(repo):
-    lm = LockManager(repo.layout, staleness_seconds=0)
+def test_leftover_lock_file_is_cleared(repo):
+    # A lock FILE with no process holding its flock is a harmless leftover.
+    lm = LockManager(repo.layout)
     lock = repo.layout.locks / "repo.lock"
     lock.write_text(json.dumps({"pid": 2_000_000, "host": lm._host, "ts": "x"}))
-    stale = [info for info in lm.list_locks() if info["stale"]]
-    assert stale
+    assert [info for info in lm.list_locks() if info["stale"]]
     cleared = lm.clear_stale()
     assert "repo.lock" in cleared
     assert not lock.exists()
+
+
+def test_live_lock_is_never_classified_stale(repo):
+    # Regression: a held lock must NEVER be reported stale or be clearable,
+    # regardless of age. Kernel-truth liveness, not a PID/age heuristic.
+    lm = LockManager(repo.layout, staleness_seconds=0)
+    with lm.repo_lock():
+        info = next(i for i in lm.list_locks() if i["name"] == "repo.lock")
+        assert info["held"] is True
+        assert info["stale"] is False
+        # clear_stale must refuse to break a live lock
+        assert "repo.lock" not in LockManager(repo.layout).clear_stale()
