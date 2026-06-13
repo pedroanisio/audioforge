@@ -6,15 +6,18 @@ fail if the checked-in JSON artifact drifts from that source.
 
 ## Versioning
 
-- Current IR schema version: `1.2`
+- Current IR schema version: `1.3`
 - Current policy: additive-compatible
-- Supported from: `0.9`, `1.0`, `1.1`
+- Supported from: `0.9`, `1.0`, `1.1`, `1.2`
 
 IR schema `1.1` adds explicit performance curves for pitch and dynamics while
 preserving the `1.0` shape for specs that do not use curves. IR schema `1.2`
-raises `master.stereo_width`'s ceiling from `1.0` to `2.0`, enabling M/S
-widening beyond the as-mixed image (the mid is preserved, so the mono sum is
-unchanged). Valid `1.0`/`1.1` specs do not require migration.
+extends the curve contract with additive note-scope timbre targets
+(`cutoff_hz`, `gain_db`, `scan`) and hash-included fretted/stringed instrument
+mechanics (`layer.tuning`, `layer.max_fret`, `note.string`, `note.fret`). IR
+schema `1.3` raises `master.stereo_width`'s ceiling from `1.0` to `2.0`,
+enabling M/S widening beyond the as-mixed image (the mid is preserved, so the
+mono sum is unchanged). Valid `1.0`/`1.1`/`1.2` specs do not require migration.
 Experimental `0.9` fixtures can be migrated with
 `audioforge.ir_schema.migrate_ir_spec(spec, "0.9")`; that migration moves the
 legacy provenance sidecar from `metadata` to `_meta` without changing
@@ -58,10 +61,11 @@ recompute verification before audio is computed.
 
 ## Performance Curves
 
-IR schema `1.1` defines one curve object for both note-scoped performance and
+IR schema `1.2` defines one curve object for both note-scoped performance and
 layer automation:
 
-- `target`: `pitch_cents`, `dynamic`, or an existing automation target.
+- `target`: `pitch_cents`, `dynamic`, `cutoff_hz`, `gain_db`, `scan`, or an
+  existing layer/master automation target.
 - `time_basis`: `note_beats`, `note_seconds`, `layer_beats`, or
   `layer_seconds`, constrained by scope.
 - Breakpoints: `points` as `[time, value]` or `[time, value, shape]`.
@@ -75,11 +79,28 @@ value holds; a single point is a constant curve.
 
 `pitch_cents` is relative to the note or layer base pitch, sums in cents when
 multiple in-scope pitch curves apply, and is render data. `dynamic` is
-normalized `[0, 1]`; a note-scoped dynamic curve replaces the layer dynamic
-for that note span. Expanded curve data is hash-included. Authored sugar such
-as legacy `vibrato`, `glide_s`, and `dynamic` breakpoints may be recorded in
+normalized `[0, 1]`; a note-scoped dynamic curve replaces the layer dynamic for
+that note span. `gain_db` is additive note gain, `cutoff_hz` is a note-local
+voice filter target, and `scan` is a note-local morph position legal only on
+`osc: morph`. Expanded curve data is hash-included. Authored sugar such as
+legacy `vibrato`, `glide_s`, and `dynamic` breakpoints may be recorded in
 `_meta.semantic.authored_expression` for decompile, and that provenance remains
 hash-excluded.
+
+## Instrument Mechanics
+
+IR schema `1.2` adds hash-included fretted/stringed fields:
+
+- `layer.tuning`: ordered open pitch names; index 1 is the first listed string.
+- `layer.max_fret`: non-negative integer, defaulted by validation to 24.
+- `note.string`: 1-based integer into `layer.tuning`.
+- `note.fret`: non-negative integer or `"x"` for a muted string.
+
+When `string`/`fret` are present, validation requires a layer tuning, checks
+string and fret feasibility, and rejects an explicit `note`/`freq_hz` that
+disagrees with the pitch derived from tuning plus fret. The pure compiler
+lowering that emits derived pitch and position timbre is staged separately in
+AF-P3/P2.
 
 Structured intent lives under `intent.structured`:
 

@@ -1,0 +1,13 @@
+# AF-P3/G13 rejection fixture: note-scope scan requires osc=morph.
+
+asset expressive_scan_non_morph {
+  kind: cue
+  duration: 1s
+  tempo: 120bpm
+  layer lead : notes {
+    osc: sine
+    env: a=0.001s d=0.01s s=0.8 r=0.02s
+    notes: A4 @ 0b for 1b scan(0.5)
+  }
+  master { peak: -1db }
+}

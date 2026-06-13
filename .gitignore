@@ -16,3 +16,5 @@ drift-risk-map.svg
 af-latest.tar
 compositions/
 _temp/
+.shadowmd/
+_catalog/

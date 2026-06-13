@@ -19,7 +19,18 @@ from dataclasses import dataclass, field
 from . import theory
 from .ir_schema import INTENT_RENDER_ENUMS
 from .lark_parser import parse_assets
-from .schema import IR_ARTICULATIONS, BPM_MIN, TEMPO_MAP_BPM_MAX
+from .curves import PHYSICAL_MODEL_OSCILLATORS
+from .schema import (
+    IR_ARTICULATIONS,
+    BPM_MIN,
+    POSITION_TIMBRE_UNSUPPORTED_CODE,
+    TECHNIQUE_FALLBACK_CODE,
+    TECHNIQUE_PARAM_OUT_OF_RANGE_CODE,
+    TECHNIQUE_UNKNOWN_CODE,
+    TECHNIQUE_UNSUPPORTED_VOICE_CODE,
+    TECHNIQUES,
+    TEMPO_MAP_BPM_MAX,
+)
 from .synth import NOTE_OFFSETS
 from .styles import STYLE_PACKS
 from .theory import NOTE_RE
@@ -520,7 +531,18 @@ def _semantic_sidecar(a: Asset, smart_intent: dict) -> dict:
     for lay in a.layers:
         lsem: dict = {"props": sorted(lay.props)}
         if "notes" in lay.props:
-            lsem["notes"] = [dict(ev) for ev in lay.props.get("notes", [])]
+            raw_notes = lay.props.get("notes", [])
+            if any(not isinstance(ev, dict) for ev in raw_notes):
+                bad = next(ev for ev in raw_notes if not isinstance(ev, dict))
+                line_no = getattr(bad, "line", lay.line)
+                text = getattr(bad, "text", "notes")
+                raise DSLError(
+                    "notes: malformed note entry or unknown note modifier "
+                    f"near {text!r}; expected NOTE @ STARTb for DURb with "
+                    "supported modifiers",
+                    line_no,
+                )
+            lsem["notes"] = [dict(ev) for ev in raw_notes]
         if "plays" in lay.props:
             lsem["plays"] = [dict(play) for play in lay.props.get("plays", [])]
         if len(lsem) > 1:
@@ -1144,6 +1166,255 @@ def _event_freq_hz(ev: dict) -> float | None:
     )
 
 
+def _note_curve(target: str, value: float, *,
+                time_basis: str = "note_beats",
+                duration: float = 0.0) -> dict:
+    point_value = round(float(value), 6)
+    first = [0.0, point_value]
+    if duration > 0.0:
+        return {
+            "target": target,
+            "time_basis": time_basis,
+            "points": [first, [round(float(duration), 6), point_value]],
+        }
+    return {"target": target, "time_basis": time_basis, "points": [first]}
+
+
+def lower_note_curve_escape_hatch(name: str, value: float, *,
+                                  time_basis: str = "note_beats",
+                                  duration: float = 0.0) -> dict:
+    """Lower note-level cutoff/level/scan authoring into an explicit curve."""
+    targets = {"cutoff": "cutoff_hz", "level": "gain_db", "scan": "scan"}
+    if name not in targets:
+        raise DSLError(
+            f"note curve escape hatch '{name}' is not one of "
+            f"{sorted(targets)}"
+        )
+    return _note_curve(targets[name], value, time_basis=time_basis,
+                       duration=duration)
+
+
+def _append_curve(ev: dict, curve: dict) -> None:
+    ev.setdefault("curves", []).append(curve)
+
+
+def _voice_class(layer: dict) -> str:
+    if layer.get("type") == "instrument":
+        return "sampled"
+    if layer.get("osc") in PHYSICAL_MODEL_OSCILLATORS:
+        return "physical"
+    return "synth"
+
+
+def _seconds_to_beats(seconds: float, bpm: float) -> float:
+    return round(float(seconds) * float(bpm) / 60.0, 6)
+
+
+def _clamp_note_duration(ev: dict, max_seconds: float, bpm: float) -> None:
+    max_beats = _seconds_to_beats(max_seconds, bpm)
+    ev["dur_beats"] = round(min(float(ev["dur_beats"]), max_beats), 6)
+
+
+def _validate_technique_params(name: str, params: dict) -> dict:
+    entry = TECHNIQUES.get(name)
+    if entry is None:
+        raise DSLError(f"{TECHNIQUE_UNKNOWN_CODE}: unknown technique '{name}'")
+    out = {}
+    for key, spec in entry["params"].items():
+        value = params.get(key, spec.get("default"))
+        if spec["type"] == "number":
+            lo, hi = spec["range"]
+            if not isinstance(value, (int, float)) or not lo <= float(value) <= hi:
+                raise DSLError(
+                    f"{TECHNIQUE_PARAM_OUT_OF_RANGE_CODE}: {name}.{key} "
+                    f"outside {lo}..{hi}")
+            out[key] = float(value)
+        elif spec["type"] == "enum":
+            allowed = set(spec["enum"])
+            if value not in allowed:
+                raise DSLError(
+                    f"{TECHNIQUE_PARAM_OUT_OF_RANGE_CODE}: {name}.{key} "
+                    f"not one of {sorted(allowed)}")
+            out[key] = value
+    unknown = sorted(set(params) - set(entry["params"]))
+    if unknown:
+        raise DSLError(
+            f"{TECHNIQUE_PARAM_OUT_OF_RANGE_CODE}: {name} has unknown "
+            f"params {unknown}")
+    return out
+
+
+def lower_technique(name: str, params: dict | None = None, *,
+                    voice: str, note: dict, bpm: float = 120.0) -> dict:
+    """Lower one approved technique to explicit IR fragments.
+
+    Returns ``{"note": ..., "layer_fx": [...], "diagnostics": [...]}`` without
+    mutating the input note. Renderers never receive the technique name.
+    """
+    params = _validate_technique_params(name, params or {})
+    entry = TECHNIQUES.get(name)
+    if entry is None:
+        raise DSLError(f"{TECHNIQUE_UNKNOWN_CODE}: unknown technique '{name}'")
+    if voice not in {"synth", "sampled", "physical"}:
+        raise DSLError(f"technique voice '{voice}' invalid")
+    if not entry["support"][voice]:
+        raise DSLError(
+            f"{TECHNIQUE_UNSUPPORTED_VOICE_CODE}: {name} is unsupported for "
+            f"{voice}")
+
+    ev = {
+        k: v for k, v in note.items()
+        if k not in ("tech", "technique", "tech_params")
+    }
+    diagnostics: list[str] = []
+    layer_fx: list[dict] = []
+
+    if name == "palm_mute":
+        _clamp_note_duration(ev, 0.30, bpm)
+        _append_curve(ev, _note_curve("gain_db", -3.0))
+        if voice == "synth":
+            _append_curve(ev, _note_curve("cutoff_hz", 2500.0))
+        else:
+            diagnostics.append(
+                f"{TECHNIQUE_FALLBACK_CODE}: palm_mute sampled lowering "
+                "omits cutoff_hz because sampled voices have no per-voice filter")
+    elif name == "dead_note":
+        _clamp_note_duration(ev, 0.08, bpm)
+        _append_curve(ev, _note_curve("gain_db", -6.0))
+        if voice == "synth":
+            _append_curve(ev, _note_curve("cutoff_hz", 1200.0))
+        else:
+            diagnostics.append(
+                f"{TECHNIQUE_FALLBACK_CODE}: dead_note sampled lowering "
+                "omits cutoff_hz because sampled voices have no per-voice filter")
+    elif name == "let_ring":
+        ev["release_s_add"] = 0.6
+        ev["let_ring"] = True
+    elif name == "accent":
+        value = min(1.0, 0.6 + 0.10 * params["strength"])
+        _append_curve(ev, _note_curve("dynamic", value))
+        ev["attack_scale"] = 0.75
+    elif name == "tenuto":
+        ev["art"] = "legato"
+        ev["tenuto"] = True
+    elif name == "staccatissimo":
+        _clamp_note_duration(ev, 0.06, bpm)
+        ev["staccatissimo"] = True
+    elif name == "harmonic":
+        cents = {2: 1200.0, 3: 1900.0, 4: 2400.0}[params["partial"]]
+        _append_curve(ev, _note_curve("pitch_cents", cents))
+        ev["harmonic_partial"] = int(params["partial"])
+        layer_fx.append({"type": "peak", "freq_hz": 4800.0,
+                         "gain_db": 2.5, "q": 1.2})
+    elif name == "sul_ponticello":
+        _append_curve(ev, _note_curve("cutoff_hz", 8500.0))
+        layer_fx.append({"type": "peak", "freq_hz": 4200.0,
+                         "gain_db": 1.8, "q": 0.9})
+    elif name == "sul_tasto":
+        _append_curve(ev, _note_curve("cutoff_hz", 1800.0))
+    else:
+        raise DSLError(f"{TECHNIQUE_UNKNOWN_CODE}: unknown technique '{name}'")
+
+    return {"note": ev, "layer_fx": layer_fx, "diagnostics": diagnostics}
+
+
+def resolve_string_fret_event(ev: dict, tuning: list[str],
+                              *, max_fret: int = 24) -> dict:
+    """Return an event whose rendered pitch is derived from string/fret."""
+    if "string" not in ev and "fret" not in ev:
+        return dict(ev)
+    string_idx = int(ev["string"])
+    if string_idx < 1 or string_idx > len(tuning):
+        raise DSLError(f"string_out_of_tuning: {string_idx} outside tuning")
+    fret = ev["fret"]
+    open_note = tuning[string_idx - 1]
+    open_semis = theory.note_to_semis(open_note)
+    out = dict(ev)
+    if fret == "x":
+        out["note"] = theory.semis_to_note(open_semis)
+        out["technique"] = "dead_note"
+        return out
+    fret_i = int(fret)
+    if fret_i < 0 or fret_i > max_fret:
+        raise DSLError(f"fret_out_of_range: {fret_i} outside 0..{max_fret}")
+    derived = open_semis + fret_i
+    out["note"] = theory.semis_to_note(derived)
+    return out
+
+
+def position_timbre_curve(ev: dict, tuning: list[str]) -> dict | None:
+    """Return the §4.5 synth string/fret position cutoff curve."""
+    if "string" not in ev or "fret" not in ev or ev.get("fret") == "x":
+        return None
+    open_note = tuning[int(ev["string"]) - 1]
+    open_above_low_e = theory.note_to_semis(open_note) - theory.note_to_semis("E2")
+    cutoff = 1500.0 * (2.0 ** (open_above_low_e / 12.0))
+    cutoff = max(1500.0, min(9000.0, cutoff))
+    cutoff = max(1200.0, cutoff - 40.0 * int(ev["fret"]))
+    return _note_curve("cutoff_hz", round(cutoff, 6))
+
+
+def _has_note_curve(ev: dict, target: str) -> bool:
+    return any(
+        isinstance(curve, dict) and curve.get("target") == target
+        for curve in ev.get("curves", []) or []
+    )
+
+
+def _apply_expressive_lowering(spec: dict, diags: list[str]) -> None:
+    bpm = float(spec.get("bpm", 120.0))
+    for layer in spec.get("layers", []):
+        if layer.get("type") not in {"notes", "instrument"}:
+            continue
+        voice = _voice_class(layer)
+        tuning = layer.get("tuning")
+        max_fret = int(layer.get("max_fret", 24))
+        layer_default = layer.pop("technique", layer.pop("tech", None))
+        layer_default_params = layer.pop("tech_params", {})
+        lowered_notes = []
+        for ev in layer.get("notes", []):
+            ev = resolve_string_fret_event(ev, tuning or [],
+                                           max_fret=max_fret) \
+                if ("string" in ev or "fret" in ev) else dict(ev)
+            if tuning and voice in {"sampled", "physical"} \
+                    and "string" in ev and "fret" in ev:
+                diags.append(
+                    f"{POSITION_TIMBRE_UNSUPPORTED_CODE}: layer "
+                    f"'{layer.get('name')}' keeps pitch/feasibility only")
+
+            for mod in ev.pop("curve_mods", []):
+                curve = lower_note_curve_escape_hatch(
+                    mod["name"], mod["value"],
+                    time_basis=mod.get("time_basis", "note_beats"),
+                    duration=float(mod.get("duration", 0.0) or 0.0),
+                )
+                _append_curve(ev, curve)
+
+            tech = ev.pop("tech", ev.pop("technique", None)) or layer_default
+            params = ev.pop("tech_params", None)
+            if tech:
+                result = lower_technique(
+                    tech,
+                    params if params is not None else layer_default_params,
+                    voice=voice,
+                    note=ev,
+                    bpm=bpm,
+                )
+                ev = result["note"]
+                for fx in result["layer_fx"]:
+                    if fx not in layer.setdefault("fx", []):
+                        layer["fx"].append(fx)
+                diags.extend(result["diagnostics"])
+            if (tuning and voice == "synth"
+                    and not _has_note_curve(ev, "cutoff_hz")):
+                curve = position_timbre_curve(ev, tuning)
+                if curve is not None:
+                    _append_curve(ev, curve)
+            lowered_notes.append(ev)
+        if lowered_notes:
+            layer["notes"] = lowered_notes
+
+
 def _append_authored_expression(spec: dict, layer: dict, field: str, value):
     semantic = spec.setdefault("_meta", {}).setdefault("semantic", {})
     authored = semantic.setdefault("authored_expression", [])
@@ -1509,6 +1780,7 @@ def compile_asset(a: Asset, variant=None) -> tuple[dict, list[str]]:
         _apply_smart_directives(spec, smart_intent, diags)
     if structured_intent:
         _apply_structured_intent(spec, structured_intent, diags)
+    _apply_expressive_lowering(spec, diags)
     _lower_legacy_performance_curves(spec, diags)
 
     # advisory checks
@@ -1862,6 +2134,23 @@ def _compile_layer(lay: Layer, motifs: dict, scale, diags: list[str],
                         for i in range(0, len(toks), 3)]
     if "scan" in p:
         out["scan"] = _one(p.pop("scan"), line)
+    if "tuning" in p:
+        tuning = []
+        for tok in p.pop("tuning"):
+            if tok.kind == "PUNCT" and tok.text == ",":
+                continue
+            if tok.kind != "IDENT" or not NOTE_RE.match(tok.text):
+                raise DSLError("tuning: comma-separated note names, "
+                               "e.g. E2, A2, D3, G3, B3, E4", tok.line)
+            tuning.append(tok.text)
+        if not tuning:
+            raise DSLError("tuning: needs at least one string note", line)
+        out["tuning"] = tuning
+    max_fret_key = "max_fret" if "max_fret" in p else (
+        "maxfret" if "maxfret" in p else None)
+    if max_fret_key:
+        out["max_fret"] = int(_one(p.pop(max_fret_key), line, None,
+                                   max_fret_key))
     if "source" in p:
         out["source"] = _one(p.pop("source"), line)
     if "srcdur" in p:
@@ -1957,7 +2246,18 @@ def _compile_layer(lay: Layer, motifs: dict, scale, diags: list[str],
             arp[key] = toks[i + 2].value
             i += 3
 
-    notes = list(p.pop("notes", []))
+    notes_raw = p.pop("notes", [])
+    if any(not isinstance(ev, dict) for ev in notes_raw):
+        bad = next(ev for ev in notes_raw if not isinstance(ev, dict))
+        line_no = getattr(bad, "line", line)
+        text = getattr(bad, "text", "notes")
+        raise DSLError(
+            "notes: malformed note entry or unknown note modifier near "
+            f"{text!r}; expected NOTE @ STARTb for DURb with supported "
+            "modifiers",
+            line_no,
+        )
+    notes = list(notes_raw)
     curve_specs = (_parse_canonical_curve_specs(p.pop("curves"), line)
                    if "curves" in p else [])
     next_slur = [max([e.get("slur", 0) or 0 for e in notes] + [0])]

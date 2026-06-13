@@ -1,0 +1,142 @@
+{
+ "analysis_summary": {
+  "accepted_samples": 1,
+  "fixture": true
+ },
+ "builder_version": "audioforge.sample-catalog/1",
+ "catalog_diagnostics": {
+  "blocked_count": 0,
+  "blocked_instruments": [],
+  "ignored_opcodes": [],
+  "instrument_count": 1,
+  "instruments": [
+   {
+    "articulation": "default",
+    "category": "samples",
+    "id": "instrument",
+    "ignored_opcodes": [],
+    "key_range": {
+     "high_midi": 60,
+     "high_note": "C4",
+     "low_midi": 60,
+     "low_note": "C4"
+    },
+    "missing_samples": [],
+    "pitch_keycenters": [
+     60
+    ],
+    "regions": 1,
+    "render_blockers": [],
+    "renderable": true,
+    "round_robin_max": 1,
+    "sample_counts": {
+     "missing": 0,
+     "present": 1,
+     "unique": 1
+    },
+    "sample_formats": [
+     "wav"
+    ],
+    "sfz": "instrument.sfz",
+    "uses_include": false,
+    "velocity_layers": [
+     [
+      1,
+      127
+     ]
+    ]
+   }
+  ],
+  "render_blockers": [],
+  "renderable_count": 1,
+  "renderable_instruments": [
+   {
+    "id": "instrument",
+    "sfz": "instrument.sfz"
+   }
+  ]
+ },
+ "catalog_state": "approved",
+ "files": [
+  {
+   "path": "instrument.sfz",
+   "sha256": "1bc28277891a6125055fdc9bcce63d822b8d27c07ff193116bc846a081a76729"
+  },
+  {
+   "path": "samples/C4.wav",
+   "sha256": "77775d6e0e4c6216d250040a9842672999192efb59938ff6228d34daf6566732"
+  }
+ ],
+ "instruments": {
+  "tiny_sine": {
+   "articulations": {
+    "sustain": "instrument.sfz"
+   },
+   "sfz": "instrument.sfz"
+  }
+ },
+ "license": "CC0-1.0",
+ "license_evidence_hash": "f6af3ea870637daf75a528efab1b9d36b2fa20e3c5e873100ffe21dfb4bc431e",
+ "manifest_sha256": "4c5d300e059687e611f7f668a3572a35708251941de952684f1a37b4305da5ba",
+ "name": "tiny-approved-sample-catalog",
+ "regions": [
+  {
+   "articulation": "sustain",
+   "coverage": {
+    "articulation": "sustain",
+    "instrument": "tiny_sine",
+    "key_range": [
+     60,
+     60
+    ],
+    "keycenter_midi": 60,
+    "loop": {
+     "candidate_withheld": false,
+     "end": 0,
+     "mode": "no_loop",
+     "start": 0
+    },
+    "round_robin": {
+     "group": null,
+     "index": null,
+     "size": 1
+    },
+    "velocity_range": [
+     1,
+     127
+    ]
+   },
+   "hikey": 60,
+   "hivel": 127,
+   "instrument": "tiny_sine",
+   "library_pin": {
+    "builder_version": "audioforge.sample-catalog/1",
+    "manifest_sha256": "4c5d300e059687e611f7f668a3572a35708251941de952684f1a37b4305da5ba",
+    "name": "tiny-approved-sample-catalog",
+    "version": "1.0.0"
+   },
+   "lokey": 60,
+   "loop_end": 0,
+   "loop_mode": "no_loop",
+   "loop_start": 0,
+   "lovel": 1,
+   "pitch_keycenter": 60,
+   "sample": "samples/C4.wav",
+   "sample_identity": {
+    "byte_size": 15920,
+    "license_evidence_hash": "f6af3ea870637daf75a528efab1b9d36b2fa20e3c5e873100ffe21dfb4bc431e",
+    "sample": "samples/C4.wav",
+    "sample_sha256": "77775d6e0e4c6216d250040a9842672999192efb59938ff6228d34daf6566732",
+    "source_evidence_id": "5d3da3dd28c59f159348b5c4a763cc7c68d0ace19ec97fc2e729da057cc083e5"
+   },
+   "sample_sha256": "77775d6e0e4c6216d250040a9842672999192efb59938ff6228d34daf6566732",
+   "source_evidence_id": "5d3da3dd28c59f159348b5c4a763cc7c68d0ace19ec97fc2e729da057cc083e5"
+  }
+ ],
+ "review": {
+  "reviewed_at": "2026-06-12T00:00:00+00:00",
+  "reviewer": "fixture",
+  "status": "approved"
+ },
+ "version": "1.0.0"
+}

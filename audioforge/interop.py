@@ -191,84 +191,218 @@ def export_midi_bytes(spec: dict) -> bytes:
             + b"MTrk" + struct.pack(">I", len(track)) + bytes(track))
 
 
+# General MIDI program-number families -> a renderable (non-native) osc shape.
+# Used to voice each imported channel; native-kernel oscillators are avoided so
+# an imported file always renders without extra material/kernel dependencies.
+_GM_PROGRAM_OSC = [
+    (8, "triangle"), (16, "pluck"), (24, "organ"), (32, "pluck"),
+    (40, "saw"), (48, "pad"), (56, "pad"), (64, "saw"), (72, "triangle"),
+    (80, "triangle"), (88, "saw"), (96, "pad"), (104, "pluck"),
+    (112, "pluck"), (120, "pluck"), (128, "triangle"),
+]
+_PERCUSSIVE_OSC = {"pluck", "saw"}
+# GM channel 10 (0-based index 9) is the percussion channel.
+_GM_DRUM_CHANNEL = 9
+# Floor for imported note duration (beats); keeps zero-length percussion hits
+# above the IR's dur_beats minimum while staying rhythmically negligible.
+_MIN_DUR_BEATS = 0.02
+
+
+def _layer_ident(text: str, fallback: str, used: set[str]) -> str:
+    """Coerce a MIDI track name into a unique DSL IDENT.
+
+    The grammar's IDENT is ``letter , { letter | digit | "_" | "#" }`` — no
+    hyphens, spaces, or leading digits — and layer names must be unique so the
+    decompiled ``.af`` round-trips. Invalid runs collapse to ``_``; a numeric
+    suffix disambiguates collisions.
+    """
+    import re
+
+    cleaned = re.sub(r"[^A-Za-z0-9_#]+", "_", (text or "").strip()).strip("_")
+    if not cleaned or not cleaned[0].isalpha():
+        cleaned = fallback if (fallback and fallback[0].isalpha()) else f"L_{cleaned}"
+    candidate = cleaned
+    n = 2
+    while candidate in used:
+        candidate = f"{cleaned}_{n}"
+        n += 1
+    return candidate
+
+
+def _osc_for_program(program: int) -> str:
+    for ceiling, shape in _GM_PROGRAM_OSC:
+        if program < ceiling:
+            return shape
+    return "triangle"
+
+
+def _env_for_osc(osc: str) -> dict:
+    if osc in _PERCUSSIVE_OSC:
+        return {"attack": 0.002, "decay": 0.12, "sustain": 0.0, "release": 0.14}
+    return {"attack": 0.01, "decay": 0.1, "sustain": 0.8, "release": 0.18}
+
+
+def _split_tracks(data: bytes) -> tuple[int, int, list[bytes]]:
+    """Return (format, division, [track_bytes...]) for every MTrk chunk."""
+    _hlen, fmt, _ntrks, division = struct.unpack(">IHHH", data[4:14])
+    tracks: list[bytes] = []
+    pos = data.index(b"MTrk", 14)
+    while pos + 8 <= len(data) and data[pos:pos + 4] == b"MTrk":
+        length = struct.unpack(">I", data[pos + 4:pos + 8])[0]
+        tracks.append(data[pos + 8:pos + 8 + length])
+        pos += 8 + length
+    return fmt, division, tracks
+
+
 def import_midi_bytes(data: bytes, asset_id: str = "imported_midi") -> dict:
+    """Import a Standard MIDI File (format 0 or 1) into an IR spec.
+
+    Each ``(track, channel)`` that carries notes becomes its own ``notes``
+    layer voiced from its GM program; the percussion channel (10) is voiced
+    percussively. Running status, multi-track files, meta and SysEx events are
+    handled; per-channel pitch bend (with RPN sensitivity) projects to a
+    layer-scope ``pitch_cents`` automation curve.
+
+    ⚠ ARCHITECTURAL CONTRACT (PALS's LAW) — the returned spec is the parser's
+    *claim*; callers compile/validate it (``ir_schema`` / ``AudioForge``)
+    before trusting it. The parser never asserts the file's musical intent.
+    """
     if not data.startswith(b"MThd"):
         raise ValueError("not a MIDI file")
     _hlen, _fmt, _ntrks, division = struct.unpack(">IHHH", data[4:14])
-    pos = data.index(b"MTrk", 14)
-    length = struct.unpack(">I", data[pos + 4:pos + 8])[0]
-    track = data[pos + 8:pos + 8 + length]
-    i = tick = 0
+    if division & 0x8000:
+        raise ValueError("SMPTE time-division MIDI files are not supported; "
+                         "only ticks-per-quarter (PPQ) division")
+    _fmt, division, tracks = _split_tracks(data)
+
     bpm = 120.0
-    active: dict[int, tuple[int, int]] = {}
-    rpn_msb = rpn_lsb = None
-    bend_range_cents = 200.0
-    pitch_points = []
-    notes = []
-    while i < len(track):
-        delta, i = _read_vlq(track, i)
-        tick += delta
-        status = track[i]
-        i += 1
-        if status == 0xFF:
-            meta = track[i]; i += 1
-            ln, i = _read_vlq(track, i)
-            payload = track[i:i + ln]; i += ln
-            if meta == 0x51 and ln == 3:
-                bpm = 60_000_000 / int.from_bytes(payload, "big")
-            if meta == 0x2F:
-                break
-        elif status & 0xF0 in (0x90, 0x80):
-            note, vel = track[i], track[i + 1]
-            i += 2
-            if status & 0xF0 == 0x90 and vel:
-                active[note] = (tick, vel)
-            elif note in active:
-                st, v = active.pop(note)
-                notes.append({
-                    "note": _note_name(note),
-                    "start_beat": round(st / division, 6),
-                    "dur_beats": round((tick - st) / division, 6),
-                    "vel": round(v / 127.0, 4),
-                })
-        elif status & 0xF0 == 0xB0:
-            controller, value = track[i], track[i + 1]
-            i += 2
-            if controller == 101:
-                rpn_msb = value
-            elif controller == 100:
-                rpn_lsb = value
-            elif controller == 6 and rpn_msb == 0 and rpn_lsb == 0:
-                bend_range_cents = float(value) * 100.0
-            elif controller == 38 and rpn_msb == 0 and rpn_lsb == 0:
-                bend_range_cents = (
-                    int(bend_range_cents // 100.0) * 100.0 + float(value))
-        elif status & 0xF0 == 0xE0:
-            lsb, msb = track[i], track[i + 1]
-            i += 2
-            raw = (msb << 7) | lsb
-            delta = raw - 8192
-            denom = 8191.0 if delta >= 0 else 8192.0
-            cents = round((delta / denom) * bend_range_cents, 6)
-            pitch_points.append([round(tick / division, 6), cents])
-        else:
-            raise ValueError(f"unsupported MIDI event 0x{status:02x}")
-    dur_beats = max((n["start_beat"] + n["dur_beats"] for n in notes),
-                    default=1.0)
-    layer = {"name": "midi", "type": "notes", "osc": "sine",
-             "env": {"attack": 0.01, "decay": 0.1,
-                     "sustain": 0.8, "release": 0.1},
-             "notes": notes}
-    if pitch_points:
-        layer["automation"] = [{
-            "target": "pitch_cents",
-            "time_basis": "layer_beats",
-            "points": pitch_points,
-        }]
+    bpm_set = False
+    # (track_index, channel) -> accumulated state for that voice.
+    voices: dict[tuple[int, int], dict] = {}
+
+    def voice(ti: int, ch: int) -> dict:
+        return voices.setdefault((ti, ch), {
+            "notes": [], "active": {}, "program": 0,
+            "rpn": [None, None], "bend_range_cents": 200.0,
+            "pitch_points": [],
+        })
+
+    track_name: dict[int, str] = {}
+    for ti, track in enumerate(tracks):
+        i = tick = 0
+        status = 0
+        while i < len(track):
+            delta, i = _read_vlq(track, i)
+            tick += delta
+            head = track[i]
+            if head & 0x80:                       # new status byte
+                status = head
+                i += 1
+            # else: running status — reuse previous `status`, data starts here
+            if status == 0xFF:
+                meta = track[i]; i += 1
+                ln, i = _read_vlq(track, i)
+                payload = track[i:i + ln]; i += ln
+                if meta == 0x51 and ln == 3 and not bpm_set:
+                    bpm = 60_000_000 / int.from_bytes(payload, "big")
+                    bpm_set = True
+                elif meta == 0x03 and ti not in track_name:
+                    track_name[ti] = payload.decode("latin-1", "replace").strip()
+                elif meta == 0x2F:
+                    break
+                continue
+            if status in (0xF0, 0xF7):             # SysEx — length-prefixed, skip
+                ln, i = _read_vlq(track, i)
+                i += ln
+                continue
+            kind = status & 0xF0
+            ch = status & 0x0F
+            if kind in (0x90, 0x80):
+                note, vel = track[i], track[i + 1]
+                i += 2
+                v = voice(ti, ch)
+                if kind == 0x90 and vel:
+                    v["active"].setdefault(note, []).append((tick, vel))
+                elif v["active"].get(note):
+                    st, vv = v["active"][note].pop(0)
+                    # Floor duration: zero-length hits (same-tick on/off, common
+                    # for percussion) would violate the IR's dur_beats minimum.
+                    dur = max(round((tick - st) / division, 6), _MIN_DUR_BEATS)
+                    v["notes"].append({
+                        "note": _note_name(note),
+                        "start_beat": round(st / division, 6),
+                        "dur_beats": dur,
+                        "vel": round(vv / 127.0, 4),
+                    })
+            elif kind == 0xC0:                     # program change
+                voice(ti, ch)["program"] = track[i]; i += 1
+            elif kind == 0xD0:                     # channel pressure
+                i += 1
+            elif kind == 0xA0:                     # poly aftertouch
+                i += 2
+            elif kind == 0xB0:                     # control change
+                controller, value = track[i], track[i + 1]
+                i += 2
+                v = voice(ti, ch)
+                if controller == 101:
+                    v["rpn"][0] = value
+                elif controller == 100:
+                    v["rpn"][1] = value
+                elif controller == 6 and v["rpn"] == [0, 0]:
+                    v["bend_range_cents"] = float(value) * 100.0
+                elif controller == 38 and v["rpn"] == [0, 0]:
+                    v["bend_range_cents"] = (
+                        int(v["bend_range_cents"] // 100.0) * 100.0 + float(value))
+            elif kind == 0xE0:                     # pitch bend
+                lsb, msb = track[i], track[i + 1]
+                i += 2
+                v = voice(ti, ch)
+                raw = (msb << 7) | lsb
+                d = raw - 8192
+                denom = 8191.0 if d >= 0 else 8192.0
+                cents = round((d / denom) * v["bend_range_cents"], 6)
+                v["pitch_points"].append([round(tick / division, 6), cents])
+            else:
+                raise ValueError(f"unsupported MIDI event 0x{status:02x}")
+
+    layers = []
+    used_names: set[str] = set()
+    for (ti, ch), v in voices.items():
+        if not v["notes"]:
+            continue
+        is_drums = ch == _GM_DRUM_CHANNEL
+        osc = "pluck" if is_drums else _osc_for_program(v["program"])
+        base = track_name.get(ti) or (
+            "drums" if is_drums else f"trk{ti}_ch{ch + 1}")
+        name = _layer_ident(base, f"layer{ti}_{ch + 1}", used_names)
+        used_names.add(name)
+        layer = {
+            "name": name, "type": "notes", "osc": osc,
+            "env": _env_for_osc(osc),
+            "notes": sorted(v["notes"],
+                            key=lambda n: (n["start_beat"], n["note"])),
+        }
+        if v["pitch_points"]:
+            layer["automation"] = [{
+                "target": "pitch_cents",
+                "time_basis": "layer_beats",
+                "points": v["pitch_points"],
+            }]
+        layers.append(layer)
+
+    if not layers:
+        layers = [{"name": "midi", "type": "notes", "osc": "sine",
+                   "env": {"attack": 0.01, "decay": 0.1,
+                           "sustain": 0.8, "release": 0.1},
+                   "notes": []}]
+    dur_beats = max(
+        (n["start_beat"] + n["dur_beats"]
+         for layer in layers for n in layer["notes"]),
+        default=1.0)
     return {
         "id": asset_id, "kind": "cue", "duration_s": round(dur_beats * 60 / bpm, 3),
         "bpm": round(bpm, 6),
-        "layers": [layer],
+        "layers": layers,
         "master": {"target_peak_dbfs": -1.0},
     }
 

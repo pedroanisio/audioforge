@@ -38,12 +38,12 @@ time (F4); the published JSON Schema no longer lists `lowpass`/`highpass`/
 automation must target a real cutoff-capable fx (F12). `swing` and `groove` are
 reclassified as render-affecting fields (F7).
 
-Stereo-width note: IR schema 1.2 raises `master.stereo_width`'s ceiling from
+Stereo-width note: IR schema 1.3 raises `master.stereo_width`'s ceiling from
 `1.0` to `2.0`. The render path already scaled the side signal by `width`; the
 schema previously clamped it to `[0, 1]`, so an author could collapse toward
 mono but never widen past the as-mixed image. Widening preserves the mid (the
 mono sum is unchanged) and is zero in silence (no noise-floor cost). Backward
-compatible: every valid `1.0`/`1.1` spec is unchanged and re-renders
+compatible: every valid `1.0`/`1.1`/`1.2` spec is unchanged and re-renders
 byte-identically (the engine version is untouched).
 
 Performance-curve note: IR schema 1.1 adds explicit `pitch_cents` and
@@ -64,6 +64,46 @@ manifests now stamp `plan_hash` and exports write `<id>.plan.json`; session
 bundles include the plan artifact. `render --plan` recomputes and refuses stale
 plans before audio computation. The first landing keeps audio behavior
 unchanged while formalizing current routing decisions.
+
+AF-P3/P1 schema note: IR schema 1.2 is an additive schema/validation surface for
+expressive performance techniques. It publishes note-scope timbre targets
+(`cutoff_hz`, `gain_db`, `scan`), the `TECHNIQUES` registry skeleton, canonical
+diagnostic codes, and fretted/stringed mechanics fields (`tuning`, `string`,
+`fret`, `max_fret`). Existing valid IR 1.1 specs remain valid and no-feature
+renders remain byte-identical; pure lowering and renderer timbre consumption are
+staged after this schema slice.
+
+AF-P3/P2 compiler note: expressive techniques now lower in the compiler to
+explicit note data, note-scope curves, and layer fx. `palm_mute`, `dead_note`,
+`let_ring`, `accent`, `tenuto`, `staccatissimo`, `harmonic`,
+`sul_ponticello`, and `sul_tasto` do not create a renderer-private technique
+channel. Curve escape hatches lower to `cutoff_hz`, `gain_db`, and `scan`, and
+string/fret authoring resolves pitch plus synth-only position-to-timbre cutoff
+curves. Renderer consumption of the new timbre curves remains the staged AF-P3/P3
+hash-moving phase.
+
+AF-P3/P3 renderer note: note-scope timbre curves are now consumed by renderers.
+Synth note rendering applies absolute `cutoff_hz` lowpass envelopes, additive
+`gain_db` envelopes, and per-note morph `scan` envelopes through the existing
+curve evaluator. Sampled instrument rendering applies supported note
+`gain_db`; sampled `cutoff_hz` and `scan` remain validation rejects because the
+sampler has no per-voice filter or morph voice.
+
+AF-P3/P4 DSL note: the authoring grammar now accepts note modifiers
+`tech NAME(k=v)`, `cutoff(Nhz)`, `level(Ndb)`, `scan(N)`, `string N`, and
+`fret N|x`, plus layer `tuning:` and `max_fret:`. The decompiler preserves
+these authored modifiers through the semantic sidecar and suppresses their
+lowered curves to avoid double-applying techniques on round-trip.
+
+AF-P3/P5 support note: the support matrix is pinned by per-cell regressions for
+note-scope curves and techniques across synth, sampled, and physical voices.
+Unsupported cells reject or fall back with canonical diagnostics.
+
+AF-P3/P6 acceptance note: `static/fixtures/expressive_techniques.af` now serves
+as the end-to-end expressive-techniques fixture, covering note-scope timbre,
+registered techniques, and string/fret/tuning mechanics. Sibling rejection
+fixtures pin the canonical diagnostics for unsupported scan, duplicate timbre
+curves, and unsupported physical-model pitch curves.
 
 Determinism note: `ENGINE_VERSION` is folded into the `spec_hash` payload
 (`audioforge.determinism`). Re-rendering an unchanged spec under Engine 2.16.0
@@ -87,6 +127,20 @@ consumers that pinned 2.15.0 hashes must re-pin against this engine.
 - AF-P2 render plans are first-class derived artifacts: manifests stamp
   `plan_hash`, exports and session bundles include `.plan.json`, and CLI/SDK/
   agent surfaces can generate, explain, and stale-verify plans.
+- AF-P3/P1 adds the additive IR schema 1.2 contract for note-scope timbre
+  targets, technique registry publication, diagnostics, and string/fret/tuning
+  validation. This is hash-inert for existing no-feature specs.
+- AF-P3/P2 adds compiler-side pure lowering for registered techniques, curve
+  escape hatches, and string/fret pitch plus synth position-timbre derivation.
+  Renderer consumption of `cutoff_hz`, `gain_db`, and `scan` remains staged.
+- AF-P3/P3 wires note-scope timbre curves into rendering: synth voices consume
+  `cutoff_hz`, `gain_db`, and morph `scan`, while sampled instruments consume
+  supported note `gain_db`.
+- AF-P3/P4 adds the DSL/decompile surface for techniques, curve escape hatches,
+  and string/fret/tuning mechanics.
+- AF-P3/P5 adds support-matrix gating regressions for curves and techniques.
+- AF-P3/P6 adds the acceptance fixture, golden IR snapshot regression, and
+  rejection fixtures for the expressive-techniques contract.
 - Backward compatible for authoring: no `.af` source migration required.
 - Render hashes recompute under the new engine version and legacy performance
   lowering may change compiled IR for assets that use `vibrato`, `glide_s`, or

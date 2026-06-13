@@ -1,0 +1,81 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "shadowmd"
+version = "0.1.0"
+description = "A CLI-only, Nix-like immutable overlay layer for Markdown (and any text) files."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Pedro Anisio Silva", email = "pedroanisio@faz.ai" }]
+keywords = ["markdown", "versioning", "immutable", "content-addressed", "overlay", "cli"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Topic :: Software Development :: Version Control",
+  "Topic :: Text Processing :: Markup :: Markdown",
+]
+# Zero runtime dependencies: the design is deliberately stdlib-only
+# (hashlib, difflib, os.replace, argparse). See docs/shadowmd-design-v2.md.
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "pytest-cov>=4", "ruff>=0.6", "mypy>=1.11"]
+
+[project.scripts]
+shadowmd = "shadowmd.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/pedroanisio/shadowmd"
+Issues = "https://github.com/pedroanisio/shadowmd/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/shadowmd"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-q"
+
+[tool.coverage.run]
+source = ["shadowmd"]
+branch = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+  "E", "F", "W",   # pyflakes + pycodestyle
+  "I",             # isort
+  "B",             # bugbear
+  "UP",            # pyupgrade
+  "SIM",           # flake8-simplify
+  "C4",            # comprehensions
+  "RUF",           # ruff-specific
+]
+ignore = [
+  "SIM105",  # contextlib.suppress vs try/except/pass — explicit is fine in IO paths
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B011"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+files = ["src/shadowmd"]
+warn_unreachable = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+# Tests use fixtures/monkeypatch; keep strict on the library, lenient on tests.
+[[tool.mypy.overrides]]
+module = "tests.*"
+ignore_errors = true

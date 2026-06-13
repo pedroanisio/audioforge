@@ -144,7 +144,7 @@ it is not authored DSL. The hash-included authored policy lives under
 spec, engine, library, catalog, or policy inputs before audio is computed.
 Render manifests record `plan_hash`, and exports write `<id>.plan.json`.
 
-**Note events** (in `notes:` lists and motifs): `PITCH @ START for DUR [vel V] [voicing NAME] [art NAME]`, where `PITCH` is a note, frequency, or chord symbol. Note lists may wrap consecutive notes in `slur( …, … )` — the group shares a slur id in the IR. `slur( play m @ 0b, play m @ 4b … )` is also valid (since 2.14): the motif expansions join as **one** slur group; `play motif @ Nb legato` remains the single-motif shorthand. `notes:` needs its first event on the same line and continues across lines with trailing commas; `play` is a layer-body statement, one per line — the parser now says exactly this when the shapes are confused. Automation (`auto target:`) honors the same comma-newline continuation rule as every property list (fixed in 2.14). Articulations: `sustain staccato spiccato pizzicato tremolo marcato legato trill` — `trill` expands at compile time into alternating notes with the key-aware diatonic upper neighbor (0.125 b steps, reported in diagnostics). Chord voicings: `close` (default) `drop2 drop3 spread open wide inv1 inv2`. A chord expands to simultaneous notes — or to a sequence if the layer has an `arp:` (§6).
+**Note events** (in `notes:` lists and motifs): `PITCH @ START for DUR [vel V] [voicing NAME] [art NAME]`, where `PITCH` is a note, frequency, or chord symbol. G13 adds note modifiers `tech NAME(k=v)`, `cutoff(Nhz)`, `level(Ndb)`, `scan(N)`, `string N`, and `fret N|x`; these compile away to explicit note curves, layer fx, and hash-included string/fret IR. Note lists may wrap consecutive notes in `slur( …, … )` — the group shares a slur id in the IR. `slur( play m @ 0b, play m @ 4b … )` is also valid (since 2.14): the motif expansions join as **one** slur group; `play motif @ Nb legato` remains the single-motif shorthand. `notes:` needs its first event on the same line and continues across lines with trailing commas; `play` is a layer-body statement, one per line — the parser now says exactly this when the shapes are confused. Automation (`auto target:`) honors the same comma-newline continuation rule as every property list (fixed in 2.14). Articulations: `sustain staccato spiccato pizzicato tremolo marcato legato trill` — `trill` expands at compile time into alternating notes with the key-aware diatonic upper neighbor (0.125 b steps, reported in diagnostics). Chord voicings: `close` (default) `drop2 drop3 spread open wide inv1 inv2`. A chord expands to simultaneous notes — or to a sequence if the layer has an `arp:` (§6).
 
 ---
 
@@ -265,11 +265,13 @@ Breakpoints interpolate linearly (log-domain for cutoff; clipped 0..1 for scan).
 
 ### Performance curves
 
-Compiled IR schema `1.1` uses the same curve object for continuous performance
-state. `pitch_cents` is a relative pitch offset in cents and `dynamic` is a
-normalized performance dynamic in `[0, 1]`. Curves may live on note events
-(`note_beats` or `note_seconds`) or layer automation (`layer_beats` or
-`layer_seconds`); existing automation targets continue to use layer scope.
+Compiled IR schema `1.2` uses the same curve object for continuous performance
+state. `pitch_cents` is a relative pitch offset in cents, `dynamic` is a
+normalized performance dynamic in `[0, 1]`, and G13/P1 reserves note-scope
+timbre targets `cutoff_hz`, `gain_db`, and `scan` for explicit per-note timbre
+data. Curves may live on note events (`note_beats` or `note_seconds`) or layer
+automation (`layer_beats` or `layer_seconds`); existing automation targets
+continue to use layer scope.
 
 The compiler lowers legacy expressive fields before render:
 
@@ -277,6 +279,12 @@ The compiler lowers legacy expressive fields before render:
 - `glide_s` becomes linear-in-cents `pitch_cents` curves from the previous
   pitch offset to zero.
 - authored `dynamic` breakpoints are re-emitted as explicit `dynamic` curves.
+- `tech NAME(k=v)` note modifiers lower through the `TECHNIQUES` registry.
+- `cutoff(Nhz)`, `level(Ndb)`, and `scan(N)` lower to note-scope
+  `cutoff_hz`, `gain_db`, and `scan` curves.
+- `tuning: E2, A2, D3, G3, B3, E4` on a layer plus note `string`/`fret`
+  modifiers resolve pitch authoritatively; synth voices also get position
+  timbre as `cutoff_hz` when no explicit cutoff was authored.
 
 Interpolation is explicit in IR: points are `[time, value]` or
 `[time, value, shape]`, where shape is `linear`, `hold`, or `pow:k`
@@ -284,8 +292,10 @@ Interpolation is explicit in IR: points are `[time, value]` or
 are constants. Complex shapes should compile to dense breakpoints rather than
 adding runtime-private logic. `pitch_cents` curves sum in cents and render as
 `f_base * 2 ** (cents / 1200)`. Unsupported physical-model pitch curves reject
-with `curve_unsupported_voice`; sampled instruments and synth notes consume
-curves directly.
+with `curve_unsupported_voice`; sampled instruments and synth notes consume G11
+pitch/dynamic curves directly. G13 note-scope `cutoff_hz`/`scan` targets are
+synth-only, `gain_db` is supported on synth, sampled, and physical voices, and
+unsupported note-scope target/voice combinations reject before render.
 
 ---
 
@@ -449,7 +459,7 @@ through `interop_diagnostics()` as `lossy_pitch_curve` or
 
 **Single files.** Sample and IR files resolve against registered search paths (default `./samples`; add with `audioforge.samples.add_sample_path(dir)` or in-memory `register_sample(name, bytes)`). `audioforge ingest dir/` hashes and catalogs every WAV and prints paste-ready, hash-pinned layer snippets.
 
-**Instrument libraries.** A library is a directory of WAV + SFZ files plus a `library.manifest.json` pinning every byte and the instrument→SFZ mapping (the manifest hash covers both — remapping an instrument changes audio, so it changes the hash). `audioforge libgen dir/ --name N --license L` generates it; specs pin it with `library: "name@manifest_sha256"`, which folds into the spec hash; every sample is byte-verified at first load and mismatches refuse with both hashes named. Libraries resolve against `./libraries` plus `audioforge.library.add_library_path(dir)`.
+**Instrument libraries.** A library is a directory of WAV + SFZ files plus a `library.manifest.json` pinning every byte and the instrument→SFZ mapping (the manifest hash covers both — remapping an instrument changes audio, so it changes the hash). `audioforge libgen dir/ --name N --license L` generates it; specs pin it with `library: "name@manifest_sha256"`, which folds into the spec hash; every sample is byte-verified at first load and mismatches refuse with both hashes named. Libraries resolve against `./libraries` plus `audioforge.library.add_library_path(dir)`. Reviewed sample catalogs under `_catalog/approved/<instrument>/<version>/` can be registered with `audioforge.library.add_approved_catalog_path()`.
 
 **Articulations (since 2.11).** Per note (`art spiccato`) or per layer (`articulation:`). If the library samples the articulation, its SFZ map is selected; otherwise a documented synthetic fallback applies and is **recorded in the render manifest** (`articulation_fallbacks`) — loud, not silent: staccato/spiccato = sustain clamped to 0.18/0.12 s; pizzicato = shortest available articulation clamped to 0.10 s; marcato = +2.5 dB, hard attack; tremolo = seeded ~12 Hz re-trigger train; legato = sustain until the legato-join mechanism described in Performance & rhythm.
 
@@ -551,6 +561,7 @@ audioforge pack     spec.af [--variants N] [-o dir] [--preset P]
 audioforge campaign spec.af [-o dir] [--preset P] [--intensity K]
 audioforge ingest   samples_dir/ [-o catalog.json]
 audioforge libgen   library_dir/ [--name N] [--version V] [--license L]
+audioforge sample-catalog search|resolve-openverse|download|analyze|build-sfz|audit-license|review ...
 audioforge batch    specs_dir/ [-o dir]
 audioforge verify   spec manifest
 ```

@@ -44,13 +44,17 @@ def test_vlq_round_trip_and_midi_rejects_invalid_or_unsupported_events():
     with pytest.raises(ValueError, match="not a MIDI file"):
         interop.import_midi_bytes(b"not-midi")
 
-    track = interop._vlq(0) + bytes([0xC0, 0x00])
+    # Program change is a valid channel-voice message: it must be consumed
+    # (it voices the channel), never rejected. A note-free track yields a
+    # single empty placeholder layer.
+    track = interop._vlq(0) + bytes([0xC0, 0x19])  # program 25 -> pluck family
+    track += interop._vlq(0) + b"\xff\x2f\x00"
     data = (
         b"MThd" + struct.pack(">IHHH", 6, 0, 1, interop.TPQ)
         + b"MTrk" + struct.pack(">I", len(track)) + track
     )
-    with pytest.raises(ValueError, match="unsupported MIDI event 0xc0"):
-        interop.import_midi_bytes(data)
+    imported = interop.import_midi_bytes(data)
+    assert imported["layers"][0]["notes"] == []
 
 
 def test_midi_export_import_clamps_velocity_and_preserves_tempo():

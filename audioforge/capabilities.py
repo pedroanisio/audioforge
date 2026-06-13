@@ -20,7 +20,26 @@ from .curves import (
 )
 from .plan import (PLAN_DIAGNOSTIC_CODES, RENDER_PLAN_ROUTES,
                    RENDER_PLAN_SCHEMA_VERSION)
-from .schema import ROUTING_FALLBACK_MODES
+from .schema import (
+    EXPRESSIVE_DIAGNOSTIC_CODES,
+    NOTE_SCOPE_SUPPORT,
+    NOTE_SCOPE_TARGETS,
+    NOTE_SCOPE_TARGET_RANGES,
+    NOTE_SCOPE_TIMBRE_TARGETS,
+    ROUTING_FALLBACK_MODES,
+    TECHNIQUES,
+)
+from .sample_catalog.constants import (
+    ANALYSIS_SCHEMA,
+    CANDIDATE_SCHEMA,
+    LICENSE_BUNDLE_SCHEMA,
+    LICENSE_EVIDENCE_SCHEMA,
+    SAMPLE_CATALOG_COMMANDS,
+    SAMPLE_CATALOG_BUILDER_VERSION,
+)
+from .sample_catalog.licenses import ACCEPTED_LICENSES
+from .sample_catalog.sfz import GENERATED_SFZ_OPCODES
+from .sample_catalog.sources import SOURCE_ADAPTERS, SOURCE_ADAPTER_CLI_NAMES
 
 
 CAPABILITY_SCHEMA_VERSION = "audioforge.capabilities/1"
@@ -29,15 +48,24 @@ CURVE_SUPPORT_MATRIX = {
     "notes:synth": {
         "pitch_cents": "full",
         "dynamic": "level_time_varying_brightness_onset_sampled",
+        "gain_db": "full",
+        "cutoff_hz": "full",
+        "scan": "morph_only",
     },
     "instrument:sampled": {
         "pitch_cents": "full",
         "dynamic": "full",
+        "gain_db": "full",
+        "cutoff_hz": "unsupported_no_per_voice_filter",
+        "scan": "unsupported_no_morph_voice",
     },
     "physical_models": {
         "voices": sorted(PHYSICAL_MODEL_OSCILLATORS),
         "pitch_cents": "unsupported_until_staged",
-        "dynamic": "unsupported_until_mapped",
+        "dynamic": "full",
+        "gain_db": "full",
+        "cutoff_hz": "unsupported_until_staged",
+        "scan": "unsupported_until_staged",
         "diagnostic": CURVE_UNSUPPORTED_VOICE_CODE,
         "initial_pitch_bound_cents": 400,
     },
@@ -61,6 +89,7 @@ CLI_COMMANDS = [
     "plan",
     "render",
     "repair",
+    "sample-catalog",
     "score",
     "validate",
     "verify",
@@ -205,10 +234,45 @@ def capability_manifest() -> dict:
                     "range": [0.0, 1.0],
                     "combination": "one_per_scope",
                 },
+                "cutoff_hz": {
+                    "unit": "hz",
+                    "range": list(NOTE_SCOPE_TARGET_RANGES["cutoff_hz"]),
+                    "combination": "one_per_note",
+                },
+                "gain_db": {
+                    "unit": "db",
+                    "range": list(NOTE_SCOPE_TARGET_RANGES["gain_db"]),
+                    "combination": "one_per_note_additive",
+                },
+                "scan": {
+                    "unit": "normalized",
+                    "range": list(NOTE_SCOPE_TARGET_RANGES["scan"]),
+                    "combination": "one_per_note",
+                },
             },
+            "note_scope_targets": sorted(NOTE_SCOPE_TARGETS),
+            "note_scope_timbre_targets": sorted(NOTE_SCOPE_TIMBRE_TARGETS),
             "curve_shapes": sorted(CURVE_SHAPES),
             "time_bases": sorted(NOTE_TIME_BASES | LAYER_TIME_BASES),
             "support_matrix": CURVE_SUPPORT_MATRIX,
+        },
+        "note_scope_targets": {
+            "targets": sorted(NOTE_SCOPE_TARGETS),
+            "timbre_targets": sorted(NOTE_SCOPE_TIMBRE_TARGETS),
+            "ranges": {
+                name: list(bounds)
+                for name, bounds in sorted(NOTE_SCOPE_TARGET_RANGES.items())
+            },
+            "support": NOTE_SCOPE_SUPPORT,
+        },
+        "techniques": {
+            name: {
+                "lowers_to": list(entry["lowers_to"]),
+                "params": entry["params"],
+                "support": entry["support"],
+                "doc": entry["doc"],
+            }
+            for name, entry in sorted(TECHNIQUES.items())
         },
         "render_plan": {
             "schema": RENDER_PLAN_SCHEMA_VERSION,
@@ -228,6 +292,38 @@ def capability_manifest() -> dict:
             "artifact": {
                 "extension": ".plan.json",
                 "hash": "sha256(canonical_plan_json_without_plan_hash_field)",
+            },
+        },
+        "sample_catalog": {
+            "builder_version": SAMPLE_CATALOG_BUILDER_VERSION,
+            "artifact_schemas": {
+                "analysis": ANALYSIS_SCHEMA,
+                "candidate": CANDIDATE_SCHEMA,
+                "license_bundle": LICENSE_BUNDLE_SCHEMA,
+                "license_evidence": LICENSE_EVIDENCE_SCHEMA,
+                "library_manifest_builder": SAMPLE_CATALOG_BUILDER_VERSION,
+            },
+            "accepted_licenses": sorted(ACCEPTED_LICENSES),
+            "commands": list(SAMPLE_CATALOG_COMMANDS),
+            "source_adapters": sorted(SOURCE_ADAPTERS),
+            "cli_sources": sorted(SOURCE_ADAPTER_CLI_NAMES),
+            "storage_root": "_catalog",
+            "approved_layout": "_catalog/approved/<instrument>/<version>/",
+            "generated_sfz_subset": {
+                "validator": "audioforge.sampler.parse_sfz",
+                "opcodes": sorted(GENERATED_SFZ_OPCODES),
+                "forbidden": ["#include", "$define", "filters", "lfo", "cc"],
+            },
+            "review_gate": {
+                "candidate_state": "candidate",
+                "approved_state": "approved",
+                "required_for_approval": [
+                    "LICENSES.json",
+                    "license_evidence_hash",
+                    "review.status=approved",
+                    "review.reviewer",
+                    "manifest_sha256",
+                ],
             },
         },
         "bit_depths": sorted(BIT_DEPTHS),
@@ -353,6 +449,56 @@ def capability_manifest() -> dict:
                 "Use a supported curve target, time basis, point encoding, "
                 "and interpolation shape from performance_curves."
             ),
+            "note_curve_unsupported_target": (
+                "Use one of the published note_scope_targets or move the "
+                "automation to layer/master scope."
+            ),
+            "note_curve_unsupported_voice": (
+                "Move the note curve to a voice that supports the target, or "
+                "use an equivalent layer/master automation where available."
+            ),
+            "scan_requires_morph_osc": (
+                "Use osc=morph for note-scope scan curves, or remove the scan "
+                "curve from this note."
+            ),
+            "duplicate_note_timbre_curve": (
+                "Keep at most one cutoff_hz, gain_db, or scan curve per note."
+            ),
+            "technique_unknown": (
+                "Use a technique listed in capability_manifest()['techniques']."
+            ),
+            "technique_unsupported_voice": (
+                "Choose a supported voice for the technique or use an explicit "
+                "lower-level curve/articulation form."
+            ),
+            "technique_param_out_of_range": (
+                "Adjust technique parameters to the manifest ranges/enums."
+            ),
+            "technique_layer_override": (
+                "Per-note technique overrides the layer default; remove one if "
+                "that was not intentional."
+            ),
+            "technique_fallback": (
+                "A reduced technique lowering was used; inspect render manifest "
+                "fallback records before accepting the render."
+            ),
+            "tuning_required_for_string_fret": (
+                "Add layer.tuning before using note string/fret fields."
+            ),
+            "string_out_of_tuning": (
+                "Use a 1-based string index present in layer.tuning."
+            ),
+            "fret_out_of_range": (
+                "Use a fret inside 0..max_fret or the muted string value 'x'."
+            ),
+            "string_fret_pitch_conflict": (
+                "Remove the explicit pitch or make it match the pitch derived "
+                "from tuning, string, and fret."
+            ),
+            "position_timbre_unsupported": (
+                "Position timbre is synth-only until sampled/physical voices "
+                "grow a documented per-voice timbre primitive."
+            ),
             "curve_unsupported_voice": (
                 "Move the curve to a supported voice, remove it, or wait for "
                 "the physical-model kernel stage advertised in the support matrix."
@@ -372,6 +518,11 @@ def capability_manifest() -> dict:
             "resource_pin": {"repair_hint": "resource_pin"},
             "validate_render_ready": {"repair_hint": "validate_render_ready"},
             "invalid_curve": {"repair_hint": "invalid_curve"},
+            **{
+                code: {"repair_hint": code}
+                for code in sorted(EXPRESSIVE_DIAGNOSTIC_CODES)
+                if code != CURVE_UNSUPPORTED_VOICE_CODE
+            },
             CURVE_UNSUPPORTED_VOICE_CODE: {
                 "repair_hint": "curve_unsupported_voice"
             },
@@ -427,6 +578,8 @@ def capability_manifest_schema() -> dict:
             "diagnostic_codes": {"type": "object"},
             "cli": {"type": "object"},
             "performance_curves": {"type": "object"},
+            "note_scope_targets": {"type": "object"},
+            "techniques": {"type": "object"},
             "render_plan": {"type": "object"},
         },
         "additionalProperties": True,
