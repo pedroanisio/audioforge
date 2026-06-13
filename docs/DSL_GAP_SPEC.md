@@ -726,8 +726,14 @@ does not live in the authored DSL or IR, but its policy inputs do.
 ### G13. Expressive Performance Techniques And Note-Scope Timbre
 
 AF-P3/G13 is the next staged expressive-performance gap after G11 performance
-curves and G12 render plans. It is reserved for **Engine 2.17.0 / DSL 1.11**;
-DSL 1.10 remains reserved for the richer G11 curve-sugar authoring surface.
+curves and G12 render plans.
+
+Version note (reconciled in [ROADMAP.md](ROADMAP.md)): G13 **landed under Engine
+2.16.0**, and **DSL 1.10 was taken by content-pinned includes** (ADR 0001), so
+the earlier reservation of 1.10 for the G11 curve-sugar authoring surface no
+longer holds — that surface and the next expressive slice are re-reserved for
+**DSL 1.11**. The source-of-truth versions are `audioforge.version`
+(Engine 2.16.0 · DSL 1.10) and `IR_SCHEMA_VERSION` (1.3).
 
 The normative implementation contract is
 `docs/doc-requirements-architecture-expressive-performance-techniques-done.md`.

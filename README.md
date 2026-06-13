@@ -71,6 +71,8 @@ Design rule: **the DSL is sugar; the JSON IR is truth.** Emotion tags, intensity
 
 ## Production features
 
+* **Expressive performance techniques** — first-class note modifiers (`tech palm_mute`, `dead_note`, `let_ring`, `accent`, `harmonic`, `sul_ponticello`, …), note-scope timbre curves (`cutoff(Nhz)`, `level(Ndb)`, `scan(N)`), and fretted/stringed mechanics (`tuning:`, `string N`, `fret N`, `max_fret:`). Every technique **lowers at compile time** to explicit, diffable, hash-owned IR — the renderer never receives a private "technique" concept (IR schema 1.2; see [docs/DSL_SPEC.md](docs/DSL_SPEC.md)).
+* **Public-domain sample catalog** — `audioforge sample-catalog` builds content-addressed, license-audited SFZ instrument libraries from public sources (download → analyze → group → generate SFZ → manifest), with per-file license evidence. Full spec in [docs/goal.md](docs/goal.md).
 * **Loudness & dynamics** — BS.1770-style gated LUFS targeting backed by a lookahead true-peak limiter (4× oversampled, stereo-linked, iterative makeup); stereo-linked glue and 3-band multiband compression (`comp`, `mbcomp`); always-on DC blocker before quantization. Gain reduction is reported in the manifest.
 * **Stems** — `--stems` writes per-layer pre-master stereo files, each seeded-dithered on its own deterministic path.
 * **Sync** — markers land in the manifest and a `.markers.json` sidecar; an example plugin exports EDL marker lists for editors.
@@ -157,4 +159,8 @@ tests/               determinism suite + v2 suite (DSL, SDK, plugins,
 * Determinism is guaranteed within an environment; cross-platform float reproducibility is *checked* by the `verify` gate rather than assumed.
 * The engine is synthesis-only. Recorded material would enter cleanly as a content-addressed sample layer (hash the sample into the spec) — designed-for but not implemented. A measured A/B against a professional sample-based renderer (FluidSynth + FluidR3_GM) shows a properly-produced AudioForge render winning delivery, dynamic range, DC, and stereo width and matching the warm/full spectral balance — short only of a close-mic'd sample's between-note silence: [docs/RENDER_QUALITY_COMPARISON.md](docs/RENDER_QUALITY_COMPARISON.md) (`scripts/compare_render_quality.py`).
 
-Requires Python 3.10+, numpy, scipy. Engine 2.16.0 · DSL 1.10.
+## Roadmap
+
+What's shipped and what's next — current contract, this cycle's work, the open universality pillars, and the longer horizon — is consolidated in [docs/ROADMAP.md](docs/ROADMAP.md). Gap-level detail lives in [docs/DSL_GAP_SPEC.md](docs/DSL_GAP_SPEC.md); design decisions in [docs/adr/](docs/adr/).
+
+Requires Python 3.10+, numpy, scipy. Engine 2.16.0 · DSL 1.10 · IR schema 1.3.
