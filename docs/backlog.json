@@ -1,0 +1,1053 @@
+{
+  "disclaimer": "No information within this registry should be taken for granted. Any statement or premise not backed by a real logical definition or verifiable reference may be invalid, erroneous, or a hallucination. This backlog is an LLM-generated projection of docs/ROADMAP.md; per PALS's LAW treat every item as untrusted until checked against its cited source and evidence_checks.",
+  "metadata": {
+    "schema_version": "1.0.0",
+    "generated_by": "Claude Opus 4.8 via Claude Code",
+    "generated_on": "2026-07-04",
+    "system_of_record": "docs/ROADMAP.md (AudioForge Canonical Roadmap; Track E AF-R01..R16, Track M AF-M01..M07)",
+    "total_items": 23,
+    "id_prefix": "BL",
+    "decision_prefix": "D",
+    "categories": [
+      "docs",
+      "feature",
+      "ops",
+      "testing",
+      "tooling"
+    ],
+    "types": [
+      "bug",
+      "feature",
+      "infra",
+      "research",
+      "tech-debt"
+    ],
+    "statuses": [
+      "parked",
+      "ready",
+      "blocked",
+      "in-progress",
+      "done"
+    ],
+    "complexities": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "priorities": [
+      "low",
+      "medium",
+      "high",
+      "critical"
+    ],
+    "owners": [
+      "mine",
+      "concurrent",
+      "shared",
+      "unassigned"
+    ]
+  },
+  "items": [
+    {
+      "id": "BL-001",
+      "title": "CI pipeline that runs the whole gate on every push",
+      "summary": "Add .github/workflows/ci.yml whose primary job runs `make check` on push/PR, plus lint, native-kernel build, and a cross-OS determinism lane; gate CI against the local gate with a meta-test.",
+      "description": "DoR: BL-002 (make check) merged; run_tests.sh green on clean main; uv-sync-vs-pip install path decided; flaky/asset-dependent tests catalogued and skipif-guarded. Spec: jobs test(matrix 3.10-3.12 = make check), determinism-cross-os(macos+windows, non-blocking first), lint(ruff), native-kernels(build audioforge/native/*.c); add tests/test_ci_make_check_sync.py; cache uv + compiled kernels; trigger push+PR to main; README badge.",
+      "category": "ops",
+      "type": "infra",
+      "status": "blocked",
+      "complexity": "M",
+      "priority": "critical",
+      "rationale": "AudioForge has NO .github/ and no CI: every drift gate, determinism test, and regression fixture passes only when a human runs scripts/run_tests.sh, so the entire contract-discipline investment is advisory. FrameForge's CI primary job IS `make check`, pinned by tests/test_ci_make_check_sync.py so CI can never silently drop a gate.",
+      "acceptance_criteria": [
+        "`.github/workflows/ci.yml` exists; a PR that drifts docs/ir.schema.json from ir_json_schema() fails CI",
+        "`test` job green on main across the 3.10-3.12 matrix",
+        "tests/test_ci_make_check_sync.py fails if a target diverges between `make check` and the workflow",
+        "green-main CI run URL recorded; README shows a passing CI badge",
+        "RELEASE_NOTES.md/CHANGELOG.md records the addition"
+      ],
+      "dependencies": [
+        "BL-002"
+      ],
+      "references": [
+        "../frameforge/.github/workflows/ci.yml",
+        "../frameforge/tests/test_ci_make_check_sync.py",
+        "scripts/run_tests.sh",
+        "audioforge/native/*.c"
+      ],
+      "owner": "unassigned",
+      "source": "FrameForge (../frameforge, FrameGraph v2) — direct read 2026-07-04; canonical roadmap docs/ROADMAP.md#AF-R01",
+      "tags": [
+        "AF-R01",
+        "track-E",
+        "wave-0",
+        "P0",
+        "cx:S-M",
+        "ops"
+      ],
+      "evidence_checks": [
+        {
+          "kind": "file-exists",
+          "path": ".github/workflows/ci.yml",
+          "expect": true
+        }
+      ]
+    },
+    {
+      "id": "BL-002",
+      "title": "Makefile composing every gate into one `make check`",
+      "summary": "Create a root Makefile with named single-purpose targets (lint, schema-check, manifest-check, docs-check, drift-check, test, ...) composed into one `make check`, plus a self-documenting `make help`.",
+      "description": "DoR: BL-004/BL-005 target commands specified (may stub to true, but names fixed now); confirm POSIX make in CI. Spec: targets help/test/schema-check/manifest-check/docs-check/lint/format-check/drift-check/verify-samples/native; each *-check exits non-zero on drift and writes nothing; `check: lint format-check schema-check manifest-check docs-check drift-check test`; add tests/test_makefile_targets.py; `test` target shells out to run_tests.sh (no duplicated suite list).",
+      "category": "tooling",
+      "type": "infra",
+      "status": "ready",
+      "complexity": "S",
+      "priority": "critical",
+      "rationale": "AudioForge has no Makefile; the only orchestration is scripts/run_tests.sh, a test runner not a composed gate (no schema regen-check, lint, doc-build, manifest-freshness as named targets; no `make help` for agents). FrameForge's `make check` composes twelve gates that developers and CI run identically.",
+      "acceptance_criteria": [
+        "`make check` runs on a clean checkout and is green on main",
+        "`make help` lists every target with a one-line description",
+        "each *-check returns non-zero when its source is drifted (demonstrated for schema-check)",
+        "tests/test_makefile_targets.py passes",
+        "scripts/run_tests.sh is invoked BY the Makefile, not forked/duplicated"
+      ],
+      "dependencies": [],
+      "references": [
+        "../frameforge/Makefile:64",
+        "scripts/run_tests.sh"
+      ],
+      "owner": "unassigned",
+      "source": "FrameForge (../frameforge, FrameGraph v2) — direct read 2026-07-04; canonical roadmap docs/ROADMAP.md#AF-R02",
+      "tags": [
+        "AF-R02",
+        "track-E",
+        "wave-0",
+        "P0",
+        "cx:S",
+        "tooling"
+      ],
+      "evidence_checks": [
+        {
+          "kind": "file-exists",
+          "path": "Makefile",
+          "expect": true
+        }
+      ]
+    },
+    {
+      "id": "BL-003",
+      "title": "AGENTS.md programmatic CLI/tooling reference",
+      "summary": "Create root AGENTS.md: a single agent-facing map of runtime, every CLI verb + exit-code contract, make targets, scripts, the agent-tools surface, and the generated-artifact policy; gate it against cli.py with a sync test.",
+      "description": "DoR: BL-002 merged (stable make-target names); public-vs-internal (_-prefixed) scripts/ entrypoints agreed. Spec: sections Runtime / CLI verbs (render,plan,pack,libgen,ingest,campaign,compile,decompile,repair,capabilities,grammar,score,batch,validate,verify with exit codes) / Make targets / Scripts / Agent surface (agent_tools.run_tool, later MCP) / Generated-artifact policy; disclaimer frontmatter (Rule 5); add tests/test_agents_md_sync.py (cli.py verbs <-> AGENTS.md).",
+      "category": "docs",
+      "type": "infra",
+      "status": "blocked",
+      "complexity": "S",
+      "priority": "critical",
+      "rationale": "CLAUDE.md lists AGENTS.md at reading-order #2 as the programmatic CLI reference, but the file does not exist — a dead pointer. The nearest substitutes (docs/AGENT_TOOLS.md, AI-CORE.md) are facade/concepts, not a command map.",
+      "acceptance_criteria": [
+        "AGENTS.md exists at root with disclaimer frontmatter and all six sections",
+        "every cli.py subcommand documented; tests/test_agents_md_sync.py fails if a verb is added without an AGENTS.md entry",
+        "CLAUDE.md's reading-order reference now resolves to a real file",
+        "no command in AGENTS.md is stale (spot-checked by running three)"
+      ],
+      "dependencies": [
+        "BL-002"
+      ],
+      "references": [
+        "../frameforge/AGENTS.md",
+        "CLAUDE.md",
+        "docs/AGENT_TOOLS.md",
+        "audioforge/cli.py"
+      ],
+      "owner": "unassigned",
+      "source": "FrameForge (../frameforge, FrameGraph v2) — direct read 2026-07-04; canonical roadmap docs/ROADMAP.md#AF-R03",
+      "tags": [
+        "AF-R03",
+        "track-E",
+        "wave-0",
+        "P0",
+        "cx:S",
+        "docs"
+      ],
+      "evidence_checks": [
+        {
+          "kind": "file-exists",
+          "path": "AGENTS.md",
+          "expect": true
+        }
+      ]
+    },
+    {
+      "id": "BL-004",
+      "title": "Ruff lint + format + type-check configuration",
+      "summary": "Add [tool.ruff] (lint E,F,I,UP,B + format) to root pyproject.toml, land the format pass as an isolated commit, optionally scope non-strict mypy to the contract modules, and wire lint/format-check into the gate.",
+      "description": "DoR: baseline `ruff check .` captured and fix-vs-ignore decided per rule (ship then adjust); agreement to land `ruff format` as its own commit. Spec: [tool.ruff] target-version py310, select >= E,F,I,UP,B, per-file ignores for C-shims/_-scripts; ruff format; optional [tool.mypy] non-strict over schema.py/ir_schema.py/version.py/capabilities.py; wire make lint + format-check into check + CI.",
+      "category": "tooling",
+      "type": "infra",
+      "status": "ready",
+      "complexity": "S",
+      "priority": "critical",
+      "rationale": "The root pyproject.toml has no linter/formatter/type-checker (only the nested shadowmd/ sub-project does), so unused imports, undefined names, and style are unchecked.",
+      "acceptance_criteria": [
+        "`ruff check .` and `ruff format --check .` both pass on main",
+        "config lives in root pyproject.toml",
+        "make lint and make format-check exist and are in make check",
+        "the format-only commit is separate from any logic commit"
+      ],
+      "dependencies": [],
+      "references": [
+        "pyproject.toml",
+        "../frameforge/docs/codebase-standards.md"
+      ],
+      "owner": "unassigned",
+      "source": "FrameForge (../frameforge, FrameGraph v2) — direct read 2026-07-04; canonical roadmap docs/ROADMAP.md#AF-R04",
+      "tags": [
+        "AF-R04",
+        "track-E",
+        "wave-0",
+        "P0",
+        "cx:XS-S",
+        "tooling"
+      ],
+      "evidence_checks": [
+        {
+          "kind": "grep",
+          "path": "pyproject.toml",
+          "pattern": "\\[tool\\.ruff\\]",
+          "expect": true
+        }
+      ]
+    },
+    {
+      "id": "BL-005",
+      "title": "IR-schema generator with --check/--write (kill the hand-regen)",
+      "summary": "Create audioforge/tools/gen_ir_schema.py with --write (regenerate docs/ir.schema.json byte-stably) and --check (fail-on-drift + diff); retarget test_ir_schema.py to the generator; wire make schema-check.",
+      "description": "DoR: ir_json_schema() confirmed order-stable (else fix ordering first, or --check flaps); BL-002 exists. Spec: gen_ir_schema.py --write (stable key order + trailing newline) / --check (compare, non-zero + unified diff, write nothing); retarget test_ir_schema.py to the generator serializer; make schema-check in check + CI; document in AGENTS.md; apply same pattern to docs/capability.schema.json if hand-maintained.",
+      "category": "tooling",
+      "type": "infra",
+      "status": "blocked",
+      "complexity": "S",
+      "priority": "critical",
+      "rationale": "ir_schema.py::ir_json_schema() builds the JSON Schema in code and docs/ir.schema.json is the published copy, but NOTHING writes that file — it is regenerated by hand and only test_ir_schema.py catches drift after the fact, with no --write to fix it. FrameForge's build_schema.py owns the artifact and a --check gate re-runs it.",
+      "acceptance_criteria": [
+        "`python -m audioforge.tools.gen_ir_schema --write` reproduces docs/ir.schema.json byte-for-byte on a clean tree",
+        "--check exits non-zero on a deliberately drifted schema and prints a diff",
+        "make schema-check is in make check and CI",
+        "test_ir_schema.py uses the generator's serializer (single source of formatting)",
+        "IR_SCHEMA_VERSION bump procedure documented next to the generator"
+      ],
+      "dependencies": [
+        "BL-002"
+      ],
+      "references": [
+        "../frameforge/docs/schema/build_schema.py",
+        "audioforge/ir_schema.py",
+        "docs/ir.schema.json",
+        "tests/test_ir_schema.py"
+      ],
+      "owner": "unassigned",
+      "source": "FrameForge (../frameforge, FrameGraph v2) — direct read 2026-07-04; canonical roadmap docs/ROADMAP.md#AF-R05",
+      "tags": [
+        "AF-R05",
+        "track-E",
+        "wave-0",
+        "P0",
+        "cx:S",
+        "tooling"
+      ],
+      "evidence_checks": [
+        {
+          "kind": "file-exists",
+          "path": "audioforge/tools/gen_ir_schema.py",
+          "expect": true
+        }
+      ]
+    },
+    {
+      "id": "BL-006",
+      "title": "Golden-audio oracle with a committed hash lockfile",
+      "summary": "Curate a small fast golden .af corpus, commit a tests/golden/audio.lock.json hash lock (no WAVs), and add render_golden.py with --check/--update/--strict that classifies hash mismatches as cosmetic (sub-epsilon) vs real drift.",
+      "description": "DoR: float-reduction-order knobs (BLAS threading, numpy reduction, FFT backend) identified and a pinning strategy chosen; corpus specs render < ~10s total; epsilon defined with a cited rationale (e.g. cosmetic = max-abs < -120 dBFS). Spec: tests/golden/audio/ (5-10 specs across synth/sampler/fx/limiter/convolution/pack/groove); audio.lock.json {spec_hash,output_sha256,sr,channels,frames}; render_golden.py --check (hash then tolerance-classify) / --update / --strict; pin single-thread BLAS + record numeric env; make golden-check + CI strict same-OS + tolerant cross-OS lanes.",
+      "category": "testing",
+      "type": "infra",
+      "status": "blocked",
+      "complexity": "M",
+      "priority": "high",
+      "rationale": "AudioForge's only reproducibility oracle is `verify` (re-render vs a manifest that travels with output) and one AST golden; there is no tests/-resident golden-audio corpus or hash lockfile a fresh clone can gate against, and no cosmetic-vs-real-drift distinction (brittle for float audio across environments). This gate is the cross-track pivot: every Track-M item alters render bytes and cannot merge without it.",
+      "acceptance_criteria": [
+        "tests/golden/audio.lock.json committed; WAVs are NOT committed",
+        "render_golden.py --check passes on main same-OS and fails on a deliberate coefficient change",
+        "cosmetic/real classification exercised by a test injecting a sub-epsilon (pass) and a supra-epsilon (fail) perturbation",
+        "--update re-pins reproducibly",
+        "make golden-check in make check; CI has strict same-OS + tolerant cross-OS lanes",
+        "the epsilon threshold and its justification are documented next to the tool"
+      ],
+      "dependencies": [
+        "BL-002"
+      ],
+      "references": [
+        "../frameforge/tooling/render_golden.py",
+        "audioforge/determinism.py",
+        "tests/golden/dsl_ast.json",
+        "renders/*.manifest.json"
+      ],
+      "owner": "unassigned",
+      "source": "FrameForge (../frameforge, FrameGraph v2) — direct read 2026-07-04; canonical roadmap docs/ROADMAP.md#AF-R06",
+      "tags": [
+        "AF-R06",
+        "track-E",
+        "wave-1",
+        "P1",
+        "cx:M",
+        "testing"
+      ],
+      "evidence_checks": [
+        {
+          "kind": "file-exists",
+          "path": "tests/golden/audio.lock.json",
+          "expect": true
+        }
+      ]
+    },
+    {
+      "id": "BL-007",
+      "title": "Persisted capability manifest with a feature-status field + drift gate",
+      "summary": "Add gen_capability.py (--write/--check) to persist docs/capability-manifest.json, extend the schema with a predicate-derived per-capability status (stable/experimental/planned/deprecated), and cross-gate that every diagnostic code is documented.",
+      "description": "DoR: each status value defined by a DERIVABLE predicate (reachable+tested => stable, else experimental; planned from gap spec) — no per-item hand-labeling; BL-005 merged (generator pattern). Spec: gen_capability.py --write/--check; extend capability_manifest_schema() with status enum + optional since + gap_ref; test that status is derived not hardcoded; document every diagnostic_codes entry (create docs/DIAGNOSTIC_CODES.md if absent) and gate it; make manifest-check in check + CI.",
+      "category": "tooling",
+      "type": "infra",
+      "status": "blocked",
+      "complexity": "M",
+      "priority": "high",
+      "rationale": "capabilities.py::capability_manifest() is rich and registry-guarded but exists only at runtime — no committed on-disk artifact to git-diff — and it is a capability surface with no feature-status field; status lives in un-queryable prose (DSL_GAP_SPEC.md, goal.md).",
+      "acceptance_criteria": [
+        "docs/capability-manifest.json committed and regenerated byte-stably by gen_capability.py --write",
+        "each capability carries a status derived by predicate, not hardcoded; a test asserts the derivation (new voice => experimental until tested)",
+        "make manifest-check in make check and CI; a drifted committed manifest fails",
+        "every diagnostic code in the manifest is documented and gated"
+      ],
+      "dependencies": [
+        "BL-005"
+      ],
+      "references": [
+        "../frameforge/tooling/gen_capability_manifest.py",
+        "audioforge/capabilities.py",
+        "docs/capability.schema.json",
+        "tests/test_manifest_registry_coverage.py"
+      ],
+      "owner": "unassigned",
+      "source": "FrameForge (../frameforge, FrameGraph v2) — direct read 2026-07-04; canonical roadmap docs/ROADMAP.md#AF-R07",
+      "tags": [
+        "AF-R07",
+        "track-E",
+        "wave-1",
+        "P1",
+        "cx:S-M",
+        "tooling"
+      ],
+      "evidence_checks": [
+        {
+          "kind": "file-exists",
+          "path": "docs/capability-manifest.json",
+          "expect": true
+        }
+      ]
+    },
+    {
+      "id": "BL-008",
+      "title": "Unify the dual IR source of truth into one typed model",
+      "summary": "Make ir_schema.py DERIVE its JSON-Schema enums from schema.py's registries (Phase A, kills the HIGH duplicate-source coupling) with a sync test; optionally introduce a typed IR model generating the schema (Phase B, ADR-gated).",
+      "description": "DoR: the exact duplicated literals between schema.py and ir_schema.py enumerated from drift-risk-map; explicit Phase-A-only vs Phase-A+B decision recorded as an ADR (Pydantic v2 vs dataclass+TypedDict tradeoff) — MUST NOT start without it; BL-005 merged. Spec Phase A: ir_schema.py imports schema.py registries, delete duplicated literals, add tests/test_schema_sources_sync.py. Phase B (optional): typed model generates docs/ir.schema.json (subsumes BL-005), validate_spec = model validation + semantic rules. Ship Phase A and stop if time-constrained (~70% value at ~20% cost).",
+      "category": "tooling",
+      "type": "tech-debt",
+      "status": "blocked",
+      "complexity": "L",
+      "priority": "high",
+      "rationale": "Two hand-synced IR sources must agree: schema.py (KINDS/LAYER_TYPES/OSC_SHAPES/FX_TYPES/AUTO_TARGETS + validate_spec) and ir_schema.py (a hand-built JSON-Schema dict + validate_ir_schema). The same facts are encoded twice; the repo's own drift-risk-map rates this HIGH and drift_inspect.py that detects it is unwired (BL-013). This is the largest genuine structural weakness FrameForge's practice would fix. It is the one item where 'the current approach is not broken' is a legitimate stop — do the cheap enforcement wins first.",
+      "acceptance_criteria": [
+        "Phase A: no IR fact (osc shape, fx type, layer type, auto target, kind) stated in more than one module; ir_schema.py derives from schema.py",
+        "Phase A: tests/test_schema_sources_sync.py passes and fails if a new osc shape is added to schema.py but not reflected in the generated JSON Schema",
+        "Phase A: drift_inspect.py reports the HIGH registry coupling as resolved (and is wired per BL-013)",
+        "Phase A: all determinism/contract tests still green (byte-identical renders)",
+        "Phase B (if chosen): a single typed model generates docs/ir.schema.json; validate_spec keeps the v2.14 'render-time SpecError pre-reported by validate' property; the Pydantic/dataclass ADR is merged"
+      ],
+      "dependencies": [
+        "BL-005"
+      ],
+      "references": [
+        "../frameforge/docs/models/framegraph.py",
+        "../frameforge/tests/test_validate_type_sets_sync.py",
+        "audioforge/schema.py",
+        "audioforge/ir_schema.py",
+        "drift-risk-map.md",
+        "scripts/drift_inspect.py"
+      ],
+      "owner": "unassigned",
+      "source": "FrameForge (../frameforge, FrameGraph v2) — direct read 2026-07-04; canonical roadmap docs/ROADMAP.md#AF-R08",
+      "tags": [
+        "AF-R08",
+        "track-E",
+        "wave-1",
+        "P1",
+        "cx:L",
+        "tooling"
+      ],
+      "evidence_checks": [
+        {
+          "kind": "file-exists",
+          "path": "tests/test_schema_sources_sync.py",
+          "expect": true
+        }
+      ]
+    },
+    {
+      "id": "BL-009",
+      "title": "CHANGELOG.md + a version-bump tool with --check",
+      "summary": "Create a Keep-a-Changelog CHANGELOG.md seeded from RELEASE_NOTES.md, add bump_version.py that atomically rewrites every version literal + inserts a changelog skeleton, with a --check that fails on a half-bump; wire make version-check.",
+      "description": "DoR: exhaustive list of files carrying a version literal captured (grep 2.16.0/ENGINE_VERSION/DSL_VERSION); decision to fold RELEASE_NOTES.md into CHANGELOG.md or keep both with a clear division. Spec: CHANGELOG.md (Keep-a-Changelog + conventional-commit style) seeded from history; bump_version.py <ver> [--dsl v] rewrites version.py/pyproject/README banner + inserts changelog skeleton; --check asserts all sites agree; make version-check in check; PR-changes-engine-updates-changelog convention.",
+      "category": "tooling",
+      "type": "infra",
+      "status": "ready",
+      "complexity": "S",
+      "priority": "high",
+      "rationale": "No CHANGELOG.md exists (RELEASE_NOTES.md is a prose surrogate with no machine-readable per-version diff). Version consistency across version.py/pyproject/README/docs is test-guarded, but no tool performs a coordinated bump, so bumping is manual and error-prone.",
+      "acceptance_criteria": [
+        "CHANGELOG.md exists, seeded from history, current version at top",
+        "bump_version.py <v> performs an atomic multi-file bump; a dry-run shows every site updated",
+        "bump_version.py --check fails on a deliberately half-bumped tree; wired into make check and CI",
+        "no version literal exists that the tool does not manage (proven by --check)"
+      ],
+      "dependencies": [],
+      "references": [
+        "../frameforge/tooling/bump_version.py",
+        "docs/RELEASE_NOTES.md",
+        "audioforge/version.py",
+        "pyproject.toml",
+        "tests/test_version_sources.py"
+      ],
+      "owner": "unassigned",
+      "source": "FrameForge (../frameforge, FrameGraph v2) — direct read 2026-07-04; canonical roadmap docs/ROADMAP.md#AF-R09",
+      "tags": [
+        "AF-R09",
+        "track-E",
+        "wave-1",
+        "P1",
+        "cx:S",
+        "tooling"
+      ],
+      "evidence_checks": [
+        {
+          "kind": "file-exists",
+          "path": "CHANGELOG.md",
+          "expect": true
+        }
+      ]
+    },
+    {
+      "id": "BL-010",
+      "title": "MCP server over the agent_tools facade (stdio)",
+      "summary": "Add audioforge/mcp/ (optional dep group): a stdio MCP server that thinly wraps the existing agent_tools.run_tool ops (compile/validate/plan/render/analyze/repair/decompile/verify/capabilities) and exposes session resources (IR/manifest/diagnostics/wav/waveform PNG); contract-tested against the facade.",
+      "description": "DoR: BL-007 merged (stable versioned manifest for describe_capabilities); MCP transport chosen (official mcp package vs minimal stdio JSON-RPC) with dependency cost recorded; render/verify sandboxing/timeouts decided (renders can take tens of seconds). Spec: mcp dep group + audioforge/mcp/ wrapping run_tool (no forked logic path); session resources audioforge://session/{id}/{spec.ir.json,manifest.json,diagnostics.json,render.wav,waveform.png,spectrogram.png,markers.json}; entrypoint python -m audioforge.mcp; tests/test_mcp_contract.py enumerates the real registered tool surface.",
+      "category": "feature",
+      "type": "feature",
+      "status": "blocked",
+      "complexity": "L",
+      "priority": "medium",
+      "rationale": "PURPOSE and AI-CORE.md make 'AI agents as first-class consumers' central, yet there is no MCP server — the agent surface is an in-process Python facade only (agent_tools.run_tool over 9 ops); an external agent must import Python. The facade is a good foundation that is simply not exposed.",
+      "acceptance_criteria": [
+        "python -m audioforge.mcp starts a stdio MCP server exposing all 9 ops + verify + capabilities",
+        "a round-trip test drives compile->validate->render->read-resource and reads back the manifest + waveform PNG",
+        "tests/test_mcp_contract.py fails if an agent_tools op is added without an MCP tool (no hand-maintained parallel list)",
+        "server reuses run_tool with no duplicated render/validate path (verified by grep/AST test)",
+        "AGENTS.md documents the entrypoint and client wiring"
+      ],
+      "dependencies": [
+        "BL-007"
+      ],
+      "references": [
+        "../frameforge/src/framegraph/mcp/",
+        "audioforge/agent_tools.py",
+        "docs/AGENT_TOOLS.md",
+        "AI-CORE.md"
+      ],
+      "owner": "unassigned",
+      "source": "FrameForge (../frameforge, FrameGraph v2) — direct read 2026-07-04; canonical roadmap docs/ROADMAP.md#AF-R10",
+      "tags": [
+        "AF-R10",
+        "track-E",
+        "wave-2",
+        "P2",
+        "cx:M-L",
+        "feature"
+      ],
+      "evidence_checks": [
+        {
+          "kind": "file-exists",
+          "path": "audioforge/mcp/__init__.py",
+          "expect": true
+        }
+      ]
+    },
+    {
+      "id": "BL-011",
+      "title": "Docs site (mkdocs-material) with generated pages + a build gate",
+      "summary": "Add mkdocs.yml (Material) + gen_docs.py (--check) that generates reference.md from docs/ir.schema.json and capabilities.md from docs/capability-manifest.json; add make docs (mkdocs build --strict) + a docs CI job + link-check.",
+      "description": "DoR: BL-005 and BL-007 merged (committed schema + manifest artifacts to generate from — else the site restates hand facts and inherits drift); hosting decision (GitHub Pages later vs local build gate first; local gate suffices for P2). Spec: mkdocs.yml (Material, ephemeral) with hand index.md + authored DSL_SPEC/IR_SCHEMA/INTEROP/AGENT_TOOLS + generated reference.md + capabilities.md; gen_docs.py --check asserts nav entries resolve; make docs (gen_docs + mkdocs build --strict) + make docs-serve + docs CI job + docs-linkcheck.",
+      "category": "docs",
+      "type": "infra",
+      "status": "blocked",
+      "complexity": "M",
+      "priority": "medium",
+      "rationale": "No mkdocs.yml, no docs site, no generated API docs — documentation is hand-written Markdown (DSL_SPEC.md, IR_SCHEMA.md, goal.md). Drift is tested, but there is no browsable site, no reference generated from the schema/manifest, and no --strict build failing on broken links.",
+      "acceptance_criteria": [
+        "make docs builds the site with --strict (zero warnings) on main",
+        "reference.md and capabilities.md are generated from the committed artifacts, not hand-written",
+        "gen_docs.py --check fails if a nav page is missing or a generated page is stale; wired into make check and CI",
+        "a broken relative link fails the build (demonstrated)"
+      ],
+      "dependencies": [
+        "BL-005",
+        "BL-007"
+      ],
+      "references": [
+        "../frameforge/mkdocs.yml",
+        "../frameforge/tooling/gen_docs.py",
+        "docs/DSL_SPEC.md",
+        "docs/ir.schema.json"
+      ],
+      "owner": "unassigned",
+      "source": "FrameForge (../frameforge, FrameGraph v2) — direct read 2026-07-04; canonical roadmap docs/ROADMAP.md#AF-R11",
+      "tags": [
+        "AF-R11",
+        "track-E",
+        "wave-2",
+        "P2",
+        "cx:M",
+        "docs"
+      ],
+      "evidence_checks": [
+        {
+          "kind": "file-exists",
+          "path": "mkdocs.yml",
+          "expect": true
+        }
+      ]
+    },
+    {
+      "id": "BL-012",
+      "title": "ADR set (docs/adr/) and an adoption rule for future decisions",
+      "summary": "Create docs/adr/ with a template and >=4 backfilled ADRs (determinism model, non-vocal scope, IR-is-truth/DSL-is-sugar, fail-loud native kernels) plus a forward ADR-0005 for the BL-008 typed-model decision; add an adoption rule.",
+      "description": "DoR: ADR template agreed (MADR-style fine); the 4-5 highest-value existing decisions to backfill listed. Spec: docs/adr/adr-template.md (Status/Context/Decision/Consequences + disclaimer frontmatter); ADR-0001 determinism model, ADR-0002 non-vocal scope, ADR-0003 IR-is-truth/DSL-is-sugar, ADR-0004 fail-loud native kernels, ADR-0005(forward) Pydantic-vs-dataclass (DoR of BL-008); adoption rule in CLAUDE.md/AGENTS.md; link from docs nav (BL-011) and cite from governed code.",
+      "category": "docs",
+      "type": "infra",
+      "status": "ready",
+      "complexity": "S",
+      "priority": "medium",
+      "rationale": "No ADRs. Rationale for load-bearing decisions (flat package, hand-built JSON Schema vs Pydantic, in-process facade vs MCP, SHA-256 re-render oracle) is scattered in code comments, RELEASE_NOTES.md, and goal.md and must be reverse-engineered.",
+      "acceptance_criteria": [
+        "docs/adr/ exists with a template and >=4 backfilled ADRs",
+        "each backfilled ADR states Context/Decision/Consequences and carries disclaimer frontmatter",
+        "the adoption rule is written into CLAUDE.md and/or AGENTS.md",
+        "at least one ADR is referenced from the code it governs"
+      ],
+      "dependencies": [],
+      "references": [
+        "../frameforge/docs/adr-0002-sdk-lags-core-delivery.md",
+        "docs/RELEASE_NOTES.md",
+        "docs/goal.md"
+      ],
+      "owner": "unassigned",
+      "source": "FrameForge (../frameforge, FrameGraph v2) — direct read 2026-07-04; canonical roadmap docs/ROADMAP.md#AF-R12",
+      "tags": [
+        "AF-R12",
+        "track-E",
+        "wave-2",
+        "P2",
+        "cx:S",
+        "docs"
+      ],
+      "evidence_checks": [
+        {
+          "kind": "file-exists",
+          "path": "docs/adr/adr-template.md",
+          "expect": true
+        }
+      ]
+    },
+    {
+      "id": "BL-013",
+      "title": "codebase-standards.md tri-state ratchet + wire drift_inspect.py into the gate",
+      "summary": "Give scripts/drift_inspect.py a --check mode and wire it into make check + CI (the high-value 30%), then add docs/codebase-standards.md with Enforced/Adopted/Target tri-state tags and a source-of-truth-per-topic table.",
+      "description": "DoR: BL-002 exists (make check to add drift-check to); drift_inspect.py's detection scope confirmed to be the registry HIGH coupling. Spec: drift_inspect.py --check (non-zero on drift), make drift-check in check + CI (do first); docs/codebase-standards.md tri-state (determinism/version/schema/lint/coverage Enforced; typed-IR/MCP Target) each Enforced rule citing its gate; source-of-truth-per-topic table; keep drift-risk-map.md generation + number findings and cite in source comments.",
+      "category": "tooling",
+      "type": "tech-debt",
+      "status": "blocked",
+      "complexity": "S",
+      "priority": "medium",
+      "rationale": "No standards ratchet doc, and critically scripts/drift_inspect.py (registry-drift detection) exists but is NOT wired into run_tests.sh — the repo's own drift-risk-map flags this MODERATE. A drift detector nothing invokes is the exact 'advisory discipline' failure this roadmap targets.",
+      "acceptance_criteria": [
+        "drift_inspect.py --check runs in make check and CI and fails on injected registry drift",
+        "docs/codebase-standards.md exists with every rule tagged Enforced/Adopted/Target and the enforcing gate cited for each Enforced",
+        "a source-of-truth-per-topic table exists",
+        "drift-risk-map.md no longer lists 'drift_inspect.py not wired in' as an open MODERATE finding"
+      ],
+      "dependencies": [
+        "BL-002"
+      ],
+      "references": [
+        "../frameforge/docs/codebase-standards.md",
+        "scripts/drift_inspect.py",
+        "drift-risk-map.md"
+      ],
+      "owner": "unassigned",
+      "source": "FrameForge (../frameforge, FrameGraph v2) — direct read 2026-07-04; canonical roadmap docs/ROADMAP.md#AF-R13",
+      "tags": [
+        "AF-R13",
+        "track-E",
+        "wave-2",
+        "P2",
+        "cx:S",
+        "tooling"
+      ],
+      "evidence_checks": [
+        {
+          "kind": "file-exists",
+          "path": "docs/codebase-standards.md",
+          "expect": true
+        }
+      ]
+    },
+    {
+      "id": "BL-014",
+      "title": "src/ layout + package-boundary AST gate",
+      "summary": "Move audioforge/ -> src/audioforge/ and add a package-boundary AST test forbidding the shipped package from importing tests/scripts/tools — but ONLY if BL-005/BL-008 introduce a tools/ package that must not ship (else defer via ADR).",
+      "description": "DoR: a concrete trigger exists (a tools/ package that must not ship, from BL-005/BL-008) — absent that, DO NOT do it, record deferral as an ADR; clean `pip install .` + import smoke currently passes. Spec: move audioforge/ -> src/audioforge/, keep tools/ out of the wheel, update pyproject build/coverage/imports; tests/test_package_boundary.py (AST scan); verify with real pip install into a clean venv + import smoke in CI.",
+      "category": "tooling",
+      "type": "tech-debt",
+      "status": "blocked",
+      "complexity": "M",
+      "priority": "low",
+      "rationale": "Flat package layout lets tests/tooling import the package via repo-root-on-sys.path, masking packaging errors, with no gate stopping the package importing test/script-only code. This is P3, low value for a single-package project — a flat layout is not wrong.",
+      "acceptance_criteria": [
+        "package builds and installs as a wheel; `import audioforge` works with the repo root NOT on sys.path",
+        "test_package_boundary.py fails if the package imports tests/scripts/tools",
+        "all existing tests green after the move; coverage config updated"
+      ],
+      "dependencies": [
+        "BL-002"
+      ],
+      "references": [
+        "../frameforge/tests/test_package_boundary.py",
+        "pyproject.toml"
+      ],
+      "owner": "unassigned",
+      "source": "FrameForge (../frameforge, FrameGraph v2) — direct read 2026-07-04; canonical roadmap docs/ROADMAP.md#AF-R14",
+      "tags": [
+        "AF-R14",
+        "track-E",
+        "wave-3",
+        "P3",
+        "cx:M",
+        "tooling"
+      ],
+      "evidence_checks": [
+        {
+          "kind": "file-exists",
+          "path": "tests/test_package_boundary.py",
+          "expect": true
+        }
+      ]
+    },
+    {
+      "id": "BL-015",
+      "title": "Migration codemod keyed to validator rejection codes",
+      "summary": "Establish the invariant that every breaking IR change ships a validator diagnostic code AND a migrate_ir_spec() branch keyed to it; add `audioforge migrate`, a legacy-fixture corpus, and tests/test_migration_codes.py.",
+      "description": "DoR: BL-005 (schema generator) and ideally BL-008 Phase A (single registry) merged; breaking-vs-additive IR change policy defined. Spec: invariant (breaking change => rejection code + keyed migrate_ir_spec branch); `audioforge migrate <spec>` (or repair --migrate) with an exit-code contract; tests/test_migration_codes.py (every breaking code has a migration turning a rejected fixture into a passing one); tests/fixtures/legacy/ oracle corpus that must migrate cleanly.",
+      "category": "tooling",
+      "type": "infra",
+      "status": "blocked",
+      "complexity": "M",
+      "priority": "low",
+      "rationale": "migrate_ir_spec() and repair.py exist but migrations are not systematically keyed to validator diagnostic codes, so on a schema bump old .af/IR corpora in compositions/ and renders/ can silently strand. FrameForge pairs each breaking rejection code with an auto-fixer keyed to it.",
+      "acceptance_criteria": [
+        "every breaking diagnostic code has a keyed migration and a fixture proving it fixes it",
+        "`audioforge migrate` (or repair --migrate) exists with an exit-code contract",
+        "tests/test_migration_codes.py passes and fails if a breaking code lands without a migration",
+        "tests/fixtures/legacy/ corpus migrates cleanly and is gated"
+      ],
+      "dependencies": [
+        "BL-005",
+        "BL-008"
+      ],
+      "references": [
+        "../frameforge/tooling/codemod.py",
+        "audioforge/ir_schema.py",
+        "audioforge/repair.py"
+      ],
+      "owner": "unassigned",
+      "source": "FrameForge (../frameforge, FrameGraph v2) — direct read 2026-07-04; canonical roadmap docs/ROADMAP.md#AF-R15",
+      "tags": [
+        "AF-R15",
+        "track-E",
+        "wave-3",
+        "P3",
+        "cx:M",
+        "tooling"
+      ],
+      "evidence_checks": [
+        {
+          "kind": "file-exists",
+          "path": "tests/test_migration_codes.py",
+          "expect": true
+        }
+      ]
+    },
+    {
+      "id": "BL-016",
+      "title": "Cross-platform numeric-determinism pack",
+      "summary": "Record a numeric-environment descriptor (numpy/scipy/BLAS/FFT/kernel-hashes/CPU-flags) in every render manifest, emit a loud numeric_environment_drift diagnostic on mismatch, pin BLAS threading/FFT during deterministic renders, and extend the golden cross-environment lane to attribute diffs.",
+      "description": "DoR: BL-006 merged (golden oracle + epsilon for the cross-environment tolerance); empirical study of WHICH inputs actually change output bytes (measured, not assumed) — this study is the real work. Spec: numeric env descriptor in every manifest; loud numeric_environment_drift diagnostic (manifest + stderr) on mismatch, never silent substitution; pin single/fixed-thread BLAS + FFT backend during deterministic renders; cross-environment golden lane attributes hash diffs to specific env deltas; optional pinned container image for byte-exact verify. Honest target: drift recorded+loud and byte-exact WITHIN a pinned environment, not byte-exact everywhere.",
+      "category": "testing",
+      "type": "research",
+      "status": "blocked",
+      "complexity": "L",
+      "priority": "low",
+      "rationale": "The README admits cross-platform float reproducibility is only 'checked, not assumed'. The environmental inputs float-audio determinism depends on (BLAS impl/threading, numpy/scipy version, FFT backend, kernel compiler/flags, FTZ/DAZ) are neither pinned nor recorded, so a mismatch produces different audio SILENTLY — the exact failure fg-font bans for fonts. Highest-uncertainty item.",
+      "acceptance_criteria": [
+        "every render manifest records the numeric environment descriptor",
+        "a render whose numeric environment differs from a verified reference emits a loud numeric_environment_drift diagnostic (manifest + stderr), never silent",
+        "BLAS threading / FFT backend are pinned during deterministic renders and the pin is asserted at render time",
+        "the cross-environment golden lane attributes hash diffs to specific environment deltas",
+        "(if containerized) verify is byte-exact inside the pinned image on >=2 host OSes"
+      ],
+      "dependencies": [
+        "BL-006"
+      ],
+      "references": [
+        "../frameforge/src/framegraph/fontpack.py",
+        "README.md",
+        "audioforge/determinism.py",
+        "audioforge/render.py"
+      ],
+      "owner": "unassigned",
+      "source": "FrameForge (../frameforge, FrameGraph v2) — direct read 2026-07-04; canonical roadmap docs/ROADMAP.md#AF-R16",
+      "tags": [
+        "AF-R16",
+        "track-E",
+        "wave-3",
+        "P3",
+        "cx:L",
+        "testing"
+      ],
+      "evidence_checks": [
+        {
+          "kind": "grep",
+          "path": "audioforge/render.py",
+          "pattern": "numeric_environment",
+          "expect": true
+        }
+      ]
+    },
+    {
+      "id": "BL-017",
+      "title": "Pitch-class-set theory core (normal form, prime form, IC-vector, formal Tn/TnI)",
+      "summary": "New pure module audioforge/theory_pcset.py: normal/prime form (Rahn), interval-class vector, Forte number/set-class over the 220 set classes, and formal Tn/TnI/invert/complement/symmetry; refactor the ad-hoc {s%12} sites to use it (no render change); expose set-class analysis.",
+      "description": "DoR: BL-006 golden oracle exists (incidental render change caught); the 220-set-class Forte table sourced from a single authoritative reference with provenance recorded (no un-cited hand-typed catalog). Spec: theory_pcset.py normal_form/prime_form(Rahn)/interval_class_vector/forte_number/set_class + Tn/TnI/invert/complement/symmetry-degree; refactor dsl.py {s%12} to call it (byte-identical renders); analyze op reports set-class labels.",
+      "category": "feature",
+      "type": "feature",
+      "status": "blocked",
+      "complexity": "M",
+      "priority": "high",
+      "rationale": "Pitch classes exist only as ad-hoc {s%12} sets in dsl.py; there is NO normal form, prime form, IC-vector, set-class/Forte lookup, or formal Tn/TnI anywhere. theory.invert is a concrete chromatic mirror over events, not a pc-set operator. Source: Hook Exploring Musical Spaces §1.2 (prime form 037 attested #625); Forte 1973 + Rahn 1980 for the IC-vector/normal-form algorithm (IC-vector NOT attested in corpus - grounded on Forte).",
+      "acceptance_criteria": [
+        "prime_form and interval_class_vector validated EXHAUSTIVELY against all 220 set classes (property test), not sampled",
+        "Tn/TnI satisfy group axioms under test (TnI ∘ TnI = identity; Tm ∘ Tn = T(m+n)) over all 12/24 elements",
+        "the {s%12} duplication in dsl.py is gone; renders are byte-identical (golden gate green)",
+        "analyze returns a set-class label for a known chord (037 => major/minor triad, prime form (0,3,7))"
+      ],
+      "dependencies": [
+        "BL-006"
+      ],
+      "references": [
+        "Julian Hook, Exploring Musical Spaces (Oxford 2022, ISBN 978-0-19-024601-3, DOI 10.1093/oso/9780190246013.001.0001) §1.2, sentence #625",
+        "Forte, The Structure of Atonal Music (Yale 1973, ISBN 978-0-300-02120-2)",
+        "Rahn, Basic Atonal Theory (Longman 1980)",
+        "audioforge/dsl.py",
+        "audioforge/theory.py"
+      ],
+      "owner": "unassigned",
+      "source": "Research corpus — Julian Hook, Exploring Musical Spaces (Oxford 2022, ISBN 978-0-19-024601-3, DOI 10.1093/oso/9780190246013.001.0001); canonical roadmap docs/ROADMAP.md#AF-M01",
+      "tags": [
+        "AF-M01",
+        "track-M",
+        "wave-M1",
+        "P1",
+        "cx:M",
+        "feature"
+      ],
+      "evidence_checks": [
+        {
+          "kind": "file-exists",
+          "path": "audioforge/theory_pcset.py",
+          "expect": true
+        }
+      ]
+    },
+    {
+      "id": "BL-018",
+      "title": "Formal transformation operators + transformation networks",
+      "summary": "Layer the DSL transforms (transpose/invert/retrograde) onto BL-017's Tn/TnI as composable algebraic operators and add a transformation-network evaluator (named operator sequence/graph applied to a motif or chord stream), with grammar/GBNF productions.",
+      "description": "DoR: BL-017 merged (operators to compose); decision on how far toward full Lewinian networks vs a linear operator pipeline (recommend linear pipeline first; graph later only if a use case demands it - no gold-plating). Spec: DSL invert/transpose become pc-set operators applied to events; transformation-network evaluator for a named-operator sequence (T5, I, R, a UTT from BL-019); grammar + GBNF for the operator sequence so an LLM samples only well-formed networks.",
+      "category": "feature",
+      "type": "feature",
+      "status": "blocked",
+      "complexity": "M",
+      "priority": "medium",
+      "rationale": "DSL play {transform} offers transpose/diatonic/invert/retrograde/stretch as concrete note-event edits, not composable algebraic operators, and there is no transformation network (a labeled graph of operators across a passage). Source: Lewin GMIT (Oxford 2007, ISBN 978-0-19-531713-8); Hook Ch. 9 attested #16.",
+      "acceptance_criteria": [
+        "`play motif {ops: T5 I R}` produces the operator-composed result; a test asserts associativity/round-trips against BL-017's algebra",
+        "grammar accepts valid operator sequences and rejects malformed ones (test_grammar_token_sync.py extended)",
+        "renders byte-stable under the golden gate"
+      ],
+      "dependencies": [
+        "BL-017"
+      ],
+      "references": [
+        "Lewin, Generalized Musical Intervals and Transformations (Yale 1987 / Oxford 2007, ISBN 978-0-19-531713-8)",
+        "Julian Hook, Exploring Musical Spaces (Oxford 2022, ISBN 978-0-19-024601-3, DOI 10.1093/oso/9780190246013.001.0001) Ch. 9, sentence #16",
+        "audioforge/theory.py",
+        "audioforge/grammar.py"
+      ],
+      "owner": "unassigned",
+      "source": "Research corpus — Julian Hook, Exploring Musical Spaces (Oxford 2022, ISBN 978-0-19-024601-3, DOI 10.1093/oso/9780190246013.001.0001); canonical roadmap docs/ROADMAP.md#AF-M02",
+      "tags": [
+        "AF-M02",
+        "track-M",
+        "wave-M2",
+        "P2",
+        "cx:M",
+        "feature"
+      ]
+    },
+    {
+      "id": "BL-019",
+      "title": "Neo-Riemannian triadic transformations (P/L/R, UTT) + Tonnetz",
+      "summary": "New audioforge/theory_triads.py: represent a consonant triad as (root_pc, mode), implement neo-Riemannian P/L/R (PLR group order 24) and the general UTT, plus tonnetz_neighbors for shortest-path chromatic progressions; DSL sugar compiling to the existing literal-chord stream.",
+      "description": "DoR: BL-017 (pc-sets) and BL-018 (operator plumbing) merged; triad representation reconciled with theory.parse_chord so P/L/R output round-trips to existing chord symbols. Spec: theory_triads.py (root_pc, mode in {major,minor}) + P/L/R + compositions (PLR group order 24) + general UTT <sign,t+,t-> with composition; tonnetz_neighbors(triad) => P/L/R-adjacent triads (Tonnetz edges) for shortest-path progressions; DSL play <triad> {plr: L R P} and/or `progression via tonnetz from Cmaj to Abmaj` sugar compiling to literal chords.",
+      "category": "feature",
+      "type": "feature",
+      "status": "blocked",
+      "complexity": "M",
+      "priority": "medium",
+      "rationale": "No P/L/R, no UTT, no Tonnetz anywhere. AudioForge cannot express smooth chromatic third-relations (C major -> E minor by a single L) that are the core of 19th-century and film-score harmony - directly relevant to the orchestral renders/ the project already produces. Source: Hook §1.4 Tonnetz (#8) + Ch. 8 UTT/neo-Riemannian (#15); Hook JMT 46 (2002) DOI 10.1215/00222909-2005-002; Cohn Audacious Euphony (Oxford 2012).",
+      "acceptance_criteria": [
+        "P/L/R verified against their definitions on ALL 24 triads (P(Cmaj)=Cmin, L(Cmaj)=Emin, R(Cmaj)=Amin), exhaustively",
+        "the generated PLR group has order 24 (test); UTT composition is associative (test)",
+        "a Tonnetz shortest-path progression renders and is byte-stable",
+        "AGENTS.md / DSL spec document the new directive"
+      ],
+      "dependencies": [
+        "BL-017",
+        "BL-018"
+      ],
+      "references": [
+        "Julian Hook, Exploring Musical Spaces (Oxford 2022, ISBN 978-0-19-024601-3, DOI 10.1093/oso/9780190246013.001.0001) §1.4 (#8), Ch. 8 (#15)",
+        "Hook, Uniform Triadic Transformations, JMT 46 (2002), DOI 10.1215/00222909-2005-002",
+        "Cohn, Audacious Euphony (Oxford 2012, ISBN 978-0-19-977269-8)",
+        "audioforge/theory.py"
+      ],
+      "owner": "unassigned",
+      "source": "Research corpus — Julian Hook, Exploring Musical Spaces (Oxford 2022, ISBN 978-0-19-024601-3, DOI 10.1093/oso/9780190246013.001.0001); canonical roadmap docs/ROADMAP.md#AF-M03",
+      "tags": [
+        "AF-M03",
+        "track-M",
+        "wave-M2",
+        "P2",
+        "cx:M",
+        "feature"
+      ],
+      "evidence_checks": [
+        {
+          "kind": "file-exists",
+          "path": "audioforge/theory_triads.py",
+          "expect": true
+        }
+      ]
+    },
+    {
+      "id": "BL-020",
+      "title": "Scale & mode system (modes, pentatonic, octatonic, maximally-even)",
+      "summary": "New audioforge/theory_scales.py: a registry of named collections (7 diatonic modes, harmonic/melodic minor, pentatonic, whole-tone, octatonic, chromatic) each as intervals + pc-set, with a maximally_even(n,c) generator; wire the DSL scale: directive, diatonic_transpose, and the out-of-scale diagnostic to consume it.",
+      "description": "DoR: BL-017 merged (pc-set machinery); the maximally_even generator's output for diatonic (7-in-12) and octatonic (8-in-12) checked against known collections before it is trusted (derive then verify). Spec: theory_scales.py registry + maximally_even(n,c) (Clough-Douthett); wire dsl._scale_pitch_classes + theory.diatonic_transpose + out-of-scale diagnostic to the registry; DSL scale: <name> directive (grammar + GBNF); analyze reports best-fit collection.",
+      "category": "feature",
+      "type": "feature",
+      "status": "blocked",
+      "complexity": "M",
+      "priority": "high",
+      "rationale": "dsl.py defines only MAJOR/MINOR interval lists and _scale_pitch_classes handles only those two; theory.diatonic_transpose accepts an arbitrary interval list but no caller ever supplies one other than major/minor. No church modes, pentatonic, harmonic/melodic minor, whole-tone, or octatonic. Source: Hook diatonic dpc(n)/Dorian (#532), pentatonic/whole-tone/octatonic (#364), maximally even Ch. 14 (#6609); Clough-Douthett JMT 35 (1991) DOI 10.2307/843811; Carey-Clampitt MTS 11 (1989) DOI 10.2307/745935 (well-formed NOT attested in corpus).",
+      "acceptance_criteria": [
+        "every registered collection has a test pinning its pcs; maximally_even reproduces the diatonic, pentatonic, and octatonic sets exactly",
+        "scale: dorian (and friends) drives diatonic_transpose and the out-of-scale diagnostic; a D-Dorian passage raises no false out-of-scale warnings",
+        "renders byte-stable under the golden gate"
+      ],
+      "dependencies": [
+        "BL-017"
+      ],
+      "references": [
+        "Julian Hook, Exploring Musical Spaces (Oxford 2022, ISBN 978-0-19-024601-3, DOI 10.1093/oso/9780190246013.001.0001) (#532, #364, #6609)",
+        "Clough & Douthett, Maximally Even Sets, JMT 35 (1991), DOI 10.2307/843811",
+        "Carey & Clampitt, Aspects of Well-Formed Scales, MTS 11 (1989), DOI 10.2307/745935",
+        "audioforge/dsl.py",
+        "audioforge/theory.py"
+      ],
+      "owner": "unassigned",
+      "source": "Research corpus — Julian Hook, Exploring Musical Spaces (Oxford 2022, ISBN 978-0-19-024601-3, DOI 10.1093/oso/9780190246013.001.0001); canonical roadmap docs/ROADMAP.md#AF-M04",
+      "tags": [
+        "AF-M04",
+        "track-M",
+        "wave-M1",
+        "P1",
+        "cx:S-M",
+        "feature"
+      ],
+      "evidence_checks": [
+        {
+          "kind": "file-exists",
+          "path": "audioforge/theory_scales.py",
+          "expect": true
+        }
+      ]
+    },
+    {
+      "id": "BL-021",
+      "title": "Tuning & temperament engine (activate the inert tuning: directive)",
+      "summary": "Create audioforge/tuning.py (n-EDO, just intonation, historical temperaments, Scala .scl/.kbm import; cents-exact) and thread it through the ENTIRE pitch->frequency path (dsl.note_to_freq, library.py, plan.py), gated on spec.notation.tuning with a 12-TET default; prove it drives the render via an FFT assertion.",
+      "description": "DoR: BL-006 golden oracle exists (12-TET renders must be provably unchanged); default-path guarantee specified (tuning absent => byte-identical: resolver is a no-op returning 440*2**(x/12)); reference cents for >=1 JI table and 1 historical temperament sourced from Barbour (no hand-invented ratios). Spec: tuning.py resolver pitch->freq for n-EDO/JI/quarter-comma meantone/Werckmeister III/Scala .scl(+.kbm), cents-exact; thread through note_to_freq + library.py resample + plan.py gated on spec.notation.tuning (default 12-TET); interop exports non-12-EDO as pitch-bend/MPE + MusicXML microtonal accidentals (document lossy cases); FFT assertion that a non-12-EDO degree's fundamental lands at the specified cents.",
+      "category": "feature",
+      "type": "bug",
+      "status": "blocked",
+      "complexity": "L",
+      "priority": "high",
+      "rationale": "CORRECTNESS DEFECT, not a missing feature: the DSL directive `tuning: edo divisions=N base=A4 hz=440` parses and is stored in spec.notation.tuning, but NO code reads it - every pitch->freq conversion is hardcoded 12-TET (note_to_freq = 440*2**(x/12); library.py/plan.py resample with 2**(st/12)). The engine accepts a microtuning instruction and silently renders 12-TET - an unverified capability claim shipped to users (PALS's LAW). Highest-leverage Track-M item.",
+      "acceptance_criteria": [
+        "a 19-EDO (or 31-EDO) render places partials at the tuning's cents, proven by the FFT assertion - the directive demonstrably drives the render",
+        "with no tuning directive, all existing golden renders are byte-identical",
+        ".scl import round-trips a known scale (e.g. Pythagorean) to the correct cents",
+        "JI and meantone tables match Barbour's published cents (test)",
+        "DSL_SPEC.md marks tuning: as ACTIVE not notational; AGENTS.md documents the supported tuning systems"
+      ],
+      "dependencies": [
+        "BL-006"
+      ],
+      "references": [
+        "Julian Hook, Exploring Musical Spaces (Oxford 2022, ISBN 978-0-19-024601-3, DOI 10.1093/oso/9780190246013.001.0001) §1.1 (#1057, #15617, #227, #259)",
+        "Braguinski, Mathematical Music (#506, #508)",
+        "Barbour, Tuning and Temperament (Michigan State 1951; Dover ISBN 978-0-486-43406-3)",
+        "Scala .scl/.kbm format (Op de Coul)",
+        "audioforge/dsl.py",
+        "audioforge/library.py",
+        "audioforge/plan.py",
+        "audioforge/interop.py"
+      ],
+      "owner": "unassigned",
+      "source": "Research corpus — Julian Hook, Exploring Musical Spaces (Oxford 2022, ISBN 978-0-19-024601-3, DOI 10.1093/oso/9780190246013.001.0001); canonical roadmap docs/ROADMAP.md#AF-M05",
+      "tags": [
+        "AF-M05",
+        "track-M",
+        "wave-M1",
+        "P1",
+        "cx:M-L",
+        "feature"
+      ],
+      "evidence_checks": [
+        {
+          "kind": "file-exists",
+          "path": "audioforge/tuning.py",
+          "expect": true
+        }
+      ]
+    },
+    {
+      "id": "BL-022",
+      "title": "Voice-leading as optimization (minimal-displacement / VL geometry)",
+      "summary": "New audioforge/voice_leading.py computing minimal-displacement bijective voice leading (sum of |semitone motion|) with crossing-free options; add DSL voicing: smooth (new) vs voicing: ornamented (the current heuristic, renamed and kept default); integrate with BL-019's P/L/R.",
+      "description": "DoR: BL-017 (pc-sets) and BL-020 (scales) merged; the objective pinned precisely (minimize summed |delta-semitone| over a bijection; tie-break rule stated) so the result is deterministic. Spec: voice_leading.py minimal-displacement bijection with T-related/inversional options + crossing-free constraints; DSL voicing: smooth (new) vs voicing: ornamented (current L1030 heuristic renamed; unspecified => current default); integrate with BL-019 so P/L/R progressions request smooth voice leading.",
+      "category": "feature",
+      "type": "feature",
+      "status": "blocked",
+      "complexity": "M",
+      "priority": "medium",
+      "rationale": "The voice-leading logic in dsl.py (~L1030-1106) is a fixed ornament-insertion heuristic (passing tones/suspensions/anticipations + common-tone retention by pc-set intersection). It is NOT minimal-displacement voice leading - it does not compute the voice bijection minimizing total semitone motion. Source: Hook Ch. 10 hexatonic triad graph as continuous VL space (#17); Tymoczko, A Geometry of Music (Oxford 2011, ISBN 978-0-19-533667-2).",
+      "acceptance_criteria": [
+        "for known cases the algorithm returns the textbook minimal voice leading (C major -> G major moves 2 voices by 1-2 semitones, not a leap), verified by test",
+        "voicing: ornamented reproduces today's output byte-for-byte (heuristic unchanged, only renamed/defaulted)",
+        "voicing: smooth renders and is byte-stable under the golden gate"
+      ],
+      "dependencies": [
+        "BL-017",
+        "BL-020"
+      ],
+      "references": [
+        "Julian Hook, Exploring Musical Spaces (Oxford 2022, ISBN 978-0-19-024601-3, DOI 10.1093/oso/9780190246013.001.0001) Ch. 10 (#17)",
+        "Tymoczko, A Geometry of Music (Oxford 2011, ISBN 978-0-19-533667-2)",
+        "audioforge/dsl.py"
+      ],
+      "owner": "unassigned",
+      "source": "Research corpus — Julian Hook, Exploring Musical Spaces (Oxford 2022, ISBN 978-0-19-024601-3, DOI 10.1093/oso/9780190246013.001.0001); canonical roadmap docs/ROADMAP.md#AF-M06",
+      "tags": [
+        "AF-M06",
+        "track-M",
+        "wave-M2",
+        "P2",
+        "cx:M",
+        "feature"
+      ],
+      "evidence_checks": [
+        {
+          "kind": "file-exists",
+          "path": "audioforge/voice_leading.py",
+          "expect": true
+        }
+      ]
+    },
+    {
+      "id": "BL-023",
+      "title": "Functional-harmony grammar (roman numerals, cadences, progressions)",
+      "summary": "Add a compile-time expansion layer in dsl.py that, given a key: context, expands Roman-numeral progressions (I vi IV V, ii7 V7 I, secondary dominants, borrowed chords) and cadence templates into the literal chords the engine already renders, reusing BL-020 scales + BL-019 transforms; grammar/GBNF for the numeral surface.",
+      "description": "DoR: BL-019 and BL-020 merged (chromatic transforms + scale/chord construction the expansion relies on); the dialect fixed (which Roman-numeral conventions: figured-bass inversions? applied chords? mode mixture?) to avoid an open-ended grammar. Spec: compile-time expansion in dsl.py given key: (Roman-numeral progression + secondary dominants V/V + borrowed chords => literal chords, reusing BL-020 for diatonic chord construction and BL-019 for functional substitutions); cadence templates (authentic/plagal/half/deceptive) as named sugar; grammar + GBNF productions. Lowest-priority Track-M item - sugar over capabilities the other items provide.",
+      "category": "feature",
+      "type": "feature",
+      "status": "blocked",
+      "complexity": "L",
+      "priority": "low",
+      "rationale": "grammar.py expresses harmony only as literal PITCH = note | chord (e.g. C3min7) plus voicing directives - no Roman numerals, function labels (T/S/D), cadence types, or progression templates. A user must spell every chord literally; the DSL cannot say 'a ii-V-I in F' or 'a deceptive cadence'. Grounded in the codebase gap + common-practice pedagogy (Exploring Musical Spaces is deliberately transformational not functional - cited as the complement, not the source; no fabricated citation).",
+      "acceptance_criteria": [
+        "key: F; prog: ii V I expands to the correct literal chords (Gm-C-F) and renders byte-stable",
+        "each cadence template produces the textbook chord succession (test)",
+        "grammar accepts valid progressions and rejects malformed numerals (test_grammar_token_sync.py extended)"
+      ],
+      "dependencies": [
+        "BL-019",
+        "BL-020"
+      ],
+      "references": [
+        "Julian Hook, Exploring Musical Spaces (Oxford 2022, ISBN 978-0-19-024601-3, DOI 10.1093/oso/9780190246013.001.0001) (cited as the transformational complement, not the functional source)",
+        "audioforge/grammar.py",
+        "audioforge/dsl.py"
+      ],
+      "owner": "unassigned",
+      "source": "Research corpus — Julian Hook, Exploring Musical Spaces (Oxford 2022, ISBN 978-0-19-024601-3, DOI 10.1093/oso/9780190246013.001.0001); canonical roadmap docs/ROADMAP.md#AF-M07",
+      "tags": [
+        "AF-M07",
+        "track-M",
+        "wave-M3",
+        "P3",
+        "cx:L",
+        "feature"
+      ]
+    }
+  ]
+}
