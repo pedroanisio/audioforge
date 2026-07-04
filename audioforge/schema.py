@@ -591,6 +591,11 @@ def validate_spec(spec: dict) -> dict:
             raise SpecError(
                 "spec.routing.fallbacks: expected one of "
                 f"{sorted(ROUTING_FALLBACK_MODES)}")
+        sustain_gaps = routing.get("sustain_gaps", "warn")
+        if sustain_gaps not in ROUTING_FALLBACK_MODES:
+            raise SpecError(
+                "spec.routing.sustain_gaps: expected one of "
+                f"{sorted(ROUTING_FALLBACK_MODES)}")
         _num(routing, "stretch_warn_semitones", "spec.routing",
              0.0, 128.0, required=False)
 

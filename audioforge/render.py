@@ -603,6 +603,9 @@ def render_to_wav(spec: dict, out_dir: str | Path, stems: bool = False,
     meta["output_sha256"] = _write_wav(wav_path, stereo, sr, bits, root, "dither")
     meta["file"] = wav_path.name
 
+    if plan_result.diagnostics:
+        meta["plan_diagnostics"] = plan_result.diagnostics
+
     plan_path = out_dir / f"{spec['id']}.plan.json"
     plan_text = dumps_plan(plan_result.plan)
     plan_path.write_text(plan_text)

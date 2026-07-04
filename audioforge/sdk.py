@@ -131,8 +131,21 @@ class AudioAsset:
                    for m in run_extra_validators(self.spec))
         if resolve:
             from .resolve import resolve_spec
-            out.extend(Diagnostic("error", m)
-                       for m in resolve_spec(self.spec))
+            resource_problems = list(resolve_spec(self.spec))
+            out.extend(Diagnostic("error", m) for m in resource_problems)
+            # Route-level advisories (sustain gaps, fallbacks, stretch) come
+            # from the render plan. Only reachable once resources bind, so we
+            # skip it when resolve already failed.
+            if not resource_problems and any(
+                    l.get("type") == "instrument"
+                    for l in self.spec.get("layers", [])):
+                from .plan import build_render_plan
+                try:
+                    for d in build_render_plan(self.spec).diagnostics:
+                        out.append(Diagnostic(d.get("severity", "warning"),
+                                              d["message"]))
+                except SpecError as e:
+                    out.append(Diagnostic("error", str(e)))
         return out
 
     # -- mutation (agent-friendly) ----------------------------------------

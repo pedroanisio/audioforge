@@ -139,7 +139,15 @@ Motifs may contain chord symbols; transforms move the chord root and preserve th
 before rendering. The plan records sampled routes, synthetic articulation
 fallbacks, synth/native routes, evidence, diagnostics, and reserved cost fields;
 it is not authored DSL. The hash-included authored policy lives under
-`routing`: `fallbacks: allow|warn|forbid` and `stretch_warn_semitones: N`.
+`routing`: `fallbacks: allow|warn|forbid`, `stretch_warn_semitones: N`, and
+`sustain_gaps: allow|warn|forbid` (default `warn`). `sustain_gaps` guards a
+loud-failure case: a held sampled note whose notated duration exceeds the
+playable length of a **non-looping** region decays to silence before the note
+ends (VSCO-style sustains are finite one-shots). The plan flags each such note
+with `render_plan_sustain_gap`, naming the held seconds, the sample, and the
+gap; `warn` surfaces it at `validate`/`plan`/render-manifest, `forbid` refuses
+to render, `allow` opts out. Fixes: shorten/re-articulate the note or use a
+looped articulation.
 `audioforge render --plan file.plan.json` recomputes the plan and refuses stale
 spec, engine, library, catalog, or policy inputs before audio is computed.
 Render manifests record `plan_hash`, and exports write `<id>.plan.json`.

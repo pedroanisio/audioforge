@@ -37,7 +37,14 @@ PLAN_DIAGNOSTIC_CODES = {
     "render_plan_policy_fallback_warn",
     "render_plan_stretch_warn",
     "render_plan_inpaint_unavailable",
+    "render_plan_sustain_gap",
 }
+
+# A held sampled note whose notated duration exceeds the playable length of a
+# non-looping region decays to silence before its end — an audible gap the
+# author did not write. We only flag gaps larger than this tolerance so a note
+# that lands within a hair of the sample end is not reported.
+SUSTAIN_GAP_TOLERANCE_S = 0.05
 
 
 @dataclass
@@ -62,7 +69,12 @@ def normalize_routing_policy(spec: dict) -> dict:
         raise SpecError(
             "spec.routing.fallbacks: expected one of "
             f"{sorted(ROUTING_FALLBACK_MODES)}")
-    out = {"fallbacks": fallbacks}
+    sustain_gaps = routing.get("sustain_gaps", "warn")
+    if sustain_gaps not in ROUTING_FALLBACK_MODES:
+        raise SpecError(
+            "spec.routing.sustain_gaps: expected one of "
+            f"{sorted(ROUTING_FALLBACK_MODES)}")
+    out = {"fallbacks": fallbacks, "sustain_gaps": sustain_gaps}
     if "stretch_warn_semitones" in routing:
         value = routing["stretch_warn_semitones"]
         if not isinstance(value, (int, float)) or isinstance(value, bool):
@@ -163,9 +175,67 @@ def _rng_for_note(root: str, layer_index: int, layer_name: str,
     return rng_for(root, f"{layer_index}:{layer_name}", layer_type, sub)
 
 
+def _region_has_usable_loop(region) -> bool:
+    return (region.loop_mode in ("loop_continuous", "loop_sustain")
+            and region.loop_end > region.loop_start)
+
+
+def _region_playable_seconds(region, midi_i: int, lib, cache: dict) -> float | None:
+    """Output seconds a non-looping region can sound for this pitch before its
+    source is exhausted. Mirrors ``sampler.render_region``: playback speed is
+    ``2 ** (semitones/12)`` (the ``src_sr/sr`` term cancels), so pitching up
+    shortens the note. Returns None if the sample cannot be measured."""
+    key = region.sample
+    frames_sr = cache.get(key)
+    if frames_sr is None:
+        try:
+            data, src_sr = lib.audio(region.sample)
+        except Exception:
+            return None
+        frames_sr = (int(np.asarray(data).shape[0]), int(src_sr))
+        cache[key] = frames_sr
+    frames, src_sr = frames_sr
+    if src_sr <= 0:
+        return None
+    semis = midi_i - region.pitch_keycenter + region.transpose + region.tune / 100.0
+    speed = 2.0 ** (semis / 12.0)
+    if speed <= 0:
+        return None
+    return (frames / src_sr) / speed
+
+
+def _sustain_gap_diag(regions, midi_i: int, note_dur_s: float, note_path: str,
+                      lib, cache: dict) -> dict | None:
+    """Worst-case audible-silence diagnostic for the regions that will actually
+    sound this note, or None if every region loops or reaches the note's end."""
+    worst = None
+    for r in regions:
+        if _region_has_usable_loop(r):
+            return None  # a looping region sustains the whole note
+        avail = _region_playable_seconds(r, midi_i, lib, cache)
+        if avail is None:
+            continue
+        gap = note_dur_s - avail
+        if gap > SUSTAIN_GAP_TOLERANCE_S and (worst is None or gap > worst[0]):
+            worst = (gap, avail, r.sample)
+    if worst is None:
+        return None
+    gap, avail, sample = worst
+    return _diag(
+        "warning",
+        "render_plan_sustain_gap",
+        f"note held {note_dur_s:.2f}s but non-looping sample "
+        f"'{sample.rsplit('/', 1)[-1]}' plays only {avail:.2f}s at this pitch "
+        f"— {gap:.2f}s of silence before the note ends "
+        f"(shorten the note, re-articulate, or use a looped articulation)",
+        note_path,
+    )
+
+
 def _instrument_segment(spec_hash_value: str, layer: dict, layer_index: int,
                         note_index: int, ev: dict, lib, policy: dict,
-                        diagnostics: list[dict]) -> dict:
+                        diagnostics: list[dict], tempo_map,
+                        sample_len_cache: dict) -> dict:
     from .sampler import resolve_articulation_detail, select_regions
 
     layer_name = _layer_name(layer, layer_index)
@@ -214,6 +284,7 @@ def _instrument_segment(spec_hash_value: str, layer: dict, layer_index: int,
             note_path,
         ))
     dynamic_mode = bool(ev.get("curves")) or bool(layer.get("dynamic"))
+    sounding_regions: list = []
     if dynamic_mode:
         bands = {}
         for r in kreg:
@@ -226,20 +297,18 @@ def _instrument_segment(spec_hash_value: str, layer: dict, layer_index: int,
             note_index,
             section=bool(layer.get("section")),
         )
-        selected = [
-            {
+        selected = []
+        for (lo, hi), regs in sorted(
+            bands.items(), key=lambda item: (item[0][0] + item[0][1]) / 2.0
+        ):
+            picked_band = select_regions(regs, midi_i, int((lo + hi) / 2.0), rng)
+            sounding_regions.extend(picked_band)
+            selected.append({
                 "velocity_range": [lo, hi],
                 "center": (lo + hi) / 2.0,
                 "regions": [_region_identity(r) for r in regs],
-                "selected_regions": [
-                    _region_identity(r)
-                    for r in select_regions(regs, midi_i, int((lo + hi) / 2.0), rng)
-                ],
-            }
-            for (lo, hi), regs in sorted(
-                bands.items(), key=lambda item: (item[0][0] + item[0][1]) / 2.0
-            )
-        ]
+                "selected_regions": [_region_identity(r) for r in picked_band],
+            })
         velocity = {
             "mode": "dynamic_crossfade",
             "source": "note_or_layer_dynamic_curve",
@@ -256,12 +325,33 @@ def _instrument_segment(spec_hash_value: str, layer: dict, layer_index: int,
             section=bool(layer.get("section")),
         )
         picked = select_regions(kreg, midi_i, v127, rng)
+        sounding_regions = list(picked)
         velocity = {
             "mode": "static_velocity",
             "vel": vel,
             "vel127": v127,
             "selected_regions": [_region_identity(r) for r in picked],
         }
+    # Sustain-gap detection: a held note on a non-looping sample that runs out
+    # before the note ends is an audible silence the author did not write.
+    # Short articulations that clamp or re-trigger the sample cannot gap.
+    mods = detail.get("mods", {})
+    if not mods.get("retrigger"):
+        note_dur_s = float(tempo_map.sec(ev["start_beat"] + ev["dur_beats"])
+                           - tempo_map.sec(ev["start_beat"]))
+        clamp = mods.get("dur_clamp_s")
+        if clamp is not None:
+            note_dur_s = min(note_dur_s, float(clamp))
+        gap = _sustain_gap_diag(sounding_regions, midi_i, note_dur_s,
+                                note_path, lib, sample_len_cache)
+        if gap is not None:
+            mode = policy.get("sustain_gaps", "warn")
+            if mode == "forbid":
+                raise SpecError(f"{note_path}: render_plan_sustain_gap: "
+                                + gap["message"])
+            if mode == "warn":
+                segment_diags.append(gap)
+            # mode == "allow": detection is silent, author opted in
     diagnostics.extend(d for d in segment_diags if d["severity"] == "warning")
     return {
         "id": _note_id(layer_name, note_index),
@@ -331,14 +421,18 @@ def _synth_native_segment(layer: dict, layer_index: int,
 
 def build_render_plan(spec: dict) -> RenderPlanResult:
     from .library import load_library
+    from .sequencer import TempoMap
 
     resolved = validate_spec(copy.deepcopy(spec))
     root = spec_hash(resolved)
     policy = normalize_routing_policy(resolved)
+    tempo_map = TempoMap(resolved.get("tempo_map")
+                         or [[0.0, resolved.get("bpm", 120.0)]])
     diagnostics: list[dict] = []
     segments: list[dict] = []
     libraries: dict[str, dict] = {}
     library_cache: dict[tuple[str, str], Any] = {}
+    sample_len_cache: dict[str, tuple[int, int]] = {}
     for layer_index, layer0 in enumerate(resolved.get("layers", [])):
         layer = layer0
         if layer.get("type") == "instrument":
@@ -353,7 +447,7 @@ def build_render_plan(spec: dict) -> RenderPlanResult:
             for note_index, ev in enumerate(layer.get("notes", [])):
                 segments.append(_instrument_segment(
                     root, layer, layer_index, note_index, ev, lib, policy,
-                    diagnostics))
+                    diagnostics, tempo_map, sample_len_cache))
         elif layer.get("type") == "notes":
             for note_index, ev in enumerate(layer.get("notes", [])):
                 segments.append(_synth_native_segment(
