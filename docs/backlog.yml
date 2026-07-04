@@ -1,0 +1,59 @@
+# =====================================================================
+# Backlog — canonical deferred-work registry
+#
+# System of record for deferred features, tech debt, known bugs, research,
+# and infrastructure work. Structure is defined by
+# docs/schema/backlog.schema.json. Validate with:
+#   node scripts/check-backlog-governance.mjs
+#
+# Rules:
+# - no time estimates; effort is complexity only
+# - every item traces to a real source
+# - ownership records the provenance boundary for concurrent work
+# - status claims, especially done, must remain backed by live evidence
+# =====================================================================
+
+disclaimer: |
+  No statement or premise not backed by a real logical definition or
+  verifiable reference should be taken for granted. Items here are grounded
+  in cited sources; where a claim is unverified it must be marked as such.
+
+metadata:
+  schema_version: "1.0.0"
+  generated_by: "recipe-forge add-backlog-governance"
+  generated_on: "2026-07-04"
+  system_of_record: "docs/backlog.yml"
+  total_items: 1
+  id_prefix: "BL"
+  decision_prefix: "D"
+  categories: ["feature","docs","ops","security","testing","tooling"]
+  types: ["feature","tech-debt","bug","infra","research"]
+  statuses: ["parked","ready","blocked","in-progress","done"]
+  complexities: ["XS","S","M","L","XL"]
+  priorities: ["low","medium","high","critical"]
+  owners: ["mine","concurrent","shared","unassigned"]
+
+items:
+  - id: "BL-001"
+    title: "Govern the backlog with schema and drift checks"
+    summary: "Install a canonical backlog registry, rendered view, schema, and validation command."
+    description: |
+      The backlog is a claim about current and deferred work, not a loose note.
+      Keep the structured YAML canonical, render Markdown from it, and validate
+      references, dependencies, ownership, and live evidence as the repo evolves.
+    category: "docs"
+    type: "infra"
+    status: "ready"
+    complexity: "S"
+    priority: "high"
+    rationale: "Backlog drift hides shipped work, duplicate work, and ungrounded requests."
+    acceptance_criteria:
+      - "docs/backlog.yml validates against docs/schema/backlog.schema.json."
+      - "docs/BACKLOG.md lists the same backlog item IDs as the YAML registry."
+      - "Done items with live checks still match the current tree."
+    references:
+      - "docs/BACKLOG.md"
+      - "docs/schema/backlog.schema.json"
+    owner: "shared"
+    source: "Initial backlog governance recipe installation."
+    tags: ["backlog", "governance", "drift"]
