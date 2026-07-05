@@ -111,11 +111,14 @@ def v1():
         f.add(arrow(xs[i] + bw + 6, y + bh / 2, xs[i + 1] - 6, y + bh / 2,
                     SLATE, 1.6, 6))
     # verify loop
-    f.add(path(f"M{xs[2]+bw/2},{y+bh} C{xs[2]+bw/2},{y+bh+52} "
-               f"{xs[0]+bw/2},{y+bh+52} {xs[0]+bw/2},{y+bh}",
+    f.add(path(f"M{xs[2]+bw/2},{y+bh} C{xs[2]+bw/2},{y+bh+40} "
+               f"{xs[0]+bw/2},{y+bh+40} {xs[0]+bw/2},{y+bh}",
                "none", VIOLET, 1.6, dash="2 5"))
-    f.add(text(cx, y + bh + 48, "verify — re-render and compare bytes", 11,
-               500, VIOLET, "middle"))
+    lp, lw = _pill(0, 0, "verify — re-render and compare bytes", PAPER, VIOLET,
+                   10.5, 22, 12, 500)
+    f.add(rect(cx - lw / 2, y + bh + 30, lw, 22, fill=PAPER, rx=11))
+    f.add(_pill(cx - lw / 2, y + bh + 30, "verify — re-render and compare bytes",
+                "none", VIOLET, 10.5, 22, 12, 500)[0])
     # three properties
     py = 372
     props = [("Deterministic", "same source, same engine → the same bytes, "
