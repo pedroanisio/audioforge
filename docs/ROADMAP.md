@@ -11,10 +11,10 @@ disclaimer:
 # AudioForge — Canonical Roadmap
 
 > **This is the single, canonical roadmap for the AudioForge codebase.** It
-> supersedes any narrower planning document. It is organized into two tracks
+> supersedes any narrower planning document. It is organized into three tracks
 > that advance in parallel:
 >
-> - **Track E — Engineering discipline & contract infrastructure** (`AF-R01`…`AF-R16`).
+> - **Track E — Engineering discipline & contract infrastructure** (`AF-R01`…`AF-R19`).
 >   The meta-infrastructure that makes a contract-first, agent-facing,
 >   reproducibility-driven project *trustworthy*. Sourced from a direct read of
 >   the sibling FrameForge project (`../frameforge`, FrameGraph v2).
@@ -23,6 +23,13 @@ disclaimer:
 >   than a 12-TET note-stamping engine. Sourced from the research corpus —
 >   principally Julian Hook, *Exploring Musical Spaces* (Oxford, 2022) — cross-
 >   referenced against the codebase's actual capability surface.
+> - **Track X — Algorithmic & stochastic composition** (`AF-X01`…`AF-X04`).
+>   The *computer-music* lineage: sieves, seeded stochastic processes, and dynamic
+>   stochastic synthesis. Sourced from Iannis Xenakis, *Formalized Music*
+>   (Pendragon, 1992), cross-referenced against the codebase. Where Track M builds
+>   the transformational/common-practice tradition, Track X builds the
+>   algorithmic one — the tradition whose "mechanizable functions" ideal the
+>   engine's seeded determinism is already built to realize.
 >
 > Every item is an actionable work unit with a Definition of Ready (DoR), a
 > Definition of Done (DoD), and a full spec. The two tracks are not independent:
@@ -32,11 +39,22 @@ disclaimer:
 >
 > **Source basis.** Track E is grounded in a direct read of both repositories on
 > 2026-07-04. Track M is grounded in machine-verified sentence retrieval from the
-> research corpus (GraphQL endpoint; see Appendix §6) plus canonical music-theory
+> research corpus (GraphQL endpoint; see Appendix §7) plus canonical music-theory
 > literature cited with DOI/ISBN. FrameForge paths are relative to `../frameforge`;
 > AudioForge paths are relative to this repository root. Where a claim could not
 > be verified against a file or a source, it is marked. Per PALS's LAW, treat
 > unverified assertions here as untrusted until checked against the references.
+>
+> **Relationship to the governed registry.** This document is the **human
+> specification** — the full spec / DoR / DoD / risks per item. The
+> machine-checked **status registry** is [`docs/backlog.yml`](./backlog.yml)
+> (system of record for status, ownership, dependencies, and live evidence;
+> rendered to [`docs/BACKLOG.md`](./BACKLOG.md); gated by
+> `scripts/check-backlog-governance.mjs`). Every `AF-*` item here maps 1:1 to a
+> `BL-*` item there (the mapping is carried in each registry item's `tags` and
+> `references`). **Rule:** item *status* is owned by `backlog.yml`; item *design*
+> is owned by this file. When they disagree, the registry wins on status and this
+> file wins on specification — reconcile, do not let them drift.
 
 ---
 
@@ -154,6 +172,9 @@ estimates). Impact and effort are 1–5 (5 = highest).
 | **AF-R14** | `src/` layout + package-boundary AST gate | **P3** | M | 2 | 3 | ★★☆☆☆ | AF-R02 |
 | **AF-R15** | Migration codemod keyed to validator codes | **P3** | M | 3 | 3 | ★★★☆☆ | AF-R05, AF-R08 |
 | **AF-R16** | Cross-platform numeric-determinism pack | **P3** | L | 4 | 5 | ★★☆☆☆ | AF-R06 |
+| **AF-R17** | Explicit filter-automation targets (`auto lowpass/highpass`) | **P1** | S | 4 | 1 | ★★★★☆ | — |
+| **AF-R18** | Always-on dead-air render assertion (loud-by-default) | **P1** | S | 4 | 2 | ★★★★☆ | AF-R17 |
+| **AF-R19** | Unified render-assertion policy surface | **P2** | M | 3 | 3 | ★★★☆☆ | AF-R17, AF-R18 |
 
 ### Track M — music-theory & compositional capability
 
@@ -166,6 +187,15 @@ estimates). Impact and effort are 1–5 (5 = highest).
 | **AF-M03** | Neo-Riemannian triadic transformations (P/L/R, UTT) + Tonnetz | **P2** | M | 4 | 3 | ★★★★☆ | AF-M01, AF-M02 |
 | **AF-M06** | Voice-leading as optimization (minimal-displacement / VL geometry) | **P2** | M | 3 | 3 | ★★★☆☆ | AF-M01, AF-M04 |
 | **AF-M07** | Functional-harmony grammar (roman numerals, cadences, progressions) | **P3** | L | 3 | 4 | ★★★☆☆ | AF-M03, AF-M04 |
+
+### Track X — algorithmic & stochastic composition
+
+| ID | Item | Priority | Complexity | Impact | Effort | Leverage | Depends on |
+|----|------|:--------:|:----------:|:------:|:------:|:--------:|------------|
+| **AF-X02** | Seeded stochastic composition primitives (distributions, Markov, walks) | **P1** | L | 5 | 4 | ★★★★☆ | — |
+| **AF-X01** | General sieve engine (residual-class sieves → scales & rhythm) | **P2** | M | 4 | 3 | ★★★★☆ | — |
+| **AF-X04** | Positioning ADR — deterministic ground truth under generative music AI | **P2** | XS | 3 | 1 | ★★★☆☆ | — |
+| **AF-X03** | Dynamic stochastic synthesis oscillator (GENDYN-style) | **P3** | M | 3 | 3 | ★★★☆☆ | AF-X02 |
 
 ### Waves (execution order)
 
@@ -1232,20 +1262,131 @@ hardest.
 
 ---
 
+### AF-R17 — Explicit filter-automation targets (`auto lowpass` / `auto highpass` / `auto bandpass`)
+
+- **Priority:** P1 · **Wave:** 1 · **Complexity:** S · **Depends on:** —
+
+**Context.** `auto cutoff:` binds automation to *the first filter in the fx
+chain* (documented in `docs/DSL_SPEC.md` §10). With more than one filter, chain
+order silently decides which corner moves. A `highpass(28hz), lowpass(19000hz)`
+master chain automated with lowpass-shaped values swept the *highpass* toward
+Nyquist and rendered a ten-minute track to near-silence — a valid WAV, no
+diagnostic — a silent failure of the "loud and local" contract.
+
+**Mitigation shipped.** A compile-time warning now fires when `auto cutoff`
+targets a highpass (`audioforge/sdk.py` `_cutoff_target_warnings`,
+`tests/test_render_guardrails.py`). That flags the trap; it does not remove it.
+
+**Full spec.**
+1. Add `auto lowpass:`, `auto highpass:`, `auto bandpass:` targets that bind to
+   the named filter kind regardless of chain position, lowering to the same
+   `cutoff_hz` curve on that filter.
+2. Keep `auto cutoff:` as a first-filter alias for compatibility, retaining the
+   highpass-target warning.
+3. Document the targets in `docs/DSL_SPEC.md` §10 and expose them in
+   `audioforge capabilities`.
+
+**DoR:**
+- [ ] The automatable filter kinds and their IR targets are enumerated.
+- [ ] Decision: `auto <kind>:` binds to the first filter of that kind, or errors
+      when a chain holds several of one kind.
+
+**DoD:**
+- [ ] A highpass-first chain with `auto lowpass:` renders with the low band
+      intact (regression test).
+- [ ] `auto cutoff:` behavior and its warning are unchanged.
+- [ ] The new targets appear in the capability manifest and grammar artifacts,
+      guarded by the existing docs/grammar sync tests.
+
+**Risks.** Low. Additive DSL surface; the alias preserves existing specs.
+
+---
+
+### AF-R18 — Always-on dead-air render assertion (loud-by-default)
+
+- **Priority:** P1 · **Wave:** 1 · **Complexity:** S · **Depends on:** AF-R17
+
+**Context.** The dead-air detector (`audioforge/analysis.py` `_silence_metrics`,
+`tests/test_render_guardrails.py`) computes `silence_share` and
+`longest_silence_s` and raises a `dead_air` recommendation — but only under
+`render --analyze`. A default `render`/`verify` still passes a mostly-silent
+output, so the guardrail that catches the AF-R17 class is opt-in.
+
+**Full spec.**
+1. Run the windowed silence scan in the render path (it is cheap) and record
+   `silence_share` / `longest_silence_s` in every manifest.
+2. Add a `routing.dead_air: allow|warn|forbid` policy (default `warn`) mirroring
+   the sustain-gap policy (`audioforge/plan.py`): `warn` surfaces and records the
+   diagnostic; `forbid` refuses to write output.
+3. Surface the diagnostic the way plan diagnostics already surface, and document
+   the policy in `docs/DSL_SPEC.md`.
+
+**DoR:**
+- [ ] The audibility floor and run-length thresholds are pinned as documented
+      constants (already prototyped in `analysis.py`).
+- [ ] Decision: default policy `warn` vs `allow` for the first release.
+
+**DoD:**
+- [ ] A muted-lane spec surfaces `dead_air` in the manifest without `--analyze`.
+- [ ] `forbid` refuses the render; `allow` opts out; all three covered by tests.
+- [ ] An intentionally sparse-but-audible reference spec does not false-positive.
+
+**Risks.** Low–medium. False positives on deliberately sparse cues; mitigated by
+conservative thresholds and the `allow` opt-out.
+
+---
+
+### AF-R19 — Unified render-assertion policy surface
+
+- **Priority:** P2 · **Wave:** 2 · **Complexity:** M · **Depends on:** AF-R17, AF-R18
+
+**Context.** Loud-failure checks have accrued independently: sustain-gap,
+articulation-fallback, and stretch policies live in the render plan
+(`audioforge/plan.py`); the cutoff-target warning in SDK validation
+(`audioforge/sdk.py`); dead-air in analysis (`audioforge/analysis.py`). Different
+homes and inconsistent `allow|warn|forbid` handling make the verification stance
+real but scattered and hard to discover.
+
+**Full spec.**
+1. Define one render-assertion registry: each check declares a code, a default
+   severity, and a policy key under `routing`.
+2. Normalize every existing check onto that registry without changing default
+   behavior.
+3. Emit one `assertions` block in the manifest enumerating every check, its
+   inputs, and its verdict, so an agent reads one place to judge a render.
+4. Document the registry in `docs/DSL_SPEC.md` and expose it via
+   `audioforge capabilities`.
+
+**DoR:**
+- [ ] The full inventory of current render-time checks and their homes is
+      captured.
+- [ ] Decision: one flat `routing` namespace vs a nested `routing.assertions`.
+
+**DoD:**
+- [ ] Every listed check is registered and policy-gated through one path.
+- [ ] The manifest carries a single assertions report; existing sustain-gap and
+      fallback tests pass unchanged.
+- [ ] `audioforge capabilities` lists the assertion codes and their policies.
+
+**Risks.** Medium. A refactor across three modules; guarded by keeping default
+behavior identical and by the existing per-check tests.
+
+---
+
 ## 3. Track M items — music-theory & compositional capability
 
 Each item is self-contained: **Corpus/source reference → AudioForge gap → Full
 spec → DoR → DoD → Risks.** Sources are cited with DOI/ISBN; sentence anchors
 (`§`, `#nnnn`) are machine-verified retrievals from *Exploring Musical Spaces*
 (Hook 2022, ISBN 978-0-19-024601-3, DOI [10.1093/oso/9780190246013.001.0001](https://doi.org/10.1093/oso/9780190246013.001.0001))
-against the corpus GraphQL endpoint (Appendix §6). Where the corpus does **not**
+against the corpus GraphQL endpoint (Appendix §7). Where the corpus does **not**
 attest a concept, the canonical external source is cited instead and the gap in
 corpus coverage is marked — no citation is fabricated (Rule 2).
 
 > **Shared invariant for all Track-M items (PALS's LAW).** Every new theory
 > operation is LLM-adjacent surface an agent will call; each MUST ship with an
 > exhaustive property test against a *closed, enumerable* ground truth (e.g. the
-> 220 set classes, the 24 major/minor triads, the 12 transpositions) — not
+> 224 Tn/TnI set-classes, the 24 major/minor triads, the 12 transpositions) — not
 > spot-checks. A music-theory function that is "probably right" is unverified
 > output, and unverified output is a design defect, not a runtime bug.
 
@@ -1254,6 +1395,17 @@ corpus coverage is marked — no citation is fabricated (Rule 2).
 ### AF-M01 — Pitch-class-set theory core (normal form, prime form, IC-vector, formal `Tn`/`TnI`)
 
 - **Priority:** P1 · **Wave:** M1 · **Complexity:** M · **Depends on:** AF-R06
+- **Status:** ✅ **Implemented (2026-07-05)** — `audioforge/theory_pcset.py`
+  (`normal_form`, `prime_form` (Rahn), `interval_class_vector`, `Tn`/`TnI`,
+  `invert`, `complement`, symmetry degrees). Pinned by `tests/test_theory_pcset.py`,
+  which verifies **exhaustively** that `prime_form` partitions all 2¹² subsets into
+  the **224** Tn/TnI set-classes (correct count per cardinality) — plus the group
+  axioms and the corpus-attested `{0,4,7}`≡`{0,3,7}`→`(0,3,7)`. The ad-hoc `{s%12}`
+  pc-set construction in `dsl.py` now routes through `pcset()`; renders verified
+  byte-identical via `make golden-check`. (Set-class identity is the derivable
+  `(cardinality, prime_form)`; Forte ordinal numbers are intentionally not
+  fabricated — Rule 2.) *Correction:* an earlier draft of this roadmap said "220
+  set classes"; the Tn/TnI count is **224** (Burnside on D₁₂).
 
 **Source reference.** Hook, *Exploring Musical Spaces*, §1.2 "Pitch-class spaces";
 pc-set prime form is attested directly — "major and minor triads … share the
@@ -1277,7 +1429,7 @@ events, not an inversion operator on pc-sets.
 1. New module `audioforge/theory_pcset.py` (pure, dependency-free):
    - `normal_form(pcs) -> tuple`, `prime_form(pcs) -> tuple` (Rahn algorithm),
      `interval_class_vector(pcs) -> tuple[6]`, `forte_number(pcs) -> str`,
-     `set_class(pcs)` with the full catalog of 220 set classes as committed data.
+     `set_class(pcs)` returning the derivable (cardinality, prime-form) identity — no hand-typed catalogue (Rule 2).
    - Operators: `Tn(pcs, n)`, `TnI(pcs, n)`, `invert(pcs, axis)`,
      `complement(pcs)`, `transpositional/inversional symmetry` degree.
 2. Refactor the existing ad-hoc `{s % 12}` sites in `dsl.py` to call this module
@@ -1292,7 +1444,7 @@ events, not an inversion operator on pc-sets.
 
 **DoD:**
 - [ ] `prime_form` and `interval_class_vector` are validated **exhaustively**
-      against all 220 set classes (property test), not sampled.
+      against all 224 Tn/TnI set-classes (property test), not sampled.
 - [ ] `Tn`/`TnI` satisfy the group axioms under test (e.g. `TnI ∘ TnI = identity`,
       `Tm ∘ Tn = T(m+n)`) over all 12 (or 24) elements.
 - [ ] The `{s % 12}` duplication in `dsl.py` is gone; renders are byte-identical
@@ -1302,7 +1454,7 @@ events, not an inversion operator on pc-sets.
 
 **Risks.** Low. Self-contained, closed ground truth, no render-path change. The
 only trap is an off-by-one in the Rahn "most-packed-to-the-left" tie-break — the
-exhaustive test against all 220 classes is precisely what catches it.
+exhaustive test against all 224 Tn/TnI classes is precisely what catches it.
 
 ---
 
@@ -1621,7 +1773,157 @@ sugar over capabilities the other items provide.
 
 ---
 
-## 4. Cross-cutting principles to adopt (the meta-lesson)
+## 4. Track X items — algorithmic & stochastic composition
+
+Sourced from Iannis Xenakis, *Formalized Music* (Pendragon, 1992), and grounded
+in a deep-dive of the codebase against the formalized-music corpus (corpus
+document `48190286-Xenakis-Formalized-Music`, retrieved via the GraphQL endpoint,
+Appendix §7). This track builds the *algorithmic* tradition — the one whose
+"logical (hence mechanizable) functions" ideal the engine's seeded determinism
+already realizes — where Track M builds the transformational/common-practice one.
+Every Track-X item lands behind the golden-audio gate (`AF-R06`); each maps 1:1
+to a `BL-*` item in [`docs/backlog.yml`](./backlog.yml).
+
+### AF-X02 — Seeded stochastic composition primitives
+
+- **Priority:** P1 · **Wave:** 2 · **Complexity:** L · **Depends on:** AF-R06
+
+**Corpus reference.** Xenakis, *Formalized Music* — *Free Stochastic Music*,
+*Markovian Stochastic Music (Theory / Applications)*. The corpus's computer-music
+core is overwhelmingly stochastic (58 of 60 "stochastic" sentence hits resolve to
+this document).
+
+**AudioForge gap.** The engine exposes **no compositional stochastic primitives**.
+`np.random` appears only for DSP noise/dither (`synth.py`, `fx.py`); `compose.py`
+and `theory.py` have none. Yet the determinism substrate (`determinism.py`) roots
+every random path in the spec hash — the exact machinery to make stochastic
+composition *reproducible*, which was Xenakis's unrealized aim on 1960s hardware.
+
+**Full spec.**
+1. Add seeded generators that expand at compile time into explicit IR note/rhythm
+   events: probability distributions (uniform, Gaussian, exponential, Poisson,
+   Cauchy — Xenakis's set), first- and higher-order Markov chains, and bounded
+   random walks for contours.
+2. Root them in the existing seed lineage so the IR stays the complete ground
+   truth and a variant tag re-realizes all choices coherently.
+3. Document under the DSL spec and the capability manifest; gate with `AF-R06`.
+
+**DoR:**
+- [ ] The distribution set and their IR lowering are enumerated.
+- [ ] Decision: distributions as note-generators only, or also as parameter
+      modulators (velocity, timing, density).
+
+**DoD:**
+- [ ] A stochastic passage expands to explicit IR events and renders
+      byte-identically for a fixed spec+variant.
+- [ ] A new variant re-realizes the seeded choices; both are golden-locked.
+- [ ] Primitives appear in `audioforge capabilities`.
+
+**Risks.** Medium. Scope creep across distribution families; mitigate by shipping
+the core set first and treating the rest as follow-ups.
+
+---
+
+### AF-X01 — General sieve engine (residual-class sieves → scales & rhythm)
+
+- **Priority:** P2 · **Wave:** 2 · **Complexity:** M · **Depends on:** —
+
+**Corpus reference.** Xenakis sieve theory: *"an axiomatization for the totally
+ordered structure of the tempered chromatic scale … express any scale in terms of
+logical (hence mechanizable) functions."*
+
+**AudioForge gap.** Sieves exist only as **Euclidean rhythm** (`theory.py`
+`bjorklund`, `dsl.py` `euclid()`) — one degenerate case, rhythm-only. There is no
+general residual-class sieve (unions/intersections of classes mod *m*) and no
+sieve→scale path. Over the tempered chromatic (mod 12) this needs no new tuning
+support, so it is buildable now and generalizes once `AF-M05` lands.
+
+**Full spec.**
+1. Implement a `sieve(...)` primitive over residual classes with union,
+   intersection, and complement, producing both a pitch-class set (mod 12) and a
+   rhythm pattern.
+2. Make `euclid` a special case (or reduce it to a sieve) with byte-identical
+   output.
+3. Couple to `AF-M04` (scale system) and, when available, `AF-M05` (tuning) so
+   sieves generate scales over non-12 moduli.
+
+**DoR:**
+- [ ] Sieve syntax and IR representation are specified (period, residues, ops).
+- [ ] Decision: sieve output as first-class IR objects vs. expanded to explicit
+      pitch/rhythm only.
+
+**DoD:**
+- [ ] A sieve produces a pitch-class set and a rhythm pattern; `euclid` reduces
+      to it and renders unchanged.
+- [ ] Sieve output is explicit in the IR and golden-locked.
+
+**Risks.** Low. Additive, self-contained, and maps cleanly onto the deterministic
+compile-time model.
+
+---
+
+### AF-X04 — Positioning ADR: deterministic ground truth under generative music AI
+
+- **Priority:** P2 · **Wave:** 1 · **Complexity:** XS · **Depends on:** —
+
+**Context.** The corpus survey *Mathematical Music: From Antiquity to Music AI*
+frames the frontier as learning-based generation. The engine deliberately does
+not occupy it: it is a deterministic renderer and verifier whose operating law
+treats model output as *untrusted*. That is arguably the ideal **ground-truth /
+verification substrate** *under* generative music AI — a complement, not a
+competitor — but the stance is unrecorded, so product direction can drift.
+
+**Full spec.**
+1. Write an ADR (`docs/adr/`, per `AF-R12`) fixing the position: deterministic,
+   verifiable render/ground-truth layer beneath generative music AI, versus
+   adding generation.
+2. Reconcile with `PURPOSE.md` and the untrusted-output law in `CLAUDE.md`.
+3. Reference the ADR from this roadmap so downstream items inherit the stance.
+
+**DoR:**
+- [ ] The alternatives and their consequences are drafted.
+
+**DoD:**
+- [ ] The ADR is committed and linked from the roadmap; no roadmap item
+      contradicts it.
+
+**Risks.** Low. A decision record, not code.
+
+---
+
+### AF-X03 — Dynamic stochastic synthesis oscillator (GENDYN-style)
+
+- **Priority:** P3 · **Wave:** 3 · **Complexity:** M · **Depends on:** AF-X02
+
+**Corpus reference.** Xenakis's dynamic stochastic synthesis — sound generated by
+stochastic walks over the waveform itself, *"free of the … tradition of
+electronic, concrete, and instrumental music."*
+
+**AudioForge gap.** The synthesis palette (`synth.py`) has exact-Fourier
+wavetables, PADsynth, and granular voices, but no stochastic-waveform voice.
+
+**Full spec.**
+1. Add an oscillator whose breakpoint amplitudes and durations evolve by seeded,
+   bounded stochastic walks (reflecting/elastic barriers), reproducible from the
+   per-note seed.
+2. Expose it as a synth (or native) voice with explicit IR parameters; verify
+   determinism.
+3. Reuse the `AF-X02` distribution primitives for the walk laws.
+
+**DoR:**
+- [ ] The walk laws and barrier model are specified.
+- [ ] Decision: pure-Python voice vs. a native kernel (perf).
+
+**DoD:**
+- [ ] The voice is byte-reproducible and golden-locked.
+- [ ] Parameters appear in `audioforge capabilities`.
+
+**Risks.** Low–medium. Potential CPU cost at audio-rate walks; mitigate with a
+native kernel if needed (fails loud, per the engine's kernel policy).
+
+---
+
+## 5. Cross-cutting principles to adopt (the meta-lesson)
 
 Beyond the individual items, these FrameForge *habits* are what make the whole
 system trustworthy. Adopt them as review defaults, not as separate tickets:
@@ -1647,7 +1949,7 @@ system trustworthy. Adopt them as review defaults, not as separate tickets:
    prose into a queryable, drift-gated fact.
 7. **Music theory is verified against closed ground truth, or it is not shipped**
    (Track M). Every theory operation has an enumerable correctness oracle — the
-   220 set classes, the 24 triads, the 12 transpositions, published temperament
+   224 Tn/TnI set-classes, the 24 triads, the 12 transpositions, published temperament
    cents. Test against the *whole* set, not samples. A "probably correct"
    transformation is exactly the unverified LLM-adjacent output PALS's LAW
    forbids. This is why every Track-M item sits behind the AF-R06 golden gate and
@@ -1655,7 +1957,7 @@ system trustworthy. Adopt them as review defaults, not as separate tickets:
 
 ---
 
-## 5. What NOT to copy (Rule 1 — unbiased)
+## 6. What NOT to copy (Rule 1 — unbiased)
 
 To keep this roadmap honest, the following FrameForge features are **deliberately
 excluded** because they do not serve AudioForge's PURPOSE:
@@ -1687,7 +1989,7 @@ operator; skip the treatise.
 
 ---
 
-## 6. Appendix — evidence table (verified 2026-07-04)
+## 7. Appendix — evidence table (verified 2026-07-04)
 
 | Claim | Evidence (path) | Verified |
 |-------|-----------------|:--------:|

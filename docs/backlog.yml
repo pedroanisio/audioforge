@@ -1,5 +1,5 @@
 # =====================================================================
-# Backlog — canonical deferred-work registry
+# Backlog - canonical deferred-work registry
 #
 # System of record for deferred features, tech debt, known bugs, research,
 # and infrastructure work. Structure is defined by
@@ -20,10 +20,10 @@ disclaimer: |
 
 metadata:
   schema_version: "1.0.0"
-  generated_by: "recipe-forge add-backlog-governance"
+  generated_by: "recipe-forge add-backlog-governance; ported from docs/ROADMAP.md via Claude Opus 4.8"
   generated_on: "2026-07-04"
   system_of_record: "docs/backlog.yml"
-  total_items: 1
+  total_items: 31
   id_prefix: "BL"
   decision_prefix: "D"
   categories: ["feature","docs","ops","security","testing","tooling"]
@@ -34,13 +34,9 @@ metadata:
   owners: ["mine","concurrent","shared","unassigned"]
 
 items:
-  - id: "BL-001"
+  - id: BL-001
     title: "Govern the backlog with schema and drift checks"
     summary: "Install a canonical backlog registry, rendered view, schema, and validation command."
-    description: |
-      The backlog is a claim about current and deferred work, not a loose note.
-      Keep the structured YAML canonical, render Markdown from it, and validate
-      references, dependencies, ownership, and live evidence as the repo evolves.
     category: "docs"
     type: "infra"
     status: "ready"
@@ -56,4 +52,749 @@ items:
       - "docs/schema/backlog.schema.json"
     owner: "shared"
     source: "Initial backlog governance recipe installation."
-    tags: ["backlog", "governance", "drift"]
+    tags:
+      - "backlog"
+      - "governance"
+      - "drift"
+  - id: BL-002
+    title: "CI pipeline that runs the whole gate on every push"
+    summary: "GitHub Actions workflow runs the same composed make check on push and pull_request."
+    category: "ops"
+    type: "infra"
+    status: "done"
+    complexity: "M"
+    priority: "critical"
+    rationale: "Without CI the drift, determinism, and regression gates run only when a human remembers; the discipline stays advisory."
+    dependencies:
+      - "BL-003"
+    acceptance_criteria:
+      - "A workflow invokes make check on push and pull_request."
+      - "tests/test_ci_make_check_sync.py pins the CI-to-gate binding."
+    references:
+      - "docs/ROADMAP.md"
+    evidence_checks:
+      - kind: file-exists
+        path: ".github/workflows/ci.yml"
+      - kind: grep
+        path: ".github/workflows/ci.yml"
+        pattern: "make check"
+      - kind: file-exists
+        path: "tests/test_ci_make_check_sync.py"
+    owner: "mine"
+    source: "docs/ROADMAP.md AF-R01 (FrameForge .github/workflows/ci.yml parity)"
+    tags:
+      - "AF-R01"
+      - "ci"
+      - "enforcement"
+  - id: BL-003
+    title: "Makefile composing every gate into one make check"
+    summary: "Root Makefile with self-documenting help; check composes native-check and the canonical suite."
+    category: "tooling"
+    type: "infra"
+    status: "done"
+    complexity: "S"
+    priority: "critical"
+    rationale: "A single stable command name that CI and developers share turns dormant discipline into an enforced gate."
+    acceptance_criteria:
+      - "make check runs green on a clean tree."
+      - "make help lists every target."
+      - "tests/test_makefile_targets.py fails if check loses or dangles a target."
+    references:
+      - "docs/ROADMAP.md"
+    evidence_checks:
+      - kind: file-exists
+        path: "Makefile"
+      - kind: grep
+        path: "Makefile"
+        pattern: "check:.* test"
+      - kind: file-exists
+        path: "tests/test_makefile_targets.py"
+    owner: "mine"
+    source: "docs/ROADMAP.md AF-R02 (FrameForge Makefile:64 parity)"
+    tags:
+      - "AF-R02"
+      - "make"
+      - "enforcement"
+  - id: BL-004
+    title: "AGENTS.md programmatic CLI and tooling reference"
+    summary: "Create the agent-facing command map CLAUDE.md already points to but that does not yet exist."
+    category: "docs"
+    type: "infra"
+    status: "ready"
+    complexity: "S"
+    priority: "critical"
+    rationale: "CLAUDE.md ranks AGENTS.md second in reading order, but the file is absent, so the pointer is dead."
+    dependencies:
+      - "BL-003"
+    acceptance_criteria:
+      - "AGENTS.md documents every cli.py subcommand and make target."
+      - "A sync test fails if a CLI verb lacks an AGENTS.md entry."
+    references:
+      - "docs/ROADMAP.md"
+    owner: "unassigned"
+    source: "docs/ROADMAP.md AF-R03"
+    tags:
+      - "AF-R03"
+      - "agents"
+      - "docs"
+  - id: BL-005
+    title: "Ruff lint, format, and type-check configuration"
+    summary: "Add a machine-enforced style and basic-correctness floor to the root pyproject."
+    category: "tooling"
+    type: "infra"
+    status: "ready"
+    complexity: "S"
+    priority: "critical"
+    rationale: "The root pyproject has no linter, formatter, or type-checker, so unused imports and undefined names go unchecked."
+    acceptance_criteria:
+      - "ruff check and ruff format --check pass on main."
+      - "make lint and make format-check exist and are composed into make check."
+    references:
+      - "docs/ROADMAP.md"
+    owner: "unassigned"
+    source: "docs/ROADMAP.md AF-R04"
+    tags:
+      - "AF-R04"
+      - "ruff"
+      - "lint"
+  - id: BL-006
+    title: "IR-schema generator with --check and --write"
+    summary: "Own docs/ir.schema.json with a generator whose --check twin fails on drift."
+    category: "tooling"
+    type: "infra"
+    status: "done"
+    complexity: "S"
+    priority: "critical"
+    rationale: "The published schema was regenerated by hand; only an after-the-fact test guarded it, with no blessed regenerate command."
+    dependencies:
+      - "BL-003"
+    acceptance_criteria:
+      - "gen_ir_schema --write reproduces docs/ir.schema.json byte-for-byte."
+      - "--check exits non-zero on a drifted schema and prints a diff."
+      - "make schema-check is composed into make check."
+    references:
+      - "docs/ROADMAP.md"
+    evidence_checks:
+      - kind: file-exists
+        path: "audioforge/tools/gen_ir_schema.py"
+      - kind: grep
+        path: "Makefile"
+        pattern: "schema-check"
+      - kind: file-exists
+        path: "docs/ir.schema.json"
+    owner: "concurrent"
+    source: "docs/ROADMAP.md AF-R05; delivered by concurrent work (audioforge/tools/gen_ir_schema.py)"
+    tags:
+      - "AF-R05"
+      - "schema"
+      - "generator"
+  - id: BL-007
+    title: "Golden-audio oracle with a committed hash lockfile"
+    summary: "A small fast golden corpus plus a diffable SHA-256 lock and cosmetic-versus-real drift classification."
+    category: "testing"
+    type: "infra"
+    status: "done"
+    complexity: "M"
+    priority: "high"
+    rationale: "There was one committed golden and no golden-audio corpus; audio regression protection depended on a human keeping a manifest."
+    dependencies:
+      - "BL-003"
+    acceptance_criteria:
+      - "tests/golden/audio.lock.json is committed; WAVs are regenerated, not committed."
+      - "render_golden --check passes same-OS and fails on a deliberate render change."
+      - "A sub-epsilon perturbation classifies cosmetic; a supra-epsilon one classifies real."
+    references:
+      - "docs/ROADMAP.md"
+    evidence_checks:
+      - kind: file-exists
+        path: "audioforge/tools/render_golden.py"
+      - kind: grep
+        path: "Makefile"
+        pattern: "golden-check"
+      - kind: file-exists
+        path: "tests/golden/audio.lock.json"
+    owner: "concurrent"
+    source: "docs/ROADMAP.md AF-R06; delivered by concurrent work (audioforge/tools/render_golden.py)"
+    tags:
+      - "AF-R06"
+      - "golden"
+      - "determinism"
+  - id: BL-008
+    title: "Persisted capability manifest with a status field and drift gate"
+    summary: "Serialize the runtime capability manifest to a committed artifact with a derived per-feature status."
+    category: "tooling"
+    type: "infra"
+    status: "done"
+    complexity: "M"
+    priority: "high"
+    rationale: "The manifest was runtime-only with no on-disk artifact to diff and no feature-status tracker."
+    dependencies:
+      - "BL-006"
+    acceptance_criteria:
+      - "docs/capability-manifest.json is committed and regenerated byte-stably."
+      - "Each capability status is derived by predicate, not hand-labeled."
+      - "make manifest-check is composed into make check."
+    references:
+      - "docs/ROADMAP.md"
+    evidence_checks:
+      - kind: file-exists
+        path: "audioforge/tools/gen_capability.py"
+      - kind: grep
+        path: "Makefile"
+        pattern: "manifest-check"
+      - kind: file-exists
+        path: "docs/capability-manifest.json"
+    owner: "concurrent"
+    source: "docs/ROADMAP.md AF-R07; delivered by concurrent work (audioforge/tools/gen_capability.py)"
+    tags:
+      - "AF-R07"
+      - "capabilities"
+      - "manifest"
+  - id: BL-009
+    title: "Unify the dual IR source of truth into one typed model"
+    summary: "Make ir_schema.py derive its enumerations from schema.py, then optionally introduce a typed IR model."
+    category: "tooling"
+    type: "tech-debt"
+    status: "ready"
+    complexity: "L"
+    priority: "high"
+    rationale: "The same IR facts are encoded twice across schema.py and ir_schema.py; the drift-risk map rates this coupling HIGH."
+    dependencies:
+      - "BL-006"
+    acceptance_criteria:
+      - "No IR fact is stated in more than one module."
+      - "A sync test fails if a new osc shape is added to schema.py but not the generated schema."
+      - "All determinism and contract tests stay green (byte-identical renders)."
+    references:
+      - "docs/ROADMAP.md"
+    owner: "unassigned"
+    source: "docs/ROADMAP.md AF-R08; drift-risk-map.md (registry coupling HIGH)"
+    tags:
+      - "AF-R08"
+      - "ir"
+      - "coupling"
+  - id: BL-010
+    title: "CHANGELOG.md plus a version-bump tool with --check"
+    summary: "Add a Keep-a-Changelog history and an atomic multi-file version-bump tool with a --check twin."
+    category: "docs"
+    type: "infra"
+    status: "ready"
+    complexity: "S"
+    priority: "high"
+    rationale: "There is no CHANGELOG; version bumping is manual across several literal sites and error-prone."
+    acceptance_criteria:
+      - "CHANGELOG.md exists, seeded from release notes, current version at top."
+      - "bump_version --check fails on a half-bumped tree and is composed into make check."
+    references:
+      - "docs/ROADMAP.md"
+    owner: "unassigned"
+    source: "docs/ROADMAP.md AF-R09"
+    tags:
+      - "AF-R09"
+      - "changelog"
+      - "versioning"
+  - id: BL-011
+    title: "MCP server over the agent_tools facade (stdio)"
+    summary: "Expose the existing in-process agent_tools ops over the Model Context Protocol with session resources."
+    category: "feature"
+    type: "feature"
+    status: "ready"
+    complexity: "L"
+    priority: "medium"
+    rationale: "PURPOSE makes agents first-class consumers, yet the agent surface is import-only Python with no protocol server."
+    dependencies:
+      - "BL-008"
+    acceptance_criteria:
+      - "python -m audioforge.mcp starts a stdio server exposing all ops plus verify and capabilities."
+      - "A contract test fails if an agent_tools op has no MCP tool."
+      - "The server reuses run_tool with no duplicated render path."
+    references:
+      - "docs/ROADMAP.md"
+    owner: "unassigned"
+    source: "docs/ROADMAP.md AF-R10 (FrameForge src/framegraph/mcp parity)"
+    tags:
+      - "AF-R10"
+      - "mcp"
+      - "agents"
+  - id: BL-012
+    title: "Docs site (mkdocs-material) with generated pages and a build gate"
+    summary: "A MkDocs-Material site whose reference and capability pages are generated from committed artifacts, gated by a strict build."
+    category: "docs"
+    type: "infra"
+    status: "ready"
+    complexity: "M"
+    priority: "medium"
+    rationale: "There is no docs site and no generated reference; a broken link cannot fail a build today."
+    dependencies:
+      - "BL-006"
+      - "BL-008"
+    acceptance_criteria:
+      - "make docs builds the site with --strict and zero warnings."
+      - "reference.md and capabilities.md are generated, not hand-written."
+      - "A broken relative link fails the build."
+    references:
+      - "docs/ROADMAP.md"
+    owner: "unassigned"
+    source: "docs/ROADMAP.md AF-R11"
+    tags:
+      - "AF-R11"
+      - "docs"
+      - "mkdocs"
+  - id: BL-013
+    title: "ADR set (docs/adr/) and an adoption rule"
+    summary: "Record load-bearing decisions as numbered ADRs and require an ADR for future contract changes."
+    category: "docs"
+    type: "infra"
+    status: "ready"
+    complexity: "S"
+    priority: "medium"
+    rationale: "Architectural rationale is scattered across code comments and long docs and must be reverse-engineered."
+    acceptance_criteria:
+      - "docs/adr/ exists with a template and at least four backfilled ADRs."
+      - "The adoption rule is written into CLAUDE.md or AGENTS.md."
+      - "At least one ADR is referenced from the code it governs."
+    references:
+      - "docs/ROADMAP.md"
+    owner: "unassigned"
+    source: "docs/ROADMAP.md AF-R12"
+    tags:
+      - "AF-R12"
+      - "adr"
+      - "decisions"
+  - id: BL-014
+    title: "Codebase-standards ratchet and wire drift_inspect.py into the gate"
+    summary: "Give drift_inspect.py a --check mode and compose it into the gate; add a tri-state standards doc."
+    category: "tooling"
+    type: "infra"
+    status: "ready"
+    complexity: "S"
+    priority: "medium"
+    rationale: "drift_inspect.py exists but is not wired into the canonical suite, so a built detector never runs."
+    dependencies:
+      - "BL-003"
+    acceptance_criteria:
+      - "drift_inspect.py --check runs in make check and fails on injected registry drift."
+      - "docs/codebase-standards.md tags every rule Enforced, Adopted, or Target with a cited gate."
+    references:
+      - "docs/ROADMAP.md"
+    owner: "unassigned"
+    source: "docs/ROADMAP.md AF-R13; drift-risk-map.md (detector not wired, MODERATE)"
+    tags:
+      - "AF-R13"
+      - "drift"
+      - "standards"
+  - id: BL-015
+    title: "src/ layout and a package-boundary AST gate"
+    summary: "Move the flat package under src/ and add an AST test forbidding the wheel from importing tests, scripts, or tools."
+    category: "tooling"
+    type: "tech-debt"
+    status: "ready"
+    complexity: "M"
+    priority: "low"
+    rationale: "The flat layout lets tests import the package via repo-root on sys.path, masking packaging errors."
+    dependencies:
+      - "BL-003"
+    acceptance_criteria:
+      - "import audioforge works from an install with repo root not on sys.path."
+      - "A boundary test fails if the package imports tests, scripts, or tools."
+    references:
+      - "docs/ROADMAP.md"
+    owner: "unassigned"
+    source: "docs/ROADMAP.md AF-R14 (do only once a tools package must not ship)"
+    tags:
+      - "AF-R14"
+      - "packaging"
+      - "src-layout"
+  - id: BL-016
+    title: "Migration codemod keyed to validator rejection codes"
+    summary: "Pair every breaking IR change with a diagnostic code and a keyed migration so old corpora convert deterministically."
+    category: "tooling"
+    type: "infra"
+    status: "blocked"
+    complexity: "M"
+    priority: "low"
+    rationale: "migrate_ir_spec exists but migrations are not systematically keyed to diagnostic codes, so old specs can strand on a bump."
+    dependencies:
+      - "BL-006"
+      - "BL-009"
+    acceptance_criteria:
+      - "Every breaking diagnostic code has a keyed migration and a fixture proving it fixes it."
+      - "audioforge migrate exists with an exit-code contract."
+    references:
+      - "docs/ROADMAP.md"
+    owner: "unassigned"
+    source: "docs/ROADMAP.md AF-R15 (FrameForge codemod parity)"
+    tags:
+      - "AF-R15"
+      - "migration"
+      - "codemod"
+  - id: BL-017
+    title: "Cross-platform numeric-determinism pack"
+    summary: "Record and pin the numeric environment (BLAS, FFT, kernel flags) and make substitution loud, not silent."
+    category: "testing"
+    type: "research"
+    status: "ready"
+    complexity: "L"
+    priority: "low"
+    rationale: "Float-audio determinism secretly depends on BLAS, FFT backend, and compiler flags that are neither pinned nor recorded."
+    dependencies:
+      - "BL-007"
+    acceptance_criteria:
+      - "Every render manifest records the numeric environment descriptor."
+      - "A differing numeric environment emits a loud drift diagnostic to manifest and stderr."
+      - "Byte-exact verify holds within a pinned environment."
+    references:
+      - "docs/ROADMAP.md"
+    owner: "unassigned"
+    source: "docs/ROADMAP.md AF-R16; README (cross-platform reproducibility checked, not assumed)"
+    tags:
+      - "AF-R16"
+      - "determinism"
+      - "numeric"
+  - id: BL-018
+    title: "Pitch-class-set theory core (normal/prime form, IC-vector, Tn/TnI)"
+    summary: "Implement normal form, prime form, interval-class vector, set-class lookup, and formal Tn/TnI operators."
+    category: "feature"
+    type: "feature"
+    status: "done"
+    complexity: "M"
+    priority: "high"
+    rationale: "Pitch classes existed only as ad-hoc modulo-12 sets; there was no formal set-class machinery to build harmony reasoning on."
+    dependencies:
+      - "BL-007"
+    acceptance_criteria:
+      - "prime_form and interval_class_vector are validated exhaustively against all 224 Tn/TnI set-classes."
+      - "Tn and TnI satisfy the group axioms under test."
+      - "The ad-hoc modulo-12 duplication in dsl.py is removed; renders stay byte-identical."
+    references:
+      - "docs/ROADMAP.md"
+    evidence_checks:
+      - kind: file-exists
+        path: "audioforge/theory_pcset.py"
+      - kind: file-exists
+        path: "tests/test_theory_pcset.py"
+      - kind: grep
+        path: "audioforge/dsl.py"
+        pattern: "from .theory_pcset import pcset"
+    owner: "mine"
+    source: "docs/ROADMAP.md AF-M01; Hook, Exploring Musical Spaces (Oxford 2022, DOI 10.1093/oso/9780190246013.001.0001) (prime form 037, verified sentence 625); Forte, The Structure of Atonal Music (Yale 1973)"
+    tags:
+      - "AF-M01"
+      - "pitch-class-set"
+      - "theory"
+  - id: BL-019
+    title: "Formal transformation operators and transformation networks"
+    summary: "Layer the DSL transforms onto Tn/TnI and add a small transformation-network evaluator."
+    category: "feature"
+    type: "feature"
+    status: "ready"
+    complexity: "M"
+    priority: "medium"
+    rationale: "DSL transforms are concrete note-event edits, not composable algebraic operators, and there is no transformation network."
+    dependencies:
+      - "BL-018"
+    acceptance_criteria:
+      - "An operator sequence such as T5 I R composes correctly and round-trips against the algebra."
+      - "Grammar accepts valid operator sequences and rejects malformed ones."
+    references:
+      - "docs/ROADMAP.md"
+    owner: "unassigned"
+    source: "docs/ROADMAP.md AF-M02; Lewin, Generalized Musical Intervals and Transformations (Yale 1987); Hook, Exploring Musical Spaces (Oxford 2022, DOI 10.1093/oso/9780190246013.001.0001) (Ch.9, verified sentence 16)"
+    tags:
+      - "AF-M02"
+      - "transformations"
+      - "lewin"
+  - id: BL-020
+    title: "Neo-Riemannian triadic transformations (P/L/R, UTT) and Tonnetz"
+    summary: "Implement P, L, R and their order-24 group, the UTT representation, and Tonnetz-neighbour lookup."
+    category: "feature"
+    type: "feature"
+    status: "blocked"
+    complexity: "M"
+    priority: "medium"
+    rationale: "There is no P/L/R, no UTT, and no Tonnetz, so the smooth chromatic third-relations of film and Romantic harmony are inexpressible."
+    dependencies:
+      - "BL-018"
+      - "BL-019"
+    acceptance_criteria:
+      - "P, L, R are verified against their definitions on all 24 triads."
+      - "The generated PLR group has order 24 and UTT composition is associative."
+      - "A Tonnetz shortest-path progression renders and is byte-stable."
+    references:
+      - "docs/ROADMAP.md"
+    owner: "unassigned"
+    source: "docs/ROADMAP.md AF-M03; Hook, Exploring Musical Spaces (Oxford 2022, DOI 10.1093/oso/9780190246013.001.0001) (Tonnetz section 1.4 verified sentence 8; Ch.8 verified sentence 15); Hook, JMT 46 (2002), DOI 10.1215/00222909-2005-002; Cohn, Audacious Euphony (Oxford 2012)"
+    tags:
+      - "AF-M03"
+      - "neo-riemannian"
+      - "tonnetz"
+  - id: BL-021
+    title: "Scale and mode system (modes, pentatonic, octatonic, maximally-even)"
+    summary: "A registry of modes, pentatonic, harmonic and melodic minor, whole-tone, octatonic, plus a maximally-even generator."
+    category: "feature"
+    type: "feature"
+    status: "ready"
+    complexity: "M"
+    priority: "high"
+    rationale: "Only major and minor scales exist; diatonic_transpose accepts an interval list but no caller ever supplies other modes."
+    dependencies:
+      - "BL-018"
+    acceptance_criteria:
+      - "Every registered collection has a test pinning its pitch classes."
+      - "The maximally-even generator reproduces the diatonic, pentatonic, and octatonic sets exactly."
+      - "scale: dorian drives transpose and the out-of-scale diagnostic without false warnings."
+    references:
+      - "docs/ROADMAP.md"
+    owner: "unassigned"
+    source: "docs/ROADMAP.md AF-M04; Hook, Exploring Musical Spaces (Oxford 2022, DOI 10.1093/oso/9780190246013.001.0001) (Dorian dpc(0) verified sentence 532; octatonic verified sentence 364; maximally even Ch.14 verified sentence 6609); Clough & Douthett, JMT 35 (1991), DOI 10.2307/843811"
+    tags:
+      - "AF-M04"
+      - "scales"
+      - "modes"
+  - id: BL-022
+    title: "Tuning and temperament engine (activate the inert tuning directive)"
+    summary: "A tuning resolver that drives pitch-to-frequency for n-EDO, just intonation, historical temperaments, and Scala scales."
+    category: "feature"
+    type: "bug"
+    status: "ready"
+    complexity: "L"
+    priority: "high"
+    rationale: "The tuning: edo directive parses but no renderer reads it; all pitch math is hardcoded 12-TET, so the DSL advertises microtuning it does not deliver."
+    dependencies:
+      - "BL-007"
+    acceptance_criteria:
+      - "A 19-EDO or 31-EDO render places partials at the tuning cents, proven by an FFT assertion."
+      - "With no tuning directive all existing golden renders are byte-identical."
+      - "A Scala .scl import round-trips a known scale to the correct cents."
+    references:
+      - "docs/ROADMAP.md"
+    owner: "unassigned"
+    source: "docs/ROADMAP.md AF-M05; Hook, Exploring Musical Spaces (Oxford 2022, DOI 10.1093/oso/9780190246013.001.0001) (continuous pitch and just intonation, verified sentences 1057 and 15617); Barbour, Tuning and Temperament (1951); Scala scale-file format"
+    tags:
+      - "AF-M05"
+      - "tuning"
+      - "temperament"
+      - "defect"
+  - id: BL-023
+    title: "Voice-leading as optimization (minimal-displacement / VL geometry)"
+    summary: "Compute minimal-displacement bijective voice leading and add a smooth voicing mode alongside the current ornament heuristic."
+    category: "feature"
+    type: "feature"
+    status: "blocked"
+    complexity: "M"
+    priority: "medium"
+    rationale: "The voice-leading logic is a fixed ornament-insertion heuristic, not minimal-displacement motion over a voicing space."
+    dependencies:
+      - "BL-018"
+      - "BL-021"
+    acceptance_criteria:
+      - "The algorithm returns the textbook minimal voice leading for known cases."
+      - "voicing: ornamented reproduces today output byte-for-byte."
+      - "voicing: smooth renders and is byte-stable under the golden gate."
+    references:
+      - "docs/ROADMAP.md"
+    owner: "unassigned"
+    source: "docs/ROADMAP.md AF-M06; Hook, Exploring Musical Spaces (Oxford 2022, DOI 10.1093/oso/9780190246013.001.0001) (voice-leading spaces Ch.10, verified sentence 17); Tymoczko, A Geometry of Music (Oxford 2011)"
+    tags:
+      - "AF-M06"
+      - "voice-leading"
+      - "geometry"
+  - id: BL-024
+    title: "Functional-harmony grammar (roman numerals, cadences, progressions)"
+    summary: "A compile-time layer that expands roman-numeral progressions and cadence templates into concrete chords."
+    category: "feature"
+    type: "feature"
+    status: "blocked"
+    complexity: "L"
+    priority: "low"
+    rationale: "The grammar expresses harmony only as literal chord symbols; there are no roman numerals, functions, cadences, or progressions."
+    dependencies:
+      - "BL-020"
+      - "BL-021"
+    acceptance_criteria:
+      - "key: F with prog: ii V I expands to the correct literal chords and renders byte-stable."
+      - "Each cadence template produces the textbook chord succession."
+      - "Grammar accepts valid progressions and rejects malformed numerals."
+    references:
+      - "docs/ROADMAP.md"
+    owner: "unassigned"
+    source: "docs/ROADMAP.md AF-M07 (common-practice functional harmony; complement to the transformational view in Hook, Exploring Musical Spaces (Oxford 2022, DOI 10.1093/oso/9780190246013.001.0001))"
+    tags:
+      - "AF-M07"
+      - "functional-harmony"
+      - "grammar"
+  - id: BL-025
+    title: "Explicit filter-automation targets (auto lowpass / highpass / bandpass)"
+    summary: "Bind filter automation to a named filter instead of the first-filter-in-chain rule that can silently sweep a signal away."
+    category: "feature"
+    type: "feature"
+    status: "ready"
+    complexity: "S"
+    priority: "medium"
+    rationale: "auto cutoff binds to the first filter in an fx chain; a highpass placed first was swept toward Nyquist and rendered a ten-minute track to near-silence with no error. A compile-time warning now flags the case, but explicit targets remove the ambiguity at the source."
+    acceptance_criteria:
+      - "auto lowpass, auto highpass, and auto bandpass bind automation to the named filter regardless of chain order."
+      - "auto cutoff stays a first-filter alias and still warns when it targets a highpass."
+      - "A test renders a highpass-first chain with auto lowpass and confirms the low band survives."
+    references:
+      - "docs/ROADMAP.md"
+      - "docs/DSL_SPEC.md"
+      - "audioforge/sdk.py"
+    owner: "unassigned"
+    source: "Root-cause fix for the auto-cutoff ambiguity found while composing last_24h; the mitigation warning shipped in audioforge/sdk.py (_cutoff_target_warnings)."
+    tags:
+      - "AF-R17"
+      - "dsl"
+      - "automation"
+      - "loud-failure"
+  - id: BL-026
+    title: "Always-on dead-air assertion in the render path"
+    summary: "Promote unexpected-silence detection from the opt-in analyze pass to a policy-gated render assertion recorded in every manifest."
+    category: "testing"
+    type: "feature"
+    status: "ready"
+    complexity: "S"
+    priority: "medium"
+    rationale: "The dead-air detector runs only under analyze, so a mostly-silent render still passes a default render or verify. A routing-style silence policy run in the render path makes the failure loud without opt-in."
+    dependencies:
+      - "BL-025"
+    acceptance_criteria:
+      - "A render whose interior is largely silent surfaces a dead_air diagnostic in the manifest without the analyze flag."
+      - "routing.dead_air allow, warn, and forbid gate the behavior; forbid refuses to write output."
+      - "A test drives a muted-lane spec and asserts the diagnostic under the default policy."
+    references:
+      - "docs/ROADMAP.md"
+      - "audioforge/analysis.py"
+      - "audioforge/render.py"
+    owner: "unassigned"
+    source: "Generalization of the dead-air detector added after the last_24h silence bug (audioforge/analysis.py, tests/test_render_guardrails.py)."
+    tags:
+      - "AF-R18"
+      - "verification"
+      - "loud-failure"
+      - "manifest"
+  - id: BL-027
+    title: "Unified render-assertion policy surface"
+    summary: "Consolidate the render loud-failure catches under one policy vocabulary and one manifest report block."
+    category: "tooling"
+    type: "tech-debt"
+    status: "blocked"
+    complexity: "M"
+    priority: "low"
+    rationale: "Loud-failure checks accrued independently across the render plan, SDK validation, and analysis, with inconsistent allow, warn, and forbid handling; one policy surface keeps them discoverable and uniformly gated."
+    dependencies:
+      - "BL-025"
+      - "BL-026"
+    acceptance_criteria:
+      - "Sustain-gap, articulation-fallback, stretch, cutoff-target, and dead-air checks share one routing policy vocabulary."
+      - "The manifest carries a single assertions block enumerating every check and its verdict."
+      - "Existing sustain-gap and fallback policies migrate without changing their default behavior."
+    references:
+      - "docs/ROADMAP.md"
+      - "audioforge/plan.py"
+      - "audioforge/analysis.py"
+      - "audioforge/sdk.py"
+    owner: "unassigned"
+    source: "Consolidation opportunity recorded while adding the dead-air and cutoff-target guardrails (tests/test_render_guardrails.py, tests/test_sustain_gap.py)."
+    tags:
+      - "AF-R19"
+      - "verification"
+      - "policy"
+      - "tech-debt"
+  - id: BL-028
+    title: "General sieve engine (residual-class sieves for scales and rhythm)"
+    summary: "A sieve primitive that generates pitch-class sets and rhythm patterns from unions and intersections of residual classes, with the current Euclidean rhythm as one special case."
+    category: "feature"
+    type: "feature"
+    status: "ready"
+    complexity: "M"
+    priority: "medium"
+    rationale: "The engine expresses sieves only as Euclidean rhythm (theory.py bjorklund), which is one degenerate case of Xenakis sieve theory. Sieves unify scale and rhythm as logical, mechanizable functions over residual classes, and over the tempered chromatic (mod 12) they need no new tuning support, so this is the most architecture-aligned formal primitive the engine lacks."
+    acceptance_criteria:
+      - "A sieve expression produces both a pitch-class set (mod 12) and a rhythm pattern from residual-class logic."
+      - "euclid is expressible as, or reduces to, a sieve, and renders byte-identically to the current output."
+      - "Sieve output is explicit in the compiled IR and covered by the golden-audio gate."
+    references:
+      - "docs/ROADMAP.md"
+      - "audioforge/theory.py"
+      - "audioforge/dsl.py"
+    owner: "unassigned"
+    source: "Deep-dive of the codebase against the formalized-music corpus; Xenakis sieve theory (corpus document 48190286-Xenakis-Formalized-Music), sieve theory over the tempered chromatic scale."
+    tags:
+      - "AF-X01"
+      - "sieve"
+      - "algorithmic"
+      - "xenakis"
+  - id: BL-029
+    title: "Seeded stochastic composition primitives"
+    summary: "Probability distributions, Markov chains, and bounded random walks that expand into explicit IR note and rhythm events at compile time, reproducible from the spec seed."
+    category: "feature"
+    type: "feature"
+    status: "ready"
+    complexity: "L"
+    priority: "high"
+    rationale: "The corpus's computer-music core is stochastic composition, yet the engine exposes no compositional stochastic primitives; np.random is used only for DSP noise and dither. The seeded-determinism substrate already roots every random path in the spec hash, which is exactly the machinery to make stochastic composition reproducible, a differentiated niche the substrate was built for."
+    acceptance_criteria:
+      - "Distribution, Markov, and random-walk generators expand to explicit IR events at compile time, leaving the IR the complete ground truth."
+      - "The same spec and variant tag render byte-identically; a new variant re-realizes the seeded choices coherently."
+      - "The primitives land behind the golden-audio gate and are documented in the DSL spec and capability manifest."
+    references:
+      - "docs/ROADMAP.md"
+      - "audioforge/determinism.py"
+      - "audioforge/compose.py"
+    owner: "unassigned"
+    source: "Deep-dive of the codebase against the formalized-music corpus; Xenakis free and Markovian stochastic music (corpus document 48190286-Xenakis-Formalized-Music)."
+    tags:
+      - "AF-X02"
+      - "stochastic"
+      - "algorithmic"
+      - "determinism"
+  - id: BL-030
+    title: "Dynamic stochastic synthesis oscillator (GENDYN-style)"
+    summary: "A synthesis voice whose waveform breakpoints evolve by seeded stochastic walks, giving reproducible dynamic stochastic synthesis."
+    category: "feature"
+    type: "feature"
+    status: "blocked"
+    complexity: "M"
+    priority: "low"
+    rationale: "Dynamic stochastic synthesis is the corpus's computer sound-synthesis method and a natural fit for the seeded, deterministic synth; the palette has exact-Fourier, PADsynth, and granular voices but no stochastic-waveform voice."
+    dependencies:
+      - "BL-029"
+    acceptance_criteria:
+      - "A dynamic-stochastic oscillator drives waveform breakpoints by seeded bounded walks and is byte-reproducible."
+      - "It is documented as a native or synth voice and its determinism is verified."
+      - "Its parameters are explicit in the IR and exposed in the capability manifest."
+    references:
+      - "docs/ROADMAP.md"
+      - "audioforge/synth.py"
+    owner: "unassigned"
+    source: "Deep-dive of the codebase against the formalized-music corpus; Xenakis dynamic stochastic synthesis (corpus document 48190286-Xenakis-Formalized-Music)."
+    tags:
+      - "AF-X03"
+      - "synthesis"
+      - "stochastic"
+      - "xenakis"
+  - id: BL-031
+    title: "Positioning decision: deterministic ground truth under generative music AI"
+    summary: "An architecture decision record fixing whether the engine positions as the verifiable ground-truth and render layer beneath generative music AI, rather than adding generation itself."
+    category: "docs"
+    type: "research"
+    status: "ready"
+    complexity: "XS"
+    priority: "low"
+    rationale: "The corpus frames the frontier as learning-based generation, while the engine is a deterministic renderer and verifier whose operating law treats model output as untrusted. Without a recorded stance, product direction between building generation and being the verification substrate drifts."
+    acceptance_criteria:
+      - "An ADR under docs/adr records the decision, alternatives, and consequences."
+      - "The decision is consistent with PURPOSE.md and the untrusted-output law in CLAUDE.md."
+      - "The ADR is referenced from the roadmap so downstream items inherit the stance."
+    references:
+      - "docs/ROADMAP.md"
+      - "PURPOSE.md"
+      - "CLAUDE.md"
+    owner: "unassigned"
+    source: "Deep-dive open question: the corpus survey Mathematical Music: From Antiquity to Music AI frames a frontier the engine deliberately does not occupy."
+    tags:
+      - "AF-X04"
+      - "positioning"
+      - "adr"
+      - "music-ai"

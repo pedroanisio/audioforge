@@ -10,6 +10,41 @@ def _db(x: float) -> float:
     return 20.0 * math.log10(max(float(x), 1e-12))
 
 
+def _silence_metrics(mono: np.ndarray, sample_rate: int,
+                     hop_s: float = 0.25) -> dict:
+    """Windowed dead-air detection.
+
+    A render can be technically valid yet mostly silent — a lane that failed to
+    sound, an accidental mute, or (as happens) a filter automated into removing
+    all signal. Global RMS hides this when a few loud passages lift the average,
+    so we scan a short-window envelope and report the longest continuous dead
+    run and the dead share of the interior (fade in/out excluded). "Dead" is
+    both near-absolute-silent and far below the track's own loud level, so a
+    uniformly quiet-but-audible piece is not flagged.
+    """
+    n = max(1, int(hop_s * sample_rate))
+    usable = mono.size - (mono.size % n)
+    if usable < n * 4:
+        return {"silence_share": 0.0, "longest_silence_s": 0.0}
+    frames = mono[:usable].reshape(-1, n)
+    wdb = 10.0 * np.log10(np.maximum(np.mean(frames * frames, axis=1), 1e-24))
+    loud_ref = float(np.percentile(wdb, 90))
+    floor = min(-48.0, loud_ref - 30.0)
+    dead = wdb < floor
+    edge = int(round(1.0 / hop_s))              # ignore ~1 s fade edges
+    if dead.size > 2 * edge:
+        dead[:edge] = False
+        dead[-edge:] = False
+    longest = cur = 0
+    for d in dead:
+        cur = cur + 1 if d else 0
+        longest = max(longest, cur)
+    return {
+        "silence_share": round(float(np.mean(dead)), 4),
+        "longest_silence_s": round(longest * hop_s, 3),
+    }
+
+
 def analyze_audio(stereo: np.ndarray, sample_rate: int) -> dict:
     """Return structured, deterministic features for an already-rendered buffer.
 
@@ -49,6 +84,7 @@ def analyze_audio(stereo: np.ndarray, sample_rate: int) -> dict:
         "low_band_share": round(low, 6),
         "stereo_width": round(width, 6),
     }
+    report.update(_silence_metrics(mono, sample_rate))
     report["recommendations"] = _recommend(report)
     return report
 
@@ -89,5 +125,19 @@ def _recommend(r: dict) -> list[dict]:
             "severity": "info",
             "message": "Peak is very close to 0 dBFS.",
             "suggestion": "Use a lower master peak target for delivery headroom.",
+        })
+    if r.get("longest_silence_s", 0.0) >= 4.0 or r.get("silence_share", 0.0) >= 0.2:
+        recs.append({
+            "code": "dead_air",
+            "severity": "warning",
+            "message": (
+                f"Unexpected silence: longest dead run "
+                f"{r.get('longest_silence_s', 0.0):.1f}s, "
+                f"{r.get('silence_share', 0.0) * 100:.0f}% of the interior is "
+                f"near-silent."),
+            "suggestion": (
+                "A lane may be muted or filtered out — check gain automation "
+                "and that 'auto cutoff' targets the intended filter (it drives "
+                "the first filter in the chain)."),
         })
     return recs

@@ -17,6 +17,7 @@ import re
 from dataclasses import dataclass, field
 
 from . import theory
+from .theory_pcset import pcset
 from .ir_schema import INTENT_RENDER_ENUMS
 from .lark_parser import parse_assets
 from .curves import PHYSICAL_MODEL_OSCILLATORS
@@ -299,7 +300,7 @@ def _scale_pitch_classes(key_str: str) -> set[int] | None:
     if len(root) > 1:
         off += 1 if root[1] == "#" else -1
     iv = MAJOR if mode == "major" else MINOR if mode == "minor" else None
-    return {(off + s) % 12 for s in iv} if iv else None
+    return set(pcset(off + s for s in iv)) if iv else None
 
 
 def _note_pc(note: str) -> int:
@@ -1034,7 +1035,7 @@ def _apply_voicing_extensions(layer: dict, voicing: dict):
         if len(group) < 3:
             continue
         semis = sorted(theory.note_to_semis(ev["note"]) for ev in group)
-        pcs = {s % 12 for s in semis}
+        pcs = set(pcset(semis))
         root = semis[0]
         for ext in extensions:
             if ext not in intervals:
@@ -1075,7 +1076,7 @@ def _apply_voicing_extensions(layer: dict, voicing: dict):
                 "vel": round(0.55 + 0.25 * richness, 4),
                 "generated": "voice_leading",
             })
-        common = set(s % 12 for s in a_semis) & set(s % 12 for s in b_semis)
+        common = set(pcset(a_semis)) & set(pcset(b_semis))
         if common:
             sus_pc = sorted(common)[0]
             sus = next(s for s in a_semis if s % 12 == sus_pc)

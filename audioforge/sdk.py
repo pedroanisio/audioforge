@@ -308,6 +308,44 @@ def _timeline_warnings(spec: dict) -> list[Diagnostic]:
                     "note event extends past asset duration and will be "
                     "truncated or skipped at render",
                     f"layers.{i}.notes.{j}"))
+    out.extend(_cutoff_target_warnings(spec))
+    return out
+
+
+def _cutoff_target_warnings(spec: dict) -> list[Diagnostic]:
+    """`auto cutoff` drives the FIRST filter in an fx chain. Automating a
+    highpass with lowpass-shaped values silently filters the signal away — a
+    real footgun. Warn when a cutoff automation's target filter is a highpass
+    (put the lowpass first, or intend the sweep)."""
+    out: list[Diagnostic] = []
+
+    def check(fx, automation, where):
+        if not isinstance(fx, list) or not isinstance(automation, list):
+            return
+        cut_pts = [p for a in automation
+                   if isinstance(a, dict) and a.get("target") in (None, "cutoff_hz")
+                   for p in a.get("points", [])]
+        if not cut_pts or not any(a.get("target") in (None, "cutoff_hz")
+                                  for a in automation if isinstance(a, dict)):
+            return
+        first_filter = next((f for f in fx if isinstance(f, dict)
+                             and f.get("type") == "filter"), None)
+        if first_filter and first_filter.get("mode") == "highpass":
+            hi = max((float(p[1]) for p in cut_pts if len(p) >= 2), default=0.0)
+            out.append(Diagnostic(
+                "warning",
+                f"'auto cutoff' drives the first filter in this chain, which is "
+                f"a highpass (up to {hi:.0f} Hz). A high highpass corner removes "
+                f"low frequencies and can silence the signal — put the lowpass "
+                f"first if you meant to sweep the top.",
+                where))
+
+    master = spec.get("master") or {}
+    check(master.get("fx"), master.get("automation"), "master")
+    for i, layer in enumerate(spec.get("layers", [])):
+        check(layer.get("fx"), layer.get("automation"), f"layers.{i}")
+    for i, bus in enumerate(spec.get("buses", []) or []):
+        check(bus.get("fx"), bus.get("automation"), f"buses.{i}")
     return out
 
 
