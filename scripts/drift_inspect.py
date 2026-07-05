@@ -142,7 +142,16 @@ if spec_ver != DSL_VERSION:
 
 
 # ---------------------------------------------------------------- report ----
-def main():
+def main(argv=None):
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Cross-check runtime registries against their consumers "
+                    "(AF-R13, `make drift-check`). Exit 1 on drift, 0 if clean.",
+    )
+    parser.add_argument("--check", action="store_true",
+                        help="gate mode (the default behaviour): exit non-zero on drift")
+    parser.parse_args(argv)
     drifts = [f for f in findings if f[0] == "DRIFT"]
     notes = [f for f in findings if f[0] == "note"]
     print("=" * 68)

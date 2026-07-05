@@ -2,7 +2,7 @@
 #
 # `make check` is THE gate: the single command a developer runs locally and the
 # exact command CI runs (AF-R01). Every target is real — no stub gates. As
-# generator-backed gates land (AF-R05 schema, AF-R07 manifest, AF-R06 golden have;
+# generator-backed gates land (schema/manifest/golden/drift/version have;
 # AF-R04 lint pending), add them as prerequisites of `check`;
 # `tests/test_makefile_targets.py` pins the contract and
 # `tests/test_ci_make_check_sync.py` keeps CI calling this same target.
@@ -16,14 +16,14 @@ PYTHON ?= $(shell [ -x ./.venv/bin/python ] && printf '%s' ./.venv/bin/python ||
 export PYTHON
 
 .DEFAULT_GOAL := help
-.PHONY: help check test native-check schema-check manifest-check golden-check docs-check version-check clean
+.PHONY: help check test native-check schema-check manifest-check golden-check drift-check version-check docs-check clean
 
 help:  ## List available targets
 	@grep -hE '^[a-zA-Z0-9_.-]+:.*?## ' $(MAKEFILE_LIST) \
 	  | sort \
 	  | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
 
-check: native-check schema-check manifest-check golden-check test  ## Run the full local gate (what CI runs)
+check: native-check schema-check manifest-check golden-check drift-check version-check test  ## Run the full local gate (what CI runs)
 
 test:  ## Run the canonical suite (script suites + pytest) via run_tests.sh
 	@sh scripts/run_tests.sh
@@ -43,6 +43,12 @@ manifest-check:  ## Capability-manifest drift gate: docs/capability-manifest.jso
 golden-check:  ## Golden-audio drift gate: re-render the corpus vs the hash lock (AF-R06)
 	@$(PYTHON) -m audioforge.tools.render_golden --check
 
+drift-check:  ## Registry drift gate: runtime registries vs their consumers (AF-R13)
+	@$(PYTHON) scripts/drift_inspect.py --check
+
+version-check:  ## Version-consistency gate: every version literal == version.py (AF-R09)
+	@$(PYTHON) -m audioforge.tools.bump_version --check
+
 # --- Discrete fast gates (real subsets of the suite, for local iteration) ------
 # Not prerequisites of `check` (the `test` target already runs them all); these
 # exist so an agent or developer can run one drift class quickly.
@@ -50,9 +56,6 @@ golden-check:  ## Golden-audio drift gate: re-render the corpus vs the hash lock
 docs-check:  ## Fast: documentation drift guards only
 	@$(PYTHON) -m pytest -q tests/test_docs_regression.py tests/test_cli_docs_sync.py \
 	  tests/test_export_presets_docs.py tests/test_native_kernel_docs.py
-
-version-check:  ## Fast: version-source hygiene guards only
-	@$(PYTHON) -m pytest -q tests/test_version_sources.py
 
 clean:  ## Remove Python caches and compiled artifacts
 	@find . -type d -name __pycache__ -prune -exec rm -rf {} + 2>/dev/null || true
