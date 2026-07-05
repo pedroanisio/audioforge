@@ -61,6 +61,9 @@ FX_TYPES = {"filter", "delay", "reverb", "hall", "plate", "fdn",
             "comp", "mbcomp", "drive", "tremolo", "gain",
             "peak", "lowshelf", "highshelf", "transient", "saturate",
             "convolve"} | NATIVE_FX_TYPES
+# Modes for the `filter` fx — one source shared by validate_spec (below) and the
+# generated JSON Schema (ir_schema.py), so the two cannot drift (ADR-0005, AF-R08).
+FILTER_MODES = {"lowpass", "highpass", "bandpass"}
 
 
 def fx_needs_native(fx: dict) -> bool:
@@ -268,7 +271,7 @@ def _validate_fx(chain, path):
                             f"(built-in: {sorted(FX_TYPES)}; or a registered plugin)")
         if t == "filter":
             mode = _req(fx, "mode", p)
-            if mode not in {"lowpass", "highpass", "bandpass"}:
+            if mode not in FILTER_MODES:
                 raise SpecError(f"{p}.mode: '{mode}' invalid")
             _num(fx, "cutoff_hz", p, 10, 24000)
         if t == "delay":

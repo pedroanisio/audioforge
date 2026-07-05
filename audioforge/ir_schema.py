@@ -4,11 +4,14 @@ from __future__ import annotations
 import copy
 from typing import Any
 
+# schema.py's registries are the single source of truth for IR enums; this module
+# DERIVES its JSON-Schema enums from them (never restates them) — see ADR-0005.
 from .schema import (
     AUTO_TARGETS,
     BIT_DEPTHS,
     BPM_MAX,
     BPM_MIN,
+    FILTER_MODES,
     FX_TYPES,
     KINDS,
     LAYER_TYPES,
@@ -411,7 +414,7 @@ def ir_json_schema() -> dict[str, Any]:
                 "required": ["type"],
                 "properties": {
                     "type": _string_enum(FX_TYPES),
-                    "mode": _string_enum({"lowpass", "highpass", "bandpass"}),
+                    "mode": _string_enum(FILTER_MODES),
                     "cutoff_hz": _number(minimum=10, maximum=24000),
                 },
                 "additionalProperties": True,
