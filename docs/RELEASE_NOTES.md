@@ -26,6 +26,25 @@ how they are regenerated and gated is new. Never hand-edit `docs/ir.schema.json`
 edit `audioforge/ir_schema.py` (the source of truth) and rerun `--write`.
 (AI-authored: Claude Opus 4.8 via Claude Code.)
 
+Gate note (AF-R06 / AF-R07 / AF-R03, 2026-07-04): three new gates join
+`make check` (so CI runs them), each a real generator/oracle with no runtime
+contract change and no version bump.
+- **AF-R06 golden-audio oracle** — `tests/golden/audio/` (5 short specs) is pinned
+  by `tests/golden/audio.lock.json` (SHA-256 per spec; **no WAVs committed**).
+  `python -m audioforge.tools.render_golden --check` re-renders and gates drift:
+  strict exact-hash when the numeric env matches the lock, advisory when it differs
+  (cross-env float drift is AF-R16, not a regression), `--strict` forces failure.
+  ε for cosmetic-vs-real classification is a −120 dBFS per-sample max-abs bound.
+- **AF-R07 capability manifest** — `docs/capability-manifest.json` is now committed
+  and owned by `python -m audioforge.tools.gen_capability` (`--write`/`--check`),
+  with a predicate-derived per-capability `status` (`stable` = pure-Python;
+  `experimental` = native-kernel/env-dependent). Every diagnostic code is now
+  documented in the generated `docs/DIAGNOSTIC_CODES.md`, gated by the same tool.
+- **AF-R03 `AGENTS.md`** — the programmatic CLI/tooling reference `CLAUDE.md`
+  points to now exists; `tests/test_agents_md_sync.py` gates its verb list against
+  `cli.py`.
+(AI-authored: Claude Opus 4.8 via Claude Code.)
+
 Contract note: Engine 2.16.0 corrects the published IR contract to match the
 validator that actually gates rendering (audit findings F1–F7, F12). These are
 tightenings — specs previously accepted in error may now be rejected: instrument
