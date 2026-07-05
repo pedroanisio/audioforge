@@ -50,8 +50,11 @@ def test_check_flags_structural_drift_regardless_of_env(tmp_path, monkeypatch):
 
 
 def test_check_same_env_hash_change_is_real(tmp_path, monkeypatch):
-    # keep the real numeric_env (same env) but tamper only the hash -> real drift
+    # Force the lock's env to equal the CURRENT env so the strict path is
+    # exercised regardless of which machine/venv runs the test (the committed
+    # lock's env may differ from the runner's). Then tamper only the hash.
     lock = json.loads(LOCK.read_text())
+    lock["numeric_env"] = gold.numeric_env()
     stem = sorted(lock["specs"])[0]
     lock["specs"][stem]["output_sha256"] = "0" * 64
     tampered = tmp_path / "audio.lock.json"

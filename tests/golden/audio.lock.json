@@ -2,10 +2,10 @@
   "cosmetic_eps_dbfs": -120.0,
   "numeric_env": {
     "machine": "x86_64",
-    "numpy": "2.5.1",
+    "numpy": "2.4.6",
     "platform": "Linux-6.18.7-76061807-generic-x86_64-with-glibc2.39",
     "python": "3.13.12",
-    "scipy": "1.18.0"
+    "scipy": "1.17.1"
   },
   "specs": {
     "fx_filter_sweep": {

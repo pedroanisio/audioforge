@@ -20,5 +20,10 @@
   "static/fixtures/rejections/expressive_physical_pitch_curve.af": "sha256:8bc44ef2822ca278cf7ca80a160b3ae51281be38433069246eabd8f76268c198",
   "static/fixtures/rejections/expressive_scan_non_morph.af": "sha256:6284bc255c62648b107ad7263b62e078322aa1ed32c9c4fdc2d6471d0c4d8fea",
   "static/fixtures/unser_leben.af": "sha256:074c7282fb370962e8a522c2b18f08cc5f23d24fd64204b37fb02edfec1c525a",
-  "static/samples/transition_sweep.af": "sha256:978a13065959f6845bc4df0784317461f8d7233f3c9f4c9035d077039becd5ff"
+  "static/samples/transition_sweep.af": "sha256:978a13065959f6845bc4df0784317461f8d7233f3c9f4c9035d077039becd5ff",
+  "tests/golden/audio/fx_filter_sweep.af": "sha256:8345065ce557f79615cfdf201d67e9e2a90ddeb365188fab5970ad053e55c702",
+  "tests/golden/audio/groove_beat.af": "sha256:3ef74e6bdece19974c554de76237bc5585ac9ffd5158619048ea3b996cbe656d",
+  "tests/golden/audio/loudness_limiter.af": "sha256:0597f3add8302c4042c2d3ae3c7ffb4e2c46ef13a9f1f64db76f4e79952d9ee5",
+  "tests/golden/audio/multi_layer.af": "sha256:3076caf56c7b3c8d57188b208b5aeda4c740027011a1d331a42f186e6c29052b",
+  "tests/golden/audio/synth_voice.af": "sha256:2f140ebc4af4d50736963279ee93d6ea33983a66ebd3eb4bae469edafcaf6ffc"
 }
