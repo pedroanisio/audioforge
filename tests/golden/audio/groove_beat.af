@@ -1,0 +1,13 @@
+asset groove_beat {
+  kind: loop
+  duration: 2s
+  tempo: 120bpm
+  loopsafe: on
+  layer beat : drums {
+    voice: kick
+    pattern: x.x.x.x.
+    gain: -10db
+    groove: laidback
+  }
+  master { peak: -1db }
+}

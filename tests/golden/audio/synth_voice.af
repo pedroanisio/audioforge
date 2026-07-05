@@ -1,0 +1,12 @@
+asset synth_voice {
+  kind: cue
+  duration: 2s
+  tempo: 120bpm
+  layer lead : notes {
+    osc: saw
+    gain: -12db
+    env: a=0.01s d=0.1s s=0.7 r=0.2s
+    notes: C4 @ 0b for 2b, Eb4 @ 2b for 2b
+  }
+  master { peak: -1db }
+}

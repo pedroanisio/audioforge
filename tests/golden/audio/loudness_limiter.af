@@ -1,0 +1,13 @@
+asset loudness_limiter {
+  kind: bed
+  duration: 2s
+  tempo: 100bpm
+  layer pad : notes {
+    osc: organ
+    gain: -6db
+    env: a=0.2s d=0.3s s=0.8 r=0.4s
+    notes: C3 @ 0b for 4b, G3 @ 0b for 4b
+  }
+  master { lufs: -16
+           peak: -1db }
+}

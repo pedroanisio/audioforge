@@ -1,0 +1,47 @@
+{
+  "cosmetic_eps_dbfs": -120.0,
+  "numeric_env": {
+    "machine": "x86_64",
+    "numpy": "2.5.1",
+    "platform": "Linux-6.18.7-76061807-generic-x86_64-with-glibc2.39",
+    "python": "3.13.12",
+    "scipy": "1.18.0"
+  },
+  "specs": {
+    "fx_filter_sweep": {
+      "channels": 2,
+      "frames": 96000,
+      "output_sha256": "a06a8bdce8840dc964deb63e64cca1edd4f245bda529a59eef069c88cac7fc22",
+      "spec_hash": "6d0987f665f1a8f0cd1c067fbb5d8ff2964023930cc787c5dd8b7f972be023bd",
+      "sr": 48000
+    },
+    "groove_beat": {
+      "channels": 2,
+      "frames": 96000,
+      "output_sha256": "e6d90c2e3c1b628dbf2153fd4f4c1ee649aad198499a69f4daedb71a8b39c86b",
+      "spec_hash": "9d84f1b5bb67bfeba3ddb004d5d98d5579536bd2f1198d7b9dbead346fc5674c",
+      "sr": 48000
+    },
+    "loudness_limiter": {
+      "channels": 2,
+      "frames": 96000,
+      "output_sha256": "da4f34c0d22e9d7ca5a00b92a159b58130252c30f2f2965a4e6b893e16ba6e04",
+      "spec_hash": "96c8a34a6d1766d029afb2a71078f21dbb1268ea1a707ddc36f43d170d6925f7",
+      "sr": 48000
+    },
+    "multi_layer": {
+      "channels": 2,
+      "frames": 96000,
+      "output_sha256": "1aa95872bc853847f0194256a4201102050a412e6fea965889f1b510704bd6a3",
+      "spec_hash": "434560a3bbd36b787c4484c9655676ea1150bb8b2c80e529fbdc2142ddd570ad",
+      "sr": 48000
+    },
+    "synth_voice": {
+      "channels": 2,
+      "frames": 96000,
+      "output_sha256": "7444cba2ba0bba84c484e1900a6074b312c18cf1c138924d6c9883eafb7f580f",
+      "spec_hash": "3c93dc662cdaf45b86e3d9a22308f48c1d669cc044b52f7770ca76809fcc5d20",
+      "sr": 48000
+    }
+  }
+}

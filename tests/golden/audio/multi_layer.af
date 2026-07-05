@@ -1,0 +1,19 @@
+asset multi_layer {
+  kind: cue
+  duration: 2s
+  tempo: 120bpm
+  bus music { gain: -2db }
+  layer bass : notes {
+    osc: sine
+    bus: music
+    gain: -9db
+    env: a=0.01s d=0.1s s=0.8 r=0.2s
+    notes: C2 @ 0b for 4b
+  }
+  layer hat : drums {
+    voice: kick
+    pattern: ..x...x.
+    gain: -18db
+  }
+  master { peak: -1db }
+}

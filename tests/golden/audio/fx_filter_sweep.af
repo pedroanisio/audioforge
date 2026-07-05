@@ -1,0 +1,15 @@
+asset fx_filter_sweep {
+  kind: transition
+  duration: 2s
+  tempo: 120bpm
+  layer riser : sweep {
+    shape: saw
+    from: 110hz
+    to: 880hz
+    duration: 2s
+    gain: -14db
+    env: a=0.02s d=0.1s s=0.8 r=0.1s
+    fx: lowpass(1200hz), reverb(decay=1.5s, mix=0.3)
+  }
+  master { peak: -1db }
+}
