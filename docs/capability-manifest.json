@@ -1,0 +1,1661 @@
+{
+  "articulations": [
+    "legato",
+    "marcato",
+    "pizzicato",
+    "spiccato",
+    "staccato",
+    "sustain",
+    "tremolo",
+    "trill"
+  ],
+  "automation_targets": [
+    "cutoff_hz",
+    "dynamic",
+    "gain_db",
+    "pitch_cents",
+    "scan"
+  ],
+  "bit_depths": [
+    16,
+    24
+  ],
+  "cli": {
+    "commands": [
+      "batch",
+      "campaign",
+      "capabilities",
+      "compile",
+      "decompile",
+      "export-midi",
+      "export-musicxml",
+      "grammar",
+      "import-midi",
+      "import-musicxml",
+      "ingest",
+      "libgen",
+      "pack",
+      "plan",
+      "render",
+      "repair",
+      "sample-catalog",
+      "score",
+      "validate",
+      "verify"
+    ]
+  },
+  "diagnostic_codes": {
+    "curve_unsupported_voice": {
+      "repair_hint": "curve_unsupported_voice"
+    },
+    "duplicate_note_timbre_curve": {
+      "repair_hint": "duplicate_note_timbre_curve"
+    },
+    "fret_out_of_range": {
+      "repair_hint": "fret_out_of_range"
+    },
+    "intent_conflict": {
+      "repair_hint": "Review typed intent fields against explicit render settings."
+    },
+    "invalid_curve": {
+      "repair_hint": "invalid_curve"
+    },
+    "lossy_articulation": {
+      "repair_hint": "Use MusicXML for notation metadata or accept MIDI loss."
+    },
+    "note_curve_unsupported_target": {
+      "repair_hint": "note_curve_unsupported_target"
+    },
+    "note_curve_unsupported_voice": {
+      "repair_hint": "note_curve_unsupported_voice"
+    },
+    "notes_first_event": {
+      "repair_hint": "notes_first_event"
+    },
+    "position_timbre_unsupported": {
+      "repair_hint": "position_timbre_unsupported"
+    },
+    "render_plan_inpaint_unavailable": {
+      "repair_hint": "Inpainting is reserved and cannot be routed until F3 lands."
+    },
+    "render_plan_missing_evidence": {
+      "repair_hint": "render_plan_stale"
+    },
+    "render_plan_policy_fallback_forbid": {
+      "repair_hint": "render_plan_policy"
+    },
+    "render_plan_policy_fallback_warn": {
+      "repair_hint": "render_plan_policy"
+    },
+    "render_plan_schema": {
+      "repair_hint": "render_plan_stale"
+    },
+    "render_plan_stale": {
+      "repair_hint": "render_plan_stale"
+    },
+    "render_plan_stretch_warn": {
+      "repair_hint": "render_plan_policy"
+    },
+    "resource_pin": {
+      "repair_hint": "resource_pin"
+    },
+    "scan_requires_morph_osc": {
+      "repair_hint": "scan_requires_morph_osc"
+    },
+    "string_fret_pitch_conflict": {
+      "repair_hint": "string_fret_pitch_conflict"
+    },
+    "string_out_of_tuning": {
+      "repair_hint": "string_out_of_tuning"
+    },
+    "technique_fallback": {
+      "repair_hint": "technique_fallback"
+    },
+    "technique_layer_override": {
+      "repair_hint": "technique_layer_override"
+    },
+    "technique_param_out_of_range": {
+      "repair_hint": "technique_param_out_of_range"
+    },
+    "technique_unknown": {
+      "repair_hint": "technique_unknown"
+    },
+    "technique_unsupported_voice": {
+      "repair_hint": "technique_unsupported_voice"
+    },
+    "tuning_required_for_string_fret": {
+      "repair_hint": "tuning_required_for_string_fret"
+    },
+    "unknown_property": {
+      "repair_hint": "unknown_property"
+    },
+    "validate_render_ready": {
+      "repair_hint": "validate_render_ready"
+    }
+  },
+  "dsl_version": "1.9",
+  "dynamic_marks": {
+    "f": 0.74,
+    "ff": 0.87,
+    "fff": 1.0,
+    "mf": 0.6,
+    "mp": 0.48,
+    "p": 0.35,
+    "pp": 0.22,
+    "ppp": 0.1
+  },
+  "emotions": [
+    "awe",
+    "calm",
+    "cinematic_intensity",
+    "fear",
+    "intimacy",
+    "sadness",
+    "suspense",
+    "tension",
+    "triumph",
+    "urgency",
+    "wonder"
+  ],
+  "engine_version": "2.16.0",
+  "examples": {
+    "audio_layer": "layer vocal : audio { file: \"take.wav\" sha256: \"...64 hex...\" preserve: stereo }",
+    "intent_block": "intent {\n  density: sparse\n  contour: arch\n  texture: smooth\n  affect: tense\n  avoid: clipping, noise\n  repair: \"make the melody less rough\"\n}",
+    "notes_layer": "layer lead : notes { osc: sine env: a=0.01s d=0.1s s=0.8 r=0.2s notes: C4 @ 0b for 1b }",
+    "score_layer": "meter: 7 8\npickup: 1b\nform: intro 0b for 7b, verse 7b for 14b\nrepeat: verse x2",
+    "smart_directives": "style: cinematic\nperform: style=cinematic expressivity=0.8 rubato=arch\nensemble: synth size=5 spread=0.45 octaves=1\nvoicing: richness=0.7 extensions=7,9\nspace: hall=studio depth=0.5"
+  },
+  "fx": {
+    "bandpass": {
+      "type": "bandpass"
+    },
+    "comp": {
+      "type": "comp"
+    },
+    "convolve": {
+      "type": "convolve"
+    },
+    "delay": {
+      "type": "delay"
+    },
+    "drive": {
+      "type": "drive"
+    },
+    "fdn": {
+      "type": "fdn"
+    },
+    "filter": {
+      "type": "filter"
+    },
+    "gain": {
+      "type": "gain"
+    },
+    "hall": {
+      "type": "hall"
+    },
+    "highpass": {
+      "type": "highpass"
+    },
+    "highshelf": {
+      "type": "highshelf"
+    },
+    "ladder": {
+      "type": "ladder"
+    },
+    "lowpass": {
+      "type": "lowpass"
+    },
+    "lowshelf": {
+      "type": "lowshelf"
+    },
+    "mbcomp": {
+      "type": "mbcomp"
+    },
+    "peak": {
+      "type": "peak"
+    },
+    "plate": {
+      "type": "plate"
+    },
+    "reverb": {
+      "type": "reverb"
+    },
+    "saturate": {
+      "type": "saturate"
+    },
+    "tape": {
+      "type": "tape"
+    },
+    "transient": {
+      "type": "transient"
+    },
+    "tremolo": {
+      "type": "tremolo"
+    }
+  },
+  "generated_from": {
+    "fx": "audioforge.schema.FX_TYPES",
+    "layer_types": "audioforge.schema.LAYER_TYPES",
+    "styles": "audioforge.styles.STYLE_PACKS"
+  },
+  "grooves": [
+    "heavy_one",
+    "laidback",
+    "pushed",
+    "shuffle",
+    "straight",
+    "swing16"
+  ],
+  "incompatibilities": {
+    "cutoff_auto_without_filter": "cutoff automation requires a filter fx at the target index.",
+    "instrument_without_library": "Instrument layers require a spec-level library pin.",
+    "loopsafe_without_bpm": "loopsafe requires tempo/bpm so whole-beat duration can be checked.",
+    "seat_with_bus": "A staged layer cannot also set bus; the stage is its route."
+  },
+  "intent_blocks": {
+    "conflicts": [
+      "density=sparse with ensemble.size > 6 emits a warning",
+      "avoid=clipping with master peak > -0.5 dBFS emits a warning"
+    ],
+    "metadata": {
+      "affect": {
+        "type": "string"
+      },
+      "avoid": {
+        "type": "string[]"
+      },
+      "repair": {
+        "type": "string"
+      },
+      "style_text": {
+        "type": "string"
+      }
+    },
+    "render_affecting": {
+      "contour": {
+        "enum": [
+          "arch",
+          "fall",
+          "flat",
+          "rise"
+        ],
+        "expands_to": "master gain automation"
+      },
+      "density": {
+        "enum": [
+          "balanced",
+          "dense",
+          "sparse"
+        ],
+        "expands_to": "layer gain_db deltas"
+      },
+      "texture": {
+        "enum": [
+          "airy",
+          "bright",
+          "neutral",
+          "smooth",
+          "warm"
+        ],
+        "expands_to": "master fx"
+      }
+    }
+  },
+  "interop": {
+    "cli": [
+      "export-midi",
+      "export-musicxml",
+      "import-midi",
+      "import-musicxml"
+    ],
+    "exports": [
+      "midi",
+      "musicxml"
+    ],
+    "imports": [
+      "midi",
+      "musicxml"
+    ]
+  },
+  "ir_schema": {
+    "metadata": {
+      "curves": {
+        "hash_policy": "expanded curve data is render data",
+        "shapes": [
+          "hold",
+          "linear",
+          "pow"
+        ],
+        "targets": [
+          "cutoff_hz",
+          "dynamic",
+          "gain_db",
+          "pitch_cents",
+          "scan"
+        ],
+        "time_bases": [
+          "layer_beats",
+          "layer_seconds",
+          "note_beats",
+          "note_seconds"
+        ]
+      },
+      "engine_version": "2.16.0",
+      "field_layers": {
+        "provenance": [
+          "_meta"
+        ],
+        "render": [
+          "id",
+          "kind",
+          "duration_s",
+          "sample_rate",
+          "bit_depth",
+          "bpm",
+          "swing",
+          "groove",
+          "loop_safe",
+          "layers",
+          "buses",
+          "master",
+          "variant",
+          "intensity_scale"
+        ],
+        "semantic": [
+          "intent",
+          "emotion",
+          "intensity_curve",
+          "score",
+          "key",
+          "key_map",
+          "tempo_map",
+          "holds",
+          "markers",
+          "cutdowns",
+          "stage",
+          "library",
+          "routing",
+          "notation"
+        ]
+      },
+      "hash_excluded_top_level": [
+        "_meta",
+        "intent",
+        "notation"
+      ],
+      "migration": {
+        "current": "1.2",
+        "notes": "IR schema 1.2 extends note-scope curves with timbre targets and adds hash-included fretted/stringed instrument mechanics. No migration is required for valid 1.0/1.1 specs; curves and string/fret/tuning fields are render data and therefore hash-included, while provenance-only metadata changes remain hash-excluded.",
+        "policy": "additive-compatible",
+        "supported_from": [
+          "0.9",
+          "1.0"
+        ]
+      },
+      "render_plan": {
+        "hash_policy": "routing policy is render data; derived route decisions live outside the IR",
+        "policy_field": "routing",
+        "schema": "audioforge.render-plan/1"
+      },
+      "version": "1.2"
+    },
+    "path": "docs/ir.schema.json",
+    "version": "1.2"
+  },
+  "kinds": [
+    "bed",
+    "cue",
+    "jingle",
+    "loop",
+    "sfx",
+    "signature",
+    "soundtrack",
+    "transition"
+  ],
+  "layer_types": {
+    "audio": {
+      "compiles_to": "sample",
+      "properties": {
+        "auto": {
+          "enum": [
+            "cutoff_hz",
+            "dynamic",
+            "gain_db",
+            "pitch_cents",
+            "scan"
+          ],
+          "type": "automation"
+        },
+        "bus": {
+          "type": "string"
+        },
+        "duration": {
+          "type": "number",
+          "unit": "s"
+        },
+        "env": {
+          "type": "adsr"
+        },
+        "file": {
+          "type": "string"
+        },
+        "fx": {
+          "type": "fx_chain"
+        },
+        "gain": {
+          "default": 0.0,
+          "type": "number",
+          "unit": "db"
+        },
+        "pan": {
+          "default": 0.0,
+          "max": 1.0,
+          "min": -1.0,
+          "type": "number"
+        },
+        "preserve": {
+          "default": "mono",
+          "enum": [
+            "channels",
+            "mono",
+            "stereo"
+          ],
+          "type": "enum"
+        },
+        "sha256": {
+          "type": "sha256"
+        },
+        "start": {
+          "default": 0.0,
+          "type": "number",
+          "unit": "s"
+        }
+      }
+    },
+    "drums": {
+      "properties": {
+        "auto": {
+          "enum": [
+            "cutoff_hz",
+            "dynamic",
+            "gain_db",
+            "pitch_cents",
+            "scan"
+          ],
+          "type": "automation"
+        },
+        "bus": {
+          "type": "string"
+        },
+        "duration": {
+          "type": "number",
+          "unit": "s"
+        },
+        "env": {
+          "type": "adsr"
+        },
+        "fx": {
+          "type": "fx_chain"
+        },
+        "gain": {
+          "default": 0.0,
+          "type": "number",
+          "unit": "db"
+        },
+        "pan": {
+          "default": 0.0,
+          "max": 1.0,
+          "min": -1.0,
+          "type": "number"
+        },
+        "pattern": {
+          "type": "pattern"
+        },
+        "start": {
+          "default": 0.0,
+          "type": "number",
+          "unit": "s"
+        },
+        "voice": {
+          "enum": [
+            "clap",
+            "hat",
+            "kick",
+            "open_hat",
+            "snare",
+            "tom"
+          ],
+          "type": "enum"
+        }
+      }
+    },
+    "foley": {
+      "properties": {
+        "auto": {
+          "enum": [
+            "cutoff_hz",
+            "dynamic",
+            "gain_db",
+            "pitch_cents",
+            "scan"
+          ],
+          "type": "automation"
+        },
+        "bus": {
+          "type": "string"
+        },
+        "duration": {
+          "type": "number",
+          "unit": "s"
+        },
+        "env": {
+          "type": "adsr"
+        },
+        "fx": {
+          "type": "fx_chain"
+        },
+        "gain": {
+          "default": 0.0,
+          "type": "number",
+          "unit": "db"
+        },
+        "model": {
+          "enum": [
+            "fire",
+            "rain",
+            "surf",
+            "wind"
+          ],
+          "type": "enum"
+        },
+        "pan": {
+          "default": 0.0,
+          "max": 1.0,
+          "min": -1.0,
+          "type": "number"
+        },
+        "start": {
+          "default": 0.0,
+          "type": "number",
+          "unit": "s"
+        }
+      }
+    },
+    "grain": {
+      "properties": {
+        "auto": {
+          "enum": [
+            "cutoff_hz",
+            "dynamic",
+            "gain_db",
+            "pitch_cents",
+            "scan"
+          ],
+          "type": "automation"
+        },
+        "bus": {
+          "type": "string"
+        },
+        "density": {
+          "type": "number"
+        },
+        "duration": {
+          "type": "number",
+          "unit": "s"
+        },
+        "env": {
+          "type": "adsr"
+        },
+        "fx": {
+          "type": "fx_chain"
+        },
+        "gain": {
+          "default": 0.0,
+          "type": "number",
+          "unit": "db"
+        },
+        "grainsize": {
+          "type": "number",
+          "unit": "s"
+        },
+        "pan": {
+          "default": 0.0,
+          "max": 1.0,
+          "min": -1.0,
+          "type": "number"
+        },
+        "pitchspread": {
+          "type": "number",
+          "unit": "c"
+        },
+        "source": {
+          "enum": [
+            "blown",
+            "bowed",
+            "brass",
+            "brown",
+            "fm",
+            "modal",
+            "morph",
+            "organ",
+            "pad",
+            "pink",
+            "pluck",
+            "saw",
+            "sine",
+            "square",
+            "struck",
+            "sympathetic",
+            "triangle",
+            "white"
+          ],
+          "type": "enum"
+        },
+        "start": {
+          "default": 0.0,
+          "type": "number",
+          "unit": "s"
+        }
+      }
+    },
+    "instrument": {
+      "properties": {
+        "articulation": {
+          "default": "sustain",
+          "enum": [
+            "legato",
+            "marcato",
+            "pizzicato",
+            "spiccato",
+            "staccato",
+            "sustain",
+            "tremolo",
+            "trill"
+          ],
+          "type": "enum"
+        },
+        "auto": {
+          "enum": [
+            "cutoff_hz",
+            "dynamic",
+            "gain_db",
+            "pitch_cents",
+            "scan"
+          ],
+          "type": "automation"
+        },
+        "bus": {
+          "type": "string"
+        },
+        "duration": {
+          "type": "number",
+          "unit": "s"
+        },
+        "env": {
+          "type": "adsr"
+        },
+        "fx": {
+          "type": "fx_chain"
+        },
+        "gain": {
+          "default": 0.0,
+          "type": "number",
+          "unit": "db"
+        },
+        "instrument": {
+          "type": "string"
+        },
+        "pan": {
+          "default": 0.0,
+          "max": 1.0,
+          "min": -1.0,
+          "type": "number"
+        },
+        "seat": {
+          "type": "stage_position"
+        },
+        "section": {
+          "type": "object"
+        },
+        "start": {
+          "default": 0.0,
+          "type": "number",
+          "unit": "s"
+        }
+      }
+    },
+    "noise": {
+      "properties": {
+        "auto": {
+          "enum": [
+            "cutoff_hz",
+            "dynamic",
+            "gain_db",
+            "pitch_cents",
+            "scan"
+          ],
+          "type": "automation"
+        },
+        "bus": {
+          "type": "string"
+        },
+        "color": {
+          "enum": [
+            "brown",
+            "pink",
+            "white"
+          ],
+          "type": "enum"
+        },
+        "duration": {
+          "type": "number",
+          "unit": "s"
+        },
+        "env": {
+          "type": "adsr"
+        },
+        "fx": {
+          "type": "fx_chain"
+        },
+        "gain": {
+          "default": 0.0,
+          "type": "number",
+          "unit": "db"
+        },
+        "pan": {
+          "default": 0.0,
+          "max": 1.0,
+          "min": -1.0,
+          "type": "number"
+        },
+        "start": {
+          "default": 0.0,
+          "type": "number",
+          "unit": "s"
+        }
+      }
+    },
+    "notes": {
+      "properties": {
+        "arp": {
+          "enum": [
+            "down",
+            "downup",
+            "random",
+            "up",
+            "updown"
+          ],
+          "type": "arpeggiator"
+        },
+        "auto": {
+          "enum": [
+            "cutoff_hz",
+            "dynamic",
+            "gain_db",
+            "pitch_cents",
+            "scan"
+          ],
+          "type": "automation"
+        },
+        "bus": {
+          "type": "string"
+        },
+        "duration": {
+          "type": "number",
+          "unit": "s"
+        },
+        "dynamic": {
+          "enum": [
+            "f",
+            "ff",
+            "fff",
+            "mf",
+            "mp",
+            "p",
+            "pp",
+            "ppp"
+          ],
+          "type": "dynamic_curve"
+        },
+        "env": {
+          "type": "adsr"
+        },
+        "fx": {
+          "type": "fx_chain"
+        },
+        "gain": {
+          "default": 0.0,
+          "type": "number",
+          "unit": "db"
+        },
+        "humanize": {
+          "max": 1.0,
+          "min": 0.0,
+          "type": "number|object"
+        },
+        "loop": {
+          "type": "number",
+          "unit": "b"
+        },
+        "notes": {
+          "type": "note_events"
+        },
+        "osc": {
+          "default": "sine",
+          "enum": [
+            "blown",
+            "bowed",
+            "brass",
+            "fm",
+            "modal",
+            "morph",
+            "organ",
+            "pad",
+            "pluck",
+            "saw",
+            "sine",
+            "square",
+            "struck",
+            "sympathetic",
+            "triangle"
+          ],
+          "type": "enum"
+        },
+        "pan": {
+          "default": 0.0,
+          "max": 1.0,
+          "min": -1.0,
+          "type": "number"
+        },
+        "phrasing": {
+          "max": 1.0,
+          "min": 0.0,
+          "type": "number"
+        },
+        "play": {
+          "type": "motif_expansion"
+        },
+        "start": {
+          "default": 0.0,
+          "type": "number",
+          "unit": "s"
+        }
+      }
+    },
+    "sample": {
+      "properties": {
+        "auto": {
+          "enum": [
+            "cutoff_hz",
+            "dynamic",
+            "gain_db",
+            "pitch_cents",
+            "scan"
+          ],
+          "type": "automation"
+        },
+        "bus": {
+          "type": "string"
+        },
+        "duration": {
+          "type": "number",
+          "unit": "s"
+        },
+        "env": {
+          "type": "adsr"
+        },
+        "file": {
+          "type": "string"
+        },
+        "fx": {
+          "type": "fx_chain"
+        },
+        "gain": {
+          "default": 0.0,
+          "type": "number",
+          "unit": "db"
+        },
+        "pan": {
+          "default": 0.0,
+          "max": 1.0,
+          "min": -1.0,
+          "type": "number"
+        },
+        "pitch": {
+          "default": 0.0,
+          "type": "number",
+          "unit": "st"
+        },
+        "sha256": {
+          "type": "sha256"
+        },
+        "start": {
+          "default": 0.0,
+          "type": "number",
+          "unit": "s"
+        }
+      }
+    },
+    "sweep": {
+      "properties": {
+        "auto": {
+          "enum": [
+            "cutoff_hz",
+            "dynamic",
+            "gain_db",
+            "pitch_cents",
+            "scan"
+          ],
+          "type": "automation"
+        },
+        "bus": {
+          "type": "string"
+        },
+        "curve": {
+          "default": "exp",
+          "enum": [
+            "exp",
+            "lin"
+          ],
+          "type": "enum"
+        },
+        "duration": {
+          "type": "number",
+          "unit": "s"
+        },
+        "env": {
+          "type": "adsr"
+        },
+        "from": {
+          "type": "number",
+          "unit": "hz"
+        },
+        "fx": {
+          "type": "fx_chain"
+        },
+        "gain": {
+          "default": 0.0,
+          "type": "number",
+          "unit": "db"
+        },
+        "pan": {
+          "default": 0.0,
+          "max": 1.0,
+          "min": -1.0,
+          "type": "number"
+        },
+        "shape": {
+          "default": "sine",
+          "enum": [
+            "blown",
+            "bowed",
+            "brass",
+            "fm",
+            "modal",
+            "morph",
+            "organ",
+            "pad",
+            "pluck",
+            "saw",
+            "sine",
+            "square",
+            "struck",
+            "sympathetic",
+            "triangle"
+          ],
+          "type": "enum"
+        },
+        "start": {
+          "default": 0.0,
+          "type": "number",
+          "unit": "s"
+        },
+        "to": {
+          "type": "number",
+          "unit": "hz"
+        }
+      }
+    },
+    "tone": {
+      "properties": {
+        "auto": {
+          "enum": [
+            "cutoff_hz",
+            "dynamic",
+            "gain_db",
+            "pitch_cents",
+            "scan"
+          ],
+          "type": "automation"
+        },
+        "bus": {
+          "type": "string"
+        },
+        "detune": {
+          "default": 0.0,
+          "type": "number",
+          "unit": "c"
+        },
+        "duration": {
+          "type": "number",
+          "unit": "s"
+        },
+        "env": {
+          "type": "adsr"
+        },
+        "freq": {
+          "type": "number",
+          "unit": "hz"
+        },
+        "fx": {
+          "type": "fx_chain"
+        },
+        "gain": {
+          "default": 0.0,
+          "type": "number",
+          "unit": "db"
+        },
+        "note": {
+          "type": "pitch"
+        },
+        "osc": {
+          "default": "sine",
+          "enum": [
+            "blown",
+            "bowed",
+            "brass",
+            "fm",
+            "modal",
+            "morph",
+            "organ",
+            "pad",
+            "pluck",
+            "saw",
+            "sine",
+            "square",
+            "struck",
+            "sympathetic",
+            "triangle"
+          ],
+          "type": "enum"
+        },
+        "pan": {
+          "default": 0.0,
+          "max": 1.0,
+          "min": -1.0,
+          "type": "number"
+        },
+        "start": {
+          "default": 0.0,
+          "type": "number",
+          "unit": "s"
+        }
+      }
+    }
+  },
+  "note_scope_targets": {
+    "ranges": {
+      "cutoff_hz": [
+        10.0,
+        24000.0
+      ],
+      "gain_db": [
+        -120.0,
+        24.0
+      ],
+      "scan": [
+        0.0,
+        1.0
+      ]
+    },
+    "support": {
+      "instrument:sampled": {
+        "cutoff_hz": "unsupported",
+        "dynamic": "supported",
+        "gain_db": "supported",
+        "pitch_cents": "supported",
+        "scan": "unsupported"
+      },
+      "notes:synth": {
+        "cutoff_hz": "supported",
+        "dynamic": "supported",
+        "gain_db": "supported",
+        "pitch_cents": "supported",
+        "scan": "morph_only"
+      },
+      "physical_models": {
+        "cutoff_hz": "unsupported",
+        "dynamic": "supported",
+        "gain_db": "supported",
+        "pitch_cents": "unsupported",
+        "scan": "unsupported"
+      }
+    },
+    "targets": [
+      "cutoff_hz",
+      "dynamic",
+      "gain_db",
+      "pitch_cents",
+      "scan"
+    ],
+    "timbre_targets": [
+      "cutoff_hz",
+      "gain_db",
+      "scan"
+    ]
+  },
+  "oscillators": [
+    "blown",
+    "bowed",
+    "brass",
+    "fm",
+    "modal",
+    "morph",
+    "organ",
+    "pad",
+    "pluck",
+    "saw",
+    "sine",
+    "square",
+    "struck",
+    "sympathetic",
+    "triangle"
+  ],
+  "performance_curves": {
+    "curve_shapes": [
+      "hold",
+      "linear",
+      "pow"
+    ],
+    "note_scope_targets": [
+      "cutoff_hz",
+      "dynamic",
+      "gain_db",
+      "pitch_cents",
+      "scan"
+    ],
+    "note_scope_timbre_targets": [
+      "cutoff_hz",
+      "gain_db",
+      "scan"
+    ],
+    "support_matrix": {
+      "instrument:sampled": {
+        "cutoff_hz": "unsupported_no_per_voice_filter",
+        "dynamic": "full",
+        "gain_db": "full",
+        "pitch_cents": "full",
+        "scan": "unsupported_no_morph_voice"
+      },
+      "notes:synth": {
+        "cutoff_hz": "full",
+        "dynamic": "level_time_varying_brightness_onset_sampled",
+        "gain_db": "full",
+        "pitch_cents": "full",
+        "scan": "morph_only"
+      },
+      "physical_models": {
+        "cutoff_hz": "unsupported_until_staged",
+        "diagnostic": "curve_unsupported_voice",
+        "dynamic": "full",
+        "gain_db": "full",
+        "initial_pitch_bound_cents": 400,
+        "pitch_cents": "unsupported_until_staged",
+        "scan": "unsupported_until_staged",
+        "voices": [
+          "blown",
+          "bowed",
+          "brass",
+          "struck",
+          "sympathetic"
+        ]
+      }
+    },
+    "targets": {
+      "cutoff_hz": {
+        "combination": "one_per_note",
+        "range": [
+          10.0,
+          24000.0
+        ],
+        "unit": "hz"
+      },
+      "dynamic": {
+        "combination": "one_per_scope",
+        "range": [
+          0.0,
+          1.0
+        ],
+        "unit": "normalized"
+      },
+      "gain_db": {
+        "combination": "one_per_note_additive",
+        "range": [
+          -120.0,
+          24.0
+        ],
+        "unit": "db"
+      },
+      "pitch_cents": {
+        "combination": "sum_in_cents",
+        "default_limit": 2400.0,
+        "hard_limit": 4800.0,
+        "reference": "relative_to_base_pitch",
+        "unit": "cents"
+      },
+      "scan": {
+        "combination": "one_per_note",
+        "range": [
+          0.0,
+          1.0
+        ],
+        "unit": "normalized"
+      }
+    },
+    "time_bases": [
+      "layer_beats",
+      "layer_seconds",
+      "note_beats",
+      "note_seconds"
+    ]
+  },
+  "render_plan": {
+    "artifact": {
+      "extension": ".plan.json",
+      "hash": "sha256(canonical_plan_json_without_plan_hash_field)"
+    },
+    "diagnostic_codes": [
+      "render_plan_inpaint_unavailable",
+      "render_plan_missing_evidence",
+      "render_plan_policy_fallback_forbid",
+      "render_plan_policy_fallback_warn",
+      "render_plan_schema",
+      "render_plan_stale",
+      "render_plan_stretch_warn",
+      "render_plan_sustain_gap"
+    ],
+    "policy": {
+      "fallbacks": {
+        "default": "allow",
+        "enum": [
+          "allow",
+          "forbid",
+          "warn"
+        ]
+      },
+      "stretch_warn_semitones": {
+        "default": null,
+        "minimum": 0,
+        "type": "number"
+      }
+    },
+    "routes": [
+      "inpaint",
+      "sample",
+      "synth_native",
+      "synthetic_fallback"
+    ],
+    "schema": "audioforge.render-plan/1"
+  },
+  "repair_hints": {
+    "curve_unsupported_voice": "Move the curve to a supported voice, remove it, or wait for the physical-model kernel stage advertised in the support matrix.",
+    "duplicate_note_timbre_curve": "Keep at most one cutoff_hz, gain_db, or scan curve per note.",
+    "fret_out_of_range": "Use a fret inside 0..max_fret or the muted string value 'x'.",
+    "invalid_curve": "Use a supported curve target, time basis, point encoding, and interpolation shape from performance_curves.",
+    "note_curve_unsupported_target": "Use one of the published note_scope_targets or move the automation to layer/master scope.",
+    "note_curve_unsupported_voice": "Move the note curve to a voice that supports the target, or use an equivalent layer/master automation where available.",
+    "notes_first_event": "Put the first notes: event on the same line, or write play as a separate layer-body statement.",
+    "position_timbre_unsupported": "Position timbre is synth-only until sampled/physical voices grow a documented per-voice timbre primitive.",
+    "render_plan_policy": "Adjust spec.routing or choose sampled articulations that satisfy the active render-plan policy.",
+    "render_plan_stale": "Regenerate the plan from the current spec, engine version, library pin, catalog facts, and routing policy before rendering.",
+    "resource_pin": "Replace placeholder hashes with content-addressed sample, IR, or library manifest SHA-256 values.",
+    "scan_requires_morph_osc": "Use osc=morph for note-scope scan curves, or remove the scan curve from this note.",
+    "string_fret_pitch_conflict": "Remove the explicit pitch or make it match the pitch derived from tuning, string, and fret.",
+    "string_out_of_tuning": "Use a 1-based string index present in layer.tuning.",
+    "technique_fallback": "A reduced technique lowering was used; inspect render manifest fallback records before accepting the render.",
+    "technique_layer_override": "Per-note technique overrides the layer default; remove one if that was not intentional.",
+    "technique_param_out_of_range": "Adjust technique parameters to the manifest ranges/enums.",
+    "technique_unknown": "Use a technique listed in capability_manifest()['techniques'].",
+    "technique_unsupported_voice": "Choose a supported voice for the technique or use an explicit lower-level curve/articulation form.",
+    "tuning_required_for_string_fret": "Add layer.tuning before using note string/fret fields.",
+    "unknown_property": "Remove the property or replace it with one listed for the asset/layer/master scope in this manifest.",
+    "validate_render_ready": "Run validate without --no-resolve before render; clean validation is the render-ready predicate."
+  },
+  "sample_catalog": {
+    "accepted_licenses": [
+      "CC0-1.0",
+      "PDM",
+      "PUBLIC-DOMAIN"
+    ],
+    "approved_layout": "_catalog/approved/<instrument>/<version>/",
+    "artifact_schemas": {
+      "analysis": "audioforge.sample-catalog.analysis/1",
+      "candidate": "audioforge.sample-catalog.candidate/1",
+      "library_manifest_builder": "audioforge.sample-catalog/1",
+      "license_bundle": "audioforge.sample-catalog.licenses/1",
+      "license_evidence": "audioforge.sample-catalog.evidence/1"
+    },
+    "builder_version": "audioforge.sample-catalog/1",
+    "cli_sources": [
+      "freesound",
+      "internet-archive",
+      "openverse",
+      "wikimedia-commons"
+    ],
+    "commands": [
+      "search",
+      "resolve-openverse",
+      "download",
+      "analyze",
+      "build-sfz",
+      "audit-license",
+      "review"
+    ],
+    "generated_sfz_subset": {
+      "forbidden": [
+        "#include",
+        "$define",
+        "filters",
+        "lfo",
+        "cc"
+      ],
+      "opcodes": [
+        "ampeg_attack",
+        "ampeg_release",
+        "hikey",
+        "hivel",
+        "lokey",
+        "lovel",
+        "pitch_keycenter",
+        "sample",
+        "seq_length",
+        "seq_position"
+      ],
+      "validator": "audioforge.sampler.parse_sfz"
+    },
+    "review_gate": {
+      "approved_state": "approved",
+      "candidate_state": "candidate",
+      "required_for_approval": [
+        "LICENSES.json",
+        "license_evidence_hash",
+        "review.status=approved",
+        "review.reviewer",
+        "manifest_sha256"
+      ]
+    },
+    "source_adapters": [
+      "freesound",
+      "internet_archive",
+      "openverse_discovery",
+      "wikimedia_commons"
+    ],
+    "storage_root": "_catalog"
+  },
+  "schema": "audioforge.capabilities/1",
+  "score_layer": {
+    "properties": {
+      "form": "form: section STARTb for DURb, ...",
+      "meter": "meter: BEATS UNIT",
+      "pickup": "pickup: N b",
+      "polymeter": "polymeter: layer BEATS UNIT",
+      "repeat": "repeat: section xN"
+    }
+  },
+  "smart_directives": {
+    "ensemble": {
+      "properties": [
+        "family",
+        "size",
+        "spread",
+        "octaves"
+      ]
+    },
+    "perform": {
+      "properties": [
+        "style",
+        "expressivity",
+        "rubato",
+        "amount",
+        "segment"
+      ],
+      "rubato": {
+        "compiles_to": "dense tempo_map points",
+        "enum": [
+          "arch",
+          "push_pull",
+          "ritard",
+          "accelerando"
+        ]
+      }
+    },
+    "space": {
+      "properties": [
+        "hall",
+        "depth"
+      ]
+    },
+    "style": {
+      "enum": [
+        "ambient",
+        "baroque",
+        "choral",
+        "cinematic",
+        "folk",
+        "jazz",
+        "metal",
+        "minimalism",
+        "pop",
+        "romantic",
+        "techno",
+        "trap"
+      ]
+    },
+    "voicing": {
+      "properties": [
+        "richness",
+        "extensions"
+      ]
+    }
+  },
+  "statuses": {
+    "by_capability": {
+      "fx_types": {
+        "comp": "stable",
+        "convolve": "stable",
+        "delay": "stable",
+        "drive": "stable",
+        "fdn": "stable",
+        "filter": "stable",
+        "gain": "stable",
+        "hall": "stable",
+        "highshelf": "stable",
+        "ladder": "experimental",
+        "lowshelf": "stable",
+        "mbcomp": "stable",
+        "peak": "stable",
+        "plate": "stable",
+        "reverb": "stable",
+        "saturate": "stable",
+        "tape": "experimental",
+        "transient": "stable",
+        "tremolo": "stable"
+      },
+      "oscillators": {
+        "blown": "experimental",
+        "bowed": "experimental",
+        "brass": "experimental",
+        "fm": "stable",
+        "modal": "stable",
+        "morph": "stable",
+        "organ": "stable",
+        "pad": "stable",
+        "pluck": "stable",
+        "saw": "stable",
+        "sine": "stable",
+        "square": "stable",
+        "struck": "experimental",
+        "sympathetic": "experimental",
+        "triangle": "stable"
+      }
+    },
+    "predicate": "stable = pure-Python, always available; experimental = requires the native C-kernel toolchain (fails loudly if the compiler is absent)"
+  },
+  "style_packs": [
+    "ambient",
+    "baroque",
+    "choral",
+    "cinematic",
+    "folk",
+    "jazz",
+    "metal",
+    "minimalism",
+    "pop",
+    "romantic",
+    "techno",
+    "trap"
+  ],
+  "techniques": {
+    "accent": {
+      "doc": "Add dynamic emphasis by strength-scaled explicit dynamic/gain data.",
+      "lowers_to": [
+        "dynamic"
+      ],
+      "params": {
+        "strength": {
+          "default": 0.5,
+          "range": [
+            0.0,
+            1.0
+          ],
+          "type": "number"
+        }
+      },
+      "support": {
+        "physical": false,
+        "sampled": true,
+        "synth": true
+      }
+    },
+    "dead_note": {
+      "doc": "Clamp duration and reduce gain; synth also emits a low cutoff curve.",
+      "lowers_to": [
+        "curve:gain_db",
+        "curve:cutoff_hz"
+      ],
+      "params": {},
+      "support": {
+        "physical": false,
+        "sampled": true,
+        "synth": true
+      }
+    },
+    "harmonic": {
+      "doc": "Transpose to an allowed partial and add bell-like emphasis.",
+      "lowers_to": [
+        "curve:pitch_cents",
+        "fx:peak"
+      ],
+      "params": {
+        "partial": {
+          "default": 2,
+          "enum": [
+            2,
+            3,
+            4
+          ],
+          "type": "enum"
+        }
+      },
+      "support": {
+        "physical": false,
+        "sampled": false,
+        "synth": true
+      }
+    },
+    "let_ring": {
+      "doc": "Suppress short-note clamping and preserve a longer release.",
+      "lowers_to": [
+        "gain_db"
+      ],
+      "params": {},
+      "support": {
+        "physical": false,
+        "sampled": true,
+        "synth": true
+      }
+    },
+    "palm_mute": {
+      "doc": "Clamp duration, reduce gain, and darken synth voices with cutoff.",
+      "lowers_to": [
+        "curve:cutoff_hz",
+        "curve:gain_db"
+      ],
+      "params": {},
+      "support": {
+        "physical": false,
+        "sampled": true,
+        "synth": true
+      }
+    },
+    "staccatissimo": {
+      "doc": "Clamp duration to a very short explicit note length.",
+      "lowers_to": [
+        "gain_db"
+      ],
+      "params": {},
+      "support": {
+        "physical": false,
+        "sampled": true,
+        "synth": true
+      }
+    },
+    "sul_ponticello": {
+      "doc": "Brighten synth notes with a high cutoff and peak emphasis.",
+      "lowers_to": [
+        "curve:cutoff_hz",
+        "fx:peak"
+      ],
+      "params": {},
+      "support": {
+        "physical": false,
+        "sampled": false,
+        "synth": true
+      }
+    },
+    "sul_tasto": {
+      "doc": "Darken synth notes with a low cutoff curve.",
+      "lowers_to": [
+        "curve:cutoff_hz"
+      ],
+      "params": {},
+      "support": {
+        "physical": false,
+        "sampled": false,
+        "synth": true
+      }
+    },
+    "tenuto": {
+      "doc": "Preserve full-length sustain and slight legato emphasis.",
+      "lowers_to": [
+        "gain_db"
+      ],
+      "params": {},
+      "support": {
+        "physical": false,
+        "sampled": true,
+        "synth": true
+      }
+    }
+  },
+  "timing": {
+    "fermata": "fermata: BEATb=DURATIONs inserts absolute seconds",
+    "hold": "alias for fermata with identical IR under spec.holds",
+    "tempo_map": "piecewise-linear [beat, bpm] points integrated exactly"
+  },
+  "version_contract": {
+    "dsl_version": "1.9",
+    "engine_version": "2.16.0",
+    "source": "audioforge.version"
+  }
+}

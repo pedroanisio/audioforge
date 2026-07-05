@@ -4,7 +4,8 @@ from __future__ import annotations
 from .dsl import (ARTICULATIONS, DSL_VERSION, DYNAMIC_MARKS, EMOTIONS,
                   GROOVE_TEMPLATES)
 from .schema import (AUTO_TARGETS, BIT_DEPTHS, FX_TYPES, KINDS, LAYER_TYPES,
-                     NOISE_COLORS, OSC_SHAPES)
+                     NATIVE_FX_TYPES, NATIVE_OSC_SHAPES, NOISE_COLORS,
+                     OSC_SHAPES)
 from .styles import list_style_packs
 from .version import ENGINE_VERSION, version_contract
 from .ir_schema import IR_SCHEMA_VERSION, ir_schema_metadata
@@ -123,6 +124,36 @@ COMMON_LAYER_PROPS = {
     "auto": _param("automation", enum=AUTO_TARGETS),
     "bus": _param("string"),
 }
+
+
+def _capability_statuses() -> dict:
+    """Per-capability lifecycle status, derived by predicate (AF-R07) — not hand-listed.
+
+    stable       = pure-Python, always available.
+    experimental = requires the native C-kernel toolchain (fails loudly if the
+                   compiler is absent), so its availability is environment-dependent.
+    A new voice inherits its status from *where it is registered*: a pure-Python
+    oscillator is `stable`; a native kernel is `experimental` until it too is
+    pure-Python — no manifest edit required, so the field cannot rot.
+    """
+
+    def _status(name: str, native: set) -> str:
+        return "experimental" if name in native else "stable"
+
+    return {
+        "predicate": (
+            "stable = pure-Python, always available; experimental = requires the "
+            "native C-kernel toolchain (fails loudly if the compiler is absent)"
+        ),
+        "by_capability": {
+            "oscillators": {
+                n: _status(n, NATIVE_OSC_SHAPES) for n in sorted(OSC_SHAPES | NATIVE_OSC_SHAPES)
+            },
+            "fx_types": {
+                n: _status(n, NATIVE_FX_TYPES) for n in sorted(FX_TYPES | NATIVE_FX_TYPES)
+            },
+        },
+    }
 
 
 def capability_manifest() -> dict:
@@ -555,6 +586,7 @@ def capability_manifest() -> dict:
             "cutoff_auto_without_filter": "cutoff automation requires a filter fx at the target index.",
             "loopsafe_without_bpm": "loopsafe requires tempo/bpm so whole-beat duration can be checked.",
         },
+        "statuses": _capability_statuses(),
     }
 
 
