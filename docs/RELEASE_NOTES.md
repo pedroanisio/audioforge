@@ -15,6 +15,17 @@ finding F9). The published EBNF/GBNF artifacts are now derived from that one
 grammar, with the GBNF `pitch` rule tightened to the real single-octave-digit
 note spelling.
 
+Tooling note (AF-R05, 2026-07-04): `docs/ir.schema.json` is now a *generated*
+artifact owned by `python -m audioforge.tools.gen_ir_schema` (`--write` to
+regenerate, `--check` to fail on drift with a unified diff). The canonical
+serialization is `sort_keys=True, indent=2`; `make schema-check` runs the
+`--check` twin and is a `make check` prerequisite, so CI (AF-R01) fails if the
+committed schema drifts from `ir_json_schema()`. This is not a runtime-contract
+change and carries no version bump — the schema bytes are byte-identical; only
+how they are regenerated and gated is new. Never hand-edit `docs/ir.schema.json`;
+edit `audioforge/ir_schema.py` (the source of truth) and rerun `--write`.
+(AI-authored: Claude Opus 4.8 via Claude Code.)
+
 Contract note: Engine 2.16.0 corrects the published IR contract to match the
 validator that actually gates rendering (audit findings F1–F7, F12). These are
 tightenings — specs previously accepted in error may now be rejected: instrument

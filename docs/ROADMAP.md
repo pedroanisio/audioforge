@@ -68,13 +68,22 @@ cheap-versus-expensive split governs Track E; **Track M (music-theory
 capability, §3) is a parallel workstream** justified on its own merit and gated
 behind the same golden oracle (`AF-R06`).
 
-### The single most important Track-E finding
+### The single most important Track-E finding — ✅ RESOLVED (2026-07-04)
 
-AudioForge has **no `.github/` directory and no CI of any kind.** Every drift
-gate, every determinism test, every regression fixture exists and passes
-locally via `scripts/run_tests.sh` — and nothing forces them to run before a
-merge. The entire contract-discipline investment is currently **advisory.**
-This is the first thing to fix and it is inexpensive.
+**Original finding.** AudioForge had no code-gate CI: every drift gate,
+determinism test, and regression fixture passed locally via
+`scripts/run_tests.sh`, but nothing forced them to run before a merge, so the
+entire contract-discipline investment was **advisory.** (A narrow
+`backlog-governance.yml` workflow existed, but it gated only the backlog
+registry — not the test/drift suite.)
+
+**Resolution.** `AF-R02` (root `Makefile` composing `make check`) and `AF-R01`
+(`.github/workflows/ci.yml` running that same `make check` on push/PR across
+Python 3.10–3.12) are **implemented and verified** — `make check` runs green
+locally (704 passed, 3 skipped) and the gate is now pinned by two regression
+tests (`tests/test_makefile_targets.py`, `tests/test_ci_make_check_sync.py`) so
+it cannot silently weaken. The discipline is no longer advisory. See the AF-R02
+and AF-R01 items for the delivered artifacts.
 
 ### Track M — the capability gap, in one sentence
 
@@ -221,6 +230,13 @@ spec → DoR → DoD → Risks.** DoR is the gate to *start*; DoD is the gate to
 ### AF-R01 — CI pipeline that runs the whole gate on every push
 
 - **Priority:** P0 · **Wave:** 0 · **Complexity:** S–M · **Depends on:** AF-R02
+- **Status:** ✅ **Implemented (2026-07-04)** — `.github/workflows/ci.yml` runs
+  `make check` on push/PR across Python 3.10–3.12; `tests/test_ci_make_check_sync.py`
+  pins the CI↔gate binding. *Caveat:* a live GitHub Actions run has not yet been
+  observed from this environment; the workflow and its sync test are green, but
+  first-run validation (and asset-availability `skipif` for `libraries/`-dependent
+  tests) remains to confirm on the runner. The `determinism-cross-os`,
+  `native-kernels`, and `lint` jobs from the full spec are **not** yet split out.
 
 **FrameForge reference.** `.github/workflows/ci.yml` runs five jobs; the primary
 `python` job *is* `make check` — the exact same composed gate a developer runs
@@ -285,6 +301,15 @@ that job non-blocking until AF-R16, but surface it.
 ### AF-R02 — `Makefile` composing every gate into one `make check`
 
 - **Priority:** P0 · **Wave:** 0 · **Complexity:** S · **Depends on:** —
+- **Status:** ✅ **Implemented (2026-07-04)** — root `Makefile` with self-documenting
+  `make help`; `check: native-check test` composes only *real* gates (`test`
+  wraps `scripts/run_tests.sh`, `native-check` asserts a C compiler for the
+  deterministic kernels) — no stub gates, honoring the no-placeholder rule. Real
+  discrete fast-gates (`schema-check`, `docs-check`, `version-check`) are provided
+  for iteration but kept out of `check` to avoid double-running the suite. Pinned
+  by `tests/test_makefile_targets.py`. `make check` verified green (704 passed,
+  3 skipped, ~88 s). As `AF-R04` (lint) and `AF-R05` (schema `--check`) land, add
+  them as `check` prerequisites — the regression test will require them documented.
 
 **FrameForge reference.** `Makefile:64`:
 `check: schema-check grammar-check spec-check a11y-check status-check test validate overflow golden-check docs-check docs-linkcheck disclaimer-check`.
@@ -498,13 +523,24 @@ who changes the schema has no blessed way to regenerate the artifact.
 - [ ] AF-R02 exists so the `schema-check` target has a home.
 
 **DoD:**
-- [ ] `python -m audioforge.tools.gen_ir_schema --write` reproduces
+- [x] `python -m audioforge.tools.gen_ir_schema --write` reproduces
       `docs/ir.schema.json` byte-for-byte on a clean tree.
-- [ ] `--check` exits non-zero on a deliberately drifted schema and prints a diff.
-- [ ] `make schema-check` is in `make check` and CI.
-- [ ] `test_ir_schema.py` uses the generator's serializer (single source of
+- [x] `--check` exits non-zero on a deliberately drifted schema and prints a diff.
+- [x] `make schema-check` is in `make check` and CI.
+- [x] `test_ir_schema.py` uses the generator's serializer (single source of
       formatting).
-- [ ] `IR_SCHEMA_VERSION` bump procedure is documented next to the generator.
+- [x] `IR_SCHEMA_VERSION` bump procedure is documented next to the generator.
+
+**Delivered (2026-07-04, Claude Opus 4.8 via Claude Code).** `audioforge/tools/`
+package + `gen_ir_schema.py` (`--write`/`--check`, canonical
+`sort_keys=True, indent=2` serialization); `tests/test_gen_ir_schema.py` (11
+tests); `tests/test_ir_schema.py` retargeted to `render_schema()` for byte-parity;
+`Makefile` `schema-check` repurposed to the generator `--check` and promoted to a
+`make check` prerequisite (so CI runs it via AF-R01). **Scope boundary:** step 5
+(`docs/capability.schema.json` `--check`) is out of scope here because it *is*
+**AF-R07**'s deliverable (persisted capability manifest + drift gate); building it
+here would duplicate that item's generation seam. `ir.schema.json` — this item's
+own subject — is fully delivered.
 
 **Risks.** If `ir_json_schema()` is not order-stable, `--check` will produce
 false failures — the DoR guards this. Low overall risk; this is the cheapest
@@ -1655,8 +1691,8 @@ operator; skip the treatise.
 
 | Claim | Evidence (path) | Verified |
 |-------|-----------------|:--------:|
-| AudioForge has no `.github/` / CI | repo root listing; `find .github` empty | ✅ |
-| No `Makefile` | repo root listing | ✅ |
+| ~~AudioForge has no `.github/` / CI~~ → **RESOLVED**: gate CI added (`.github/workflows/ci.yml`) | AF-R01; prior `.github/` held only `backlog-governance.yml`, not a code gate | ✅ |
+| ~~No `Makefile`~~ → **RESOLVED**: root `Makefile` composes `make check` | AF-R02; `make check` green (704 passed) | ✅ |
 | `AGENTS.md` referenced by `CLAUDE.md` but absent | `CLAUDE.md` reading-order §; root listing | ✅ |
 | No ruff/black/mypy in root `pyproject.toml` | `pyproject.toml` (deps: lark, matplotlib, numpy, scipy) | ✅ |
 | `docs/ir.schema.json` regenerated by hand; only test guards it | `tests/test_ir_schema.py`; no writer found | ✅ |

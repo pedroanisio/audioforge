@@ -12,6 +12,7 @@ from audioforge.ir_schema import (
     migrate_ir_spec,
     validate_ir_schema,
 )
+from audioforge.tools.gen_ir_schema import render_schema
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -71,9 +72,14 @@ def _compiled_spec():
 
 def test_published_ir_schema_matches_runtime_source():
     runtime = ir_json_schema()
-    published = json.loads(PUBLISHED_SCHEMA.read_text())
+    published_text = PUBLISHED_SCHEMA.read_text()
+    published = json.loads(published_text)
 
     assert runtime == published
+    # AF-R05: docs/ir.schema.json is a generated artifact. Its exact bytes are
+    # owned by the generator's canonical serializer (single source of
+    # formatting), so byte-level drift is a failure too — not just structural.
+    assert published_text == render_schema()
     assert runtime["$id"].endswith(f"audioforge-ir-{IR_SCHEMA_VERSION}.schema.json")
     assert runtime["x-audioforge"]["version"] == IR_SCHEMA_VERSION
     assert runtime["x-audioforge"]["field_layers"]["semantic"]
