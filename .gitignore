@@ -18,3 +18,7 @@ compositions/
 _temp/
 .shadowmd/
 _catalog/
+.recipe-forge/receipts/add-backlog-governance.json
+scripts/gen_2030.py
+scripts/gen_to_be_alive.py
+docs/shadowmd-design-v2.md
