@@ -119,3 +119,13 @@ the paired `--write`, then let the `--check` gate confirm:
 
 Rendered WAVs are **never** committed — the golden lock re-renders them. The DSL
 grammar (`grammar` verb) is derived from `audioforge.lark_parser.LARK_GRAMMAR`.
+
+## 7 · Architecture decisions (ADRs)
+
+Load-bearing decisions live in `docs/adr/` (template: `docs/adr/adr-template.md`).
+**Adoption rule (AF-R12):** any change that alters the **IR contract**, the
+**determinism model**, or a **public surface** (CLI verbs, agent-tools/MCP tools,
+generated artifacts) ships with an ADR — a new `docs/adr/NNNN-*.md` recording
+Context / Decision / Consequences. Current records: ADR-0001 (determinism oracle),
+0002 (non-vocal scope), 0003 (IR-is-truth), 0004 (native kernels fail loud), 0005
+(one IR source of truth; Phase B deferred), 0006 (generator-owns-artifact).
