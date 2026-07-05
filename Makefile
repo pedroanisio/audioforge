@@ -16,14 +16,14 @@ PYTHON ?= $(shell [ -x ./.venv/bin/python ] && printf '%s' ./.venv/bin/python ||
 export PYTHON
 
 .DEFAULT_GOAL := help
-.PHONY: help check test native-check schema-check manifest-check golden-check drift-check version-check docs-check clean
+.PHONY: help check test native-check schema-check manifest-check golden-check drift-check version-check docs-gen-check docs docs-check clean
 
 help:  ## List available targets
 	@grep -hE '^[a-zA-Z0-9_.-]+:.*?## ' $(MAKEFILE_LIST) \
 	  | sort \
 	  | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
 
-check: native-check schema-check manifest-check golden-check drift-check version-check test  ## Run the full local gate (what CI runs)
+check: native-check schema-check manifest-check golden-check drift-check version-check docs-gen-check test  ## Run the full local gate (what CI runs)
 
 test:  ## Run the canonical suite (script suites + pytest) via run_tests.sh
 	@sh scripts/run_tests.sh
@@ -45,6 +45,13 @@ golden-check:  ## Golden-audio drift gate: re-render the corpus vs the hash lock
 
 drift-check:  ## Registry drift gate: runtime registries vs their consumers (AF-R13)
 	@$(PYTHON) scripts/drift_inspect.py --check
+
+docs-gen-check:  ## Docs-site drift gate: generated reference/capabilities pages + nav resolve (AF-R11)
+	@$(PYTHON) -m audioforge.tools.gen_docs --check
+
+docs:  ## Build the docs site: regenerate pages then `mkdocs build --strict` (AF-R11; needs uv)
+	@$(PYTHON) -m audioforge.tools.gen_docs --write
+	@uv run --with mkdocs-material mkdocs build --strict
 
 version-check:  ## Version-consistency gate: every version literal == version.py (AF-R09)
 	@$(PYTHON) -m audioforge.tools.bump_version --check

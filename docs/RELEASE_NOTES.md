@@ -62,6 +62,24 @@ change and no version bump.
   vision-capable agent can read back. Pure-Python; no new dependency.
 (AI-authored: Claude Opus 4.8 via Claude Code.)
 
+Decisions + docs note (AF-R12 / AF-R08 / AF-R11, 2026-07-05): no runtime-contract
+change and no version bump.
+- **AF-R12** — `docs/adr/` holds a template plus six backfilled architecture
+  decision records (determinism oracle, non-vocal scope, IR-is-truth, native
+  kernels fail-loud, IR source-of-truth, generator-owns-artifact). AGENTS.md §7
+  records the adoption rule: IR-contract / determinism / public-surface changes
+  ship with an ADR.
+- **AF-R08 Phase A** — the generated JSON Schema already derived its enums from
+  `schema.py`; the last duplicated literal (filter modes) is now a single
+  `FILTER_MODES` registry, and `tests/test_schema_sources_sync.py` gates that every
+  generated enum equals its registry. Schema bytes unchanged. **Phase B** (a typed
+  Pydantic model) is deferred to the operator (ADR-0005).
+- **AF-R11** — `mkdocs.yml` + `python -m audioforge.tools.gen_docs` generate
+  `docs/reference.md` (from `ir.schema.json`) and `docs/capabilities.md` (from
+  `capability-manifest.json`); `make docs-gen-check` gates them in `make check`,
+  and `make docs` runs `mkdocs build --strict`.
+(AI-authored: Claude Opus 4.8 via Claude Code.)
+
 Contract note: Engine 2.16.0 corrects the published IR contract to match the
 validator that actually gates rendering (audit findings F1–F7, F12). These are
 tightenings — specs previously accepted in error may now be rejected: instrument

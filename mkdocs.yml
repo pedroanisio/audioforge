@@ -1,0 +1,50 @@
+# AudioForge documentation site (roadmap item AF-R11).
+#
+# Only index.md is hand-written; reference.md and capabilities.md are GENERATED
+# from the committed contract artifacts by `python -m audioforge.tools.gen_docs`
+# (gated by `make docs-gen-check`). The remaining pages are authored references.
+# `make docs` runs the generator then `mkdocs build --strict`. Material theme is
+# fetched ephemerally, so it stays out of the runtime dependency set.
+site_name: AudioForge
+site_description: Deterministic audio-asset generation for production pipelines.
+docs_dir: docs
+theme:
+  name: material
+
+# docs/ holds many non-site sources (schemas, gap specs, goal.md, backlog); a
+# curated nav plus these validation settings keep `--strict` green without
+# pulling every stray Markdown file into the build.
+validation:
+  omitted_files: ignore
+  absolute_links: ignore
+  unrecognized_links: ignore
+
+# Non-site sources that live in docs/ but are not part of the built site (they
+# link to repo source files, carry their own governance, or are working notes).
+exclude_docs: |
+  BACKLOG.md
+  ROADMAP.md
+  DSL_GAP_SPEC.md
+  goal.md
+  shadowmd-design-v2.md
+  doc-requirements-*.md
+
+nav:
+  - Home: index.md
+  - The DSL: DSL_SPEC.md
+  - IR schema (prose): IR_SCHEMA.md
+  - IR reference (generated): reference.md
+  - Capabilities (generated): capabilities.md
+  - Diagnostic codes: DIAGNOSTIC_CODES.md
+  - Agent tools: AGENT_TOOLS.md
+  - Interop: INTEROP.md
+  - Codebase standards: codebase-standards.md
+  - Release notes: RELEASE_NOTES.md
+  - Design records:
+      - Template: adr/adr-template.md
+      - ADR-0001 Determinism oracle: adr/0001-determinism-oracle.md
+      - ADR-0002 Non-vocal scope: adr/0002-non-vocal-scope.md
+      - ADR-0003 IR is truth: adr/0003-ir-is-truth.md
+      - ADR-0004 Native kernels fail loud: adr/0004-native-kernels-fail-loud.md
+      - ADR-0005 IR source of truth: adr/0005-ir-source-of-truth.md
+      - ADR-0006 Generator owns artifact: adr/0006-generator-owns-artifact.md
