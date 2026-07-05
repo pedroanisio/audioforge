@@ -97,7 +97,13 @@ Coverage is **not** in `make check`; run it yourself:
 - `audioforge capabilities` (or the committed `docs/capability-manifest.json`)
   exposes the full capability surface including a derived per-capability `status`
   (`stable` = pure-Python; `experimental` = native-kernel/env-dependent).
-- No MCP server yet (that is AF-R10).
+- **MCP server** (AF-R10): `python -m audioforge.mcp` runs a stdio Model Context
+  Protocol server (JSON-RPC 2.0, newline-delimited) exposing the nine
+  `run_tool` ops plus `capabilities` and `verify` as tools — pure pass-throughs,
+  no forked logic. A `render` call also emits session resources
+  (`audioforge://session/{id}/{manifest.json,render.wav,waveform.png}`) so a
+  vision-capable agent can read back and *see* the output. Pure-Python (no extra
+  dependency). Contract-gated by `tests/test_mcp_contract.py`.
 
 ## 6 · Generated-artifact policy
 

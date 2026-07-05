@@ -45,6 +45,23 @@ contract change and no version bump.
   `cli.py`.
 (AI-authored: Claude Opus 4.8 via Claude Code.)
 
+Gate + agent-surface note (AF-R09 / AF-R13 / AF-R10, 2026-07-05): two more gates
+join `make check` and the agent surface gains an MCP server. No runtime-contract
+change and no version bump.
+- **AF-R09** — `CHANGELOG.md` (Keep-a-Changelog) plus
+  `python -m audioforge.tools.bump_version` (`--check`, `<version>`, `--dry-run`):
+  a coordinated bump across `version.py`/`pyproject.toml`/`README.md`/`CHANGELOG.md`
+  with `make version-check` gating that every version literal equals `version.py`.
+- **AF-R13** — `scripts/drift_inspect.py` (registry-drift detector, long built but
+  never invoked) is now wired into `make check` as `drift-check`, and
+  `docs/codebase-standards.md` records the engineering bar as an honest
+  `[Enforced]`/`[Adopted]`/`[Target]` ratchet with a source-of-truth-per-topic map.
+- **AF-R10** — `python -m audioforge.mcp` is a stdio MCP server exposing the nine
+  `agent_tools.run_tool` ops plus `capabilities`/`verify` (pure pass-throughs);
+  a `render` call emits session resources (manifest, WAV, waveform PNG) a
+  vision-capable agent can read back. Pure-Python; no new dependency.
+(AI-authored: Claude Opus 4.8 via Claude Code.)
+
 Contract note: Engine 2.16.0 corrects the published IR contract to match the
 validator that actually gates rendering (audit findings F1–F7, F12). These are
 tightenings — specs previously accepted in error may now be rejected: instrument
