@@ -16,16 +16,23 @@ Every diagnostic code the engine can emit, with its repair hint. Generated from
 `capability_manifest()["diagnostic_codes"]` and gated by `gen_capability.py --check`
 (`make manifest-check`), so a new code cannot land undocumented.
 
-There are **29** diagnostic codes.
+There are **38** diagnostic codes.
 
 | Code | Repair hint |
 |------|-------------|
+| `ambiguous_harmony` | _(see repair_hints in the manifest)_ |
 | `curve_unsupported_voice` | Move the curve to a supported voice, remove it, or wait for the physical-model kernel stage advertised in the support matrix. |
+| `dead_air` | _(see repair_hints in the manifest)_ |
 | `duplicate_note_timbre_curve` | Keep at most one cutoff_hz, gain_db, or scan curve per note. |
 | `fret_out_of_range` | Use a fret inside 0..max_fret or the muted string value 'x'. |
+| `high_crest` | _(see repair_hints in the manifest)_ |
 | `intent_conflict` | _(see repair_hints in the manifest)_ |
 | `invalid_curve` | Use a supported curve target, time basis, point encoding, and interpolation shape from performance_curves. |
+| `loop_boundary_tail` | _(see repair_hints in the manifest)_ |
 | `lossy_articulation` | _(see repair_hints in the manifest)_ |
+| `low_foundation_weak` | _(see repair_hints in the manifest)_ |
+| `mono_image` | _(see repair_hints in the manifest)_ |
+| `near_ceiling` | _(see repair_hints in the manifest)_ |
 | `note_curve_unsupported_target` | Use one of the published note_scope_targets or move the automation to layer/master scope. |
 | `note_curve_unsupported_voice` | Move the note curve to a voice that supports the target, or use an equivalent layer/master automation where available. |
 | `notes_first_event` | Put the first notes: event on the same line, or write play as a separate layer-body statement. |
@@ -48,4 +55,6 @@ There are **29** diagnostic codes.
 | `technique_unsupported_voice` | Choose a supported voice for the technique or use an explicit lower-level curve/articulation form. |
 | `tuning_required_for_string_fret` | Add layer.tuning before using note string/fret fields. |
 | `unknown_property` | Remove the property or replace it with one listed for the asset/layer/master scope in this manifest. |
+| `unrecognized_harmony` | _(see repair_hints in the manifest)_ |
 | `validate_render_ready` | Run validate without --no-resolve before render; clean validation is the render-ready predicate. |
+| `very_bright` | _(see repair_hints in the manifest)_ |

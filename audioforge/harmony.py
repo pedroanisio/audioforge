@@ -11,6 +11,9 @@ import numpy as np
 
 from .theory import CHORD_QUALITIES, note_to_semis, semis_to_note
 
+# `<status>_harmony` diagnostics for unresolved collections (registered in the capability manifest).
+HARMONY_DIAGNOSTIC_CODES = frozenset({"ambiguous_harmony", "unrecognized_harmony"})
+
 
 def identify_chord(events: list[dict]) -> dict:
     """Identify exact pitch collections or report competing interpretations.

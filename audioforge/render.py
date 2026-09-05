@@ -467,12 +467,12 @@ def _finish(left, right, sr, master, spec, root, stems, return_stems,
             render_plan_hash: str | None = None):
     loop_report = None
     if spec.get("loop_safe"):
-        from .analysis import loop_boundary_report
+        from .analysis import LOOP_BOUNDARY_CODE, loop_boundary_report
         from .schema import SpecError
         loop_report = loop_boundary_report(np.stack([left, right], axis=1), sr, spec)
         if not loop_report["passed"]:
             _premaster_reports.pop(id(spec), None)
-            raise SpecError("loop_boundary_tail: unsafe loop seam or truncated tail: "
+            raise SpecError(f"{LOOP_BOUNDARY_CODE}: unsafe loop seam or truncated tail: "
                             + json.dumps(loop_report, sort_keys=True))
     # Measure and normalize the delivered fade envelope, not an earlier buffer.
     fi = min(left.size, int(master.get("fade_in_s", 0.0) * sr))
@@ -527,7 +527,7 @@ def _finish(left, right, sr, master, spec, root, stems, return_stems,
         delivered = loop_boundary_report(stereo, sr, spec)
         if not delivered["passed"]:
             _premaster_reports.pop(id(spec), None)
-            raise SpecError("loop_boundary_tail: unsafe delivered loop seam: "
+            raise SpecError(f"{LOOP_BOUNDARY_CODE}: unsafe delivered loop seam: "
                             + json.dumps(delivered, sort_keys=True))
         delivered["premaster"] = loop_report
         loop_report = delivered

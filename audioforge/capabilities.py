@@ -19,6 +19,8 @@ from .curves import (
     PITCH_CENTS_DEFAULT_LIMIT,
     PITCH_CENTS_HARD_LIMIT,
 )
+from .analysis import ANALYSIS_DIAGNOSTIC_CODES, LOOP_BOUNDARY_CODE
+from .harmony import HARMONY_DIAGNOSTIC_CODES
 from .plan import (PLAN_DIAGNOSTIC_CODES, RENDER_PLAN_ROUTES,
                    RENDER_PLAN_SCHEMA_VERSION)
 from .schema import (
@@ -614,6 +616,44 @@ def capability_manifest() -> dict:
             },
             "intent_conflict": {
                 "repair_hint": "Review typed intent fields against explicit render settings."
+            },
+            # Harmony (RM-E-001): unresolved pitch collections are preserved and reported.
+            "ambiguous_harmony": {
+                "repair_hint": "Author an explicit chord symbol (for example C3maj7) so root and "
+                               "quality are not inferred from an ambiguous collection such as C6/Am7."
+            },
+            "unrecognized_harmony": {
+                "repair_hint": "The pitch collection matches no known chord quality; notes are kept "
+                               "unchanged. Author a chord symbol or leave the cluster as written."
+            },
+            # Loop safety: measured seam and tail failure raised at render.
+            LOOP_BOUNDARY_CODE: {
+                "repair_hint": "Shorten gates or releases so tails end before the loop boundary, or "
+                               "drop loopsafe; the JSON in the message names the measured seam jump "
+                               "and tail energy."
+            },
+            # Audio analysis observations/recommendations (context-aware since 3.0).
+            "low_foundation_weak": {
+                "repair_hint": "Check the declared bass part, its register, gain and filtering, or "
+                               "declare expect_bass=false when the piece has no bass by design."
+            },
+            "mono_image": {
+                "repair_hint": "Increase space depth, width, unison spread or pan layers, or declare "
+                               "stereo=mono when a mono image is intended."
+            },
+            "very_bright": {
+                "repair_hint": "Lower oscillator brightness, add lowpass automation, or rebalance "
+                               "low layers."
+            },
+            "high_crest": {
+                "repair_hint": "Use bus compression, saturation, or lower transient layers."
+            },
+            "near_ceiling": {
+                "repair_hint": "Use a lower master peak target for delivery headroom."
+            },
+            "dead_air": {
+                "repair_hint": "Fill or trim silent stretches; pass the spec as analysis context so "
+                               "authored rests are not reported as missing audio."
             },
         },
         "incompatibilities": {

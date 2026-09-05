@@ -6,6 +6,13 @@ import math
 import numpy as np
 
 
+# Codes emitted by analysis and loop-safety checks. Registered in
+# capabilities.capability_manifest()["diagnostic_codes"] (RM-E-001 / HARNESS-CON-001).
+ANALYSIS_DIAGNOSTIC_CODES = frozenset({
+    "low_foundation_weak", "mono_image", "very_bright", "high_crest", "near_ceiling", "dead_air",
+})
+LOOP_BOUNDARY_CODE = "loop_boundary_tail"
+
 def _db(x: float) -> float:
     return 20.0 * math.log10(max(float(x), 1e-12))
 
