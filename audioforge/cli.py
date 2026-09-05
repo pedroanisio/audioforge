@@ -41,6 +41,29 @@ def _load(path: str) -> dict:
     return json.loads(Path(path).read_text())
 
 
+def _load_json_object(path: str, label: str) -> dict:
+    """Structured failure for non-JSON input (DSL_GAP_SPEC §3.3: no raw decoder errors)."""
+    try:
+        data = json.loads(Path(path).read_text())
+    except json.JSONDecodeError as e:
+        raise SpecError(
+            f"{label}: {path} is not valid JSON (line {e.lineno}, column {e.colno}); "
+            "pass compiled JSON IR, or an .af source for the spec") from e
+    if not isinstance(data, dict):
+        raise SpecError(f"{label}: {path} must contain a JSON object")
+    return data
+
+
+def _spec_for_verify(path: str) -> dict:
+    """`verify` accepts compiled JSON IR or a single-asset .af source."""
+    if str(path).endswith(".af"):
+        assets = _assets(path)
+        if len(assets) != 1:
+            raise SpecError(f"verify: {path} compiles to {len(assets)} assets; verify needs exactly one")
+        return assets[0].spec
+    return _load_json_object(path, "verify: spec")
+
+
 class _UrllibHttp:
     def get_json(self, url, *, params=None, headers=None):
         if params:
@@ -811,9 +834,12 @@ def main(argv=None) -> int:
                     meta = a.export(args.out)
                     print(f"{meta['file']:44s} {meta['output_sha256'][:16]}")
         elif args.cmd == "verify":
-            expected = _load(args.manifest)["output_sha256"]
+            manifest = _load_json_object(args.manifest, "verify: manifest")
+            if "output_sha256" not in manifest:
+                raise SpecError(f"verify: manifest {args.manifest} lacks output_sha256")
+            spec = _spec_for_verify(args.spec)
             with tempfile.TemporaryDirectory() as td:
-                ok = verify(_load(args.spec), expected, td)
+                ok = verify(spec, manifest["output_sha256"], td)
             print("REPRODUCIBLE" if ok else "MISMATCH — output drifted")
             return 0 if ok else 2
     except (SpecError, DSLError, ValueError) as e:

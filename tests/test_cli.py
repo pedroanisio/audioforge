@@ -278,3 +278,26 @@ def test_cli_interop_score_pack_and_verify_edges(monkeypatch, capsys, tmp_path):
     monkeypatch.setattr(cli, "verify", lambda spec, expected, td: False)
     assert cli.main(["verify", str(spec_json), str(manifest_json)]) == 2
     assert "MISMATCH" in capsys.readouterr().out
+
+
+def test_cli_verify_accepts_af_source_and_reports_non_json_structurally(tmp_path, capsys):
+    """RM-E-003 / HARNESS-CON-003: verify takes .af or compiled IR; bad input is a diagnostic."""
+    from audioforge import cli
+    root = Path(__file__).resolve().parents[1]
+    source = root / "tests" / "golden" / "audio" / "synth_voice.af"
+    out = tmp_path / "out"
+    assert cli.main(["render", str(source), "-o", str(out)]) == 0
+    manifest = next(out.glob("*.manifest.json"))
+    capsys.readouterr()
+    assert cli.main(["verify", str(source), str(manifest)]) == 0
+    assert "REPRODUCIBLE" in capsys.readouterr().out
+    bogus = tmp_path / "bogus.json"
+    bogus.write_text("not json")
+    assert cli.main(["verify", str(bogus), str(manifest)]) == 1
+    err = capsys.readouterr().err
+    assert "verify: spec" in err and "not valid JSON" in err and "Expecting value" not in err
+    assert cli.main(["verify", str(manifest), str(bogus)]) == 1
+    assert "verify: manifest" in capsys.readouterr().err
+    (tmp_path / "no_hash.json").write_text("{}")
+    assert cli.main(["verify", str(source), str(tmp_path / "no_hash.json")]) == 1
+    assert "lacks output_sha256" in capsys.readouterr().err

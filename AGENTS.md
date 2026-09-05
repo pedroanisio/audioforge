@@ -50,7 +50,7 @@ against `cli.py`, so a verb cannot be added or removed without this file failing
 | `capabilities` | Emit the machine-readable capability manifest (see §6). |
 | `grammar` | Emit the DSL grammar (EBNF/GBNF), derived from the single Lark grammar. |
 | `score` | Score-layout output. |
-| `verify` | Re-render a spec and SHA-256 compare against a manifest. Exit **0** = `REPRODUCIBLE`, **2** = `MISMATCH`. |
+| `verify` | Re-render a spec (compiled JSON IR or a single-asset `.af`) and SHA-256 compare against a manifest. Exit **0** = `REPRODUCIBLE`, **2** = `MISMATCH`, **1** = structured input error. |
 <!-- END cli-verbs -->
 
 ## 3 · Make targets (the gate)
