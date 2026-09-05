@@ -229,6 +229,15 @@ def capability_manifest() -> dict:
                                default="mono"),
         },
     }
+    for name, entry in layers.items():
+        entry["properties"]["automation_ir"] = _param("json_string", description="Canonical automation list, including shaped or mapped curves")
+        if name in {"notes", "instrument"}:
+            entry["properties"]["notes_ir"] = _param("json_string", description="Canonical note events with stable IDs, voices and mapped curves")
+        if name not in {"notes", "instrument"}:
+            entry["properties"].update({
+                "clip_source": _param("json_string", description="Compiled repeat source timing; paired with clip_map"),
+                "clip_map": _param("json_string", description="Compiled [source_start_s, source_end_s, destination_s] windows"),
+            })
     return {
         "schema": CAPABILITY_SCHEMA_VERSION,
         "engine_version": ENGINE_VERSION,
@@ -249,8 +258,23 @@ def capability_manifest() -> dict:
         "dynamic_marks": dict(sorted(DYNAMIC_MARKS.items())),
         "grooves": sorted(GROOVE_TEMPLATES),
         "emotions": sorted(EMOTIONS),
+        "audio_semantics": {
+            "performance_seed": {"type": "integer", "min": 0, "max": 2**64-1, "default": 0,
+                                 "dsl": "seed: N", "scope": "take identity independent of mix edits"},
+            "master_normalization": {"enum": ["none", "peak"], "default": "none", "dsl": "normalize: none|peak",
+                                     "peak": "true-peak ceiling", "lufs": "explicit loudness normalization"},
+            "note_duration": "gate time followed by release; fixed-window tone/noise envelopes retain window semantics",
+            "sample_resampling": "rate-adaptive antialias filtering; loop_sustain exits at note-off",
+            "loop_safe": "whole beats under the actual tempo/hold map plus measured premaster and delivered seam and tail checks",
+            "emotion_scope": "production presets only; sadness and urgency are metadata",
+            "analysis": "observations separate from context-dependent recommendations; no musical-quality score",
+            "acceptance": "python -m audioforge.tools.musical_acceptance --out DIR [--baseline-root CHECKOUT]",
+        },
         "automation_targets": sorted(AUTO_TARGETS),
         "performance_curves": {
+            "time_offset": "Input-clock shift in the curve time basis; preserves cropped note shape",
+            "time_map": "Contiguous [source_start, source_end, destination] windows in the curve time basis",
+            "canonical_ir": "automation_ir JSON strings on layers/buses/master; notes_ir JSON strings on note layers",
             "targets": {
                 "pitch_cents": {
                     "unit": "cents",
@@ -301,6 +325,7 @@ def capability_manifest() -> dict:
                 "params": entry["params"],
                 "support": entry["support"],
                 "doc": entry["doc"],
+                "fidelity": entry.get("fidelity", "control_transform"),
             }
             for name, entry in sorted(TECHNIQUES.items())
         },
@@ -376,10 +401,15 @@ def capability_manifest() -> dict:
                 "rubato": {
                     "enum": ["arch", "push_pull", "ritard", "accelerando"],
                     "compiles_to": "dense tempo_map points",
+                    "coordination": "one conductor curve from authored form or merged activity spans",
                 },
+                "phrasing": "authored form/slurs or rest-delimited spans; neutral midpoint arch unless dynamics are authored",
+                "cadences": "conservative dominant-to-tonic candidates require chord, key and downbeat evidence",
             },
             "ensemble": {"properties": ["family", "size", "spread", "octaves"]},
-            "voicing": {"properties": ["richness", "extensions"]},
+            "voicing": {"properties": ["richness", "extensions", "voice_leading"],
+                        "ambiguity": "preserve pitch collection and emit diagnostic",
+                        "voice_leading": "opt-in register search preserving pitch classes, onsets and gates"},
             "space": {"properties": ["hall", "depth"]},
         },
         "intent_blocks": {
@@ -415,7 +445,13 @@ def capability_manifest() -> dict:
                 "form": "form: section STARTb for DURb, ...",
                 "repeat": "repeat: section xN",
                 "polymeter": "polymeter: layer BEATS UNIT",
-            }
+            },
+            "semantics": {
+                "repeat": "count includes first pass; lowers to expanded events/clip windows and extends duration",
+                "meter": "quarter-note beat units; local bar resets groove phase",
+                "pickup": "beat zero begins pickup; first full downbeat is pickup_beats",
+                "polymeter": "per-part groove/bar phase without rescaling explicit timestamps",
+            },
         },
         "interop": {
             "exports": ["midi", "musicxml"],

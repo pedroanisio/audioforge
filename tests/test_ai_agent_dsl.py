@@ -165,7 +165,8 @@ asset voiced {
     res = AudioForge().compile(src)
     assert res.ok, [d.message for d in res.diagnostics]
     notes = [e["note"] for e in res.assets[0].spec["layers"][0]["notes"]]
-    assert "A#3" in notes
+    assert "B3" in notes
+    assert "A#3" not in notes
     assert "D4" in notes
 
 
@@ -310,21 +311,22 @@ asset phrased {
     spec = AudioForge().compile(src).assets[0].spec
     phrases = spec["intent"]["analysis"]["phrases"]
     assert len(phrases) == 2
-    assert phrases[0]["peak_note"] == "G4"
+    assert phrases[0]["boundary_evidence"] == "activity_span"
+    assert "cadence_beat" not in phrases[0]
     layer = spec["layers"][0]
     assert layer["dynamic"][0][1] < max(v for _b, v in layer["dynamic"])
-    assert layer["vibrato"]["depth_cents"] > 0
-    assert layer["notes"][0]["slur"] == layer["notes"][1]["slur"]
-    assert layer["notes"][3]["dur_beats"] > 2.0  # phrase peak agogic lengthening
+    assert "vibrato" not in layer
+    assert all("slur" not in note for note in layer["notes"])
+    assert layer["notes"][3]["dur_beats"] == 2.0
 
 
-def test_voicing_directive_voice_leads_and_adds_passing_or_suspension_tones():
+def test_voicing_directive_leads_chord_voices_without_inventing_ornaments():
     src = """
 asset voicelead {
   kind: cue
   duration: 4s
   tempo: 80bpm
-  voicing: richness=1 extensions=7,9
+  voicing: richness=1 extensions=7,9 voice_leading=on
   layer harmony : notes {
     osc: sine
     env: a=0.01s d=0.1s s=0.8 r=0.2s
@@ -337,8 +339,9 @@ asset voicelead {
     spec = AudioForge().compile(src).assets[0].spec
     notes = spec["layers"][0]["notes"]
     assert any(e.get("generated") == "voice_leading" for e in notes)
-    assert any(e.get("generated") in {"passing_tone", "suspension"} for e in notes)
-    assert "voice_leading" in spec["intent"]["voicing"]
+    assert {event["start_beat"] for event in notes} == {0.0, 2.0}
+    assert not any(e.get("generated") in {"passing_tone", "suspension"} for e in notes)
+    assert spec["intent"]["voicing"]["voice_leading"] == "on"
 
 
 def test_ensemble_and_space_create_role_buses_and_route_layers():
@@ -380,7 +383,7 @@ def test_analysis_returns_actionable_recommendations():
     t = np.arange(sr) / sr
     mono_bright = 0.05 * np.sin(2 * np.pi * 9000 * t)
     stereo = np.stack([mono_bright, mono_bright], axis=1)
-    report = analyze_audio(stereo, sr)
+    report = analyze_audio(stereo, sr, context={"expect_bass": True, "stereo": "stereo", "brightness": "warm"})
     recs = {r["code"] for r in report["recommendations"]}
     assert {"low_foundation_weak", "mono_image", "very_bright"}.issubset(recs)
 
@@ -391,11 +394,13 @@ def test_decompiler_preserves_buses_automation_dynamic_and_smart_render_ir():
     spec["layers"][0].setdefault("automation", []).append(
         {"target": "gain_db", "points": [[0, -12], [2, -6]]})
     dsl = spec_to_dsl(spec)
-    assert "bus af_" in dsl
-    assert "auto gain:" in dsl
-    assert "dynamic:" in dsl
+    assert "style: cinematic" in dsl
+    assert "automation_ir:" in dsl
     again = AudioForge().compile(dsl)
     assert again.ok, [d.message for d in again.diagnostics]
+    assert again.assets[0].spec["buses"] == spec["buses"]
+    assert again.assets[0].spec['layers'][0]['automation'] == spec['layers'][0]['automation']
+    assert again.assets[0].spec['layers'][0]['dynamic'] == spec['layers'][0]['dynamic']
 
 
 def test_intent_block_compiles_to_structured_semantic_ir_and_explicit_render_ir():
@@ -538,3 +543,14 @@ def test_decompiler_reports_lossy_semantic_cases_without_sidecar():
     warnings = decompile_diagnostics(spec)
 
     assert any("lossy decompile" in warning for warning in warnings)
+def test_json_escape_errors_are_structured_and_exponent_numbers_roundtrip():
+    from audioforge import AudioForge
+    from audioforge.decompile import spec_to_dsl
+    source = 'asset tiny {kind: cue\n duration: 1s\n tempo: 120bpm\n layer a : notes {osc: sine\n notes: A4 @ 0b for 1b\n gain: -1e-6db}\n}'
+    result = AudioForge().compile(source)
+    assert result.ok, result.diagnostics
+    rebuilt = AudioForge().compile(spec_to_dsl(result.assets[0].spec))
+    assert rebuilt.ok, rebuilt.diagnostics
+    assert rebuilt.assets[0].spec['layers'][0]['gain_db'] == -1e-6
+    bad = AudioForge().compile(source.replace('osc: sine', r'osc: "bad\q"'))
+    assert not bad.ok

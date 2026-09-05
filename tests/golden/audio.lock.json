@@ -3,7 +3,7 @@
   "numeric_env": {
     "machine": "x86_64",
     "numpy": "2.4.6",
-    "platform": "Linux-6.18.7-76061807-generic-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.11-76070011-generic-x86_64-with-glibc2.39",
     "python": "3.13.12",
     "scipy": "1.17.1"
   },
@@ -11,36 +11,36 @@
     "fx_filter_sweep": {
       "channels": 2,
       "frames": 96000,
-      "output_sha256": "a06a8bdce8840dc964deb63e64cca1edd4f245bda529a59eef069c88cac7fc22",
-      "spec_hash": "6d0987f665f1a8f0cd1c067fbb5d8ff2964023930cc787c5dd8b7f972be023bd",
+      "output_sha256": "12e3b010f45af7c46bd25d4962d590cb98b7ed8a58ebc7f2982a6f8b82d7ee1f",
+      "spec_hash": "f003c5818efaecd557d448b2a15a7f93b57c44a620e711e0ea33638893686a34",
       "sr": 48000
     },
     "groove_beat": {
       "channels": 2,
       "frames": 96000,
-      "output_sha256": "e6d90c2e3c1b628dbf2153fd4f4c1ee649aad198499a69f4daedb71a8b39c86b",
-      "spec_hash": "9d84f1b5bb67bfeba3ddb004d5d98d5579536bd2f1198d7b9dbead346fc5674c",
+      "output_sha256": "0a85d59c65bb30eac02c4b58eb2eb6162591e9cdfd8e37269a439a8b8f04769e",
+      "spec_hash": "efcc69b7b607c5a30b521b7284402afed52f07c6330ca1f5b89b24440e166b1b",
       "sr": 48000
     },
     "loudness_limiter": {
       "channels": 2,
       "frames": 96000,
-      "output_sha256": "da4f34c0d22e9d7ca5a00b92a159b58130252c30f2f2965a4e6b893e16ba6e04",
-      "spec_hash": "96c8a34a6d1766d029afb2a71078f21dbb1268ea1a707ddc36f43d170d6925f7",
+      "output_sha256": "3b1bfe6993a7eb3e07b732d41167b8cb84df51e75ebd996665e39e4431c20948",
+      "spec_hash": "fca798eba693cd38a0969f4a97a6fc94e5c71fb9c0193d97eb31d38b859266f1",
       "sr": 48000
     },
     "multi_layer": {
       "channels": 2,
       "frames": 96000,
-      "output_sha256": "1aa95872bc853847f0194256a4201102050a412e6fea965889f1b510704bd6a3",
-      "spec_hash": "434560a3bbd36b787c4484c9655676ea1150bb8b2c80e529fbdc2142ddd570ad",
+      "output_sha256": "1daa0f510e4acfb4ac435e77e6fb121cb79924c5857411e44eb3f34ac166a9ab",
+      "spec_hash": "9749421e2e9eb5cf84d37291971265e731ce2d9b66756d368346c4b8e86ae778",
       "sr": 48000
     },
     "synth_voice": {
       "channels": 2,
       "frames": 96000,
-      "output_sha256": "7444cba2ba0bba84c484e1900a6074b312c18cf1c138924d6c9883eafb7f580f",
-      "spec_hash": "3c93dc662cdaf45b86e3d9a22308f48c1d669cc044b52f7770ca76809fcc5d20",
+      "output_sha256": "65f311542467f88bf81f76af003a3a21da22205dad44ffe9ac29ba5388cc961a",
+      "spec_hash": "1314eb6ca7e174b8d5e3e10af08f0a554cbddc3095634e9b7fbfb0d10277895c",
       "sr": 48000
     }
   }

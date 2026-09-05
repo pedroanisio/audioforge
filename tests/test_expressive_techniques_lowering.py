@@ -59,7 +59,8 @@ def test_lower_technique_emits_explicit_ir_for_every_synth_technique(name):
         assert ev["dur_beats"] == 0.12
     elif name == "harmonic":
         assert ev["harmonic_partial"] == 3
-        assert ev["curves"][0]["points"] == [[0.0, 1900.0]]
+        assert ev["curves"][0]["points"][0][0] == 0.0
+        assert ev["curves"][0]["points"][0][1] == pytest.approx(1200 * __import__("math").log2(3), abs=1e-6)
         assert result["layer_fx"][0]["type"] == "peak"
     elif name == "sul_ponticello":
         assert ev["curves"][0]["points"] == [[0.0, 8500.0]]

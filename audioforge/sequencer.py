@@ -9,6 +9,7 @@ import numpy as np
 
 from . import synth
 from .curves import evaluate_curve
+from .determinism import rng_for
 from .fx import filter_auto_fx, filter_fx
 
 
@@ -234,7 +235,7 @@ def _sum_note_curve(ev: dict, target: str, tm: "TempoMap",
 
 def render_drum_track(track: dict, total_n: int, sr: int, tm: "TempoMap",
                       swing: float, rng, groove: dict | None = None,
-                      rng_humanize=None, hit_override=None) -> np.ndarray:
+                      rng_humanize=None, hit_override=None, rng_factory=None) -> np.ndarray:
     """track = {voice, pattern, gain_db?, humanize?} ; pattern repeats.
     groove = {"timing": [16 x 16th-fractions], "accent": [16 x mult]}
     humanize = {"timing_s": ..., "vel": ...} with per-hit seeded jitter."""
@@ -264,13 +265,23 @@ def render_drum_track(track: dict, total_n: int, sr: int, tm: "TempoMap",
         if swing and i % 2 == 1:
             beat += swing * 0.25
         amp = gain * (1.25 if ch == "X" else 1.0)
-        slot = i % 16
+        from .performance import groove_slot
+        slot = groove_slot(beat, track.get("name", ""), track.get("_score", {}), len(g_t or g_a or [0] * 16))
         if g_t:
             beat += g_t[slot] * 0.25
         if g_a:
             amp *= g_a[slot]
         t = tm.sec(beat)
-        if hum and rng_humanize is not None:
+        if rng_factory is not None:
+            event_rng = rng_factory(f"hit:{float(i * .25):.12g}")
+            if hum:
+                from .performance import timing_deviation
+                t += timing_deviation(track, beat, rng_factory) * hum.get("timing_s", 0)
+                amp *= 1 + (event_rng.random() * 2 - 1) * hum.get("vel", 0)
+            if hit_override is None:
+                hit = (voice(sr, event_rng, dp if dp else None) if voice is not None
+                       else PLUGIN_VOICES[track["voice"]](sr, event_rng))
+        elif hum and rng_humanize is not None:
             t += (rng_humanize.random() * 2.0 - 1.0) * hum.get("timing_s", 0.0)
             amp *= 1.0 + (rng_humanize.random() * 2.0 - 1.0) * hum.get("vel", 0.0)
         start = int(round(max(t, 0.0) * sr))
@@ -293,52 +304,28 @@ def render_note_track(track: dict, total_n: int, sr: int, tm: "TempoMap",
     env_p = track.get("env", {"attack": 0.01, "decay": 0.1,
                               "sustain": 0.7, "release": 0.1})
     gain = 10.0 ** (track.get("gain_db", 0.0) / 20.0)
-    hum = track.get("humanize")
     vib = track.get("vibrato")
     glide_s = float(track.get("glide_s", 0.0))
     vb_amount = float(track.get("vel_brightness", 0.0))
     dyn_pts = track.get("dynamic")
     if dyn_pts and vb_amount == 0.0:
         vb_amount = 1.0                  # dynamics imply full timbre coupling
-    g_t = (groove or {}).get("timing")
-    g_a = (groove or {}).get("accent")
     out = np.zeros(total_n)
-    loop_beats = track.get("loop_beats")
-    events = list(track["notes"])
-    if loop_beats:
-        reps = int(np.ceil(tm.beat_at(total_n / sr) / loop_beats))
-        events = [
-            {**e, "start_beat": e["start_beat"] + r * loop_beats}
-            for r in range(reps) for e in track["notes"]
-        ]
-    events.sort(key=lambda e: (e["start_beat"], e.get("note", ""),
-                               e.get("freq_hz", 0.0)))
+    from .performance import schedule_notes
+    factory = rng_factory or (lambda path: rng_for("default_take", path))
+    scheduled = schedule_notes(track, total_n, sr, tm, factory, groove)
     prev_freq = None
     prev_start = None
-    for j, ev in enumerate(events):
+    for note in scheduled:
+        ev = note["event"]
         freq = ev.get("freq_hz") or synth.note_to_freq(ev["note"])
-        vel = float(ev.get("vel", 1.0))
-        start_beat = ev["start_beat"]
-        b = start_beat
-        slot = int(round(start_beat * 4.0)) % 16
-        if g_t:
-            b += g_t[slot] * 0.25
-        if g_a:
-            vel *= g_a[slot]
-        t = tm.sec(b)
-        ev_rng = rng_factory(f"note{j}") if rng_factory else None
-        if hum and ev_rng is not None:
-            t += (ev_rng.random() * 2.0 - 1.0) * hum.get("timing_s", 0.0)
-            vel *= 1.0 + (ev_rng.random() * 2.0 - 1.0) * hum.get("vel", 0.0)
-        vel = float(np.clip(vel, 0.05, 1.3))
-        start = int(round(max(t, 0.0) * sr))
-        if start >= total_n:
-            continue
-        n = int(round((tm.sec(start_beat + ev["dur_beats"])
-                       - tm.sec(start_beat)) * sr))
-        n = min(n, total_n - start)
-        if n <= 0:
-            continue
+        vel, start, gate_n = note["vel"], note["start"], note["dur_n"]
+        start_beat, t, ev_rng = note["start_beat"], note["start_time_s"], note["rng"]
+        release_s = env_p["release"] + float(ev.get("release_s_add", 0.0))
+        env = synth.note_adsr(gate_n, sr, env_p["attack"] * ev.get("attack_scale", 1), env_p["decay"],
+                              env_p["sustain"], release_s)
+        n = min(env.size, total_n - start)
+        env = env[:n]
         shape = track.get("osc", "sine")
         # Explicit note curves are the render contract. Legacy glide/vibrato
         # remain as a fallback for pre-curve IR during the migration window.
@@ -393,8 +380,6 @@ def render_note_track(track: dict, total_n: int, sr: int, tm: "TempoMap",
             sig = filter_auto_fx(sig, sr, "lowpass",
                                  np.clip(note_cutoff, 10.0, sr / 2.0 - 1.0),
                                  0.7071)
-        env = synth.adsr(n, sr, env_p["attack"], env_p["decay"],
-                         env_p["sustain"], env_p["release"])
         contrib = gain * vel * sig * env
         if dyn_v is not None:
             contrib = contrib * dyn_gain(dyn_v)

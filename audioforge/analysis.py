@@ -11,7 +11,7 @@ def _db(x: float) -> float:
 
 
 def _silence_metrics(mono: np.ndarray, sample_rate: int,
-                     hop_s: float = 0.25) -> dict:
+                     hop_s: float = 0.25, expected: np.ndarray | None = None) -> dict:
     """Windowed dead-air detection.
 
     A render can be technically valid yet mostly silent — a lane that failed to
@@ -28,9 +28,12 @@ def _silence_metrics(mono: np.ndarray, sample_rate: int,
         return {"silence_share": 0.0, "longest_silence_s": 0.0}
     frames = mono[:usable].reshape(-1, n)
     wdb = 10.0 * np.log10(np.maximum(np.mean(frames * frames, axis=1), 1e-24))
-    loud_ref = float(np.percentile(wdb, 90))
+    sounding = wdb[wdb > -120.0]
+    loud_ref = float(np.percentile(sounding, 90)) if sounding.size else -48.0
     floor = min(-48.0, loud_ref - 30.0)
     dead = wdb < floor
+    if expected is not None:
+        dead &= expected[:dead.size]
     edge = int(round(1.0 / hop_s))              # ignore ~1 s fade edges
     if dead.size > 2 * edge:
         dead[:edge] = False
@@ -45,7 +48,8 @@ def _silence_metrics(mono: np.ndarray, sample_rate: int,
     }
 
 
-def analyze_audio(stereo: np.ndarray, sample_rate: int) -> dict:
+def analyze_audio(stereo: np.ndarray, sample_rate: int,
+                  context: dict | None = None) -> dict:
     """Return structured, deterministic features for an already-rendered buffer.
 
     Analysis lives outside the render path: it observes audio and annotates the
@@ -56,12 +60,16 @@ def analyze_audio(stereo: np.ndarray, sample_rate: int) -> dict:
         arr = np.stack([arr, arr], axis=1)
     if arr.size == 0:
         raise ValueError("cannot analyze empty audio")
+    if arr.ndim != 2 or arr.shape[1] not in (1, 2):
+        raise ValueError("audio must be mono or stereo")
+    if not np.isfinite(arr).all() or not np.isfinite(sample_rate) or sample_rate <= 0:
+        raise ValueError("audio and sample rate must be finite; sample rate must be positive")
     mono = arr.mean(axis=1)
     peak = float(np.max(np.abs(arr)))
     rms = float(np.sqrt(np.mean(arr * arr)))
     crest = _db(peak / max(rms, 1e-12))
     win = np.hanning(mono.size) if mono.size > 1 else np.ones(mono.size)
-    spec = np.abs(np.fft.rfft(mono * win))
+    spec = np.sqrt(np.mean(np.abs(np.fft.rfft(arr * win[:, None], axis=0)) ** 2, axis=1))
     freqs = np.fft.rfftfreq(mono.size, 1.0 / sample_rate)
     mag_sum = float(np.sum(spec))
     centroid = float(np.sum(freqs * spec) / mag_sum) if mag_sum else 0.0
@@ -84,9 +92,69 @@ def analyze_audio(stereo: np.ndarray, sample_rate: int) -> dict:
         "low_band_share": round(low, 6),
         "stereo_width": round(width, 6),
     }
-    report.update(_silence_metrics(mono, sample_rate))
-    report["recommendations"] = _recommend(report)
+    energy = np.sqrt(np.mean(arr * arr, axis=1))
+    report.update(_silence_metrics(energy, sample_rate))
+    expectations = _analysis_context(context or {})
+    expected = _expected_activity(context or {}, arr.shape[0] / sample_rate)
+    if expected is not None:
+        missing = _silence_metrics(energy, sample_rate, expected=expected)
+        report["unexpected_silence_share"] = missing["silence_share"]
+        report["longest_unexpected_silence_s"] = missing["longest_silence_s"]
+    else:
+        missing = report
+    observations = _recommend(report)
+    report["observations"] = [{"code": item["code"], "message": item["message"]}
+                              for item in observations]
+    recs = []
+    for item in observations:
+        code = item["code"]
+        relevant = {
+            "low_foundation_weak": expectations.get("expect_bass") is True,
+            "mono_image": expectations.get("stereo") == "stereo",
+            "very_bright": expectations.get("brightness") == "warm",
+            "high_crest": expectations.get("dynamics") == "controlled",
+            "dead_air": not expectations.get("allow_silence", False) and (
+                expected is not None or expectations.get("continuous") is True) and (
+                missing.get("longest_silence_s", 0) >= 4 or missing.get("silence_share", 0) >= .2),
+        }.get(code, True)
+        if relevant:
+            recs.append({**item, "basis": "declared_context" if code != "near_ceiling" else "measured_headroom"})
+    report["context"] = expectations
+    report["recommendations"] = recs
+    report["assessment_scope"] = "signal_and_declared_expectations; musical merit requires listening"
     return report
+
+
+def _analysis_context(context: dict) -> dict:
+    if "layers" not in context:
+        return dict(context)
+    explicit = context.get("intent", {}).get("analysis_context", {})
+    bass = any(layer.get("role") == "bass" for layer in context["layers"])
+    return {"role": "solo" if len(context["layers"]) == 1 else "mix",
+            "expect_bass": bass, **explicit}
+
+
+def _expected_activity(context: dict, duration_s: float) -> np.ndarray | None:
+    """Compare silence with written activity instead of assuming continuous music."""
+    if "layers" not in context:
+        return None
+    from .performance import note_events
+    from .sequencer import TempoMap, TimelineMap
+    timeline = TimelineMap(TempoMap(context.get("tempo_map") or [[0, context.get("bpm", 120)]]),
+                           context.get("holds"))
+    centers = np.arange(.125, duration_s, .25)
+    mask = np.zeros(centers.size, dtype=bool)
+    for layer in context["layers"]:
+        offset = layer.get("start_s", 0)
+        if layer.get("notes"):
+            for event in note_events(layer, timeline.beat_at(duration_s)):
+                start = timeline.sec(event["start_beat"]) + offset
+                end = timeline.sec(event["start_beat"] + event["dur_beats"]) + offset
+                if event.get("vel", 1) > 0:
+                    mask |= (centers >= start) & (centers < end)
+        else:
+            mask |= (centers >= offset) & (centers < offset + layer.get("duration_s", duration_s))
+    return mask
 
 
 def _recommend(r: dict) -> list[dict]:
@@ -95,8 +163,8 @@ def _recommend(r: dict) -> list[dict]:
         recs.append({
             "code": "low_foundation_weak",
             "severity": "warning",
-            "message": "Low-frequency foundation is weak.",
-            "suggestion": "Add or raise a bass/sub layer, or use ensemble octaves.",
+            "message": "Little energy is below 250 Hz.",
+            "suggestion": "Check the declared bass part, its register, gain and filtering.",
         })
     if r["stereo_width"] < 0.08:
         recs.append({
@@ -131,7 +199,7 @@ def _recommend(r: dict) -> list[dict]:
             "code": "dead_air",
             "severity": "warning",
             "message": (
-                f"Unexpected silence: longest dead run "
+                f"Observed silence: longest quiet run "
                 f"{r.get('longest_silence_s', 0.0):.1f}s, "
                 f"{r.get('silence_share', 0.0) * 100:.0f}% of the interior is "
                 f"near-silent."),
@@ -141,3 +209,41 @@ def _recommend(r: dict) -> list[dict]:
                 "the first filter in the chain)."),
         })
     return recs
+
+
+def loop_boundary_report(stereo: np.ndarray, sample_rate: int, spec: dict) -> dict:
+    """Measure the cyclic seam and identify note tails cut by the container.
+
+    A whole-beat length is only a grid condition. This check runs before master
+    fades so a fade cannot hide a clipped written release. It is a signal check,
+    not a claim that the composition makes a satisfying musical loop.
+    """
+    arr = np.asarray(stereo)
+    window = min(arr.shape[0] // 2, max(8, int(.005 * sample_rate)))
+    first, last = arr[:window], arr[-window:]
+    jump = float(np.max(np.abs(arr[0] - arr[-1])))
+    derivatives = np.concatenate([np.diff(first, axis=0).ravel(), np.diff(last, axis=0).ravel()])
+    typical_step = float(np.percentile(np.abs(derivatives), 95))
+    click = jump > max(1e-4, 3 * typical_step)
+    tail_rms = float(np.sqrt(np.mean(last * last)))
+    head_rms = float(np.sqrt(np.mean(first * first)))
+    from .performance import note_events
+    from .sequencer import TempoMap, TimelineMap
+    timeline = TimelineMap(TempoMap(spec.get("tempo_map") or [[0, spec.get("bpm", 120)]]), spec.get("holds"))
+    duration = arr.shape[0] / sample_rate
+    clipped = []
+    for layer in spec.get("layers", []):
+        for note in note_events(layer, timeline.beat_at(duration)) if layer.get("notes") else []:
+            release = layer.get("env", {}).get("release", .1 if layer.get("type") == "notes" else .05)
+            release += note.get("release_s_add", 0)
+            end = timeline.sec(note["start_beat"] + note["dur_beats"]) + layer.get("start_s", 0)
+            if (note.get("vel", 1) and end + release > duration + 1 / sample_rate
+                    and tail_rms > 1e-4):
+                clipped.append(layer.get("name", "?"))
+    decaying_tail = tail_rms > max(1e-4, head_rms * 8)
+    return {"passed": not (click or clipped or decaying_tail),
+            "jump_dbfs": round(_db(jump), 3), "local_step_dbfs": round(_db(typical_step), 3),
+            "tail_rms_dbfs": round(_db(tail_rms), 3),
+            "head_rms_dbfs": round(_db(head_rms), 3),
+            "discontinuous_seam": bool(click), "clipped_note_tails": sorted(set(clipped)),
+            "unmatched_tail_energy": bool(decaying_tail)}

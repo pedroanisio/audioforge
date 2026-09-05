@@ -1,6 +1,28 @@
+---
+disclaimer:
+  notice: >-
+    No information within this document should be taken for granted. Claims
+    require verification against the implementation and its acceptance tests.
+  generated_by: "GPT-6 via Codex"
+  date: "2026-09-05"
+---
+
 # AudioForge Release Notes
 
 ## Current Runtime Contract
+
+- Engine 3.0.0
+- DSL 2.0
+- IR schema 2.0
+- Version source of truth: `audioforge.version`
+
+Migration is required for audio expectations: corrected gain, note gates,
+resampling, mastering, repeats and performance identity intentionally change
+renders. Review the [engine 3 migration guide](MIGRATION_3.md) and regenerate
+manifests after review. [ADR-0007](adr/0007-musical-render-semantics.md) records
+the decision; the [acceptance ledger](MUSICAL_CORRECTNESS.md) tracks proof.
+
+## Engine 2.16.0 and DSL 1.9 history
 
 - Engine 2.16.0
 - DSL 1.9

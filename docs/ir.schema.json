@@ -74,6 +74,21 @@
                 ],
                 "type": "string"
               },
+              "time_map": {
+                "items": {
+                  "items": {
+                    "type": "number"
+                  },
+                  "maxItems": 3,
+                  "minItems": 3,
+                  "type": "array"
+                },
+                "minItems": 1,
+                "type": "array"
+              },
+              "time_offset": {
+                "type": "number"
+              },
               "values": {
                 "items": {
                   "type": "number"
@@ -110,6 +125,150 @@
       },
       "required": [
         "name"
+      ],
+      "type": "object"
+    },
+    "clip_source": {
+      "additionalProperties": false,
+      "properties": {
+        "automation": {
+          "items": {
+            "additionalProperties": true,
+            "properties": {
+              "fx_index": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "points": {
+                "items": {
+                  "oneOf": [
+                    {
+                      "maxItems": 2,
+                      "minItems": 2,
+                      "prefixItems": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ],
+                      "type": "array"
+                    },
+                    {
+                      "maxItems": 3,
+                      "minItems": 3,
+                      "prefixItems": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "string"
+                        }
+                      ],
+                      "type": "array"
+                    }
+                  ]
+                },
+                "minItems": 1,
+                "type": "array"
+              },
+              "rate_hz": {
+                "minimum": 1e-09,
+                "type": "number"
+              },
+              "t0": {
+                "type": "number"
+              },
+              "target": {
+                "enum": [
+                  "cutoff_hz",
+                  "dynamic",
+                  "gain_db",
+                  "pitch_cents",
+                  "scan"
+                ],
+                "type": "string"
+              },
+              "time_basis": {
+                "enum": [
+                  "layer_beats",
+                  "layer_seconds",
+                  "note_beats",
+                  "note_seconds"
+                ],
+                "type": "string"
+              },
+              "time_map": {
+                "items": {
+                  "items": {
+                    "type": "number"
+                  },
+                  "maxItems": 3,
+                  "minItems": 3,
+                  "type": "array"
+                },
+                "minItems": 1,
+                "type": "array"
+              },
+              "time_offset": {
+                "type": "number"
+              },
+              "values": {
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 1,
+                "type": "array"
+              }
+            },
+            "required": [
+              "target"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "duration_s": {
+          "maximum": 600,
+          "minimum": 0.05,
+          "type": "number"
+        },
+        "holds": {
+          "items": {
+            "$ref": "#/$defs/hold"
+          },
+          "type": "array"
+        },
+        "layer_duration_s": {
+          "maximum": 600,
+          "minimum": 0.05,
+          "type": "number"
+        },
+        "score": {
+          "$ref": "#/$defs/score"
+        },
+        "start_s": {
+          "maximum": 600,
+          "minimum": 0,
+          "type": "number"
+        },
+        "tempo_map": {
+          "items": {
+            "$ref": "#/$defs/point"
+          },
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "duration_s",
+        "layer_duration_s",
+        "start_s",
+        "tempo_map"
       ],
       "type": "object"
     },
@@ -182,6 +341,21 @@
             "note_seconds"
           ],
           "type": "string"
+        },
+        "time_map": {
+          "items": {
+            "items": {
+              "type": "number"
+            },
+            "maxItems": 3,
+            "minItems": 3,
+            "type": "array"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "time_offset": {
+          "type": "number"
         },
         "values": {
           "items": {
@@ -402,6 +576,21 @@
                 ],
                 "type": "string"
               },
+              "time_map": {
+                "items": {
+                  "items": {
+                    "type": "number"
+                  },
+                  "maxItems": 3,
+                  "minItems": 3,
+                  "type": "array"
+                },
+                "minItems": 1,
+                "type": "array"
+              },
+              "time_offset": {
+                "type": "number"
+              },
               "values": {
                 "items": {
                   "type": "number"
@@ -419,6 +608,22 @@
         },
         "bus": {
           "type": "string"
+        },
+        "clip_map": {
+          "items": {
+            "items": {
+              "minimum": 0,
+              "type": "number"
+            },
+            "maxItems": 3,
+            "minItems": 3,
+            "type": "array"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "clip_source": {
+          "$ref": "#/$defs/clip_source"
         },
         "color": {
           "enum": [
@@ -473,6 +678,11 @@
               "art": {
                 "type": "string"
               },
+              "attack_scale": {
+                "maximum": 10,
+                "minimum": 0,
+                "type": "number"
+              },
               "curves": {
                 "items": {
                   "$ref": "#/$defs/curve"
@@ -480,7 +690,7 @@
                 "type": "array"
               },
               "dur_beats": {
-                "minimum": 0,
+                "minimum": 0.001,
                 "type": "number"
               },
               "freq_hz": {
@@ -501,8 +711,34 @@
               "generated": {
                 "type": "string"
               },
+              "harmony": {
+                "properties": {
+                  "quality": {
+                    "type": "string"
+                  },
+                  "root_pc": {
+                    "maximum": 11,
+                    "minimum": 0,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "root_pc",
+                  "quality"
+                ],
+                "type": "object"
+              },
+              "id": {
+                "minLength": 1,
+                "type": "string"
+              },
               "note": {
                 "type": "string"
+              },
+              "release_s_add": {
+                "maximum": 10,
+                "minimum": 0,
+                "type": "number"
               },
               "slur": {
                 "minimum": 1,
@@ -516,10 +752,38 @@
                 "minimum": 1,
                 "type": "integer"
               },
+              "technique_render": {
+                "properties": {
+                  "fidelity": {
+                    "enum": [
+                      "approximate",
+                      "control_transform"
+                    ]
+                  },
+                  "method": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "params": {
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "name",
+                  "fidelity",
+                  "method"
+                ],
+                "type": "object"
+              },
               "vel": {
                 "maximum": 1,
                 "minimum": 0,
                 "type": "number"
+              },
+              "voice": {
+                "type": "string"
               }
             },
             "required": [
@@ -694,6 +958,21 @@
                 ],
                 "type": "string"
               },
+              "time_map": {
+                "items": {
+                  "items": {
+                    "type": "number"
+                  },
+                  "maxItems": 3,
+                  "minItems": 3,
+                  "type": "array"
+                },
+                "minItems": 1,
+                "type": "array"
+              },
+              "time_offset": {
+                "type": "number"
+              },
               "values": {
                 "items": {
                   "type": "number"
@@ -722,6 +1001,13 @@
             "$ref": "#/$defs/fx"
           },
           "type": "array"
+        },
+        "normalization": {
+          "default": "none",
+          "enum": [
+            "none",
+            "peak"
+          ]
         },
         "stereo_width": {
           "maximum": 1,
@@ -870,7 +1156,7 @@
       "type": "object"
     }
   },
-  "$id": "https://audioforge.local/schemas/audioforge-ir-1.2.schema.json",
+  "$id": "https://audioforge.local/schemas/audioforge-ir-2.0.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": true,
   "properties": {
@@ -1016,6 +1302,12 @@
       "additionalProperties": true,
       "type": "object"
     },
+    "performance_seed": {
+      "default": 0,
+      "maximum": 18446744073709551615,
+      "minimum": 0,
+      "type": "integer"
+    },
     "routing": {
       "additionalProperties": false,
       "properties": {
@@ -1094,7 +1386,7 @@
         "note_seconds"
       ]
     },
-    "engine_version": "2.16.0",
+    "engine_version": "3.0.0",
     "field_layers": {
       "provenance": [
         "_meta"
@@ -1113,6 +1405,7 @@
         "buses",
         "master",
         "variant",
+        "performance_seed",
         "intensity_scale"
       ],
       "semantic": [
@@ -1138,12 +1431,15 @@
       "notation"
     ],
     "migration": {
-      "current": "1.2",
-      "notes": "IR schema 1.2 extends note-scope curves with timbre targets and adds hash-included fretted/stringed instrument mechanics. No migration is required for valid 1.0/1.1 specs; curves and string/fret/tuning fields are render data and therefore hash-included, while provenance-only metadata changes remain hash-excluded.",
-      "policy": "additive-compatible",
+      "current": "2.0",
+      "notes": "IR 2.0 changes gate/release, gain, mastering, randomness and repeat semantics. Migration preserves authored numeric intent, not old audio bytes. Review renders and regenerate manifests; docs/MIGRATION_3.md describes explicit compatibility choices.",
+      "policy": "structural-migration-audio-review-required",
       "supported_from": [
         "0.9",
-        "1.0"
+        "1.0",
+        "1.1",
+        "1.2",
+        "2.0"
       ]
     },
     "render_plan": {
@@ -1151,6 +1447,6 @@
       "policy_field": "routing",
       "schema": "audioforge.render-plan/1"
     },
-    "version": "1.2"
+    "version": "2.0"
   }
 }

@@ -20,8 +20,8 @@ Supported opcodes (v1):
   tune transpose volume
 
 Anything else is collected and reported as ignored — loud, not silent.
-Resampling uses a fixed 32-tap Hann-windowed-sinc kernel so pitch shifting
-is bit-stable across versions.
+Resampling uses a rate-adaptive Hann-windowed-sinc lowpass to suppress
+aliasing when transposition or source-rate conversion skips samples.
 
 P2 adds:
 - a per-layer `dynamic` curve driving equal-power, *time-varying* velocity-
@@ -195,24 +195,54 @@ def select_regions(regions: list[Region], midi: int, vel127: int,
 _SINC_HALF = 16
 
 
-def _sinc_read(src: np.ndarray, positions: np.ndarray) -> np.ndarray:
-    """Read fractional positions from src with the fixed windowed-sinc
-    kernel. Positions beyond the source are zero."""
-    n_src = src.size
-    padded = np.concatenate([np.zeros(_SINC_HALF), src,
-                             np.zeros(_SINC_HALF + 1)])
-    base = np.floor(positions).astype(np.int64)
-    frac = positions - base
-    valid = (base >= 0) & (base < n_src)
-    base_c = np.clip(base, 0, n_src - 1)
-    offsets = np.arange(-_SINC_HALF + 1, _SINC_HALF + 1)
-    # x = distance from sample tap to read position
-    x = offsets[None, :] - frac[:, None]
-    window = 0.5 + 0.5 * np.cos(np.pi * x / _SINC_HALF)
-    kern = np.sinc(x) * window
-    idx = base_c[:, None] + offsets[None, :] + _SINC_HALF
-    out = np.einsum("ij,ij->i", padded[idx], kern)
-    return np.where(valid, out, 0.0)
+def _sinc_read(src: np.ndarray, positions: np.ndarray,
+               rates: np.ndarray | None = None) -> np.ndarray:
+    """Bandlimited fractional reads with a playback-rate-dependent cutoff.
+
+    Playback faster than one source sample per output sample is downsampling.
+    Widening the kernel and reducing its cutoff removes frequencies that would
+    fold into the output band. Each read uses its local rate, including glides.
+    Chunks bound working memory without changing any sample's calculation.
+    """
+    out = np.zeros(positions.size, dtype=np.float64)
+    if not src.size or not positions.size:
+        return out
+    if rates is None:
+        rates = np.gradient(positions) if positions.size > 1 else np.ones(1)
+    rates = np.broadcast_to(rates, positions.shape)
+    cutoffs = 0.94 / np.maximum(1.0, np.abs(rates))
+    radius = int(np.ceil(_SINC_HALF / float(np.min(cutoffs))))
+    offsets = np.arange(-radius + 1, radius + 1)
+    chunk = max(1, min(4096, 1_000_000 // offsets.size))
+    for start in range(0, positions.size, chunk):
+        end = min(start + chunk, positions.size)
+        pos = positions[start:end]
+        base = np.floor(pos).astype(np.int64)
+        x = offsets[None, :] - (pos - base)[:, None]
+        cutoff = cutoffs[start:end, None]
+        scaled = x * cutoff
+        window = np.where(
+            np.abs(scaled) < _SINC_HALF,
+            0.5 + 0.5 * np.cos(np.pi * scaled / _SINC_HALF), 0.0)
+        kernel = cutoff * np.sinc(scaled) * window
+        kernel /= np.sum(kernel, axis=1, keepdims=True)
+        indices = base[:, None] + offsets[None, :]
+        values = src[np.clip(indices, 0, src.size - 1)]
+        values = np.where((indices >= 0) & (indices < src.size), values, 0.0)
+        out[start:end] = np.einsum("ij,ij->i", values, kernel)
+        out[start:end] *= (pos >= 0) & (pos < src.size)
+    return out
+
+
+def transition_offset(region: Region, source_rate: int) -> dict:
+    """Use a library's sustain-loop start, or its declared attack endpoint.
+
+    These are approximate joins between stationary notes; an SFZ sustain loop
+    is evidence for a usable steady portion, not a recorded transition.
+    """
+    if region.loop_mode in ("loop_continuous", "loop_sustain") and region.loop_end > region.loop_start:
+        return {"seconds": region.loop_start / source_rate, "evidence": "sfz_loop_start"}
+    return {"seconds": region.ampeg_attack, "evidence": "sfz_envelope_attack"}
 
 
 def render_region(region: Region, src: np.ndarray, src_sr: int,
@@ -232,13 +262,13 @@ def render_region(region: Region, src: np.ndarray, src_sr: int,
     semis = (midi_float - region.pitch_keycenter + region.transpose
              + region.tune / 100.0)
     ratio = (2.0 ** (semis / 12.0)) * (src_sr / sr)
-    rel_n = int(region.ampeg_release * sr)
+    rel_n = int(round(region.ampeg_release * sr))
     total_n = dur_n + rel_n
     if ramp_from_midi is not None and ramp_from_midi != midi_float:
         semis0 = (ramp_from_midi - region.pitch_keycenter + region.transpose
                   + region.tune / 100.0)
         r0 = (2.0 ** (semis0 / 12.0)) * (src_sr / sr)
-        k = max(2, int(ramp_s * sr))
+        k = min(total_n, max(2, int(ramp_s * sr)))
         rate = np.full(total_n, ratio)
         rate[:k] = r0 + (ratio - r0) * np.linspace(0.0, 1.0, k)
     else:
@@ -258,6 +288,8 @@ def render_region(region: Region, src: np.ndarray, src_sr: int,
     else:
         positions = np.arange(total_n) * ratio
     positions = positions + src_offset_s * src_sr
+    original_source = src
+    sustain_release_positions = None
 
     if region.loop_mode in ("loop_continuous", "loop_sustain") \
             and region.loop_end > region.loop_start:
@@ -265,6 +297,10 @@ def render_region(region: Region, src: np.ndarray, src_sr: int,
         body = src[ls:le]
         xf = int(min(region.loop_crossfade * src_sr, body.size * 0.5))
         stride = body.size - xf
+        if region.loop_mode == "loop_sustain" and dur_n < total_n:
+            at_release = positions[dur_n]
+            phase = ls + (at_release - ls) % max(stride, 1) if at_release >= le else at_release
+            sustain_release_positions = phase + positions[dur_n:] - at_release
         need = (positions[-1] if positions.size else 0.0) + 2
         reps = max(1, int(np.ceil((need - ls) / max(stride, 1))) + 1)
         ext = np.zeros(int(ls + stride * reps + body.size))
@@ -279,10 +315,17 @@ def render_region(region: Region, src: np.ndarray, src_sr: int,
             else:
                 ext[pos:pos + body.size] = body
         src = ext
-    out = _sinc_read(src, positions)
+    out = _sinc_read(src, positions, rate)
+    if sustain_release_positions is not None:
+        tail = _sinc_read(original_source, sustain_release_positions, rate[dur_n:])
+        blend = min(int(.002 * sr), tail.size)
+        if blend:
+            weight = np.linspace(0, 1, blend)
+            tail[:blend] = out[dur_n:dur_n + blend] * (1 - weight) + tail[:blend] * weight
+        out[dur_n:] = tail
 
-    env = synth.adsr(total_n, sr, region.ampeg_attack, region.ampeg_decay,
-                     region.ampeg_sustain / 100.0, region.ampeg_release)
+    env = synth.note_adsr(dur_n, sr, region.ampeg_attack, region.ampeg_decay,
+                          region.ampeg_sustain / 100.0, region.ampeg_release)
     out *= env * (10.0 ** (region.volume / 20.0))
     return out
 
@@ -309,7 +352,7 @@ _FALLBACKS = {
                 {"dur_clamp_s": 0.14, "release_s": 0.06, "retrigger": True},
                 "seeded re-trigger train (~12 Hz) of short regions"),
     "legato": (("sustain",), {},
-               "sustain regions (true legato joins arrive with P3)"),
+               "sustain regions; joined slurs use approximate sample-aware crossfades"),
 }
 
 
@@ -414,8 +457,8 @@ def render_instrument_track(track: dict, total_n: int, sr: int, tm,
       the incoming note skips its recorded attack and glides its read rate
       from the previous pitch (a real smear, not a crossfade artifact);
     - an opt-in `phrasing` arch shapes slur groups: velocities rise toward
-      the group's pitch peak and ease after, and the last note lifts
-      slightly (documented constants, fully deterministic);
+      the group's temporal midpoint and ease after; authored gates remain
+      unchanged (documented constants, fully deterministic);
     - `time_offset_s`/`midi_offset` are the per-player handles used by
       section multiplication."""
     from .sequencer import _sum_note_curve, dyn_env, dyn_gain
@@ -423,7 +466,6 @@ def render_instrument_track(track: dict, total_n: int, sr: int, tm,
     default_art = track.get("articulation", "sustain")
     dyn_pts = track.get("dynamic")
     join_w = float(track.get("legato_s", 0.05))
-    phrasing = float(track.get("phrasing", 0.0))
     art_cache: dict[str, tuple] = {}
     plan_by_note = {
         int(seg["note_index"]): seg
@@ -498,81 +540,21 @@ def render_instrument_track(track: dict, total_n: int, sr: int, tm,
         return lib.regions(instrument, resolved), dict(decision.get("mods", {}))
 
     env_gain = 10.0 ** (track.get("gain_db", 0.0) / 20.0)
-    hum = track.get("humanize")
-    g_t = (groove or {}).get("timing")
-    g_a = (groove or {}).get("accent")
+    from .performance import legato_links, schedule_notes
     out = np.zeros(total_n)
-    events = list(track["notes"])
-    loop_beats = track.get("loop_beats")
-    if loop_beats:
-        reps = int(np.ceil(tm.beat_at(total_n / sr) / loop_beats))
-        events = [{**e, "start_beat": e["start_beat"] + r * loop_beats}
-                  for r in range(reps) for e in track["notes"]]
-    events.sort(key=lambda e: (e["start_beat"], e.get("note", ""),
-                               e.get("freq_hz", 0.0)))
-
-    # ---- pass 1: schedule -------------------------------------------------
-    sched = []
-    for j, ev in enumerate(events):
-        freq = ev.get("freq_hz") or synth.note_to_freq(ev["note"])
-        vel = float(ev.get("vel", 1.0))
-        b = ev["start_beat"]
-        slot = int(round(b * 4.0)) % 16
-        if g_t:
-            b += g_t[slot] * 0.25
-        if g_a:
-            vel *= g_a[slot]
-        t = tm.sec(b) + time_offset_s
-        ev_rng = rng_factory(f"note{j}")
-        if hum:
-            t += (ev_rng.random() * 2.0 - 1.0) * hum.get("timing_s", 0.0)
-            vel *= 1.0 + (ev_rng.random() * 2.0 - 1.0) * hum.get("vel", 0.0)
-        start = int(round(max(t, 0.0) * sr))
-        dur_n = int(round((tm.sec(ev["start_beat"] + ev["dur_beats"])
-                           - tm.sec(ev["start_beat"])) * sr))
-        if start >= total_n or dur_n <= 0:
-            continue
-        sched.append({
-            "midi": freq_to_midi(freq) + midi_offset, "vel": vel,
-            "start": start, "dur_n": dur_n, "rng": ev_rng,
-            "art": ev.get("art", default_art), "slur": ev.get("slur"),
-            "event": ev, "start_beat": ev["start_beat"],
-            "start_time_s": t, "note_index": j})
-
-    # ---- phrasing arch over slur groups (documented constants) ------------
-    if phrasing > 0.0:
-        groups: dict[int, list[int]] = {}
-        for k, s in enumerate(sched):
-            if s["slur"]:
-                groups.setdefault(s["slur"], []).append(k)
-        for idxs in groups.values():
-            if len(idxs) < 2:
-                continue
-            midis = [sched[k]["midi"] for k in idxs]
-            peak = len(midis) - 1 - midis[::-1].index(max(midis))
-            last = len(idxs) - 1
-            for i2, k in enumerate(idxs):
-                if i2 <= peak:
-                    x = i2 / peak if peak else 1.0
-                else:
-                    x = 1.0 - 1.3 * (i2 - peak) / max(last - peak, 1)
-                sched[k]["vel"] *= 1.0 + 0.18 * phrasing * (x - 0.5) * 2.0
-            last_k = idxs[last]
-            sched[last_k]["dur_n"] = int(
-                sched[last_k]["dur_n"] * (1.0 - 0.05 * phrasing))
-            sched[last_k]["vel"] *= 1.0 - 0.07 * phrasing
+    sched = schedule_notes(track, total_n, sr, tm, rng_factory, groove,
+                           time_offset_s, midi_offset)
 
     # ---- pass 2: render with join awareness --------------------------------
     join_n = int(join_w * sr)
+    links = legato_links(sched)
     for k, s in enumerate(sched):
         seg_t0 = time.perf_counter_ns()
-        s["vel"] = float(np.clip(s["vel"], 0.05, 1.3))
-        prev = sched[k - 1] if k > 0 else None
-        nxt = sched[k + 1] if k + 1 < len(sched) else None
-        join_in = (prev is not None and s["slur"]
-                   and prev["slur"] == s["slur"])
-        join_out = (nxt is not None and s["slur"]
-                    and nxt["slur"] == s["slur"])
+        s["vel"] = float(np.clip(s["vel"], 0.0, 1.3))
+        previous, following = links[k]
+        prev = sched[previous] if previous is not None else None
+        nxt = sched[following] if following is not None else None
+        join_in, join_out = prev is not None, nxt is not None
         plan_segment = plan_by_note.get(int(s["note_index"]))
         regions, mods = articulation_from_plan(plan_segment, s["art"])
         clamp_n = (int(mods["dur_clamp_s"] * sr)
@@ -589,16 +571,18 @@ def render_instrument_track(track: dict, total_n: int, sr: int, tm,
         extra_g = 10.0 ** (mods.get("gain_db", 0.0) / 20.0)
 
         def shaped(r):
-            if mods.get("release_s") or mods.get("attack_s"):
-                return dataclasses.replace(
-                    r, ampeg_release=mods.get("release_s", r.ampeg_release),
-                    ampeg_attack=mods.get("attack_s", r.ampeg_attack))
-            return r
+            return dataclasses.replace(
+                r, ampeg_release=mods.get("release_s", r.ampeg_release)
+                + float(s["event"].get("release_s_add", 0)),
+                ampeg_attack=mods.get("attack_s", r.ampeg_attack)
+                * float(s["event"].get("attack_scale", 1)))
 
-        rr_kwargs = {}
-        if join_in:
-            rr_kwargs = {"src_offset_s": 0.06,
-                         "ramp_from_midi": prev["midi"]}
+        def transition_kwargs(region, source_rate):
+            if not join_in:
+                return {}
+            offset = transition_offset(region, source_rate)
+            return {"src_offset_s": offset["seconds"],
+                    "ramp_from_midi": prev["midi"], "ramp_s": join_w}
         held_n = dur_n + (join_n if join_out else 0)
 
         def note_curve(target: str, n: int, offset_n: int = 0):
@@ -612,7 +596,7 @@ def render_instrument_track(track: dict, total_n: int, sr: int, tm,
         def render_hit(h_start, h_dur_n, h_vel, h_rng):
             note_offset_n = max(0, h_start - s["start"])
             max_rel = max(shaped(r).ampeg_release for r in kreg)
-            full_n = h_dur_n + int(max_rel * sr)
+            full_n = h_dur_n + int(round(max_rel * sr))
             note_gain_db = note_curve("gain_db", full_n, note_offset_n)
             note_gain = (10.0 ** (note_gain_db / 20.0)
                          if note_gain_db is not None else None)
@@ -649,11 +633,11 @@ def render_instrument_track(track: dict, total_n: int, sr: int, tm,
                         srcb, src_sr = lib.audio(r.sample)
                         pitch = note_curve(
                             "pitch_cents",
-                            h_dur_n + int(shaped(r).ampeg_release * sr),
+                            h_dur_n + int(round(shaped(r).ampeg_release * sr)),
                             note_offset_n)
                         part = render_region(shaped(r), srcb, src_sr,
                                              s["midi"], h_dur_n, sr,
-                                             pitch_cents=pitch, **rr_kwargs)
+                                             pitch_cents=pitch, **transition_kwargs(r, src_sr))
                         m = min(part.size, full_n)
                         sig[:m] += part[:m] * w[:m]
                 sig *= dyn_gain(v_env) * h_vel * extra_g
@@ -678,17 +662,17 @@ def render_instrument_track(track: dict, total_n: int, sr: int, tm,
                         f"instrument '{instrument}': no region at velocity "
                         f"{v127} for midi {midi_i}")
                 sig = np.zeros(
-                    max(int(shaped(r).ampeg_release * sr) for r in chosen)
+                    max(int(round(shaped(r).ampeg_release * sr)) for r in chosen)
                     + h_dur_n)
                 for r in chosen:
                     srcb, src_sr = lib.audio(r.sample)
                     pitch = note_curve(
                         "pitch_cents",
-                        h_dur_n + int(shaped(r).ampeg_release * sr),
+                        h_dur_n + int(round(shaped(r).ampeg_release * sr)),
                         note_offset_n)
                     part = render_region(shaped(r), srcb, src_sr,
                                          s["midi"], h_dur_n, sr,
-                                         pitch_cents=pitch, **rr_kwargs)
+                                         pitch_cents=pitch, **transition_kwargs(r, src_sr))
                     sig[:part.size] += part
                 sig = sig * h_vel * extra_g
                 if note_gain is not None:
@@ -731,8 +715,8 @@ def render_section(layer: dict, total_n: int, sr: int, tm, rng, lib,
                    plan_segments: list[dict] | None = None) -> np.ndarray:
     """Ensemble multiplication: N seeded virtual players from one part —
     independent timing offsets, micro-detune, round-robin pools, and a
-    stereo position across the spread. All jitter derives from the spec
-    hash via player-namespaced RNG paths (variant-aware by construction).
+    stereo position across the spread. All jitter derives from the take
+    identity via player-namespaced RNG paths (variant-aware by construction).
 
     Honest disclosure (also in the docs): N copies of one recorded player
     is a chorus of soloists, not a true section. VSCO's violin recordings
@@ -740,25 +724,17 @@ def render_section(layer: dict, total_n: int, sr: int, tm, rng, lib,
     spatializes — prefer genuinely-sampled sections where they exist."""
     sec = layer["section"]
     n_players = int(sec["size"])
-    spread = float(sec.get("spread", 0.6))
-    det_c = float(sec.get("detune_c", 7.0))
-    tim_s = float(sec.get("timing_s", 0.009))
-    base_pan = float(layer.get("pan", 0.0))
+    from .performance import section_player
     out = np.zeros((total_n, 2))
     scale = 1.0 / np.sqrt(n_players)
     for p in range(n_players):
-        prng = rng(f"player{p}:static")
-        dt = (prng.random() * 2.0 - 1.0) * tim_s
-        dmidi = (prng.random() * 2.0 - 1.0) * det_c / 100.0
-        pos = base_pan + spread * (
-            -1.0 + 2.0 * p / (n_players - 1) if n_players > 1 else 0.0)
-        pos = float(np.clip(pos, -1.0, 1.0))
+        dt, dmidi, pos = section_player(layer, p, rng)
         mono = render_instrument_track(
             layer, total_n, sr, tm,
             lambda sub, _p=p: rng(f"player{_p}:{sub}"), lib,
             groove=groove, report=report if p == 0 else None,
             time_offset_s=dt, midi_offset=dmidi,
-            plan_segments=plan_segments if p == 0 else None)
+            plan_segments=[seg for seg in (plan_segments or []) if seg.get("player_index", 0) == p])
         theta = (pos + 1.0) * np.pi / 4.0
         out[:, 0] += np.cos(theta) * mono * scale
         out[:, 1] += np.sin(theta) * mono * scale

@@ -1,6 +1,15 @@
+---
+disclaimer:
+  notice: >-
+    No information within this document should be taken for granted. Claims
+    require verification against the implementation and its acceptance tests.
+  generated_by: "GPT-6 via Codex"
+  date: "2026-09-05"
+---
+
 # AudioForge
 
-Deterministic audio-asset generation for production pipelines. One schema + one engine version = byte-identical audio, every render, forever. Non-vocal by design: music, sound design, SFX, ambience, beats, loops, jingles, transitions, and branded sonic identities.
+Deterministic audio-asset generation for production pipelines. A pinned spec and engine produce reproducible audio within a verified runtime environment. Non-vocal by design: music, sound design, SFX, ambience, beats, loops, jingles, transitions, and branded sonic identities.
 
 ```
 .af DSL  ──compile──▶  JSON IR (hashed ground truth)  ──render──▶  WAV + manifest
@@ -14,9 +23,11 @@ This work is subject to the methodological caveats and commitments described in 
 
 ## Why deterministic
 
-Every spec is canonically hashed (with the engine version folded in). The manifest records `spec_hash` and `output_sha256`; `audioforge verify` re-renders and compares bytes — a CI gate against silent drift. All randomness (noise, reverb IRs, dither, plugin entropy) derives from per-component seeds rooted in the spec hash. No wall clocks, no global RNG.
+Every spec is canonically hashed (with the engine version folded in). The manifest records `spec_hash` and `output_sha256`; `audioforge verify` re-renders and compares bytes — a CI gate against silent drift. Randomness derives from named component paths under `performance_seed` and `variant`; changing gain or metadata preserves the performance. The complete spec hash still identifies the render contract. No wall clocks, no global RNG.
 
 ## Quick start
+
+Engine 3.0 changes audible behavior. Read the [migration guide](docs/MIGRATION_3.md) for gate/release, gain, mastering, repeat and performance-seed changes. The [acceptance ledger](docs/MUSICAL_CORRECTNESS.md) separates measured correctness from listening judgments.
 
 ```bash
 python -m audioforge.cli validate static/samples/transition_sweep.af
@@ -75,7 +86,7 @@ Design rule: **the DSL is sugar; the JSON IR is truth.** Emotion tags, intensity
 * **Stems** — `--stems` writes per-layer pre-master stereo files, each seeded-dithered on its own deterministic path.
 * **Sync** — markers land in the manifest and a `.markers.json` sidecar; an example plugin exports EDL marker lists for editors.
 * **Export presets** — `social_video` (48k/16/−14 LUFS), `broadcast` (48k/24/−23), `cinematic_master` (96k/24/−16), `web_preview` (22k05/16). Presets derive a re-id'd spec, so every delivery variant is itself hash-tracked.
-* **Loop safety** — `loopsafe: on` validates whole-beat durations.
+* **Loop safety** — `loopsafe: on` checks duration under the actual tempo/hold map and measures the premaster and delivered seam and tails.
 
 ## SDK & plugins
 
@@ -93,7 +104,7 @@ The `stage{}` block + `seat: -16deg @ 4.5m`: per-source direct path (1/r, ISO-fl
 
 ## Orchestral performance model (v2.12 — P3)
 
-**Legato joins**: `slur(...)` groups render connected — outgoing note held through an equal-power window, incoming attack skipped (measured 13.7x scrape suppression), read-rate glide through the join (f0 verified passing intermediate values). **Section multiplication**: `section: size=8 spread=0.75` renders seeded virtual players with micro-detune/timing and independent round-robins across a true-stereo stage (envelope beating 0.10 -> 0.37 — the shimmer; side/mid 0 -> 0.38 at mix level). **Phrasing**: a documented deterministic arch over slur groups, contrasting a mechanical "typewriter" reading against a "singing" one.
+**Legato joins** connect contiguous monophonic slur groups using the selected sample's loop or attack boundary, an equal-power crossfade and a pitch glide. This is an approximation, declared in the render plan. **Section multiplication** creates seeded players with a shared timing clock and separate offsets, detune and round-robins; it does not reproduce an independently recorded section. **Phrasing** applies a documented arch by time within the group and preserves authored note gates. `routing: fallbacks=forbid` rejects these approximate sampled routes.
 
 ## Orchestral dynamics & articulation (v2.11 — P2)
 
@@ -101,7 +112,7 @@ A `dynamic:` curve (`pp..fff` marks, hairpins) drives **time-varying equal-power
 
 ## Orchestral Tier S (v2.10 — P1)
 
-A **deterministic SFZ-subset sampler** (key/velocity mapping, seeded round-robins, ampeg, loop crossfades, fixed windowed-sinc resampling at ±0.3-cent accuracy) reading **content-addressed instrument libraries**: `audioforge libgen` pins every sample byte and the instrument mapping into one manifest hash that folds into the spec hash; `instrument` layers play through it with the standard performance machinery. Verified against a real CC0 VSCO 2 Community Edition subset (fetch script in `scripts/`): byte-identical re-renders through 37 pinned files.
+A **deterministic SFZ-subset sampler** (key/velocity mapping, seeded round-robins, ampeg, loop crossfades, rate-adaptive windowed-sinc resampling with antialias filtering) reading **content-addressed instrument libraries**: `audioforge libgen` pins every sample byte and the instrument mapping into one manifest hash that folds into the spec hash; `instrument` layers play through it with the standard performance machinery. Verified against a real CC0 VSCO 2 Community Edition subset (fetch script in `scripts/`): byte-identical re-renders through 37 pinned files.
 
 ## Palette depth (v2.9)
 
@@ -153,6 +164,6 @@ tests/               determinism suite + v2 suite (DSL, SDK, plugins,
 * The compressors are deterministic offline lookahead-RMS designs with documented semantics — built for reproducibility, not analog emulation.
 * IR computation is a sequential Python loop bounded by tail length (~2-4 s per parameter set, cached); long multi-space cinematic masters render in tens of seconds rather than seconds.
 * Determinism is guaranteed within an environment; cross-platform float reproducibility is *checked* by the `verify` gate rather than assumed.
-* The engine is synthesis-only. Recorded material would enter cleanly as a content-addressed sample layer (hash the sample into the spec) — designed-for but not implemented.
+* Recorded material uses content-addressed WAV sample layers or pinned SFZ-subset instrument libraries. Recorded transitions and ensemble realism depend on the source material; synthesized approximations are declared in the render plan.
 
-Requires Python 3.10+, numpy, scipy. Engine 2.16.0 · DSL 1.9.
+Requires Python 3.10+, numpy, scipy. Engine 3.0.0 · DSL 2.0.

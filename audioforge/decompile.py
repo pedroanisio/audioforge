@@ -5,7 +5,7 @@ from __future__ import annotations
 def _fmt_num(v) -> str:
     if isinstance(v, int) or float(v).is_integer():
         return str(int(v))
-    return f"{float(v):.6g}"
+    return repr(float(v))
 
 
 def _note(ev: dict) -> str:
@@ -20,6 +20,8 @@ def _note(ev: dict) -> str:
     s = f"{pitch} @ {_fmt_num(ev['start_beat'])}b for {_fmt_num(ev['dur_beats'])}b"
     if "vel" in ev:
         s += f" vel {_fmt_num(ev['vel'])}"
+    if "voicing" in ev:
+        s += f" voicing {ev['voicing']}"
     if "art" in ev:
         s += f" art {ev['art']}"
     tech = ev.get("technique") or ev.get("tech")
@@ -244,6 +246,19 @@ def _auto(au: dict) -> str:
     return f"auto {target}: {pts}"
 
 
+def _json_property(name: str, value) -> str:
+    import json
+    return f"{name}: {json.dumps(json.dumps(value, separators=(',', ':')))}"
+
+
+def _automation_lines(automations: list[dict]) -> list[str]:
+    if any(set(au) - {"target", "points", "from_intent", "from_intensity"}
+           or any(len(point) != 2 for point in au.get("points", []))
+           for au in automations):
+        return [_json_property("automation_ir", automations)]
+    return [_auto(au) for au in automations]
+
+
 def _dynamic(points: list[list]) -> str:
     return ", ".join(f"{_fmt_num(b)}b={_fmt_num(v)}" for b, v in points)
 
@@ -397,7 +412,18 @@ def spec_to_dsl(spec: dict) -> str:
     master_props = set(semantic.get("master_props", []))
     lines.append(f"  kind: {spec['kind']}")
     lines.append(f"  duration: {_fmt_num(spec['duration_s'])}s")
-    if "bpm" in spec:
+    if "performance_seed" in spec:
+        lines.append(f"  seed: {spec['performance_seed']}")
+    if spec.get("routing"):
+        values = " ".join(f"{key}={value}" for key, value in sorted(spec["routing"].items()))
+        lines.append(f"  routing: {values}")
+    rubato = spec.get("intent", {}).get("perform", {}).get("rubato_compiled", {})
+    authored_tempo = rubato.get("source_tempo_map") if smart_preserved else None
+    tempo = authored_tempo or spec.get("tempo_map")
+    if tempo and len(tempo) > 1:
+        parts = [f"{_fmt_num(b)}b={_fmt_num(v)}bpm" for b, v in tempo]
+        lines.append("  tempo: " + ", ".join(parts))
+    elif "bpm" in spec:
         lines.append(f"  tempo: {_fmt_num(spec['bpm'])}bpm")
     if spec.get("holds"):
         parts = [
@@ -405,12 +431,20 @@ def spec_to_dsl(spec: dict) -> str:
             for h in spec["holds"]
         ]
         lines.append("  fermata: " + ", ".join(parts))
-    if "key" in spec:
+    if spec.get("key_map"):
+        lines.append("  key: " + ", ".join(f"{_fmt_num(b)}b={root} {mode}" for b, root, mode in spec["key_map"]))
+    elif "key" in spec:
         lines.append(f"  key: {spec['key']}")
-    smart_lines = _smart_directive_lines(spec.get("intent"), semantic)
+    for field, name in (("sample_rate", "samplerate"), ("bit_depth", "bitdepth")):
+        if field in spec:
+            lines.append(f"  {name}: {spec[field]}")
+    if "loop_safe" in spec:
+        lines.append(f"  loopsafe: {'on' if spec['loop_safe'] else 'off'}")
+    expanded_arrangement = bool(spec.get("intent", {}).get("arrangement"))
+    smart_lines = [] if expanded_arrangement else _smart_directive_lines(spec.get("intent"), semantic)
     if smart_lines:
         lines.extend(smart_lines)
-    intent_lines = _structured_intent_lines(spec.get("intent"))
+    intent_lines = [] if expanded_arrangement else _structured_intent_lines(spec.get("intent"))
     if intent_lines:
         lines.extend(intent_lines)
     score = spec.get("score", {})
@@ -444,8 +478,8 @@ def spec_to_dsl(spec: dict) -> str:
             lines.append(f"    gain: {_fmt_num(bus['gain_db'])}db")
         if "fx" in bus:
             lines.append("    fx: " + ", ".join(_fx(fx) for fx in bus["fx"]))
-        for au in bus.get("automation", []):
-            lines.append(f"    {_auto(au)}")
+        for au_line in _automation_lines(bus.get("automation", [])):
+            lines.append(f"    {au_line}")
         lines.append("  }")
     for layer in spec["layers"]:
         layer_semantic = semantic_layers.get(layer.get("name", ""), {})
@@ -454,6 +488,10 @@ def spec_to_dsl(spec: dict) -> str:
         for k in ("osc", "voice", "color", "shape", "model", "instrument"):
             if k in layer:
                 lines.append(f"    {k}: {layer[k]}")
+        if "note" in layer:
+            lines.append(f"    note: {layer['note']}")
+        if "freq_hz" in layer:
+            lines.append(f"    freq: {_fmt_num(layer['freq_hz'])}hz")
         if "tuning" in layer:
             lines.append("    tuning: " + ", ".join(layer["tuning"]))
         if "max_fret" in layer:
@@ -462,6 +500,10 @@ def spec_to_dsl(spec: dict) -> str:
             lines.append(f"    gain: {_fmt_num(layer['gain_db'])}db")
         if "pan" in layer:
             lines.append(f"    pan: {_fmt_num(layer['pan'])}")
+        for field in ("clip_source", "clip_map"):
+            if field in layer:
+                import json
+                lines.append(f"    {field}: {json.dumps(json.dumps(layer[field], separators=(',', ':')))}")
         if "bus" in layer and not (
                 smart_preserved and "bus" not in authored_props
                 and str(layer["bus"]).startswith("af_")):
@@ -497,14 +539,19 @@ def spec_to_dsl(spec: dict) -> str:
         if "dynamic" in layer and not (
                 smart_preserved and "dynamic" not in authored_props):
             lines.append(f"    dynamic: {_dynamic(layer['dynamic'])}")
-        if "notes" in layer_semantic:
+        raw_notes = any("id" in ev or "voice" in ev or any(
+            "time_offset" in curve or "time_map" in curve for curve in ev.get("curves", []))
+            for ev in layer.get("notes", []))
+        if raw_notes:
+            lines.append("    " + _json_property("notes_ir", layer["notes"]))
+        elif "notes" in layer_semantic:
             lines.append(f"    notes: {_notes_list(layer_semantic['notes'])}")
         elif "notes" in layer:
             lines.append(f"    notes: {_notes_list(layer['notes'])}")
         suppressed = authored_curve_targets.get(layer.get("name", ""), set())
         semantic_suppressed = _semantic_curve_suppression(
             layer_semantic.get("notes", []))
-        for curve_line in _note_curve_lines(layer.get("notes", []), suppressed,
+        for curve_line in _note_curve_lines([] if raw_notes else layer.get("notes", []), suppressed,
                                            semantic_suppressed):
             lines.append(f"    {curve_line}")
         for play in layer_semantic.get("plays", []):
@@ -513,8 +560,8 @@ def spec_to_dsl(spec: dict) -> str:
             lines.append(f"    pattern: {layer['pattern']}")
         if "fx" in layer:
             lines.append("    fx: " + ", ".join(_fx(fx) for fx in layer["fx"]))
-        for au in layer.get("automation", []):
-            lines.append(f"    {_auto(au)}")
+        for au_line in _automation_lines(layer.get("automation", [])):
+            lines.append(f"    {au_line}")
         lines.append("  }")
     master = spec.get("master", {})
     if master:
@@ -525,6 +572,11 @@ def spec_to_dsl(spec: dict) -> str:
             lines.append(f"    peak: {_fmt_num(master['target_peak_dbfs'])}db")
         if "target_lufs" in master:
             lines.append(f"    lufs: {_fmt_num(master['target_lufs'])}")
+        if "normalization" in master:
+            lines.append(f"    normalize: {master['normalization']}")
+        for field, name in (("fade_in_s", "fadein"), ("fade_out_s", "fadeout")):
+            if field in master:
+                lines.append(f"    {name}: {_fmt_num(master[field])}s")
         if "fx" in master:
             fxs = [
                 fx for fx in master["fx"]
@@ -532,10 +584,10 @@ def spec_to_dsl(spec: dict) -> str:
             ]
             if fxs:
                 lines.append("    fx: " + ", ".join(_fx(fx) for fx in fxs))
-        for au in master.get("automation", []):
-            if au.get("from_intent") and "auto" not in master_props:
-                continue
-            lines.append(f"    {_auto(au)}")
+        automations = [au for au in master.get("automation", []) if not (
+            smart_preserved and au.get("from_intent") and "auto" not in master_props)]
+        for au_line in _automation_lines(automations):
+            lines.append(f"    {au_line}")
         lines.append("  }")
     lines.append("}")
     return "\n".join(lines) + "\n"

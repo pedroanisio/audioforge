@@ -320,6 +320,13 @@ def _apply_emotion(spec: dict, emotion: dict, diags: list[str]):
             + 0.7 * emotion.get("suspense", 0.0))
     big = emotion.get("cinematic_intensity", 0.0) + 0.5 * emotion.get("triumph", 0.0)
 
+    diags.append("emotion: production presets only; harmony, rhythm and melodic "
+                 "affect remain authored musical choices")
+    inactive = sorted(tag for tag, value in emotion.items()
+                      if value and tag in {"sadness", "urgency"})
+    if inactive:
+        diags.append("emotion: " + ", ".join(inactive) +
+                     " retained as metadata; no production transform is defined")
     master = spec.setdefault("master", {})
     if awe or big:
         w = master.get("stereo_width", 0.7)
@@ -518,7 +525,7 @@ def _semantic_sidecar(a: Asset, smart_intent: dict) -> dict:
     decompile stay at the same authoring altitude when the IR came from DSL.
     """
     semantic: dict = {}
-    if smart_intent and "style" not in smart_intent:
+    if smart_intent:
         semantic["smart_directives"] = [
             key for key in ("style", "perform", "ensemble", "voicing", "space")
             if key in smart_intent
@@ -588,8 +595,8 @@ def _read_score_props(p: dict, line: int) -> dict:
         score["sections"] = sections
     if "repeat" in p:
         toks = p.pop("repeat")
-        if len(toks) < 2 or toks[0].kind != "IDENT" \
-                or toks[1].kind != "IDENT" or not toks[1].text.startswith("x"):
+        if len(toks) != 2 or toks[0].kind != "IDENT" \
+                or toks[1].kind != "IDENT" or not re.fullmatch(r"x[1-9][0-9]*", toks[1].text):
             raise DSLError("repeat: section xN", line)
         score.setdefault("repeats", []).append({
             "section": toks[0].text,
@@ -675,7 +682,7 @@ def _apply_smart_directives(spec: dict, intent: dict, diags: list[str]):
     octaves = int(ensemble.get("octaves", 0) or 0)
     phrase_report = {}
     for layer in spec["layers"]:
-        phrases = _analyze_layer_phrases(layer)
+        phrases = _analyze_layer_phrases(layer, spec)
         if phrases:
             phrase_report[layer["name"]] = phrases
         if layer["type"] in ("notes", "instrument", "drums"):
@@ -707,8 +714,11 @@ def _apply_smart_directives(spec: dict, intent: dict, diags: list[str]):
             layer["notes"].sort(key=lambda e: (e["start_beat"],
                                                e.get("note", ""),
                                                e.get("freq_hz", 0)))
-        if layer["type"] == "notes" and layer.get("notes"):
-            _apply_voicing_extensions(layer, voicing)
+        if layer["type"] in ("notes", "instrument") and layer.get("notes"):
+            key_scale = sorted(_scale_pitch_classes(spec.get("key", "")) or []) or None
+            key_scales = [[beat, sorted(_scale_pitch_classes(f"{root} {mode}") or []) or None]
+                          for beat, root, mode in spec.get("key_map", [])]
+            _apply_voicing_extensions(layer, voicing, key_scale, diags, key_scales)
     if phrase_report:
         intent.setdefault("analysis", {})["phrases"] = [
             {**p, "layer": lname}
@@ -727,10 +737,6 @@ def _apply_smart_directives(spec: dict, intent: dict, diags: list[str]):
                    "mix": round(0.08 + 0.28 * depth, 3)})
         fx.append({"type": "saturate", "amount": round(0.08 + 0.14 * depth, 3),
                    "mix": 0.35, "warmth": 0.35})
-    if expressivity:
-        spec.setdefault("master", {}).setdefault("fx", []).append({
-            "type": "comp", "threshold": -20.0, "ratio": 1.4,
-            "attack": 0.04, "release": 0.22, "knee": 6.0, "makeup": 0.0})
     diags.append("smart directives: expanded style/perform/ensemble/voicing/"
                  "space into explicit layer and master IR")
 
@@ -809,6 +815,10 @@ def _apply_rubato_tempo_map(spec: dict, perform: dict,
         diags.append("perform.rubato: no note phrases found; no tempo_map "
                      "points were generated")
         return
+    # One conductor clock: authored form wins; otherwise merge overlapping
+    # activity spans so polyphonic parts cannot overwrite each other's tempo.
+    from .performance import conductor_spans
+    phrases = conductor_spans(spec, phrases)
     base_points = _base_tempo_points(spec)
     compiled: dict[float, float] = {
         round(float(b), 6): float(v) for b, v in base_points
@@ -825,6 +835,8 @@ def _apply_rubato_tempo_map(spec: dict, perform: dict,
                 shape, x, amount)
             compiled[beat] = round(max(BPM_MIN, min(TEMPO_MAP_BPM_MAX, bpm)), 6)
         for key in ("peak_beat", "cadence_beat"):
+            if key not in ph:
+                continue
             beat = round(float(ph[key]), 6)
             x = (beat - start) / dur
             bpm = _tempo_at(base_points, beat) * _rubato_multiplier(
@@ -840,6 +852,7 @@ def _apply_rubato_tempo_map(spec: dict, perform: dict,
         "shape": shape,
         "amount": amount,
         "base_bpm": float(spec.get("bpm", points[0][1])),
+        "source_tempo_map": base_points,
         "segment_beats": segment,
         "max_segment_error_s": max_error,
         "point_count": len(points),
@@ -944,167 +957,38 @@ def _apply_structured_intent(spec: dict, structured: dict, diags: list[str]):
         )
 
 
-def _analyze_layer_phrases(layer: dict) -> list[dict]:
-    if layer.get("type") != "notes" or not layer.get("notes"):
-        return []
-    notes = [e for e in sorted(layer["notes"], key=lambda x: x["start_beat"])
-             if "note" in e]
-    if not notes:
-        return []
-    phrases: list[list[dict]] = [[notes[0]]]
-    for prev, ev in zip(notes, notes[1:]):
-        gap = ev["start_beat"] - (prev["start_beat"] + prev["dur_beats"])
-        if gap >= 1.5:
-            phrases.append([ev])
-        else:
-            phrases[-1].append(ev)
-    out = []
-    for idx, ph in enumerate(phrases, 1):
-        semis = [(theory.note_to_semis(e["note"]), e) for e in ph]
-        peak_s, peak = max(semis, key=lambda x: (x[0], x[1]["start_beat"]))
-        out.append({
-            "id": idx,
-            "start_beat": ph[0]["start_beat"],
-            "end_beat": round(max(e["start_beat"] + e["dur_beats"]
-                                  for e in ph), 6),
-            "peak_beat": peak["start_beat"],
-            "peak_note": peak["note"],
-            "note_count": len(ph),
-            "cadence_beat": ph[-1]["start_beat"],
-        })
-    return out
+def _analyze_layer_phrases(layer: dict, spec: dict | None = None) -> list[dict]:
+    """Describe authored spans or activity separated by rests.
+
+    A pitch maximum is not an expressive peak, and a final note alone is not
+    evidence of a cadence. Contour peaks below are explicit shaping policies.
+    """
+    from .performance import phrase_spans
+    return phrase_spans(layer, spec or {})
 
 
 def _apply_performance_phrase_ir(layer: dict, phrases: list[dict],
                                  expressivity: float):
-    if layer.get("type") != "notes" or not layer.get("notes"):
+    if layer.get("type") not in ("notes", "instrument") or not layer.get("notes"):
         return
-    notes = sorted(layer["notes"], key=lambda e: (e["start_beat"],
-                                                  e.get("note", "")))
+    # Explicit dynamics override the neutral midpoint arch. Do not infer slurs,
+    # vibrato, duration changes or processing from a generic expressivity knob.
     if phrases and "dynamic" not in layer:
-        pts = []
-        for ph in phrases:
-            low = round(max(0.1, 0.42 + 0.1 * expressivity), 3)
-            high = round(min(1.0, 0.62 + 0.3 * expressivity), 3)
-            pts.extend([[ph["start_beat"], low], [ph["peak_beat"], high],
-                        [ph["end_beat"], round(max(0.1, low - 0.08), 3)]])
-        layer["dynamic"] = sorted(pts, key=lambda p: p[0])
-    if "vibrato" not in layer:
-        layer["vibrato"] = {"rate_hz": round(4.8 + 1.2 * expressivity, 3),
-                            "depth_cents": round(10.0 * expressivity, 3),
-                            "delay_s": 0.18}
-    next_slur = max([e.get("slur", 0) or 0 for e in notes] + [0])
-    for a, b in zip(notes, notes[1:]):
-        if "note" not in a or "note" not in b:
-            continue
-        interval = abs(theory.note_to_semis(a["note"]) -
-                       theory.note_to_semis(b["note"]))
-        gap = b["start_beat"] - (a["start_beat"] + a["dur_beats"])
-        if interval <= 3 and gap <= 0.25:
-            if not a.get("slur") and not b.get("slur"):
-                next_slur += 1
-                a["slur"] = b["slur"] = next_slur
-            elif a.get("slur") and not b.get("slur"):
-                b["slur"] = a["slur"]
-    for ph in phrases:
-        for ev in notes:
-            if ev.get("start_beat") == ph["peak_beat"] \
-                    and ev.get("note") == ph["peak_note"]:
-                ev["dur_beats"] = round(ev["dur_beats"]
-                                        * (1.0 + 0.08 * expressivity), 6)
-    layer["notes"] = sorted(notes, key=lambda e: (e["start_beat"],
-                                                  e.get("note", ""),
-                                                  e.get("freq_hz", 0)))
+        points = {}
+        for phrase in phrases:
+            low = round(0.42 + 0.1 * expressivity, 3)
+            high = round(0.62 + 0.3 * expressivity, 3)
+            start, end = phrase["start_beat"], phrase["end_beat"]
+            points.update({start: low, (start + end) / 2: high, end: low})
+        layer["dynamic"] = [[beat, points[beat]] for beat in sorted(points)]
 
 
-def _apply_voicing_extensions(layer: dict, voicing: dict):
-    richness = max(0.0, min(1.0, float(voicing.get("richness", 0.0) or 0.0)))
-    if richness <= 0:
-        return
-    extensions = [int(x) for x in voicing.get("extensions", [])]
-    if not extensions:
-        return
-    intervals = {7: 10, 9: 14, 11: 17, 13: 21}
-    notes = list(layer.get("notes", []))
-    additions = []
-    groups: dict[tuple[float, float], list[dict]] = {}
-    for ev in notes:
-        if "note" in ev:
-            groups.setdefault((ev["start_beat"], ev["dur_beats"]), []).append(ev)
-    for group in groups.values():
-        if len(group) < 3:
-            continue
-        semis = sorted(theory.note_to_semis(ev["note"]) for ev in group)
-        pcs = set(pcset(semis))
-        root = semis[0]
-        for ext in extensions:
-            if ext not in intervals:
-                continue
-            target = root + intervals[ext]
-            if target % 12 in pcs:
-                continue
-            base = {k: v for k, v in group[0].items()
-                    if k not in ("note", "freq_hz")}
-            additions.append({**base, "note": theory.semis_to_note(target),
-                              "vel": round(group[0].get("vel", 1.0)
-                                           * (0.72 + 0.2 * richness), 4)})
-            pcs.add(target % 12)
-    starts = sorted(groups)
-    for a_key, b_key in zip(starts, starts[1:]):
-        a_group, b_group = groups[a_key], groups[b_key]
-        a_semis = sorted(theory.note_to_semis(e["note"]) for e in a_group)
-        b_semis = sorted(theory.note_to_semis(e["note"]) for e in b_group)
-        if not a_semis or not b_semis:
-            continue
-        if abs(b_semis[0] - a_semis[0]) >= 3:
-            step = 2 if b_semis[0] > a_semis[0] else -2
-            additions.append({
-                "note": theory.semis_to_note(a_semis[0] + step),
-                "start_beat": round(a_key[0] + a_key[1] * 0.72, 6),
-                "dur_beats": round(min(0.5, a_key[1] * 0.22), 6),
-                "vel": round(0.55 + 0.25 * richness, 4),
-                "generated": "voice_leading",
-            })
-        moving = min(a_semis, key=lambda s: min(abs(s - t) for t in b_semis))
-        target = min(b_semis, key=lambda s: abs(s - moving))
-        if abs(target - moving) >= 3:
-            mid = moving + (1 if target > moving else -1) * min(2, abs(target - moving) // 2)
-            additions.append({
-                "note": theory.semis_to_note(mid),
-                "start_beat": round(a_key[0] + a_key[1] * 0.72, 6),
-                "dur_beats": round(min(0.5, a_key[1] * 0.22), 6),
-                "vel": round(0.55 + 0.25 * richness, 4),
-                "generated": "voice_leading",
-            })
-        common = set(pcset(a_semis)) & set(pcset(b_semis))
-        if common:
-            sus_pc = sorted(common)[0]
-            sus = next(s for s in a_semis if s % 12 == sus_pc)
-            additions.append({
-                "note": theory.semis_to_note(sus),
-                "start_beat": b_key[0],
-                "dur_beats": round(min(0.5, b_key[1] * 0.25), 6),
-                "vel": round(0.48 + 0.22 * richness, 4),
-                "generated": "suspension",
-            })
-        elif abs(b_semis[0] - a_semis[-1]) <= 7 \
-                and b_key[0] - min(0.5, a_key[1] * 0.2) >= 0.0:
-            # an anticipation cannot precede beat 0 (merged from _tmp: jazz
-            # style + chord at 0b otherwise compiled a passing tone to -0.5b)
-            additions.append({
-                "note": theory.semis_to_note((b_semis[0] + a_semis[-1]) // 2),
-                "start_beat": round(b_key[0] - min(0.5, a_key[1] * 0.2), 6),
-                "dur_beats": round(min(0.5, a_key[1] * 0.2), 6),
-                "vel": round(0.45 + 0.2 * richness, 4),
-                "generated": "passing_tone",
-            })
-    if additions:
-        voicing["voice_leading"] = True
-    if additions:
-        layer["notes"] = sorted(notes + additions,
-                                key=lambda e: (e["start_beat"],
-                                               e.get("note", ""),
-                                               e.get("freq_hz", 0)))
+def _apply_voicing_extensions(layer: dict, voicing: dict,
+                              scale: list[int] | None = None,
+                              diags: list[str] | None = None,
+                              key_scales: list | None = None):
+    from .harmony import apply_voicing
+    apply_voicing(layer, voicing, scale, diags if diags is not None else [], key_scales)
 
 
 def _layer_role(layer: dict) -> str:
@@ -1302,7 +1186,7 @@ def lower_technique(name: str, params: dict | None = None, *,
         _clamp_note_duration(ev, 0.06, bpm)
         ev["staccatissimo"] = True
     elif name == "harmonic":
-        cents = {2: 1200.0, 3: 1900.0, 4: 2400.0}[params["partial"]]
+        cents = 1200.0 * math.log2(params["partial"])
         _append_curve(ev, _note_curve("pitch_cents", cents))
         ev["harmonic_partial"] = int(params["partial"])
         layer_fx.append({"type": "peak", "freq_hz": 4800.0,
@@ -1316,6 +1200,15 @@ def lower_technique(name: str, params: dict | None = None, *,
     else:
         raise DSLError(f"{TECHNIQUE_UNKNOWN_CODE}: unknown technique '{name}'")
 
+    approximate = TECHNIQUES[name].get("fidelity") == "approximate"
+    ev["technique_render"] = {
+        "name": name, "params": params,
+        "fidelity": "approximate" if approximate else "control_transform",
+        "method": "envelope_pitch_filter_controls",
+    }
+    if approximate:
+        diagnostics.append(f"{TECHNIQUE_FALLBACK_CODE}: approximate {name}: "
+                           "envelope/pitch/filter controls; no recorded or physical technique")
     return {"note": ev, "layer_fx": layer_fx, "diagnostics": diagnostics}
 
 
@@ -1547,6 +1440,13 @@ def compile_asset(a: Asset, variant=None) -> tuple[dict, list[str]]:
 
     spec["kind"] = _one(take("kind", [Tok("IDENT", "sfx", a.line)]), a.line)
     spec["duration_s"] = _one(take("duration"), a.line, "s", "duration")
+    if "routing" in p:
+        spec["routing"] = _kv_directive(take("routing"), a.line)
+    if "seed" in p:
+        tokens = take("seed")
+        if len(tokens) != 1 or not re.fullmatch(r"[0-9]+", tokens[0].text):
+            raise DSLError("seed: expected an unsigned integer", a.line)
+        spec["performance_seed"] = int(tokens[0].text)
     smart_intent = _read_smart_directives(p, a.line)
     structured_intent = (
         _read_structured_intent(a.intent, a.line) if a.intent else {}
@@ -1713,6 +1613,8 @@ def compile_asset(a: Asset, variant=None) -> tuple[dict, list[str]]:
             b = dict(braw)
             bline = b.pop("line", a.line)
             out_b: dict = {"name": b.pop("name")}
+            if "automation_ir" in b:
+                out_b["automation"] = _json_ir(b.pop("automation_ir"), bline, "automation_ir")
             if "gain" in b:
                 out_b["gain_db"] = _one(b.pop("gain"), bline, "db", "gain")
             if "fx" in b:
@@ -1752,12 +1654,16 @@ def compile_asset(a: Asset, variant=None) -> tuple[dict, list[str]]:
 
     master: dict = {}
     m = dict(a.master)
+    if "automation_ir" in m:
+        master["automation"] = _json_ir(m.pop("automation_ir"), a.line, "automation_ir")
     if "width" in m:
         master["stereo_width"] = _one(m.pop("width"), a.line)
     if "peak" in m:
         master["target_peak_dbfs"] = _one(m.pop("peak"), a.line, "db", "peak")
     if "lufs" in m:
         master["target_lufs"] = _one(m.pop("lufs"), a.line)
+    if "normalize" in m:
+        master["normalization"] = _one(m.pop("normalize"), a.line)
     if "fadein" in m:
         master["fade_in_s"] = _one(m.pop("fadein"), a.line, "s")
     if "fadeout" in m:
@@ -1796,6 +1702,14 @@ def compile_asset(a: Asset, variant=None) -> tuple[dict, list[str]]:
 def _auto_block(tgt: str, pts: list[tuple]) -> dict:
     target = {"gain": "gain_db", "cutoff": "cutoff_hz", "scan": "scan"}.get(tgt, tgt)
     return {"target": target, "points": [[t, v] for t, v, _u in pts]}
+
+
+def _json_ir(tokens, line: int, field: str):
+    import json
+    try:
+        return json.loads(_one(tokens, line))
+    except (TypeError, ValueError) as error:
+        raise DSLError(f"{field}: expected a JSON string", line) from error
 
 
 def _resolve_vary(toks, seed_str: str, line: int):
@@ -1897,6 +1811,8 @@ def _expand_chords(notes: list[dict], arp: dict | None,
                                    ev.get("voicing", "close"))
         base = {k: v for k, v in ev.items()
                 if k not in ("chord_root", "chord", "voicing")}
+        base["harmony"] = {"root_pc": theory.note_to_semis(ev["chord_root"]) % 12,
+                           "quality": ev["chord"]}
         if arp is None:
             for s in semis:
                 out.append({**base, "note": theory.semis_to_note(s)})
@@ -2023,6 +1939,14 @@ def _compile_layer(lay: Layer, motifs: dict, scale, diags: list[str],
         out["source_kind"] = "audio"
     p = dict(lay.props)
     line = lay.line
+
+    for field in ("clip_source", "clip_map"):
+        if field in p:
+            import json
+            try:
+                out[field] = json.loads(_one(p.pop(field), line))
+            except (TypeError, ValueError) as error:
+                raise DSLError(f"{field}: expected a JSON string", line) from error
 
     simple = {"osc": ("osc", None), "voice": ("voice", None),
               "color": ("color", None), "shape": ("shape", None),
@@ -2362,6 +2286,12 @@ def _compile_layer(lay: Layer, motifs: dict, scale, diags: list[str],
         out["note"] = _one(p.pop("note"), line)
     for tgt, pts in p.pop("auto", []):
         out.setdefault("automation", []).append(_auto_block(tgt, pts))
+    for field in ("automation", "notes"):
+        name = field + "_ir"
+        if name in p:
+            if field in out:
+                raise DSLError(f"{name}: cannot combine with authored {field}", line)
+            out[field] = _json_ir(p.pop(name), line, name)
     if p:
         diags.append(f"layer '{lay.name}': unknown properties ignored: {sorted(p)}")
     return out

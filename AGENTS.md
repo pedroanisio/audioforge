@@ -89,6 +89,8 @@ Coverage is **not** in `make check`; run it yourself:
 
 ## 5 · Agent surface
 
+Musical correctness probes: `python -m audioforge.tools.musical_acceptance --out DIR [--baseline-root CHECKOUT]` renders numerical cases and a standalone listening-review page. Generated WAVs remain outside Git. See `docs/MIGRATION_3.md` and `docs/MUSICAL_CORRECTNESS.md`.
+
 - In-process facade: `audioforge.agent_tools.run_tool(operation, request)` over
   ops `compile, validate, plan, render, analyze, decompile, import, export,
   repair`; response envelope `schema: "audioforge.agent-tools/1"`
@@ -128,4 +130,5 @@ Load-bearing decisions live in `docs/adr/` (template: `docs/adr/adr-template.md`
 generated artifacts) ships with an ADR — a new `docs/adr/NNNN-*.md` recording
 Context / Decision / Consequences. Current records: ADR-0001 (determinism oracle),
 0002 (non-vocal scope), 0003 (IR-is-truth), 0004 (native kernels fail loud), 0005
-(one IR source of truth; Phase B deferred), 0006 (generator-owns-artifact).
+(one IR source of truth; Phase B deferred), 0006 (generator-owns-artifact),
+0007 (musical rendering semantics and stable performance identity).

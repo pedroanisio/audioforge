@@ -150,12 +150,14 @@ TECHNIQUES = {
         "doc": "Add dynamic emphasis by strength-scaled explicit dynamic/gain data.",
     },
     "dead_note": {
+        "fidelity": "approximate",
         "lowers_to": ["curve:gain_db", "curve:cutoff_hz"],
         "params": {},
         "support": {"synth": True, "sampled": True, "physical": False},
         "doc": "Clamp duration and reduce gain; synth also emits a low cutoff curve.",
     },
     "harmonic": {
+        "fidelity": "approximate",
         "lowers_to": ["curve:pitch_cents", "fx:peak"],
         "params": {
             "partial": {"type": "enum", "enum": [2, 3, 4], "default": 2},
@@ -170,6 +172,7 @@ TECHNIQUES = {
         "doc": "Suppress short-note clamping and preserve a longer release.",
     },
     "palm_mute": {
+        "fidelity": "approximate",
         "lowers_to": ["curve:cutoff_hz", "curve:gain_db"],
         "params": {},
         "support": {"synth": True, "sampled": True, "physical": False},
@@ -182,12 +185,14 @@ TECHNIQUES = {
         "doc": "Clamp duration to a very short explicit note length.",
     },
     "sul_ponticello": {
+        "fidelity": "approximate",
         "lowers_to": ["curve:cutoff_hz", "fx:peak"],
         "params": {},
         "support": {"synth": True, "sampled": False, "physical": False},
         "doc": "Brighten synth notes with a high cutoff and peak emphasis.",
     },
     "sul_tasto": {
+        "fidelity": "approximate",
         "lowers_to": ["curve:cutoff_hz"],
         "params": {},
         "support": {"synth": True, "sampled": False, "physical": False},
@@ -390,8 +395,17 @@ def _validate_note_events(layer: dict, p: str):
     max_fret = layer.get("max_fret", 24)
     if not isinstance(max_fret, int) or max_fret < 0:
         raise SpecError(f"{p}.max_fret: non-negative integer")
+    event_ids = set()
     for j, ev in enumerate(notes):
         ep = f"{p}.notes[{j}]"
+        if not isinstance(ev, dict):
+            raise SpecError(f"{ep}: note object required")
+        if "id" in ev:
+            if not isinstance(ev["id"], str) or not ev["id"] or ev["id"] in event_ids:
+                raise SpecError(f"{ep}.id: non-empty unique event identifier required")
+            event_ids.add(ev["id"])
+        if "voice" in ev and not isinstance(ev["voice"], str):
+            raise SpecError(f"{ep}.voice: string required")
         has_string_fret = "string" in ev or "fret" in ev
         if "note" not in ev and "freq_hz" not in ev and not has_string_fret:
             raise SpecError(f"{ep}: needs 'note' or 'freq_hz'")
@@ -432,6 +446,18 @@ def _validate_note_events(layer: dict, p: str):
                             "explicit frequency disagrees with string/fret pitch")
         _num(ev, "start_beat", ep, 0.0)
         _num(ev, "dur_beats", ep, 1e-3)
+        _num(ev, "release_s_add", ep, 0, 10, required=False)
+        _num(ev, "attack_scale", ep, 0, 10, required=False)
+        if "harmony" in ev:
+            harmony = ev["harmony"]
+            if (not isinstance(harmony, dict) or type(harmony.get("root_pc")) is not int
+                    or not 0 <= harmony["root_pc"] <= 11 or harmony.get("quality") not in theory.CHORD_QUALITIES):
+                raise SpecError(f"{ep}.harmony: root_pc in 0..11 and known chord quality")
+        if "technique_render" in ev:
+            evidence = ev["technique_render"]
+            if (not isinstance(evidence, dict) or evidence.get("name") not in TECHNIQUES
+                    or evidence.get("fidelity") != TECHNIQUES[evidence["name"]].get("fidelity", "control_transform")):
+                raise SpecError(f"{ep}.technique_render: known technique and declared fidelity")
         art = ev.get("art")
         if art is not None and art not in IR_ARTICULATIONS:
             raise SpecError(f"{ep}.art: '{art}' is not one of "
@@ -585,6 +611,9 @@ def validate_spec(spec: dict) -> dict:
     if bd not in BIT_DEPTHS:
         raise SpecError(f"spec.bit_depth: {bd} invalid (allowed 16, 24)")
     _num(spec, "swing", "spec", 0.0, 0.5, required=False)
+    seed = spec.get("performance_seed", 0)
+    if isinstance(seed, bool) or not isinstance(seed, int) or not 0 <= seed < 2 ** 64:
+        raise SpecError("spec.performance_seed: unsigned 64-bit integer")
     routing = spec.get("routing")
     if routing is not None:
         if not isinstance(routing, dict):
@@ -619,6 +648,8 @@ def validate_spec(spec: dict) -> dict:
             raise SpecError(f"{p}.type: '{t}' invalid (allowed: {sorted(LAYER_TYPES)})")
         _num(layer, "pan", p, -1.0, 1.0, required=False)
         _num(layer, "start_s", p, 0.0, 600.0, required=False)
+        from .arrangement import validate_clip
+        validate_clip(layer, p, spec["duration_s"])
         if "fx" in layer:
             _validate_fx(layer["fx"], f"{p}.fx")
         if t == "tone":
@@ -723,6 +754,8 @@ def validate_spec(spec: dict) -> dict:
                 if not isinstance(sec, dict):
                     raise SpecError(f"{p}.section: object")
                 _num(sec, "size", f"{p}.section", 2, 24)
+                if type(sec["size"]) is not int:
+                    raise SpecError(f"{p}.section.size: integer player count")
                 _num(sec, "spread", f"{p}.section", 0.0, 1.0,
                      required=False)
                 _num(sec, "detune_c", f"{p}.section", 0.0, 30.0,
@@ -906,6 +939,10 @@ def validate_spec(spec: dict) -> dict:
                              master.get("fx"), scope="master")
     _num(master, "target_peak_dbfs", "spec.master", -40.0, 0.0, required=False)
     _num(master, "target_lufs", "spec.master", -40.0, -5.0, required=False)
+    if master.get("normalization", "none") not in {"none", "peak"}:
+        raise SpecError("spec.master.normalization: expected none or peak")
+    if master.get("normalization") == "peak" and "target_lufs" in master:
+        raise SpecError("spec.master: peak normalization conflicts with target_lufs")
     _num(master, "stereo_width", "spec.master", 0.0, 1.0, required=False)
 
     # Grid-using specs (drums/notes/instrument) require a base tempo. Checked at
@@ -915,11 +952,19 @@ def validate_spec(spec: dict) -> dict:
     if uses_grid:
         _num(spec, "bpm", "spec", BPM_MIN, BPM_MAX)
 
+    from .arrangement import compile_repeats, validate_score
+    validate_score(spec)
+    if spec.get("score", {}).get("repeats"):
+        expanded = validate_spec(compile_repeats(spec))
+        spec.clear()
+        spec.update(expanded)
+
     if spec.get("loop_safe"):
         if not spec.get("bpm"):
             raise SpecError("spec.loop_safe: requires bpm")
-        beat_s = 60.0 / spec["bpm"]
-        beats = spec["duration_s"] / beat_s
+        from .sequencer import TempoMap, TimelineMap
+        timeline = TimelineMap(TempoMap(spec.get("tempo_map") or [[0, spec["bpm"]]]), spec.get("holds"))
+        beats = timeline.beat_at(spec["duration_s"])
         if abs(beats - round(beats)) > 1e-6:
             raise SpecError(
                 f"spec.loop_safe: duration_s={spec['duration_s']} is "

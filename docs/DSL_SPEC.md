@@ -1,6 +1,15 @@
+---
+disclaimer:
+  notice: >-
+    No information within this document should be taken for granted. Claims
+    require verification against the implementation and its acceptance tests.
+  generated_by: "GPT-6 via Codex"
+  date: "2026-09-05"
+---
+
 # AudioForge DSL Specification
 
-**DSL 1.9 · Engine 2.16.0**
+**DSL 2.0 · Engine 3.0.0**
 
 The `.af` DSL is the authoring surface for humans and AI agents. It compiles to a JSON spec — the deterministic intermediate representation (IR) that the engine renders. Everything expressive in the DSL (emotion tags, intensity curves, motifs, chords, transforms, groove templates, `vary()` choices) is **expanded at compile time** into explicit JSON parameters, so the IR is always the single, inspectable ground truth for what will be rendered. Under the same engine version, same DSL text → same IR → same spec hash → byte-identical audio.
 
@@ -11,7 +20,7 @@ and expressiveness gaps are tracked in [DSL_GAP_SPEC.md](DSL_GAP_SPEC.md).
 
 ## 1. Lexical rules
 
-Comments run from `#` to end of line (a `#` *inside* an identifier, as in `C#4`, is part of the identifier). Statements are line-oriented; a property list continues onto the next line if the current line ends with a comma or is inside parentheses. Strings are double-quoted: `file: "kick_room.wav"`.
+Comments run from `#` to end of line (a `#` *inside* an identifier, as in `C#4`, is part of the identifier). Statements are line-oriented; a property list continues onto the next line if the current line ends with a comma or is inside parentheses. Strings use JSON escaping inside double quotes: `file: "kick_room.wav"`. Numbers accept scientific notation, including before a unit suffix, such as `1e-6db`.
 
 Numbers may carry a unit suffix, validated against what the property expects:
 
@@ -60,19 +69,19 @@ A file may contain multiple `asset` blocks; each compiles to its own spec. Buses
 | `key:` | e.g. `C minor`, or a **key map**: `A minor, 26b=C major` | `key` + `key_map` |
 | `swing:` | 0..1 | `swing` (legacy; prefer `groove:`) |
 | `groove:` | `<template> [amount]` — `straight swing16 shuffle laidback pushed heavy_one` | explicit 16-slot `timing`/`accent` arrays |
-| `loopsafe:` | `on` | `loop_safe` (validates whole-beat duration) |
+| `loopsafe:` | `on` | whole-beat duration under the tempo/hold map; premaster and delivered seam/tail checks at render |
 | `emotion:` | `name=0..1, ...` | metadata + Emotion macro expansion |
 | `intensity:` | `time=0..1, ...` | tagged master `gain_db` automation + `intensity_curve` |
 | `library:` | `"name@manifest_sha256"` | `library` — pins a content-addressed instrument library; mandatory for `instrument` layers |
 | `meter:` | `BEATS UNIT`, e.g. `7 8` | `score.meter` |
 | `pickup:` | beats | `score.pickup_beats` |
 | `form:` | `name STARTb for DURb, ...` | `score.sections` |
-| `repeat:` | `section xN` | `score.repeats` |
+| `repeat:` | `section xN`, N in 1..32 including the first pass | expanded events, tempo, controls and duration; following material moves later |
 | `polymeter:` | `layer BEATS UNIT` | `score.polymeter` |
 | `style:` | style-pack name | deterministic defaults under `intent.style` and explicit render IR |
 | `perform:` | `style=... expressivity=... rubato=arch amount=0.12 segment=0.25b` | phrase analysis + explicit performance parameters; rubato lowers to dense `tempo_map` points |
 | `ensemble:` | `family size=N spread=... octaves=N` | explicit unison/section/octave events and role buses |
-| `voicing:` | `richness=... extensions=...` | explicit chord extensions and generated voice-leading notes |
+| `voicing:` | `richness=... extensions=... voice_leading=on` | root/quality-aware extensions in the local key; optional register search preserving chord tones |
 | `space:` | `hall=... depth=...` | explicit room/glue processing |
 
 **Tempo maps** ramp BPM linearly between points; beat→seconds is the exact analytic integral (logarithmic per ramp segment), so accelerandi are smooth, not stepped. Keep them austere: `tempo_map` is only `[beat, bpm]` points. `fermata: 12b=1.5s` (or `hold:`) compiles to first-class `holds` events that insert absolute seconds at the named beat, before events at that beat and all later beats. `perform: rubato=...` is smart directive sugar: the compiler analyzes phrases and writes dense piecewise-linear tempo points with ≤2 ms segment error, so the render IR stays diffable and verifiable. Every musical grid — note starts/durations, drum steps, groove and swing offsets, loop expansion — follows the map plus holds. Layer `start:`, automation breakpoints, and markers remain in real seconds. **Key maps** modulate mid-asset: scale advisories and `diatonic` transforms (§3) resolve whichever key is in force at their position.
@@ -80,6 +89,8 @@ A file may contain multiple `asset` blocks; each compiles to its own spec. Buses
 Known emotion tags: `tension awe sadness triumph suspense intimacy urgency calm fear wonder cinematic_intensity`. Unknown tags are kept as metadata with a warning.
 
 ### 2.2 Markers
+
+`performance_seed: 42` selects a reproducible take independently of mix settings. `routing: fallbacks=allow|warn|forbid` applies to technique, sampled legato and section approximations as well as missing articulation routes.
 
 `marker climax @ 26s` — compiled into `markers`, written to the manifest and a `.markers.json` sidecar for video-timeline alignment.
 
@@ -187,14 +198,14 @@ All deviation from the grid comes from per-note seeded RNG paths or fixed templa
 | Property | Where | Behavior |
 |----------|-------|----------|
 | `groove: <name> [amount]` | asset | template × amount → explicit 16-slot timing (fractions of a 16th) and accent arrays, applied to drum patterns and note onsets |
-| `humanize: 0..1` (or `time=…s vel=…`) | notes/drums | macro → `{timing_s, vel}` (at 1.0: ±18 ms, ±15%); per-hit seeded jitter |
+| `humanize: 0..1` (or `time=…s vel=…`) | notes/instrument/drums | bounded seeded timing: 70% shared beat clock, 30% part-onset deviation; simultaneous chord tones share an onset |
 | `velbright: 0..1` | notes | velocity→timbre: soft notes get a lowpass pulled toward the fundamental (measured: vel 0.3 vs 1.0 → 400 vs 1923 Hz centroid on a saw) |
 | `glide: Ns` | notes | portamento from the previous note (monophonic-line semantics), exponential |
 | `vibrato: rate=Hz depth=Nc delay=Ns` | notes | per-note vibrato entering after `delay` with a fade-in |
 | `arp: <pattern> [rate=…b octaves=N gate=0..1]` | notes | chords in the layer sequence instead of sounding together. Patterns: `up down updown downup random` (`random` order is seeded from variant + layer + event index — compile-stable) |
-| `slur( … )` / `play … legato` | notes/instrument | phrase groups (since 2.12). On instrument layers, consecutive slurred notes render with **legato joins**: the outgoing note holds through an equal-power crossfade (`legato: Ns`, default 0.05 s), the incoming note skips 60 ms past its recorded attack and glides its read rate from the previous pitch — a real smear, not a crossfade artifact. Synth layers use slurs for phrasing only (use `glide:` for portamento) |
-| `section: size=N [spread=0..1] [detune=Nc] [timing=Ns]` | instrument | ensemble multiplication (since 2.12): N seeded virtual players — independent timing (±9 ms default), micro-detune (±7 c), per-player round-robin pools — spread across the stereo stage (the layer becomes true stereo; `pan:` offsets the whole section). Use multiplication to thicken or for divisi; it is not a substitute for independently recorded sections |
-| `phrasing: 0..1` | notes/instrument | a deterministic arch over slur groups (since 2.12): velocities rise toward the group's pitch peak (±18% at 1.0) and ease after; the last note lifts (−5% duration, −7% velocity). Documented constants, no learned model |
+| `slur( … )` / `play … legato` | notes/instrument | only contiguous monophonic events in the same voice/slur join. Sampled joins use the selected region loop/attack boundary, a crossfade and read-rate glide. The plan declares this approximation; `routing: fallbacks=forbid` rejects it. Synth slurs group phrasing; use `glide:` for portamento |
+| `section: size=N [spread=0..1] [detune=Nc] [timing=Ns]` | instrument | N seeded players with shared beat timing and static player offsets, detune and round-robin choices, spread over stereo. The plan includes every player and declares sample multiplication approximate |
+| `phrasing: 0..1` | notes/instrument | explicit midpoint arch by time within each slur group (velocity ±18% at 1.0). Preserves gates and slurs; pitch maxima and final notes do not establish expressive peaks or cadences |
 | `dynamic: beats=mark, …` | notes/instrument | dynamics as timbre (since 2.11). Marks `ppp pp p mp mf f ff fff` map to documented 0..1 values (0.10/0.22/0.35/0.48/0.60/0.74/0.87/1.00); raw numbers accepted; a hairpin is simply two points. On **instrument** layers the curve drives equal-power, *time-varying* velocity-layer crossfades (a crescendo on one held note moves through the recorded layers) plus a −9 dB..0 level term — real dynamics are mostly timbre. On **notes** layers it drives brightness (full velbright coupling unless `velbright:` is set explicitly) and the same level term, with brightness sampled at note onset. Per-note `vel` remains a local accent on amplitude |
 
 **Drum patterns** are 16th-note strings (`x` hit, `X` accent, `.` rest), or Euclidean: `pattern: euclid(5,16)` / `euclid(5,16,rot)` expands via Bjorklund to the explicit string. Glide and vibrato render through pitch-envelope synthesis (phase integration / variable-rate table reads), bandlimited at the envelope's maximum frequency.
@@ -415,10 +426,7 @@ interop commands, examples, repair hints, and known incompatibilities.
 
 ## 13. Universal score, audio, style, and interop pillars
 
-**Universal score/time layer.** `meter`, `pickup`, `form`, `repeat`, and
-`polymeter` preserve musical structure under `score`. These fields do not hide
-render behavior; they are semantic handles for agents and import/export tools,
-while note events remain explicit.
+**Universal score/time layer.** `repeat` compiles named sections into a single explicit playback timeline. Counts include the original pass and extend duration. Notes are re-articulated at discontinuous cuts with release tails; continuous generators repeat dry windows before effects. Tempo, holds, key changes, automation, form spans and markers follow the expansion. Meter and per-layer polymeter define local bar/groove phase; beat 0 begins the pickup and the first full downbeat occurs at `pickup` beats. All beat values remain quarter-note units. See [migration details](MIGRATION_3.md).
 
 ```
 meter: 7 8
@@ -471,7 +479,7 @@ through `interop_diagnostics()` as `lossy_pitch_curve` or
 
 **Articulations (since 2.11).** Per note (`art spiccato`) or per layer (`articulation:`). If the library samples the articulation, its SFZ map is selected; otherwise a documented synthetic fallback applies and is **recorded in the render manifest** (`articulation_fallbacks`) — loud, not silent: staccato/spiccato = sustain clamped to 0.18/0.12 s; pizzicato = shortest available articulation clamped to 0.10 s; marcato = +2.5 dB, hard attack; tremolo = seeded ~12 Hz re-trigger train; legato = sustain until the legato-join mechanism described in Performance & rhythm.
 
-The sampler interprets a documented SFZ subset: `<control>/<global>/<group>/<region>` inheritance, `default_path`, key/velocity mapping (`key lokey hikey pitch_keycenter lovel hivel`), **seeded round-robins** (`seq_length/seq_position` — picked from the per-note RNG path, which includes the variant tag, so repeats vary, re-renders are byte-identical, and pack variants re-realize), `ampeg_*` envelopes, forward loops with equal-power seam crossfades (`loop_mode/loop_start/loop_end/loop_crossfade`), and `tune/transpose/volume`. Unknown opcodes are collected and reported, never silently honored. Resampling is a fixed 32-tap windowed-sinc kernel (measured ±0.3 cents through a 44.1k→48k pitch-shifted path). `pitch_cents` curves multiply the per-sample source-read rate before cumulative source-position integration, so bends and vibrato also cross looped sustain regions in source coordinates. Without a `dynamic` curve, velocity maps linearly to amplitude and selects layers on the 1–127 scale; with one, the curve owns selection and crossfade (§10).
+The sampler interprets a documented SFZ subset: `<control>/<global>/<group>/<region>` inheritance, `default_path`, key/velocity mapping (`key lokey hikey pitch_keycenter lovel hivel`), **seeded round-robins** (`seq_length/seq_position` — picked from the per-note RNG path, which includes the variant tag, so repeats vary, re-renders are byte-identical, and pack variants re-realize), `ampeg_*` envelopes, forward loops with equal-power seam crossfades (`loop_mode/loop_start/loop_end/loop_crossfade`), and `tune/transpose/volume`. Unknown opcodes are collected and reported, never silently honored. Resampling uses a rate-adaptive windowed-sinc kernel; the cutoff and support track instantaneous playback rate to suppress aliases during transposition, source-rate conversion and glides. Sustain loops exit into the recorded tail at note-off; continuous loops continue during release. `pitch_cents` curves multiply the per-sample source-read rate before cumulative source-position integration, so bends and vibrato also cross looped sustain regions in source coordinates. Without a `dynamic` curve, velocity maps linearly to amplitude and selects layers on the 1–127 scale; with one, the curve owns selection and crossfade (§10).
 
 ---
 
@@ -492,9 +500,9 @@ Emotion never invents notes or changes timing — only spatial/spectral framing,
 
 ## 16. Master block, loudness, mastering order
 
-`width:` (0..1), `peak:` (dBFS true-peak ceiling), `lufs:` (integrated target), `fadein:`/`fadeout:` (s), `fx:`, `auto gain:`.
+`width:` (0..1), `peak:` (dBFS true-peak ceiling), `normalize: none|peak` (default `none`), `lufs:` (integrated target), `fadein:`/`fadeout:` (s), `fx:`, `auto gain:`.
 
-The master stage runs: **fx chain → gain automation → DC blocker (~8 Hz, always on) → LUFS gain + lookahead true-peak limiter (4× oversampled, stereo-linked, iterative makeup) → seeded dither → quantize**. `lufs:` uses a BS.1770-style measurement (K-weighting, gated 400 ms blocks); the manifest reports `measured_lufs`, `applied_gain_db`, max gain reduction, and `final_lufs`. Without `lufs:`, output is peak-normalized to `peak:`. 16-bit exports use high-pass TPDF dither; 24-bit flat TPDF. `loopsafe: on` fails compilation on non-whole-beat durations.
+The master stage runs: **fx → gain automation → width/DC safety → fades → requested normalization → true-peak ceiling → seeded dither → quantization**. Without `lufs:` or `normalize: peak`, levels below the ceiling are preserved. `lufs:` requests BS.1770-style loudness normalization; the manifest reports the actual premaster measurement, applied gain, limiting and final loudness. `normalize: peak` explicitly requests peak normalization and cannot be combined with `lufs:`. Peak safety remains active even when the input already meets its loudness target. Loop-safe rendering validates both the unfaded seam/tails and the delivered buffer; these checks are numerical, not a perceptual continuity rating.
 
 Export presets (SDK/CLI `--preset`): `social_video` 48k/16/−14 · `broadcast` 48k/24/−23 · `cinematic_master` 96k/24/−16 · `web_preview` 22k05/16/−16.
 
@@ -502,7 +510,7 @@ Export presets (SDK/CLI `--preset`): `social_video` 48k/16/−14 · `broadcast` 
 
 ## 17. Determinism, manifests, versioning
 
-Every render is keyed to the spec content hash; `ENGINE_VERSION` folds into it, so any engine change that could alter bytes changes all hashes — stale caches can never masquerade as current renders. Manifests record spec hash, output SHA-256, loudness report, markers, variant/intensity tags, and cutdown lineage. `audioforge render --analyze` also writes deterministic analysis features and actionable recommendations (`low_foundation_weak`, `mono_image`, `very_bright`, etc.) into the manifest for agent critique loops. `audioforge verify spec manifest` re-renders and compares output hashes — the CI reproducibility gate. Cross-platform float reproducibility is *checked* by that gate per environment, not assumed.
+The performance seed and variant define named component randomness independently of gain, pan and metadata. Every render is keyed to the complete spec content hash; `ENGINE_VERSION` folds into it, so any engine change that could alter bytes changes all hashes — stale caches can never masquerade as current renders. Manifests record spec hash, output SHA-256, loudness report, markers, variant/intensity tags, and cutdown lineage. `audioforge render --analyze` also writes deterministic observations and recommendations conditioned on declared analysis expectations into the manifest for agent critique loops. `audioforge verify spec manifest` re-renders and compares output hashes — the CI reproducibility gate. Cross-platform float reproducibility is *checked* by that gate per environment, not assumed.
 
 Runtime version metadata is owned by `audioforge.version`. The DSL banner in
 this document, the capability manifest, `audioforge --version`, and compiled IR
@@ -511,6 +519,8 @@ this document, the capability manifest, `audioforge --version`, and compiled IR
 whether a migration is required.
 
 ## 18. Diagnostics contract (for agents)
+
+Canonical decompilation may emit JSON strings: `notes_ir:` for explicit note events (including `id`, `voice` and cropped curves), `automation_ir:` on layers/buses/master, and `clip_source:` plus `clip_map:` on continuous layers. These carry validated render IR when concise authoring syntax cannot preserve it. Curve `time_offset` shifts its input clock; `time_map` splices contiguous `[source_start, source_end, destination]` windows in that curve's time basis. All are hash-included.
 
 The executable grammar lives in `audioforge.lark_parser` as a Lark grammar and is the source for the published EBNF/GBNF artifacts (`audioforge grammar --format ebnf|gbnf`). Parse/compile errors raise with line numbers. Non-fatal advice arrives as warnings: out-of-scale notes (advisory — chromaticism is allowed), unknown properties (ignored, named), emotion expansion notes, cutdown length mismatches, and note events that extend past the asset duration. The SDK (`AudioForge.compile`) never raises on user input — everything is a structured `Diagnostic(severity, message, path)`.
 

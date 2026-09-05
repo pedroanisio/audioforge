@@ -66,7 +66,8 @@ class MCPServer:
             {
                 "name": name,
                 "description": desc,
-                "inputSchema": {"type": "object", "additionalProperties": True},
+                "inputSchema": agent_tools.tool_schemas().get(name, {}).get(
+                    "request", {"type": "object", "additionalProperties": True}),
             }
             for name, desc in {**ops, **_EXTRA_TOOLS}.items()
         ]

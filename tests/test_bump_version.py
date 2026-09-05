@@ -94,6 +94,7 @@ def test_main_check_nonzero_on_drift(tmp_path, monkeypatch, capsys):
 
 
 def test_main_dry_run(sandbox, capsys):
+    before = bv.truth()
     assert bv.main(["2.18.0", "--dry-run"]) == 0
     assert "2.18.0" in capsys.readouterr().out
-    assert bv.truth() == ("2.16.0", "1.9")  # unchanged
+    assert bv.truth() == before

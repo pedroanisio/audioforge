@@ -33,7 +33,7 @@ def _response(ok: bool, *, artifacts=None, diagnostics=None) -> dict:
 def tool_schemas() -> dict:
     ops = ["compile", "validate", "plan", "render", "analyze", "decompile",
            "import", "export", "repair"]
-    return {
+    schemas = {
         name: {
             "schema": TOOL_SCHEMA_VERSION,
             "request": {"type": "object"},
@@ -41,6 +41,12 @@ def tool_schemas() -> dict:
         }
         for name in ops
     }
+    schemas["analyze"]["request"] = {
+        "type": "object", "required": ["audio", "sample_rate"],
+        "properties": {"audio": {"type": "array"}, "sample_rate": {"type": "integer", "minimum": 1},
+                       "context": {"type": "object", "description": "Compiled spec or declared analysis expectations"}},
+    }
+    return schemas
 
 
 def run_tool(operation: str, request: dict) -> dict:
@@ -53,8 +59,10 @@ def run_tool(operation: str, request: dict) -> dict:
                 diagnostics=[d.__dict__ for d in res.diagnostics],
             )
         if operation == "validate":
-            validate_spec(request["spec"])
-            return _response(True)
+            asset = AudioForge().load_spec(request["spec"])
+            diagnostics = asset.validate(resolve=request.get("resolve", True))
+            return _response(not any(d.severity == "error" for d in diagnostics),
+                             diagnostics=[d.as_dict() for d in diagnostics])
         if operation == "plan":
             from .plan import build_render_plan
             result = build_render_plan(request["spec"])
@@ -90,7 +98,8 @@ def run_tool(operation: str, request: dict) -> dict:
         if operation == "repair":
             return _response(True, artifacts=[plan_repair(request)])
         if operation == "analyze":
-            report = analyze_audio(request["audio"], int(request["sample_rate"]))
+            report = analyze_audio(request["audio"], int(request["sample_rate"]),
+                                   context=request.get("context"))
             return _response(True, artifacts=[{"analysis": report}])
         if operation == "render":
             res = AudioForge().compile(request.get("dsl", ""))

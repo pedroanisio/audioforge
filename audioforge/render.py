@@ -1,13 +1,13 @@
 """Deterministic renderer.
 
 Pipeline: validate -> hash spec -> render each layer (seeded per layer path)
--> per-layer fx -> pan/mix to stereo -> master fx -> normalize -> fades
+-> per-layer fx -> pan/mix to stereo -> master fx -> fades -> mastering
 -> seeded TPDF dither -> quantize -> WAV + manifest (with output SHA-256).
 
 Determinism contract:
   * no wall-clock, no global RNG, no os.urandom anywhere in the pipeline;
   * every random draw comes from a Generator seeded by
-    SHA-256(engine_version + canonical_spec)[component_path];
+    SHA-256(performance_seed + variant)[component_path];
   * float64 throughout; quantization happens exactly once, at the end;
   * the manifest records spec_hash and output sha256 so CI can verify
     byte-identical reproduction.
@@ -23,30 +23,45 @@ from pathlib import Path
 import numpy as np
 
 from . import synth, sequencer
-from .determinism import ENGINE_VERSION, rng_for, spec_hash
+from .determinism import ENGINE_VERSION, performance_hash, rng_for, spec_hash
 from .fx import apply_fx_chain, gain_fx
 from .dynamics import master_loudness
 from .schema import validate_spec
 
 
-def _automation_envs(layer: dict, total_n: int, sr: int):
+def _automation_envs(layer: dict, total_n: int, sr: int, tm=None):
     """Split a layer/master automation list into (gain_env | None,
     {fx_index: cutoff_env})."""
     gain_env = None
     cutoff_envs: dict[int, "np.ndarray"] = {}
     scan_env = None
+    from .curves import curve_points, evaluate_curve
+    seconds = np.arange(total_n, dtype=float) / sr
+    beats = None
     for au in layer.get("automation", []):
+        if au["target"] not in {"gain_db", "cutoff_hz", "scan"}:
+            continue
+        times = seconds
+        if au.get("time_basis") == "layer_beats":
+            if tm is None:
+                raise ValueError("beat-based automation requires the render timeline")
+            if beats is None:
+                offset = layer.get("start_s", 0)
+                beats = np.array([tm.beat_at(float(t) + offset) - tm.beat_at(offset) for t in seconds])
+            times = beats
         if au["target"] == "gain_db":
-            db = synth.breakpoints(au["points"], total_n, sr)
+            db = evaluate_curve(au, times)
             env = 10.0 ** (db / 20.0)
             gain_env = env if gain_env is None else gain_env * env
         elif au["target"] == "cutoff_hz":
-            cutoff_envs[au.get("fx_index", 0)] = synth.breakpoints(
-                au["points"], total_n, sr, log_domain=True)
+            logarithmic = {k: v for k, v in au.items() if k not in {"t0", "rate_hz", "values"}}
+            logarithmic["points"] = [[p[0], float(np.log(max(p[1], 1e-9))), *p[2:]]
+                                      for p in curve_points(au)]
+            cutoff_envs[au.get("fx_index", 0)] = np.exp(evaluate_curve(logarithmic, times))
         elif au["target"] == "scan":
             import numpy as _np
             scan_env = _np.clip(
-                synth.breakpoints(au["points"], total_n, sr), 0.0, 1.0)
+                evaluate_curve(au, times), 0.0, 1.0)
     return gain_env, cutoff_envs, scan_env
 
 
@@ -69,16 +84,46 @@ def _layer_signal(layer: dict, total_n: int, sr: int, tm, swing: float,
                   groove: dict | None = None,
                   report: dict | None = None,
                   render_plan: dict | None = None) -> np.ndarray:
+    layer = {**layer, "_performance_root": root}
     t = layer["type"]
     name = layer.get("name", f"layer{idx}")
-    rng = lambda sub="": rng_for(root, f"{idx}:{name}", t, sub)  # noqa: E731
+    rng = lambda sub="": rng_for(root, name, t, sub)  # noqa: E731
     dur_n = int(layer.get("duration_s", total_n / sr) * sr)
     dur_n = min(dur_n, total_n)
-    _, _, scan_env = _automation_envs(layer, dur_n, sr)
+    if layer.get("clip_map"):
+        source = layer["clip_source"]
+        original = {key: value for key, value in layer.items()
+                    if key not in {"clip_map", "clip_source", "fx", "automation"}}
+        original["start_s"] = source.get("start_s", 0)
+        original["duration_s"] = source["layer_duration_s"]
+        original["automation"] = [a for a in source.get("automation", []) if a["target"] == "scan"]
+        original["_score"] = source.get("score", {})
+        source_tm = sequencer.TimelineMap(sequencer.TempoMap(source["tempo_map"]), source.get("holds"))
+        dry = _layer_signal(original, int(round(source["duration_s"] * sr)), sr,
+                            source_tm, swing, root, idx, groove, report)
+        sig = np.zeros((total_n, dry.shape[1]) if dry.ndim == 2 else total_n)
+        for index, (a, b, dest) in enumerate(layer["clip_map"]):
+            piece = dry[int(round(a * sr)):int(round(b * sr))].copy()
+            start = int(round(dest * sr))
+            count = min(piece.shape[0], total_n - start)
+            fade = min(int(.005 * sr), count // 2)
+            # Fixed-length edits: tapered discontinuous edges, no tempo drift.
+            if fade and index:
+                ramp = np.linspace(0, 1, fade)
+                piece[:fade] *= ramp[:, None] if piece.ndim == 2 else ramp
+            if fade and index + 1 < len(layer["clip_map"]):
+                ramp = np.linspace(1, 0, fade)
+                piece[-fade:] *= ramp[:, None] if piece.ndim == 2 else ramp
+            sig[start:start + count] = piece[:count]
+        # The source layer already applied its gain; effects follow assembly.
+        layer = {**layer, "gain_db": 0}
+    _, _, scan_env = _automation_envs(layer, dur_n, sr, tm)
     if scan_env is not None:
         layer = {**layer, "_scan_env": scan_env}   # reaches osc via voice
 
-    if t == "tone":
+    if layer.get("clip_map"):
+        pass
+    elif t == "tone":
         freq = layer.get("freq_hz") or synth.note_to_freq(layer["note"])
         sig = synth.osc(layer.get("osc", "sine"), freq, dur_n, sr,
                         detune_cents=layer.get("detune_cents", 0.0),
@@ -103,7 +148,7 @@ def _layer_signal(layer: dict, total_n: int, sr: int, tm, swing: float,
     elif t == "drums":
         sig = sequencer.render_drum_track(layer, dur_n, sr, tm, swing,
                                           rng("voice"), groove=groove,
-                                          rng_humanize=rng("humanize"))
+                                          rng_humanize=rng("humanize"), rng_factory=rng)
     elif t == "notes":
         sig = sequencer.render_note_track(layer, dur_n, sr, tm,
                                           rng_factory=rng, groove=groove)
@@ -182,7 +227,7 @@ def _layer_signal(layer: dict, total_n: int, sr: int, tm, swing: float,
         if "pattern" in layer:
             sig = sequencer.render_drum_track(
                 layer, dur_n, sr, tm, swing, rng("voice"), groove=groove,
-                rng_humanize=rng("humanize"), hit_override=hit)
+                rng_humanize=rng("humanize"), hit_override=hit, rng_factory=rng)
         elif hit.ndim == 2:
             sig = np.zeros((dur_n, hit.shape[1]))
             seg = min(hit.shape[0], dur_n)
@@ -194,21 +239,21 @@ def _layer_signal(layer: dict, total_n: int, sr: int, tm, swing: float,
     else:  # unreachable after validation
         raise ValueError(t)
 
-    if "gain_db" in layer and t not in ("drums", "notes") \
+    if "gain_db" in layer and t not in ("drums", "notes", "instrument") \
             and not (t == "sample" and "pattern" in layer):
         sig = gain_fx(sig, layer["gain_db"])
-    gain_env, cutoff_envs, _scan = _automation_envs(layer, sig.size, sr)
+    gain_env, cutoff_envs, _scan = _automation_envs(layer, sig.shape[0], sr, tm)
     if "fx" in layer:
         if sig.ndim == 2:                # section layers: fx per channel
             sig = np.stack([
                 apply_fx_chain(sig[:, c], sr, layer["fx"],
                                lambda sub, _c=c: rng_for(
-                                   root, f"{idx}:{name}", f"ch{_c}", sub),
+                                   root, name, f"ch{_c}", sub),
                                automation_envs=cutoff_envs)
                 for c in (0, 1)], axis=1)
         else:
             sig = apply_fx_chain(sig, sr, layer["fx"],
-                                 lambda sub: rng_for(root, f"{idx}:{name}",
+                                 lambda sub: rng_for(root, name,
                                                      sub),
                                  automation_envs=cutoff_envs)
     if gain_env is not None:
@@ -227,7 +272,7 @@ def _resolve_jobs(jobs: int | None) -> int:
     ``AUDIOFORGE_JOBS`` env var (default 1 = serial). Always >= 1.
 
     Parallelism is deterministic by construction: each layer's signal is a
-    pure function of (layer, index, spec-hash) with per-layer seeded RNG, and
+    pure function of (layer, name, performance identity) with per-layer seeded RNG, and
     results are summed back in layer order — so any job count yields
     byte-identical audio. See ``_layer_signals``.
     """
@@ -246,15 +291,16 @@ def _layer_signals(spec: dict, total_n: int, sr: int, tm, swing: float,
     """Render every layer's full-length signal, optionally across threads.
 
     Returns ``(prepped_layers, signals)`` in spec order. Layer signals are
-    order-independent (seeded per-layer RNG keyed by index); the caller sums
+    order-independent (seeded per-layer RNG keyed by name); the caller sums
     them back in order, so the result is identical for any ``jobs``. The hot
     work (synthesis, sampling, FX) is largely in GIL-releasing numpy/scipy C,
     so threads give real speedup without breaking determinism or needing the
     libraries re-loaded per process. ``report`` is write-only metadata and is
     shared across threads (it never feeds back into the audio)."""
     layers = spec["layers"]
-    prepped = [({**ly, "_library": spec["library"]}
-                if ly.get("type") == "instrument" else ly) for ly in layers]
+    prepped = [{**ly, "_score": spec.get("score", {}),
+                **({"_library": spec["library"]} if ly.get("type") == "instrument" else {})}
+               for ly in layers]
     n = len(prepped)
     parallel = jobs > 1 and n > 1
     if parallel:
@@ -286,6 +332,7 @@ def _premaster(spec: dict, root: str, sr: int, master: dict,
                return_stems: bool, jobs: int = 1,
                render_plan: dict | None = None):
     """Layers -> buses -> master fx/automation/width/DC; no loudness yet."""
+    root = performance_hash(spec)
     total_n = int(spec["duration_s"] * sr)
     bpm = float(spec.get("bpm", 120.0))
     tm = sequencer.TempoMap(spec.get("tempo_map") or [[0.0, bpm]])
@@ -375,7 +422,7 @@ def _premaster(spec: dict, root: str, sr: int, master: dict,
                               attack_s=d.get("attack_s", 0.012),
                               release_s=d.get("release_s", 0.18))
             st = st * g[:, None]
-        b_gain_env, b_cutoff_envs, _ = _automation_envs(b, total_n, sr)
+        b_gain_env, b_cutoff_envs, _ = _automation_envs(b, total_n, sr, tm)
         if "fx" in b:
             bl, br = apply_master_chain(
                 st[:, 0], st[:, 1], sr, b["fx"],
@@ -392,7 +439,7 @@ def _premaster(spec: dict, root: str, sr: int, master: dict,
     del acc, kept
     left, right = mix[:, 0], mix[:, 1]
 
-    m_gain_env, m_cutoff_envs, _mscan = _automation_envs(master, total_n, sr)
+    m_gain_env, m_cutoff_envs, _mscan = _automation_envs(master, total_n, sr, tm)
     if "fx" in master:
         from .fx import apply_master_chain
         left, right = apply_master_chain(
@@ -418,40 +465,72 @@ def _premaster(spec: dict, root: str, sr: int, master: dict,
 
 def _finish(left, right, sr, master, spec, root, stems, return_stems,
             render_plan_hash: str | None = None):
-    # loudness stage: LUFS target if requested, else peak normalize
+    loop_report = None
+    if spec.get("loop_safe"):
+        from .analysis import loop_boundary_report
+        from .schema import SpecError
+        loop_report = loop_boundary_report(np.stack([left, right], axis=1), sr, spec)
+        if not loop_report["passed"]:
+            _premaster_reports.pop(id(spec), None)
+            raise SpecError("loop_boundary_tail: unsafe loop seam or truncated tail: "
+                            + json.dumps(loop_report, sort_keys=True))
+    # Measure and normalize the delivered fade envelope, not an earlier buffer.
+    fi = min(left.size, int(master.get("fade_in_s", 0.0) * sr))
+    fo = min(left.size, int(master.get("fade_out_s", 0.0 if spec.get("loop_safe") else 0.01) * sr))
+    if fi:
+        ramp = np.linspace(0, 1, fi)
+        left[:fi] *= ramp
+        right[:fi] *= ramp
+    if fo:
+        ramp = np.linspace(1, 0, fo)
+        left[-fo:] *= ramp
+        right[-fo:] *= ramp
+    # Preserve deliberate levels; normalization requires an explicit request.
     loudness_report = None
     if "target_lufs" in master:
         st = np.stack([left, right], axis=1)
         del left, right                      # memory: one stereo copy only
-        peak = max(np.max(np.abs(st)), 1e-12)
-        st /= peak                           # in place: same ops, same bytes
-        st *= 0.5                            # pre-scale into sane range
         st, loudness_report = master_loudness(
             st, sr, float(master["target_lufs"]),
             float(master.get("target_peak_dbfs", -1.0)))
         left, right = st[:, 0], st[:, 1]
-    else:
+    elif master.get("normalization", "none") == "peak":
         target = float(master.get("target_peak_dbfs", -1.0))
         peak = max(np.max(np.abs(left)), np.max(np.abs(right)), 1e-12)
         g = (10.0 ** (target / 20.0)) / peak
         left *= g
         right *= g
+    else:
+        from .dynamics import true_peak_limit
+        st, limiter = true_peak_limit(
+            np.stack([left, right], axis=1), sr,
+            float(master.get("target_peak_dbfs", -1.0)))
+        left, right = st[:, 0], st[:, 1]
+        if limiter["limited"]:
+            loudness_report = {"limiter": limiter}
 
-    # fades (click-free edges)
-    fi = int(master.get("fade_in_s", 0.0) * sr)
-    fo = int(master.get("fade_out_s", 0.01) * sr)
-    if fi:
-        ramp = np.linspace(0, 1, fi)
-        left[:fi] *= ramp; right[:fi] *= ramp
-    if fo:
-        ramp = np.linspace(1, 0, fo)
-        left[-fo:] *= ramp; right[-fo:] *= ramp
+    # Peak normalization also promises a true-peak ceiling.
+    if master.get("normalization") == "peak":
+        from .dynamics import true_peak_limit
+        st, limiter = true_peak_limit(np.stack([left, right], axis=1), sr,
+                                      float(master.get("target_peak_dbfs", -1)))
+        left, right = st[:, 0], st[:, 1]
+        if limiter["limited"]:
+            loudness_report = {"limiter": limiter}
 
     if left.base is not None and left.base is right.base:
         stereo = left.base                   # already one [n,2] array:
     else:                                    # no third stereo copy
         stereo = np.stack([left, right], axis=1)
         del left, right
+    if loop_report is not None:
+        delivered = loop_boundary_report(stereo, sr, spec)
+        if not delivered["passed"]:
+            _premaster_reports.pop(id(spec), None)
+            raise SpecError("loop_boundary_tail: unsafe delivered loop seam: "
+                            + json.dumps(delivered, sort_keys=True))
+        delivered["premaster"] = loop_report
+        loop_report = delivered
     meta = {
         "id": spec["id"], "kind": spec["kind"], "engine_version": ENGINE_VERSION,
         "spec_hash": root, "sample_rate": sr,
@@ -459,7 +538,11 @@ def _finish(left, right, sr, master, spec, root, stems, return_stems,
         "duration_s": spec["duration_s"], "channels": 2,
         "markers": spec.get("markers", []),
         "emotion": spec.get("emotion", {}),
+        "performance_hash": performance_hash(spec),
+        "performance_seed": spec.get("performance_seed", 0),
     }
+    if loop_report is not None:
+        meta["loop_boundary"] = loop_report
     if render_plan_hash is not None:
         meta["plan_hash"] = render_plan_hash
     if loudness_report:
@@ -597,7 +680,7 @@ def render_to_wav(spec: dict, out_dir: str | Path, stems: bool = False,
         stereo, sr, meta = render(
             spec, jobs=jobs, render_plan=plan_result.plan)
     bits = meta["bit_depth"]
-    root = meta["spec_hash"]
+    root = performance_hash(spec)
 
     wav_path = out_dir / f"{spec['id']}.wav"
     meta["output_sha256"] = _write_wav(wav_path, stereo, sr, bits, root, "dither")

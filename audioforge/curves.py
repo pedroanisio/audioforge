@@ -101,6 +101,20 @@ def validate_curve(
         raise CurveError(f"{path}: pitch_cents limit exceeds hard cap "
                          f"{PITCH_CENTS_HARD_LIMIT:g}")
 
+    if not _is_number(curve.get("time_offset", 0)) or not math.isfinite(curve.get("time_offset", 0)):
+        raise CurveError(f"{path}.time_offset: finite number required")
+    if "time_map" in curve:
+        windows = curve["time_map"]
+        if not isinstance(windows, list) or not windows:
+            raise CurveError(f"{path}.time_map: non-empty source-start/end/destination windows")
+        end = 0.0
+        for window in windows:
+            if (not isinstance(window, list) or len(window) != 3
+                    or not all(_is_number(v) and math.isfinite(v) for v in window)
+                    or window[1] <= window[0] or abs(window[2] - end) > 1e-8):
+                raise CurveError(f"{path}.time_map: contiguous positive destination windows")
+            end = window[2] + window[1] - window[0]
+
     points = curve_points(curve)
     if len(points) < min_points:
         raise CurveError(f"{path}.points: need at least {min_points} point"
@@ -112,7 +126,7 @@ def validate_curve(
             raise CurveError(f"{pp}: must be [time, value] or "
                              "[time, value, shape]")
         t, value = point[0], point[1]
-        if not _is_number(t) or not _is_number(value):
+        if not _is_number(t) or not _is_number(value) or not math.isfinite(t) or not math.isfinite(value):
             raise CurveError(f"{pp}: time and value must be numbers")
         if t < prev_t:
             raise CurveError(f"{pp}: times must be ascending")
@@ -146,6 +160,12 @@ def evaluate_curve(curve: dict, times: Sequence[float] | np.ndarray) -> np.ndarr
     """Evaluate a curve at ``times`` using AudioForge's normative semantics."""
     points = _normalized_points(curve)
     xs = np.asarray(times, dtype=float)
+    if curve.get("time_map"):
+        windows = np.asarray(curve["time_map"], dtype=float)
+        indices = np.clip(np.searchsorted(windows[:, 2], xs, side="right") - 1,
+                          0, len(windows) - 1)
+        xs = xs - windows[indices, 2] + windows[indices, 0]
+    xs = xs + curve.get("time_offset", 0)
     out = np.empty_like(xs, dtype=float)
     if len(points) == 1:
         out.fill(points[0][1])

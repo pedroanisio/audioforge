@@ -28,7 +28,7 @@ from .curves import (
 )
 from .version import ENGINE_VERSION
 
-IR_SCHEMA_VERSION = "1.2"
+IR_SCHEMA_VERSION = "2.0"
 
 SEMANTIC_FIELDS = [
     "intent",
@@ -64,6 +64,7 @@ RENDER_FIELDS = [
     "buses",
     "master",
     "variant",
+    "performance_seed",
     "intensity_scale",
 ]
 
@@ -90,15 +91,13 @@ def ir_schema_metadata() -> dict[str, Any]:
         "hash_excluded_top_level": list(HASH_EXCLUDED_TOP_LEVEL),
         "migration": {
             "current": IR_SCHEMA_VERSION,
-            "supported_from": ["0.9", "1.0"],
-            "policy": "additive-compatible",
+            "supported_from": ["0.9", "1.0", "1.1", "1.2", "2.0"],
+            "policy": "structural-migration-audio-review-required",
             "notes": (
-                "IR schema 1.2 extends note-scope curves with timbre targets "
-                "and adds hash-included fretted/stringed instrument mechanics. "
-                "No migration is required for valid 1.0/1.1 specs; curves and "
-                "string/fret/tuning fields are render data and therefore "
-                "hash-included, while provenance-only metadata changes remain "
-                "hash-excluded."
+                "IR 2.0 changes gate/release, gain, mastering, randomness and "
+                "repeat semantics. Migration preserves authored numeric intent, "
+                "not old audio bytes. Review renders and regenerate manifests; "
+                "docs/MIGRATION_3.md describes explicit compatibility choices."
             ),
         },
         "curves": {
@@ -122,7 +121,8 @@ def migrate_ir_spec(spec: dict, from_version: str) -> dict:
     The only legacy boundary currently supported is 0.9 -> 1.0, where
     provenance previously appeared under ``metadata`` in experimental fixtures.
     The migration moves that sidecar to ``_meta`` and records the current schema
-    version without changing render-affecting fields.
+    version. Numeric authoring choices are retained, but engine 3 semantics
+    intentionally change sound; the returned provenance requires audio review.
     """
     if from_version not in ir_schema_metadata()["migration"]["supported_from"]:
         raise ValueError(f"unsupported IR schema migration from {from_version}")
@@ -132,6 +132,9 @@ def migrate_ir_spec(spec: dict, from_version: str) -> dict:
         if isinstance(legacy, dict):
             out.setdefault("_meta", {}).update(legacy)
     out.setdefault("_meta", {})["ir_schema_version"] = IR_SCHEMA_VERSION
+    if from_version != IR_SCHEMA_VERSION:
+        out["_meta"]["migration"] = {"from": from_version, "to": IR_SCHEMA_VERSION,
+                                      "audio_review_required": True}
     return out
 
 
@@ -184,6 +187,9 @@ def ir_json_schema() -> dict[str, Any]:
                 min_items=1,
             ),
             "time_basis": _string_enum(NOTE_TIME_BASES | LAYER_TIME_BASES),
+            "time_offset": _number(),
+            "time_map": _array_items({"type": "array", "items": {"type": "number"},
+                                      "minItems": 3, "maxItems": 3}, min_items=1),
             "t0": _number(),
             "rate_hz": _number(minimum=1e-9),
             "values": _array_items({"type": "number"}, min_items=1),
@@ -198,10 +204,26 @@ def ir_json_schema() -> dict[str, Any]:
             "note": {"type": "string"},
             "freq_hz": _number(minimum=1),
             "start_beat": _number(minimum=0),
-            "dur_beats": _number(minimum=0),
+            "dur_beats": _number(minimum=1e-3),
             "vel": _number(minimum=0, maximum=1),
             "art": {"type": "string"},
             "slur": {"type": "integer", "minimum": 1},
+            "id": {"type": "string", "minLength": 1},
+            "voice": {"type": "string"},
+            "release_s_add": _number(minimum=0, maximum=10),
+            "attack_scale": _number(minimum=0, maximum=10),
+            "harmony": {
+                "type": "object", "required": ["root_pc", "quality"],
+                "properties": {"root_pc": {"type": "integer", "minimum": 0, "maximum": 11},
+                               "quality": {"type": "string"}},
+            },
+            "technique_render": {
+                "type": "object", "required": ["name", "fidelity", "method"],
+                "properties": {"name": {"type": "string"},
+                               "params": {"type": "object"},
+                               "fidelity": {"enum": ["approximate", "control_transform"]},
+                               "method": {"type": "string"}},
+            },
             "generated": {"type": "string"},
             "curves": _array_items({"$ref": "#/$defs/curve"}),
             "string": {"type": "integer", "minimum": 1},
@@ -269,6 +291,8 @@ def ir_json_schema() -> dict[str, Any]:
             "notation": {"type": "object", "additionalProperties": True},
             "loop_safe": {"type": "boolean"},
             "variant": {"type": ["string", "integer"]},
+            "performance_seed": {"type": "integer", "minimum": 0,
+                                 "maximum": 2 ** 64 - 1, "default": 0},
             "intensity_scale": _number(minimum=0.0, maximum=1.5),
             "_meta": {
                 "type": "object",
@@ -388,10 +412,26 @@ def ir_json_schema() -> dict[str, Any]:
                     "max_fret": {"type": "integer", "minimum": 0},
                     "seat": {"type": "object", "additionalProperties": True},
                     "section": {"type": "object", "additionalProperties": True},
+                    "clip_source": {"$ref": "#/$defs/clip_source"},
+                    "clip_map": {"type": "array", "minItems": 1,
+                                 "items": {"type": "array", "minItems": 3, "maxItems": 3,
+                                           "items": _number(minimum=0)}},
                     "role": {"type": "string"},
                     "source_kind": {"type": "string"},
                 },
                 "additionalProperties": True,
+            },
+            "clip_source": {
+                "type": "object", "required": ["duration_s", "layer_duration_s", "start_s", "tempo_map"],
+                "properties": {
+                    "duration_s": _number(minimum=.05, maximum=600),
+                    "layer_duration_s": _number(minimum=.05, maximum=600),
+                    "start_s": _number(minimum=0, maximum=600),
+                    "tempo_map": _array_items({"$ref": "#/$defs/point"}, min_items=1),
+                    "holds": _array_items({"$ref": "#/$defs/hold"}),
+                    "score": {"$ref": "#/$defs/score"},
+                    "automation": _array_items(automation),
+                }, "additionalProperties": False,
             },
             "env": {
                 "type": "object",
@@ -438,6 +478,7 @@ def ir_json_schema() -> dict[str, Any]:
                     "automation": _array_items(automation),
                     "target_peak_dbfs": _number(minimum=-40, maximum=0),
                     "target_lufs": _number(minimum=-40, maximum=-5),
+                    "normalization": {"enum": ["none", "peak"], "default": "none"},
                     "stereo_width": _number(minimum=0, maximum=1),
                     "fade_in_s": _number(minimum=0),
                     "fade_out_s": _number(minimum=0),

@@ -10,6 +10,7 @@ may be absent in a thin checkout) — but when the libraries ARE present it
 FAILS rather than skips, which is the whole point of a freshness guard.
 """
 import json
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -66,12 +67,13 @@ def test_current_txt_matches_fresh_tree_snapshot():
     current = LIBS / "current.txt"
     assert current.is_file(), (
         "libraries/current.txt is missing — regenerate it with "
-        "`cd libraries && tree -a > current.txt`"
+        "`cd libraries && LC_ALL=C tree -a --charset=UTF-8 > current.txt`"
     )
     tree = shutil.which("tree")
     assert tree, "tree executable is required to verify libraries/current.txt"
     fresh = subprocess.run(
-        [tree, "-a"],
+        [tree, "-a", "--charset=UTF-8"],
+        env={**os.environ, "LC_ALL": "C"},
         cwd=LIBS,
         check=True,
         text=True,
@@ -79,7 +81,7 @@ def test_current_txt_matches_fresh_tree_snapshot():
     ).stdout
     assert current.read_text() == fresh, (
         "libraries/current.txt drifted from a fresh `tree -a` snapshot — "
-        "regenerate it with `cd libraries && tree -a > current.txt`"
+        "regenerate it with `cd libraries && LC_ALL=C tree -a --charset=UTF-8 > current.txt`"
     )
 
 

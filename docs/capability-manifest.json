@@ -9,6 +9,32 @@
     "tremolo",
     "trill"
   ],
+  "audio_semantics": {
+    "acceptance": "python -m audioforge.tools.musical_acceptance --out DIR [--baseline-root CHECKOUT]",
+    "analysis": "observations separate from context-dependent recommendations; no musical-quality score",
+    "emotion_scope": "production presets only; sadness and urgency are metadata",
+    "loop_safe": "whole beats under the actual tempo/hold map plus measured premaster and delivered seam and tail checks",
+    "master_normalization": {
+      "default": "none",
+      "dsl": "normalize: none|peak",
+      "enum": [
+        "none",
+        "peak"
+      ],
+      "lufs": "explicit loudness normalization",
+      "peak": "true-peak ceiling"
+    },
+    "note_duration": "gate time followed by release; fixed-window tone/noise envelopes retain window semantics",
+    "performance_seed": {
+      "default": 0,
+      "dsl": "seed: N",
+      "max": 18446744073709551615,
+      "min": 0,
+      "scope": "take identity independent of mix edits",
+      "type": "integer"
+    },
+    "sample_resampling": "rate-adaptive antialias filtering; loop_sustain exits at note-off"
+  },
   "automation_targets": [
     "cutoff_hz",
     "dynamic",
@@ -133,7 +159,7 @@
       "repair_hint": "validate_render_ready"
     }
   },
-  "dsl_version": "1.9",
+  "dsl_version": "2.0",
   "dynamic_marks": {
     "f": 0.74,
     "ff": 0.87,
@@ -157,7 +183,7 @@
     "urgency",
     "wonder"
   ],
-  "engine_version": "2.16.0",
+  "engine_version": "3.0.0",
   "examples": {
     "audio_layer": "layer vocal : audio { file: \"take.wav\" sha256: \"...64 hex...\" preserve: stereo }",
     "intent_block": "intent {\n  density: sparse\n  contour: arch\n  texture: smooth\n  affect: tense\n  avoid: clipping, noise\n  repair: \"make the melody less rough\"\n}",
@@ -340,7 +366,7 @@
           "note_seconds"
         ]
       },
-      "engine_version": "2.16.0",
+      "engine_version": "3.0.0",
       "field_layers": {
         "provenance": [
           "_meta"
@@ -359,6 +385,7 @@
           "buses",
           "master",
           "variant",
+          "performance_seed",
           "intensity_scale"
         ],
         "semantic": [
@@ -384,12 +411,15 @@
         "notation"
       ],
       "migration": {
-        "current": "1.2",
-        "notes": "IR schema 1.2 extends note-scope curves with timbre targets and adds hash-included fretted/stringed instrument mechanics. No migration is required for valid 1.0/1.1 specs; curves and string/fret/tuning fields are render data and therefore hash-included, while provenance-only metadata changes remain hash-excluded.",
-        "policy": "additive-compatible",
+        "current": "2.0",
+        "notes": "IR 2.0 changes gate/release, gain, mastering, randomness and repeat semantics. Migration preserves authored numeric intent, not old audio bytes. Review renders and regenerate manifests; docs/MIGRATION_3.md describes explicit compatibility choices.",
+        "policy": "structural-migration-audio-review-required",
         "supported_from": [
           "0.9",
-          "1.0"
+          "1.0",
+          "1.1",
+          "1.2",
+          "2.0"
         ]
       },
       "render_plan": {
@@ -397,10 +427,10 @@
         "policy_field": "routing",
         "schema": "audioforge.render-plan/1"
       },
-      "version": "1.2"
+      "version": "2.0"
     },
     "path": "docs/ir.schema.json",
-    "version": "1.2"
+    "version": "2.0"
   },
   "kinds": [
     "bed",
@@ -426,8 +456,20 @@
           ],
           "type": "automation"
         },
+        "automation_ir": {
+          "description": "Canonical automation list, including shaped or mapped curves",
+          "type": "json_string"
+        },
         "bus": {
           "type": "string"
+        },
+        "clip_map": {
+          "description": "Compiled [source_start_s, source_end_s, destination_s] windows",
+          "type": "json_string"
+        },
+        "clip_source": {
+          "description": "Compiled repeat source timing; paired with clip_map",
+          "type": "json_string"
         },
         "duration": {
           "type": "number",
@@ -484,8 +526,20 @@
           ],
           "type": "automation"
         },
+        "automation_ir": {
+          "description": "Canonical automation list, including shaped or mapped curves",
+          "type": "json_string"
+        },
         "bus": {
           "type": "string"
+        },
+        "clip_map": {
+          "description": "Compiled [source_start_s, source_end_s, destination_s] windows",
+          "type": "json_string"
+        },
+        "clip_source": {
+          "description": "Compiled repeat source timing; paired with clip_map",
+          "type": "json_string"
         },
         "duration": {
           "type": "number",
@@ -541,8 +595,20 @@
           ],
           "type": "automation"
         },
+        "automation_ir": {
+          "description": "Canonical automation list, including shaped or mapped curves",
+          "type": "json_string"
+        },
         "bus": {
           "type": "string"
+        },
+        "clip_map": {
+          "description": "Compiled [source_start_s, source_end_s, destination_s] windows",
+          "type": "json_string"
+        },
+        "clip_source": {
+          "description": "Compiled repeat source timing; paired with clip_map",
+          "type": "json_string"
         },
         "duration": {
           "type": "number",
@@ -593,8 +659,20 @@
           ],
           "type": "automation"
         },
+        "automation_ir": {
+          "description": "Canonical automation list, including shaped or mapped curves",
+          "type": "json_string"
+        },
         "bus": {
           "type": "string"
+        },
+        "clip_map": {
+          "description": "Compiled [source_start_s, source_end_s, destination_s] windows",
+          "type": "json_string"
+        },
+        "clip_source": {
+          "description": "Compiled repeat source timing; paired with clip_map",
+          "type": "json_string"
         },
         "density": {
           "type": "number"
@@ -684,6 +762,10 @@
           ],
           "type": "automation"
         },
+        "automation_ir": {
+          "description": "Canonical automation list, including shaped or mapped curves",
+          "type": "json_string"
+        },
         "bus": {
           "type": "string"
         },
@@ -704,6 +786,10 @@
         },
         "instrument": {
           "type": "string"
+        },
+        "notes_ir": {
+          "description": "Canonical note events with stable IDs, voices and mapped curves",
+          "type": "json_string"
         },
         "pan": {
           "default": 0.0,
@@ -736,8 +822,20 @@
           ],
           "type": "automation"
         },
+        "automation_ir": {
+          "description": "Canonical automation list, including shaped or mapped curves",
+          "type": "json_string"
+        },
         "bus": {
           "type": "string"
+        },
+        "clip_map": {
+          "description": "Compiled [source_start_s, source_end_s, destination_s] windows",
+          "type": "json_string"
+        },
+        "clip_source": {
+          "description": "Compiled repeat source timing; paired with clip_map",
+          "type": "json_string"
         },
         "color": {
           "enum": [
@@ -797,6 +895,10 @@
           ],
           "type": "automation"
         },
+        "automation_ir": {
+          "description": "Canonical automation list, including shaped or mapped curves",
+          "type": "json_string"
+        },
         "bus": {
           "type": "string"
         },
@@ -839,6 +941,10 @@
         },
         "notes": {
           "type": "note_events"
+        },
+        "notes_ir": {
+          "description": "Canonical note events with stable IDs, voices and mapped curves",
+          "type": "json_string"
         },
         "osc": {
           "default": "sine",
@@ -894,8 +1000,20 @@
           ],
           "type": "automation"
         },
+        "automation_ir": {
+          "description": "Canonical automation list, including shaped or mapped curves",
+          "type": "json_string"
+        },
         "bus": {
           "type": "string"
+        },
+        "clip_map": {
+          "description": "Compiled [source_start_s, source_end_s, destination_s] windows",
+          "type": "json_string"
+        },
+        "clip_source": {
+          "description": "Compiled repeat source timing; paired with clip_map",
+          "type": "json_string"
         },
         "duration": {
           "type": "number",
@@ -948,8 +1066,20 @@
           ],
           "type": "automation"
         },
+        "automation_ir": {
+          "description": "Canonical automation list, including shaped or mapped curves",
+          "type": "json_string"
+        },
         "bus": {
           "type": "string"
+        },
+        "clip_map": {
+          "description": "Compiled [source_start_s, source_end_s, destination_s] windows",
+          "type": "json_string"
+        },
+        "clip_source": {
+          "description": "Compiled repeat source timing; paired with clip_map",
+          "type": "json_string"
         },
         "curve": {
           "default": "exp",
@@ -1028,8 +1158,20 @@
           ],
           "type": "automation"
         },
+        "automation_ir": {
+          "description": "Canonical automation list, including shaped or mapped curves",
+          "type": "json_string"
+        },
         "bus": {
           "type": "string"
+        },
+        "clip_map": {
+          "description": "Compiled [source_start_s, source_end_s, destination_s] windows",
+          "type": "json_string"
+        },
+        "clip_source": {
+          "description": "Compiled repeat source timing; paired with clip_map",
+          "type": "json_string"
         },
         "detune": {
           "default": 0.0,
@@ -1162,6 +1304,7 @@
     "triangle"
   ],
   "performance_curves": {
+    "canonical_ir": "automation_ir JSON strings on layers/buses/master; notes_ir JSON strings on note layers",
     "curve_shapes": [
       "hold",
       "linear",
@@ -1257,7 +1400,9 @@
       "layer_seconds",
       "note_beats",
       "note_seconds"
-    ]
+    ],
+    "time_map": "Contiguous [source_start, source_end, destination] windows in the curve time basis",
+    "time_offset": "Input-clock shift in the curve time basis; preserves cropped note shape"
   },
   "render_plan": {
     "artifact": {
@@ -1265,6 +1410,7 @@
       "hash": "sha256(canonical_plan_json_without_plan_hash_field)"
     },
     "diagnostic_codes": [
+      "render_plan_approximation",
       "render_plan_inpaint_unavailable",
       "render_plan_missing_evidence",
       "render_plan_policy_fallback_forbid",
@@ -1400,6 +1546,12 @@
       "pickup": "pickup: N b",
       "polymeter": "polymeter: layer BEATS UNIT",
       "repeat": "repeat: section xN"
+    },
+    "semantics": {
+      "meter": "quarter-note beat units; local bar resets groove phase",
+      "pickup": "beat zero begins pickup; first full downbeat is pickup_beats",
+      "polymeter": "per-part groove/bar phase without rescaling explicit timestamps",
+      "repeat": "count includes first pass; lowers to expanded events/clip windows and extends duration"
     }
   },
   "smart_directives": {
@@ -1412,6 +1564,8 @@
       ]
     },
     "perform": {
+      "cadences": "conservative dominant-to-tonic candidates require chord, key and downbeat evidence",
+      "phrasing": "authored form/slurs or rest-delimited spans; neutral midpoint arch unless dynamics are authored",
       "properties": [
         "style",
         "expressivity",
@@ -1421,6 +1575,7 @@
       ],
       "rubato": {
         "compiles_to": "dense tempo_map points",
+        "coordination": "one conductor curve from authored form or merged activity spans",
         "enum": [
           "arch",
           "push_pull",
@@ -1452,10 +1607,13 @@
       ]
     },
     "voicing": {
+      "ambiguity": "preserve pitch collection and emit diagnostic",
       "properties": [
         "richness",
-        "extensions"
-      ]
+        "extensions",
+        "voice_leading"
+      ],
+      "voice_leading": "opt-in register search preserving pitch classes, onsets and gates"
     }
   },
   "statuses": {
@@ -1518,6 +1676,7 @@
   "techniques": {
     "accent": {
       "doc": "Add dynamic emphasis by strength-scaled explicit dynamic/gain data.",
+      "fidelity": "control_transform",
       "lowers_to": [
         "dynamic"
       ],
@@ -1539,6 +1698,7 @@
     },
     "dead_note": {
       "doc": "Clamp duration and reduce gain; synth also emits a low cutoff curve.",
+      "fidelity": "approximate",
       "lowers_to": [
         "curve:gain_db",
         "curve:cutoff_hz"
@@ -1552,6 +1712,7 @@
     },
     "harmonic": {
       "doc": "Transpose to an allowed partial and add bell-like emphasis.",
+      "fidelity": "approximate",
       "lowers_to": [
         "curve:pitch_cents",
         "fx:peak"
@@ -1575,6 +1736,7 @@
     },
     "let_ring": {
       "doc": "Suppress short-note clamping and preserve a longer release.",
+      "fidelity": "control_transform",
       "lowers_to": [
         "gain_db"
       ],
@@ -1587,6 +1749,7 @@
     },
     "palm_mute": {
       "doc": "Clamp duration, reduce gain, and darken synth voices with cutoff.",
+      "fidelity": "approximate",
       "lowers_to": [
         "curve:cutoff_hz",
         "curve:gain_db"
@@ -1600,6 +1763,7 @@
     },
     "staccatissimo": {
       "doc": "Clamp duration to a very short explicit note length.",
+      "fidelity": "control_transform",
       "lowers_to": [
         "gain_db"
       ],
@@ -1612,6 +1776,7 @@
     },
     "sul_ponticello": {
       "doc": "Brighten synth notes with a high cutoff and peak emphasis.",
+      "fidelity": "approximate",
       "lowers_to": [
         "curve:cutoff_hz",
         "fx:peak"
@@ -1625,6 +1790,7 @@
     },
     "sul_tasto": {
       "doc": "Darken synth notes with a low cutoff curve.",
+      "fidelity": "approximate",
       "lowers_to": [
         "curve:cutoff_hz"
       ],
@@ -1637,6 +1803,7 @@
     },
     "tenuto": {
       "doc": "Preserve full-length sustain and slight legato emphasis.",
+      "fidelity": "control_transform",
       "lowers_to": [
         "gain_db"
       ],
@@ -1654,8 +1821,8 @@
     "tempo_map": "piecewise-linear [beat, bpm] points integrated exactly"
   },
   "version_contract": {
-    "dsl_version": "1.9",
-    "engine_version": "2.16.0",
+    "dsl_version": "2.0",
+    "engine_version": "3.0.0",
     "source": "audioforge.version"
   }
 }

@@ -35,10 +35,7 @@ from matplotlib.patches import Ellipse, Wedge, Polygon, Rectangle
 
 from . import theory
 
-try:
-    from .determinism import ENGINE_VERSION
-except Exception:
-    ENGINE_VERSION = "2.16.0"
+from .version import ENGINE_VERSION
 
 # ----------------------------------------------------------------- fonts ----
 _NOTO = None

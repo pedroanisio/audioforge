@@ -88,7 +88,7 @@ def test_export_preview_analyze_and_plugin_exporters(monkeypatch, tmp_path):
 
     monkeypatch.setattr(sdk, "render_to_wav", fake_render_to_wav)
     monkeypatch.setattr(sdk, "render", fake_render)
-    monkeypatch.setattr("audioforge.analysis.analyze_audio", lambda stereo, sr: {"peak_dbfs": -3})
+    monkeypatch.setattr("audioforge.analysis.analyze_audio", lambda stereo, sr, context=None: {"peak_dbfs": -3})
     monkeypatch.setattr(sdk, "EXPORTERS", {
         "sidecar": lambda spec, meta, out: str(out / f"{spec['id']}.sidecar"),
     })
@@ -116,7 +116,7 @@ def test_export_cutdowns_uses_presets_and_writes_manifests(monkeypatch, tmp_path
         assert spec["bit_depth"] == 16
         assert spec["master"]["target_lufs"] == -14.0
         yield 15.0, [[0.0, 0.0]], 48000, {
-            "id": spec["id"], "bit_depth": 16, "spec_hash": "hash",
+            "id": spec["id"], "bit_depth": 16, "spec_hash": "hash", "performance_hash": "take",
             "cutdown": {"length_s": 15},
         }
 

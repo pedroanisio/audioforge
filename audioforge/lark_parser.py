@@ -102,8 +102,8 @@ _gitem: _scalar | AT | EQ | DOT | COLON | COMMA | group | _NL
 _scalar: IDENT | NUMBER | STRING
 
 IDENT: /[A-Za-z_][A-Za-z0-9_#]*/
-NUMBER: /[+-]?\d+(\.\d+)?(s|b|bpm|db|hz|st|c|deg|m)?\b/
-STRING: /"[^"\n]*"/
+NUMBER: /[+-]?\d+(\.\d+)?([eE][+-]?\d+)?(s|b|bpm|db|hz|st|c|deg|m)?\b/
+STRING: /"(?:\\.|[^"\\\n])*"/
 AT: "@"
 EQ: "="
 DOT: "."
@@ -151,7 +151,12 @@ def _tok(token: Token):
     text = str(token)
     line = token.line
     if kind == "STRING":
-        return Tok("STRING", text[1:-1], line)
+        import json
+        from .dsl import DSLError
+        try:
+            return Tok("STRING", json.loads(text), line)
+        except ValueError as exc:
+            raise DSLError("invalid quoted JSON string escape", line) from exc
     if kind == "NUMBER":
         unit = _num_unit(text)
         number = text[: -len(unit)] if unit else text

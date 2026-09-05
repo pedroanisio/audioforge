@@ -22,7 +22,7 @@ from audioforge.plan import (
 from audioforge.render import render_to_wav
 from audioforge.sdk import AudioAsset
 from audioforge.schema import SpecError, validate_spec
-from audioforge.determinism import rng_for, spec_hash
+from audioforge.determinism import performance_hash, rng_for, spec_hash
 from audioforge.library import load_library
 from audioforge.sequencer import TempoMap
 from test_sampler import build_library
@@ -313,16 +313,35 @@ def test_sampler_consumes_planned_fallback_without_re_resolving(pin, monkeypatch
     assert set(report["plan_segment_actual_ms"]) == {"seg:vln:0"}
 
 
-def test_sampler_plan_authority_matches_legacy_rng_stream(pin):
+@pytest.mark.parametrize("performance", [
+    {},
+    {"humanize": {"timing_s": 0.01, "vel": 0.3}},
+    {"phrasing": 0.9},
+    {"dynamic": [[0.0, 0.2], [2.0, 0.9]],
+     "humanize": {"timing_s": 0.02, "vel": 0.2}},
+    {"pitch_curve": True},
+])
+def test_sampler_plan_authority_matches_performance_rng_stream(pin, performance):
     from audioforge import sampler
 
     spec = _instrument_spec(pin, art="staccato")
+    layer = spec["layers"][0]
+    performance = dict(performance)
+    if performance.pop("pitch_curve", False):
+        layer["notes"][0]["curves"] = [{
+            "target": "pitch_cents", "time_basis": "note_seconds",
+            "points": [[0, 0], [0.5, 30]],
+        }]
+    layer.update(performance)
+    layer["notes"][0]["slur"] = 1
+    layer["notes"].append({"note": "D4", "start_beat": 1,
+                            "dur_beats": 1, "vel": 0.45, "slur": 1})
     result = build_render_plan(spec)
     lib = load_library(spec["library"])
-    root = spec_hash(spec)
+    root = performance_hash(spec)
 
     def rng(sub: str):
-        return rng_for(root, "0:vln", "instrument", sub)
+        return rng_for(root, "vln", "instrument", sub)
 
     legacy = sampler.render_instrument_track(
         spec["layers"][0],

@@ -33,17 +33,10 @@ def test_runtime_hashing_constant_matches():
     assert _det.ENGINE_VERSION == TRUTH
 
 
-def test_score_provenance_fallback_literal_matches():
-    """score.py keeps a defensive fallback literal for when determinism cannot
-    be imported; it must not silently drift from the real version."""
-    src = (ROOT / "audioforge" / "score.py").read_text()
-    # the fallback assignment: `ENGINE_VERSION = "X"` inside the except branch
-    lits = re.findall(r'ENGINE_VERSION\s*=\s*"([^"]+)"', src)
-    assert lits, "expected a fallback `ENGINE_VERSION = \"...\"` literal in score.py"
-    for lit in lits:
-        assert lit == TRUTH, (
-            f"score.py fallback literal {lit!r} != {TRUTH!r} (Finding #5)"
-        )
+def test_score_provenance_matches_runtime_version():
+    """Score provenance uses the same version as the generated audio."""
+    from audioforge import score
+    assert score.ENGINE_VERSION == TRUTH
 
 
 def test_capability_manifest_engine_version_matches():

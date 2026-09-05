@@ -248,6 +248,31 @@ def adsr(n: int, sr: int, attack: float, decay: float,
     return env
 
 
+def note_adsr(gate_n: int, sr: int, attack: float, decay: float,
+              sustain: float, release: float, curve: float = 3.0) -> np.ndarray:
+    """Hold a note until note-off, then release from its actual current level.
+
+    Unlike a fixed-duration effect envelope, release never consumes gate time.
+    An early note-off interrupts attack/decay without accelerating either stage.
+    """
+    gate_n = max(0, int(gate_n))
+    release_n = max(0, int(round(release * sr)))
+    attack_n = max(0, int(round(attack * sr)))
+    decay_n = max(0, int(round(decay * sr)))
+    env = np.full(gate_n + release_n, sustain, dtype=np.float64)
+    a = min(attack_n, gate_n)
+    if a:
+        env[:a] = (np.arange(a) / attack_n) ** (1.0 / curve)
+    d = min(decay_n, max(0, gate_n - attack_n))
+    if d:
+        env[attack_n:attack_n + d] = (
+            1.0 + (sustain - 1.0) * (np.arange(d) / decay_n) ** (1.0 / curve))
+    if release_n:
+        level = env[gate_n - 1] if gate_n else 0.0
+        env[gate_n:] = level * (1.0 - np.linspace(0, 1, release_n)) ** curve
+    return env
+
+
 # ------------------------------------------------------------- v2.1 voices
 _TABLE_CACHE: dict = {}
 _TABLE_SIZE = 8192

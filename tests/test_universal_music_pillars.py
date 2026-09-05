@@ -6,6 +6,7 @@ import wave
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -37,7 +38,7 @@ def test_universal_score_layer_compiles_form_meter_repeats_and_polymeter():
     src = """
 asset score_map {
   kind: cue
-  duration: 12s
+  duration: 20s
   tempo: 90bpm
   meter: 7 8
   pickup: 1b
@@ -63,8 +64,9 @@ asset score_map {
     assert spec["score"]["meter"] == {"beats": 7, "unit": 8}
     assert spec["score"]["pickup_beats"] == 1.0
     assert [s["name"] for s in spec["score"]["sections"]] == [
-        "intro", "verse", "refrain"]
-    assert spec["score"]["repeats"] == [{"section": "verse", "count": 2}]
+        "intro__1", "verse__1", "verse__2", "refrain__2"]
+    assert spec["intent"]["arrangement"]["repeats"] == [{"section": "verse", "count": 2}]
+    assert spec["duration_s"] == pytest.approx(20 + 14 * 60 / 90)
     assert spec["score"]["polymeter"]["pulse"] == {"beats": 3, "unit": 4}
 
 

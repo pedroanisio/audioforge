@@ -1,3 +1,12 @@
+---
+disclaimer:
+  notice: >-
+    No information within this document should be taken for granted. Claims
+    require verification against the implementation and its acceptance tests.
+  generated_by: "GPT-6 via Codex"
+  date: "2026-09-05"
+---
+
 # AudioForge Universal Music IR Schema
 
 `docs/ir.schema.json` is the published JSON Schema for compiled AudioForge IR
@@ -6,29 +15,21 @@ fail if the checked-in JSON artifact drifts from that source.
 
 ## Versioning
 
-- Current IR schema version: `1.2`
-- Current policy: additive-compatible
-- Supported from: `0.9`, `1.0`
+- Current IR schema version: `2.0`
+- Engine `3.0.0`, DSL `2.0`
+- Structural migration inputs: `0.9`, `1.0`, `1.1`, `1.2`, `2.0`
 
-IR schema `1.2` extends the `1.1` performance-curve contract with additive
-note-scope timbre targets (`cutoff_hz`, `gain_db`, `scan`) and hash-included
-fretted/stringed instrument mechanics (`layer.tuning`, `layer.max_fret`,
-`note.string`, `note.fret`). Valid `1.0` and `1.1` specs do not require
-migration.
-Experimental `0.9` fixtures can be migrated with
-`audioforge.ir_schema.migrate_ir_spec(spec, "0.9")`; that migration moves the
-legacy provenance sidecar from `metadata` to `_meta` without changing
-render-affecting fields.
+`migrate_ir_spec` preserves numeric authoring intent and marks older inputs for audio review. Gate/release, gain, mastering, randomness and executable-repeat corrections intentionally change sound. This is not an audio-compatibility migration; review renders and regenerate manifests. See [migration guidance](MIGRATION_3.md).
 
 ## Field Ownership
 
 The schema divides top-level fields into three ownership layers:
 
 - Semantic intent: `intent`, `emotion`, `intensity_curve`, `score`, `key`,
-  `key_map`, `tempo_map`, `groove`, `markers`, `cutdowns`, `stage`, `library`,
+  `key_map`, `tempo_map`, `markers`, `cutdowns`, `stage`, `library`,
   `routing`.
 - Expanded render data: `id`, `kind`, `duration_s`, `sample_rate`,
-  `bit_depth`, `bpm`, `loop_safe`, `layers`, `buses`, `master`, `variant`,
+  `bit_depth`, `bpm`, `swing`, `groove`, `loop_safe`, `layers`, `buses`, `master`, `variant`, `performance_seed`,
   `intensity_scale`.
 - Provenance: `_meta`.
 
@@ -58,7 +59,9 @@ recompute verification before audio is computed.
 
 ## Performance Curves
 
-IR schema `1.2` defines one curve object for both note-scoped performance and
+`time_offset` shifts the curve clock. `time_map` consists of contiguous `[source_start, source_end, destination]` windows in the declared time basis; the original curve function is evaluated after mapping. This preserves cropped power curves and repeated controls without fitting a different curve. Layer cutoff automation interpolates logarithmically in frequency.
+
+IR schema `2.0` retains one curve object for both note-scoped performance and
 layer automation:
 
 - `target`: `pitch_cents`, `dynamic`, `cutoff_hz`, `gain_db`, `scan`, or an
@@ -86,7 +89,7 @@ hash-excluded.
 
 ## Instrument Mechanics
 
-IR schema `1.2` adds hash-included fretted/stringed fields:
+Hash-included fretted/stringed fields remain:
 
 - `layer.tuning`: ordered open pitch names; index 1 is the first listed string.
 - `layer.max_fret`: non-negative integer, defaulted by validation to 24.

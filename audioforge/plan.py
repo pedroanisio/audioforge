@@ -14,7 +14,7 @@ from typing import Any
 
 import numpy as np
 
-from .determinism import canonical_json, rng_for, spec_hash
+from .determinism import canonical_json, performance_hash, rng_for, spec_hash
 from .schema import ROUTING_FALLBACK_MODES, SpecError, validate_spec
 from .version import ENGINE_VERSION
 
@@ -38,6 +38,7 @@ PLAN_DIAGNOSTIC_CODES = {
     "render_plan_stretch_warn",
     "render_plan_inpaint_unavailable",
     "render_plan_sustain_gap",
+    "render_plan_approximation",
 }
 
 # A held sampled note whose notated duration exceeds the playable length of a
@@ -167,14 +168,6 @@ def _library_entry(lib, ref: dict) -> dict:
     }
 
 
-def _rng_for_note(root: str, layer_index: int, layer_name: str,
-                  layer_type: str, note_index: int, section: bool):
-    sub = f"note{note_index}"
-    if section:
-        sub = f"player0:{sub}"
-    return rng_for(root, f"{layer_index}:{layer_name}", layer_type, sub)
-
-
 def _region_has_usable_loop(region) -> bool:
     return (region.loop_mode in ("loop_continuous", "loop_sustain")
             and region.loop_end > region.loop_start)
@@ -235,7 +228,8 @@ def _sustain_gap_diag(regions, midi_i: int, note_dur_s: float, note_path: str,
 def _instrument_segment(spec_hash_value: str, layer: dict, layer_index: int,
                         note_index: int, ev: dict, lib, policy: dict,
                         diagnostics: list[dict], tempo_map,
-                        sample_len_cache: dict) -> dict:
+                        sample_len_cache: dict, scheduled: dict,
+                        sample_rate: int) -> dict:
     from .sampler import resolve_articulation_detail, select_regions
 
     layer_name = _layer_name(layer, layer_index)
@@ -243,7 +237,7 @@ def _instrument_segment(spec_hash_value: str, layer: dict, layer_index: int,
     requested_art = ev.get("art", layer.get("articulation", "sustain"))
     detail = resolve_articulation_detail(lib, instrument, requested_art)
     regions = detail["regions"]
-    midi = _midi_for_event(ev)
+    midi = float(scheduled["midi"])
     midi_i = int(round(midi))
     kreg = [r for r in regions if r.lokey <= midi_i <= r.hikey]
     if not kreg:
@@ -251,7 +245,7 @@ def _instrument_segment(spec_hash_value: str, layer: dict, layer_index: int,
             f"layers[{layer_index}].notes[{note_index}]: instrument "
             f"'{instrument}' has no SFZ region covering midi {midi_i} "
             f"for articulation '{requested_art}'")
-    vel = float(ev.get("vel", 1.0))
+    vel = float(scheduled["vel"])
     note_path = f"layers[{layer_index}].notes[{note_index}]"
     fallback = detail.get("fallback")
     if fallback and policy["fallbacks"] == "forbid":
@@ -283,20 +277,14 @@ def _instrument_segment(spec_hash_value: str, layer: dict, layer_index: int,
             f"nearest keycenter, above threshold {stretch_threshold}",
             note_path,
         ))
-    dynamic_mode = bool(ev.get("curves")) or bool(layer.get("dynamic"))
+    dynamic_mode = any(c.get("target") == "dynamic" for c in ev.get("curves", [])) \
+        or bool(layer.get("dynamic"))
     sounding_regions: list = []
     if dynamic_mode:
         bands = {}
         for r in kreg:
             bands.setdefault((r.lovel, r.hivel), []).append(r)
-        rng = _rng_for_note(
-            spec_hash_value,
-            layer_index,
-            layer_name,
-            layer["type"],
-            note_index,
-            section=bool(layer.get("section")),
-        )
+        rng = scheduled["rng"]
         selected = []
         for (lo, hi), regs in sorted(
             bands.items(), key=lambda item: (item[0][0] + item[0][1]) / 2.0
@@ -316,14 +304,7 @@ def _instrument_segment(spec_hash_value: str, layer: dict, layer_index: int,
         }
     else:
         v127 = _velocity127(vel)
-        rng = _rng_for_note(
-            spec_hash_value,
-            layer_index,
-            layer_name,
-            layer["type"],
-            note_index,
-            section=bool(layer.get("section")),
-        )
+        rng = scheduled["rng"]
         picked = select_regions(kreg, midi_i, v127, rng)
         sounding_regions = list(picked)
         velocity = {
@@ -337,8 +318,7 @@ def _instrument_segment(spec_hash_value: str, layer: dict, layer_index: int,
     # Short articulations that clamp or re-trigger the sample cannot gap.
     mods = detail.get("mods", {})
     if not mods.get("retrigger"):
-        note_dur_s = float(tempo_map.sec(ev["start_beat"] + ev["dur_beats"])
-                           - tempo_map.sec(ev["start_beat"]))
+        note_dur_s = scheduled["dur_n"] / sample_rate
         clamp = mods.get("dur_clamp_s")
         if clamp is not None:
             note_dur_s = min(note_dur_s, float(clamp))
@@ -419,22 +399,58 @@ def _synth_native_segment(layer: dict, layer_index: int,
     }
 
 
+def _performance_evidence(segment, layer, event, policy, diagnostics, joined=False):
+    """Account for performance approximations independently of sample routing."""
+    approximations = []
+    technique = event.get("technique_render")
+    if technique:
+        segment["decision"]["technique"] = technique
+        if technique.get("fidelity") == "approximate":
+            approximations.append("technique " + technique["name"])
+    if layer.get("section"):
+        approximations.append("multiplied players from the same sample pool")
+    if joined:
+        approximations.append("crossfaded stationary samples with pitch glide")
+        segment["decision"]["transition"] = {
+            "fidelity": "approximate", "method": "sample_aware_crossfade",
+            "offset_policy": "sfz_loop_start_or_envelope_attack",
+            "crossfade_s": layer.get("legato_s", 0.05),
+        }
+    if not approximations:
+        return
+    message = "approximate performance: " + "; ".join(approximations)
+    if policy["fallbacks"] == "forbid":
+        raise SpecError("render_plan_policy_fallback_forbid: " + message)
+    segment["evidence"]["performance_approximations"] = approximations
+    severity = "warning" if policy["fallbacks"] == "warn" else "info"
+    diagnostic = _diag(severity, "render_plan_approximation", message, segment["id"])
+    segment["diagnostics"].append(diagnostic)
+    if severity == "warning":
+        diagnostics.append(diagnostic)
+
+
 def build_render_plan(spec: dict) -> RenderPlanResult:
     from .library import load_library
-    from .sequencer import TempoMap
+    from .performance import legato_links, note_events, schedule_notes, section_player
+    from .sequencer import TempoMap, TimelineMap
 
     resolved = validate_spec(copy.deepcopy(spec))
     root = spec_hash(resolved)
+    take_root = performance_hash(resolved)
     policy = normalize_routing_policy(resolved)
     tempo_map = TempoMap(resolved.get("tempo_map")
                          or [[0.0, resolved.get("bpm", 120.0)]])
+    if resolved.get("holds"):
+        tempo_map = TimelineMap(tempo_map, resolved["holds"])
+    sr = int(resolved.get("sample_rate", 48000))
+    total_n = int(resolved["duration_s"] * sr)
     diagnostics: list[dict] = []
     segments: list[dict] = []
     libraries: dict[str, dict] = {}
     library_cache: dict[tuple[str, str], Any] = {}
     sample_len_cache: dict[str, tuple[int, int]] = {}
     for layer_index, layer0 in enumerate(resolved.get("layers", [])):
-        layer = layer0
+        layer = {**layer0, "_performance_root": take_root, "_score": resolved.get("score", {})}
         if layer.get("type") == "instrument":
             ref = resolved["library"]
             layer = {**layer, "_library": ref}
@@ -444,14 +460,35 @@ def build_render_plan(spec: dict) -> RenderPlanResult:
                 lib = load_library(ref)
                 library_cache[key] = lib
             libraries[ref["name"]] = _library_entry(lib, ref)
-            for note_index, ev in enumerate(layer.get("notes", [])):
-                segments.append(_instrument_segment(
-                    root, layer, layer_index, note_index, ev, lib, policy,
-                    diagnostics, tempo_map, sample_len_cache))
+            lname = _layer_name(layer, layer_index)
+            base_factory = lambda sub: rng_for(take_root, lname, "instrument", sub)
+            count = int(layer.get("section", {}).get("size", 1))
+            for player in range(count):
+                offset, detune = 0.0, 0.0
+                factory = base_factory
+                if count > 1:
+                    offset, detune, _ = section_player(layer, player, base_factory)
+                    factory = lambda sub: base_factory(f"player{player}:{sub}")
+                scheduled = schedule_notes(layer, total_n, sr, tempo_map, factory,
+                                           resolved.get("groove"), offset, detune)
+                links = legato_links(scheduled)
+                for note, (previous, following) in zip(scheduled, links):
+                    note_index, ev = note["note_index"], note["event"]
+                    segment = _instrument_segment(
+                        take_root, layer, layer_index, note_index, ev, lib, policy,
+                        diagnostics, tempo_map, sample_len_cache, note, sr)
+                    if count > 1:
+                        segment["player_index"] = player
+                        segment["id"] += f":player{player}"
+                    _performance_evidence(segment, layer, ev, policy, diagnostics,
+                                          previous is not None or following is not None)
+                    segments.append(segment)
         elif layer.get("type") == "notes":
-            for note_index, ev in enumerate(layer.get("notes", [])):
-                segments.append(_synth_native_segment(
-                    layer, layer_index, note_index, ev))
+            events = note_events(layer, tempo_map.beat_at(resolved["duration_s"]))
+            for note_index, ev in enumerate(events):
+                segment = _synth_native_segment(layer, layer_index, note_index, ev)
+                _performance_evidence(segment, layer, ev, policy, diagnostics)
+                segments.append(segment)
 
     plan = {
         "schema": RENDER_PLAN_SCHEMA_VERSION,

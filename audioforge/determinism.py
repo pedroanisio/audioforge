@@ -1,14 +1,16 @@
 """Determinism primitives.
 
 Every stochastic element in the engine draws from an RNG whose seed is
-derived from (a) the canonical hash of the asset spec and (b) a stable
-string path identifying the component asking for randomness. Identical
-spec => identical bytes, on any machine, any run.
+derived from the explicit performance seed/variant and a stable component
+path. The complete spec hash separately identifies the render contract.
+Identical specs reproduce within a verified environment; cross-platform
+floating-point/native results are checked by the golden gate, not assumed.
 """
 from __future__ import annotations
 
 import hashlib
 import json
+from collections import Counter
 from typing import Any
 
 import numpy as np
@@ -33,6 +35,41 @@ def spec_hash(spec: dict) -> str:
     spec = {k: v for k, v in spec.items() if k not in HASH_EXCLUDED_TOP_LEVEL}
     payload = ENGINE_VERSION + "\x00" + canonical_json(spec)
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def performance_hash(spec: dict) -> str:
+    """Identify a take independently of mix settings, labels and engine version.
+
+    The complete spec still identifies the render. Only an explicit seed or
+    variant changes the take's entropy; named layers and events subdivide it.
+    """
+    payload = canonical_json({
+        "schema": "audioforge.performance/1",
+        "seed": spec.get("performance_seed", 0),
+        "variant": spec.get("variant"),
+    })
+    return hashlib.sha256(payload.encode()).hexdigest()
+
+
+def note_seed_paths(events: list[dict]) -> list[str]:
+    """Stable event identities; unrelated insertions do not renumber a take.
+
+    Explicit event IDs survive moving a note. Otherwise onset and pitch identify
+    the event, with occurrence numbers distinguishing identical unison notes.
+    Velocity, gate length and expression edits preserve the random realization.
+    """
+    occurrences: Counter[str] = Counter()
+    paths = []
+    for event in events:
+        identity = event.get("id") or {
+            "beat": float(event["start_beat"]),
+            "pitch": event.get("note", event.get("freq_hz")),
+            "voice": event.get("voice"),
+        }
+        key = hashlib.sha256(canonical_json(identity).encode()).hexdigest()[:24]
+        paths.append(f"note:{key}:{occurrences[key]}")
+        occurrences[key] += 1
+    return paths
 
 
 def derive_seed(root_hash: str, *path: str) -> int:

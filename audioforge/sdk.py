@@ -102,12 +102,13 @@ class AudioAsset:
             spec["sample_rate"] = cfg["sample_rate"]
             spec["bit_depth"] = cfg["bit_depth"]
             spec.setdefault("master", {})["target_lufs"] = cfg["target_lufs"]
+            spec["master"]["normalization"] = "none"
         metas = []
         for length, stereo, sr, meta in render_cutdowns(spec):
             stem = f"{self.id}_{int(length)}s"
             p = out_dir / f"{stem}.wav"
             meta["output_sha256"] = _write_wav(
-                p, stereo, sr, meta["bit_depth"], meta["spec_hash"],
+                p, stereo, sr, meta["bit_depth"], meta["performance_hash"],
                 f"dither:cutdown:{int(length)}")
             meta["file"] = p.name
             (out_dir / f"{stem}.manifest.json").write_text(
@@ -136,14 +137,19 @@ class AudioAsset:
             # Route-level advisories (sustain gaps, fallbacks, stretch) come
             # from the render plan. Only reachable once resources bind, so we
             # skip it when resolve already failed.
-            if not resource_problems and any(
-                    l.get("type") == "instrument"
-                    for l in self.spec.get("layers", [])):
+            if not resource_problems:
                 from .plan import build_render_plan
                 try:
                     for d in build_render_plan(self.spec).diagnostics:
                         out.append(Diagnostic(d.get("severity", "warning"),
                                               d["message"]))
+                except SpecError as e:
+                    out.append(Diagnostic("error", str(e)))
+            if self.spec.get("loop_safe") and not any(d.severity == "error" for d in out):
+                # Loop readiness depends on the actual seam and effect tails.
+                # The pure structural path remains available with resolve=False.
+                try:
+                    render(copy.deepcopy(self.spec))
                 except SpecError as e:
                     out.append(Diagnostic("error", str(e)))
         return out
@@ -241,7 +247,7 @@ class AudioAsset:
         if analyze:
             from .analysis import analyze_audio
             stereo, sr, _ = render(self._resolved(spec))
-            meta["analysis"] = analyze_audio(stereo, sr)
+            meta["analysis"] = analyze_audio(stereo, sr, context=spec)
             manifest = Path(out_dir) / f"{spec['id']}.manifest.json"
             if manifest.exists():
                 manifest.write_text(json.dumps(meta, indent=2,
@@ -255,7 +261,7 @@ class AudioAsset:
         """Render in memory and return deterministic analysis features."""
         from .analysis import analyze_audio
         stereo, sr, _ = self.render()
-        return analyze_audio(stereo, sr)
+        return analyze_audio(stereo, sr, context=self.spec)
 
     # -- serialization -----------------------------------------------------
     def to_json(self) -> str:
@@ -293,15 +299,17 @@ class CompileResult:
 
 
 def _timeline_warnings(spec: dict) -> list[Diagnostic]:
-    bpm = float(spec.get("bpm", 120.0))
-    beat_s = 60.0 / bpm
+    from .sequencer import TempoMap, TimelineMap
+    timeline = TimelineMap(
+        TempoMap(spec.get("tempo_map") or [[0, spec.get("bpm", 120.0)]]),
+        spec.get("holds"))
     duration_s = float(spec["duration_s"])
     out: list[Diagnostic] = []
     for i, layer in enumerate(spec.get("layers", [])):
         if layer.get("type") not in ("notes", "instrument"):
             continue
         for j, ev in enumerate(layer.get("notes", [])):
-            end_s = (float(ev["start_beat"]) + float(ev["dur_beats"])) * beat_s
+            end_s = timeline.sec(float(ev["start_beat"]) + float(ev["dur_beats"])) + float(layer.get("start_s", 0))
             if end_s > duration_s:
                 out.append(Diagnostic(
                     "warning",

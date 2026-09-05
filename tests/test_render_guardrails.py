@@ -40,7 +40,7 @@ def test_dropout_render_is_flagged():
     for _ in range(5):
         blocks.append(_tone(3))
         blocks.append(np.zeros(int(7 * SR)))
-    rep = analyze_audio(_stereo(np.concatenate(blocks)), SR)
+    rep = analyze_audio(_stereo(np.concatenate(blocks)), SR, context={"continuous": True})
     assert rep["longest_silence_s"] >= 6.0
     dead = [r for r in rep["recommendations"] if r["code"] == "dead_air"]
     assert dead and dead[0]["severity"] == "warning"

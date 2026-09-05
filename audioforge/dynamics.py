@@ -94,12 +94,9 @@ def master_loudness(stereo: np.ndarray, sr: int, target_lufs: float,
     final = measured
     for _ in range(max_iters):
         shortfall = target_lufs - final
-        if abs(shortfall) < 0.2:
-            break
-        total_gain_db += shortfall
-        if out is stereo:
-            out = stereo                     # safe: caller reassigns from
-        out *= 10.0 ** (shortfall / 20.0)    # our return; no extra copy
+        if abs(shortfall) >= 0.2:
+            total_gain_db += shortfall
+            out *= 10.0 ** (shortfall / 20.0)
         out, lim_i = true_peak_limit(out, sr, ceiling_dbfs)
         if lim_i["limited"]:
             lim = {"gain_reduction_db_max": max(
@@ -107,6 +104,8 @@ def master_loudness(stereo: np.ndarray, sr: int, target_lufs: float,
                        lim_i["gain_reduction_db_max"]),
                    "limited": True}
         final = integrated_lufs(out, sr)
+        if abs(target_lufs - final) < 0.2:
+            break
     return out, {
         "measured_lufs": round(measured, 2),
         "applied_gain_db": round(total_gain_db, 2),

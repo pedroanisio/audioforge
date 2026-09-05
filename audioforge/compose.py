@@ -71,9 +71,10 @@ class Composer:
 
     def __init__(self, id: str, kind: str = "cue", tempo: float = 120,
                  duration: float | None = None, key: str | None = None,
-                 swing: float | None = None):
+                 swing: float | None = None, performance_seed: int = 0):
         self.spec: dict = {"id": id, "kind": kind, "bpm": float(tempo),
                            "layers": [], "master": {}, "markers": []}
+        self.spec["performance_seed"] = performance_seed
         if key:
             self.spec["key"] = key
         if swing is not None:
@@ -188,8 +189,11 @@ class Composer:
     def master(self, *, peak_db: float | None = -1.0,
                target_lufs: float | None = None, fx=None,
                fade_in_s: float | None = None,
-               fade_out_s: float | None = None) -> "Composer":
+               fade_out_s: float | None = None,
+               normalization: str = "none") -> "Composer":
+        """Set delivery levels; peak_db is a ceiling unless normalization=peak."""
         m = self.spec["master"]
+        m["normalization"] = normalization
         if peak_db is not None:
             m["target_peak_dbfs"] = float(peak_db)
         if target_lufs is not None:

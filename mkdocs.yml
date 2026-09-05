@@ -40,6 +40,8 @@ nav:
   - Interop: INTEROP.md
   - Codebase standards: codebase-standards.md
   - Release notes: RELEASE_NOTES.md
+  - Migration to engine 3: MIGRATION_3.md
+  - Musical correctness: MUSICAL_CORRECTNESS.md
   - Design records:
       - Template: adr/adr-template.md
       - ADR-0001 Determinism oracle: adr/0001-determinism-oracle.md
@@ -48,3 +50,4 @@ nav:
       - ADR-0004 Native kernels fail loud: adr/0004-native-kernels-fail-loud.md
       - ADR-0005 IR source of truth: adr/0005-ir-source-of-truth.md
       - ADR-0006 Generator owns artifact: adr/0006-generator-owns-artifact.md
+      - ADR-0007 Musical rendering semantics: adr/0007-musical-render-semantics.md
