@@ -33,6 +33,11 @@ those routes. A plan proves the selected implementation path, not realism.
 
 `validate` follows SDK resource and route validation. Loop-safe assets also render a buffer to measure seams and tails. Set request `resolve: false` for structural validation only.
 
+Every diagnostic in the envelope carries `code` (ADR-0008): a key of
+`capability_manifest()["diagnostic_codes"]` (see `docs/DIAGNOSTIC_CODES.md`) or `null`
+when no registered code applies. Branch on `code`, not on `message` text; the message
+keeps its human-readable `code:` prefix.
+
 `run_tool("analyze", {"audio": samples, "sample_rate": 48000,
 "context": {"stereo": "mono", "expect_bass": false}})` separates measured
 observations from context-dependent recommendations. Context may instead be a

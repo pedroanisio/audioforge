@@ -37,8 +37,8 @@ def _notes_spec(asset_id="sdk_notes") -> dict:
 def test_diagnostic_and_asset_mutation_helpers():
     diag = sdk.Diagnostic("warning", "careful", "layers.0")
     assert diag.as_dict() == {
-        "severity": "warning", "message": "careful", "path": "layers.0",
-    }
+        "severity": "warning", "message": "careful", "path": "layers.0", "code": None,
+    }   # `code` is part of the envelope since ADR-0008
 
     asset = sdk.AudioAsset(_spec())
     assert asset.id == "sdk_asset"

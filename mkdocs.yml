@@ -51,3 +51,4 @@ nav:
       - ADR-0005 IR source of truth: adr/0005-ir-source-of-truth.md
       - ADR-0006 Generator owns artifact: adr/0006-generator-owns-artifact.md
       - ADR-0007 Musical rendering semantics: adr/0007-musical-render-semantics.md
+      - ADR-0008 Structured diagnostic codes: adr/0008-structured-diagnostic-codes.md

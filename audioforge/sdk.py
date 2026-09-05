@@ -22,7 +22,9 @@ Typical agent loop:
 from __future__ import annotations
 
 import copy
+import functools
 import json
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -42,15 +44,46 @@ EXPORT_PRESETS = {
 }
 
 
+_CODE_TOKEN = re.compile(r"\b([a-z][a-z0-9_]{2,})(?=:)")
+
+
+@functools.lru_cache(maxsize=1)
+def registered_diagnostic_codes() -> frozenset[str]:
+    """The manifest's diagnostic-code registry (ADR-0008); imported lazily to avoid cycles."""
+    from .capabilities import capability_manifest
+    return frozenset(capability_manifest()["diagnostic_codes"])
+
+
+def infer_diagnostic_code(message: str) -> str | None:
+    """Return the first registered code that prefixes a clause of ``message``.
+
+    Engine messages carry their code as a leading ``code:`` token, possibly after an
+    asset-id prefix (``"h: ambiguous_harmony: layer …"``). Unregistered tokens and
+    field paths (``"spec.layers[0].gain_db: …"``) yield ``None``.
+    """
+    registry = registered_diagnostic_codes()
+    for token in _CODE_TOKEN.findall(message or ""):
+        if token in registry:
+            return token
+    return None
+
+
 @dataclass
 class Diagnostic:
-    severity: str   # "error" | "warning"
+    """A structured diagnostic (ADR-0008): ``code`` is machine-readable and, when
+    present, is a key of ``capability_manifest()["diagnostic_codes"]``."""
+    severity: str   # "error" | "warning" | "info"
     message: str
     path: str | None = None
+    code: str | None = None
+
+    def __post_init__(self):
+        if self.code is None:
+            self.code = infer_diagnostic_code(self.message)
 
     def as_dict(self):
         return {"severity": self.severity, "message": self.message,
-                "path": self.path}
+                "path": self.path, "code": self.code}
 
 
 class AudioAsset:
@@ -142,7 +175,8 @@ class AudioAsset:
                 try:
                     for d in build_render_plan(resolved).diagnostics:
                         out.append(Diagnostic(d.get("severity", "warning"),
-                                              d["message"]))
+                                              d["message"], d.get("path"),
+                                              d.get("code")))
                 except SpecError as e:
                     out.append(Diagnostic("error", str(e)))
             if resolved.get("loop_safe") and not any(d.severity == "error" for d in out):

@@ -12,8 +12,12 @@ from .version import DSL_VERSION, ENGINE_VERSION
 TOOL_SCHEMA_VERSION = "audioforge.agent-tools/1"
 
 
-def _diag(severity: str, message: str, path: str | None = None) -> dict:
-    out = {"severity": severity, "message": message}
+def _diag(severity: str, message: str, path: str | None = None,
+          code: str | None = None) -> dict:
+    """Envelope diagnostic (ADR-0008): always carries ``code`` (registered or null)."""
+    from .sdk import infer_diagnostic_code
+    out = {"severity": severity, "message": message,
+           "code": code if code is not None else infer_diagnostic_code(message)}
     if path:
         out["path"] = path
     return out
@@ -37,7 +41,9 @@ def tool_schemas() -> dict:
         name: {
             "schema": TOOL_SCHEMA_VERSION,
             "request": {"type": "object"},
-            "response": {"required": ["schema", "ok", "diagnostics", "artifacts"]},
+            "response": {"required": ["schema", "ok", "diagnostics", "artifacts"],
+                         "diagnostic": {"required": ["severity", "message", "code"],
+                                        "code": "a capability_manifest()['diagnostic_codes'] key, or null (ADR-0008)"}},
         }
         for name in ops
     }
@@ -56,7 +62,7 @@ def run_tool(operation: str, request: dict) -> dict:
             return _response(
                 res.ok,
                 artifacts=[{"id": a.id, "spec": a.spec} for a in res.assets],
-                diagnostics=[d.__dict__ for d in res.diagnostics],
+                diagnostics=[d.as_dict() for d in res.diagnostics],
             )
         if operation == "validate":
             asset = AudioForge().load_spec(request["spec"])
@@ -104,7 +110,7 @@ def run_tool(operation: str, request: dict) -> dict:
         if operation == "render":
             res = AudioForge().compile(request.get("dsl", ""))
             if not res.ok:
-                return _response(False, diagnostics=[d.__dict__ for d in res.diagnostics])
+                return _response(False, diagnostics=[d.as_dict() for d in res.diagnostics])
             return _response(True, artifacts=[{"id": a.id, "renderable": True}
                                              for a in res.assets])
         if operation == "import":
