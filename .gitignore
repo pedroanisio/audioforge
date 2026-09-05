@@ -22,3 +22,6 @@ _catalog/
 scripts/gen_2030.py
 scripts/gen_to_be_alive.py
 docs/shadowmd-design-v2.md
+# harness evidence: keep logs/manifests, never WAVs or exports (docs/evolution/harness.md §2.5)
+docs/evolution/evidence/**/work/
+docs/evolution/evidence/**/*.wav

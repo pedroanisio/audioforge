@@ -1,0 +1,47 @@
+START 2026-09-05T22:30:38Z
+........................................................................ [  8%]
+.....................................s.................................. [ 16%]
+........................................................................ [ 24%]
+........................................................................ [ 32%]
+........................................................................ [ 40%]
+........................................................................ [ 48%]
+........................................................................ [ 56%]
+........................................................................ [ 65%]
+........................................................................ [ 73%]
+........................................................................ [ 81%]
+........................................................................ [ 89%]
+........................................................................ [ 97%]
+...s..................                                                   [100%]
+=============================== warnings summary ===============================
+tests/test_score.py::test_score_pdf_renders_rich_extended_score
+tests/test_score.py::test_score_pdf_handles_multi_asset_and_no_pitched_cases
+tests/test_score_layout.py::test_long_header_dense_seating_engraves
+  /home/admin/github-mirror/_framework/audioforge/audioforge/score.py:701: UserWarning: Glyph 108 (l) missing from font(s) Noto Music.
+    pdf.savefig(fig)
+
+tests/test_score.py::test_score_pdf_renders_rich_extended_score
+tests/test_score.py::test_score_pdf_handles_multi_asset_and_no_pitched_cases
+tests/test_score_layout.py::test_long_header_dense_seating_engraves
+  /home/admin/github-mirror/_framework/audioforge/audioforge/score.py:701: UserWarning: Glyph 112 (p) missing from font(s) Noto Music.
+    pdf.savefig(fig)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+884 passed, 2 skipped, 6 warnings in 149.27s (0:02:29)
+PYTEST_EXIT=
+audioforge/stage.py                         91      9  90.11%   62-66, 85-88, 158
+audioforge/styles.py                         9      1  88.89%   77
+audioforge/synth.py                        419     80  80.91%   47, 81, 107, 117, 124, 141-144, 160, 170-177, 188, 194-198, 217, 342, 437, 453-458, 465-468, 483-498, 500-501, 506-535, 598
+audioforge/theory.py                       104      7  93.27%   46, 76-78, 96, 118, 132
+audioforge/theory_pcset.py                  67      1  98.51%   116
+audioforge/tools/__init__.py                 0      0 100.00%
+audioforge/tools/bump_version.py            88      4  95.45%   67-68, 78, 98
+audioforge/tools/gen_capability.py          62      0 100.00%
+audioforge/tools/gen_docs.py                80      3  96.25%   104, 132-133
+audioforge/tools/gen_ir_schema.py           40      0 100.00%
+audioforge/tools/musical_acceptance.py      90     13  85.56%   174, 200-211, 215
+audioforge/tools/render_golden.py          105      8  92.38%   96, 102, 134, 145-147, 175-176
+audioforge/version.py                        8      0 100.00%
+-----------------------------------------------------------------------
+TOTAL                                    12035   1088  90.96%
+COVERAGE_EXIT=0
+END 2026-09-05T22:33:08Z

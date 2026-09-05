@@ -100,7 +100,8 @@ with `repo` scope; billing diagnosis (`RM-B-002`) needs repository-admin access.
 ### 2.5 Evidence and reporting
 
 Every check writes `<evidence>/<checkpoint>/<HARNESS-ID>.log` and one line to
-`<evidence>/<checkpoint>/summary.tsv` (`id`, `result`, `description`, `seconds`, `log`). The
+`<evidence>/<checkpoint>/summary.tsv`; heavy artifacts (WAVs, exports, the built site) go under
+`<evidence>/<checkpoint>/work/`, which is gitignored (`id`, `result`, `description`, `seconds`, `log`). The
 evidence root is `docs/evolution/evidence/` once `RM-A-001` lands; WAV files stay out of git
 (`*.wav` ignored under that path), JSON manifests and logs are committed. Until then, the T0
 evidence lives in this session's scratch directory and its load-bearing lines are copied into
@@ -472,7 +473,7 @@ assertion is one command whose exit code is the verdict; heavy checks are skippe
 # env:   PYTHON (default ./.venv/bin/python)  PY310 PY311 PY312 (matrix interpreters)
 #        RELEASE_SHA (default HEAD)  HARNESS_QUICK=1 (skip long checks)
 set -u
-CP=${1:?checkpoint label}; EV=${2:-docs/evolution/evidence}/$CP; mkdir -p "$EV"
+CP=${1:?checkpoint label}; EV=${2:-docs/evolution/evidence}/$CP; W="$EV/work"; mkdir -p "$W"   # work/ holds WAVs, exports, sites: gitignored
 PY=${PYTHON:-./.venv/bin/python}; SHA=${RELEASE_SHA:-$(git rev-parse HEAD)}
 SUM="$EV/summary.tsv"; printf 'id\tresult\tdescription\tseconds\tlog\n' > "$SUM"
 { echo "checkpoint=$CP"; echo "sha=$SHA"; echo "date=$(date -u +%FT%TZ)"; git status --porcelain | wc -l | sed 's/^/dirty_paths=/'; } > "$EV/context.txt"
@@ -497,10 +498,11 @@ run HARNESS-MUS-005 "M5 performance identity" "$PY" -m pytest -q -p no:cacheprov
 run HARNESS-MUS-006 "M6 analysis context"     "$PY" -m pytest -q -p no:cacheprovider tests/test_musical_correctness.py tests/test_ai_agent_dsl.py -k "analysis_observations or authored_rests or analysis_returns_actionable"
 
 # --- ACC ------------------------------------------------------------------
-heavy HARNESS-ACC-001 "acceptance cases pass"  "$PY" -m audioforge.tools.musical_acceptance --out "$EV/acceptance"
-acc002() { local b="$EV/baseline-2.16.0"; mkdir -p "$b" && git archive engine-2.16.0 | tar -x -C "$b" \
-  && "$PY" -m audioforge.tools.musical_acceptance --out "$EV/acceptance_ab" --baseline-root "$b" >/dev/null \
-  && py "$EV/acceptance_ab/manifest.json" <<'PYEOF'
+heavy HARNESS-ACC-001 "acceptance cases pass"  "$PY" -m audioforge.tools.musical_acceptance --out "$W/acceptance"
+[ -f "$W/acceptance/manifest.json" ] && cp "$W/acceptance/manifest.json" "$EV/acceptance-manifest.json"
+acc002() { local b="$W/baseline-2.16.0"; mkdir -p "$b" && git archive engine-2.16.0 | tar -x -C "$b" \
+  && "$PY" -m audioforge.tools.musical_acceptance --out "$W/acceptance_ab" --baseline-root "$b" >/dev/null \
+  && py "$W/acceptance_ab/manifest.json" <<'PYEOF'
 import json,sys; m=json.load(open(sys.argv[1])); c=m["cases"]
 ok=all(not x["revisions"]["baseline"]["passed"] and x["revisions"]["current"]["passed"] for x in c)
 print({x["id"]:(x["revisions"]["baseline"]["passed"],x["revisions"]["current"]["passed"]) for x in c}); sys.exit(0 if ok and len(c)==7 else 1)
@@ -508,7 +510,7 @@ PYEOF
 }
 heavy HARNESS-ACC-002 "baseline fails, current passes" acc002
 manual HARNESS-ACC-003 "listening review recorded (see harness.md 3.3)"
-acc004() { "$PY" -m audioforge.tools.musical_acceptance --out "$EV/acceptance_b" >/dev/null && py "$EV/acceptance/manifest.json" "$EV/acceptance_b/manifest.json" <<'PYEOF'
+acc004() { "$PY" -m audioforge.tools.musical_acceptance --out "$W/acceptance_b" >/dev/null && py "$W/acceptance/manifest.json" "$W/acceptance_b/manifest.json" <<'PYEOF'
 import json,sys; a,b=[json.load(open(p)) for p in sys.argv[1:3]]
 h=lambda m:{c["id"]:c["revisions"]["current"]["output_sha256"] for c in m["cases"]}; sys.exit(0 if h(a)==h(b) else 1)
 PYEOF
@@ -519,7 +521,7 @@ heavy HARNESS-ACC-004 "acceptance bundle reproducible" acc004
 heavy HARNESS-GATE-001 "make check"            timeout 300 make check PYTHON="$PY"
 heavy HARNESS-GATE-002 "coverage >= 90.1"      bash -c "$PY -m coverage run -m pytest -q -p no:cacheprovider && $PY -m coverage report"
 run   HARNESS-GATE-003 "golden strict same-env" "$PY" -m audioforge.tools.render_golden --check
-heavy HARNESS-GATE-004 "mkdocs strict"          uv run --with mkdocs-material mkdocs build --strict --site-dir "$EV/site"
+heavy HARNESS-GATE-004 "mkdocs strict"          uv run --with mkdocs-material mkdocs build --strict --site-dir "$W/site"
 run   HARNESS-GATE-005 "backlog governance"     node scripts/check-backlog-governance.mjs
 run   HARNESS-GATE-006 "git diff --check"       git diff --check
 
@@ -586,9 +588,9 @@ for s,lim in ((12,.130),(24,.250)):
     r=Region(pitch_keycenter=60,ampeg_attack=.001,ampeg_release=.1); best=min((lambda t0:(render_region(r,src,SR,60+s,SR,SR),time.perf_counter()-t0)[1])(time.perf_counter()) for _ in range(3)); out[s]=(best,lim)
 print(out); sys.exit(0 if all(b<=l for b,l in out.values()) else 1)
 PYEOF"
-mig001() { local b="$EV/baseline-2.16.0"; [ -d "$b" ] || { mkdir -p "$b" && git archive engine-2.16.0 | tar -x -C "$b"; }
-  (cd "$b" && PYTHONPATH="$b" "$PY" -m audioforge.cli render tests/golden/audio/synth_voice.af -o "$EV/mig" >/dev/null && PYTHONPATH="$b" "$PY" -m audioforge.cli compile tests/golden/audio/synth_voice.af > "$EV/mig/legacy.ir.json")
-  "$PY" -m audioforge.cli verify "$EV/mig/legacy.ir.json" "$EV/mig/synth_voice.manifest.json"; [ $? -eq 2 ]; }
+mig001() { local b="$W/baseline-2.16.0"; [ -d "$b" ] || { mkdir -p "$b" && git archive engine-2.16.0 | tar -x -C "$b"; }
+  (cd "$b" && PYTHONPATH="$b" "$PY" -m audioforge.cli render tests/golden/audio/synth_voice.af -o "$W/mig" >/dev/null && PYTHONPATH="$b" "$PY" -m audioforge.cli compile tests/golden/audio/synth_voice.af > "$W/mig/legacy.ir.json")
+  "$PY" -m audioforge.cli verify "$W/mig/legacy.ir.json" "$W/mig/synth_voice.manifest.json"; [ $? -eq 2 ]; }
 heavy HARNESS-MIG-001 "legacy manifest -> MISMATCH exit 2" mig001
 run   HARNESS-MIG-002 "repo .af specs compile+render" py <<'PYEOF'
 import sys; from pathlib import Path; from audioforge import AudioForge
@@ -599,12 +601,12 @@ run   HARNESS-MIG-003 "migration flags audio review" py <<'PYEOF'
 import sys; from audioforge.ir_schema import migrate_ir_spec; m=migrate_ir_spec({"id":"x"},"1.2")["_meta"]["migration"]; print(m); sys.exit(0 if m.get("audio_review_required") is True and m.get("to")=="2.0" else 1)
 PYEOF
 run   HARNESS-RB-001 "rollback anchor resolves"  git rev-parse --verify engine-2.16.0
-rb002() { local d="$EV/rollback-2.16.0" p shim="$EV/shim"; p="$(readlink -f "$PY")"; mkdir -p "$d" "$shim"
+rb002() { local d="$W/rollback-2.16.0" p shim="$W/shim"; p="$(readlink -f "$PY")"; mkdir -p "$d" "$shim"
   printf '#!/bin/sh\nexec %s "$@"\n' "$p" > "$shim/python3"; cp "$shim/python3" "$shim/python"; chmod +x "$shim/python3" "$shim/python"  # wrapper, not symlink: a venv python reached via an outside symlink loses its site-packages
   git archive engine-2.16.0 | tar -x -C "$d" && ln -sfn "$PWD/libraries" "$d/libraries" && (cd "$d" && export PATH="$shim:$PATH" PYTHONPATH="$d" PYTHON="$p"
   if [ -f Makefile ]; then make check PYTHON="$p"; else sh scripts/run_tests.sh; fi); }  # 2.16.0 predates the Makefile and its runner hardcodes python3
 heavy HARNESS-RB-002 "previous release gate green in export" rb002
-run   HARNESS-OBS-001 "manifest carries identities" bash -c "$PY -m audioforge.cli render tests/golden/audio/synth_voice.af -o $EV/obs >/dev/null && $PY -c \"import json,sys; m=json.load(open('$EV/obs/synth_voice.manifest.json')); need={'spec_hash','performance_hash','performance_seed','engine_version','output_sha256','plan_hash'}; print(sorted(need-set(m))); sys.exit(0 if need<=set(m) else 1)\""
+run   HARNESS-OBS-001 "manifest carries identities" bash -c "$PY -m audioforge.cli render tests/golden/audio/synth_voice.af -o $W/obs >/dev/null && $PY -c \"import json,sys; m=json.load(open('$W/obs/synth_voice.manifest.json')); need={'spec_hash','performance_hash','performance_seed','engine_version','output_sha256','plan_hash'}; print(sorted(need-set(m))); sys.exit(0 if need<=set(m) else 1)\""
 run   HARNESS-OBS-002 "evidence bundle tracked"     bash -c "test -s $SUM && git ls-files --error-unmatch docs/evolution/evidence >/dev/null 2>&1"
 if command -v unshare >/dev/null && unshare -rn true 2>/dev/null; then heavy HARNESS-SEC-001 "suite offline" unshare -rn make test PYTHON="$PY"; else printf 'HARNESS-SEC-001\tBLOCKED\tno unprivileged network namespace\t0\t-\n' | tee -a "$SUM"; fi
 run   HARNESS-SEC-002 "no secrets tracked"          bash -c "test \"\$(git grep -nE 'ghp_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|-----BEGIN (RSA|OPENSSH|EC) PRIVATE KEY|xox[baprs]-' -- . ':!uv.lock' | wc -l)\" = 0"

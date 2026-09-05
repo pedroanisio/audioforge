@@ -1,0 +1,20 @@
+START 2026-09-05T22:34:51Z
+Python 3.10.20
+native-check: C compiler present
+schema-check: /home/admin/github-mirror/_framework/audioforge/docs/ir.schema.json is in sync with ir_json_schema()
+Traceback (most recent call last):
+  File "/home/admin/.local/share/uv/python/cpython-3.10-linux-x86_64-gnu/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/home/admin/.local/share/uv/python/cpython-3.10-linux-x86_64-gnu/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/home/admin/github-mirror/_framework/audioforge/audioforge/tools/gen_capability.py", line 31, in <module>
+    from audioforge.capabilities import capability_manifest
+  File "/home/admin/github-mirror/_framework/audioforge/audioforge/capabilities.py", line 41, in <module>
+    from .sample_catalog.licenses import ACCEPTED_LICENSES
+  File "/home/admin/github-mirror/_framework/audioforge/audioforge/sample_catalog/licenses.py", line 6, in <module>
+    from datetime import UTC, datetime
+ImportError: cannot import name 'UTC' from 'datetime' (/home/admin/.local/share/uv/python/cpython-3.10-linux-x86_64-gnu/lib/python3.10/datetime.py)
+make: *** [Makefile:41: manifest-check] Error 1
+make check PYTHON=$SP/py310/bin/python  6.37s user 0.20s system 344% cpu 1.906 total
+MAKE_CHECK_PY310_EXIT=2
+END 2026-09-05T22:34:53Z

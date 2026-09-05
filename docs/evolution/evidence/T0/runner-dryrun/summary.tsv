@@ -1,0 +1,60 @@
+id	result	description	seconds	log
+HARNESS-AUD-001	PASS	A1 gain once	2	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-AUD-001.log
+HARNESS-AUD-002	PASS	A2 release at note-off	1	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-AUD-002.log
+HARNESS-AUD-003	PASS	A3 anti-alias	1	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-AUD-003.log
+HARNESS-AUD-004	PASS	A4 mastering	1	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-AUD-004.log
+HARNESS-MUS-001	PASS	M1 harmony	1	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-MUS-001.log
+HARNESS-MUS-002	PASS	M2 phrase evidence	1	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-MUS-002.log
+HARNESS-MUS-003	PASS	M3 technique fidelity	5	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-MUS-003.log
+HARNESS-MUS-004	PASS	M4 arrangement + loops	2	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-MUS-004.log
+HARNESS-MUS-005	PASS	M5 performance identity	1	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-MUS-005.log
+HARNESS-MUS-006	PASS	M6 analysis context	1	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-MUS-006.log
+HARNESS-ACC-001	SKIPPED	acceptance cases pass	0	-
+HARNESS-ACC-002	SKIPPED	baseline fails, current passes	0	-
+HARNESS-ACC-003	MANUAL	listening review recorded (see harness.md 3.3)	0	-
+HARNESS-ACC-004	SKIPPED	acceptance bundle reproducible	0	-
+HARNESS-GATE-001	SKIPPED	make check	0	-
+HARNESS-GATE-002	SKIPPED	coverage >= 90.1	0	-
+HARNESS-GATE-003	PASS	golden strict same-env	1	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-GATE-003.log
+HARNESS-GATE-004	SKIPPED	mkdocs strict	0	-
+HARNESS-GATE-005	PASS	backlog governance	0	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-GATE-005.log
+HARNESS-GATE-006	PASS	git diff --check	0	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-GATE-006.log
+HARNESS-PORT-001	BLOCKED	no PY310 interpreter	0	-
+HARNESS-PORT-002	BLOCKED	no PY311 interpreter	0	-
+HARNESS-PORT-003	BLOCKED	no PY312 interpreter	0	-
+HARNESS-PORT-004	SKIPPED	cross-env golden advisory (no PORT logs)	0	-
+HARNESS-CI-001	FAIL	a CI job executed	3	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-CI-001.log
+HARNESS-CI-002	FAIL	ci green on branch head	1	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-CI-002.log
+HARNESS-CI-003	FAIL	ci green on main	2	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-CI-003.log
+HARNESS-CI-004	FAIL	backlog-governance green	1	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-CI-004.log
+HARNESS-VCS-001	FAIL	tree clean	0	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-VCS-001.log
+HARNESS-VCS-002	FAIL	branch pushed == local	0	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-VCS-002.log
+HARNESS-VCS-003	FAIL	PR approved	1	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-VCS-003.log
+HARNESS-VCS-004	FAIL	merged into origin/main	0	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-VCS-004.log
+HARNESS-REL-001	PASS	version literals	1	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-REL-001.log
+HARNESS-REL-002	FAIL	changelog consolidated	0	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-REL-002.log
+HARNESS-REL-003	FAIL	release tags on origin	1	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-REL-003.log
+HARNESS-REL-004	FAIL	uv lock in sync	0	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-REL-004.log
+HARNESS-GOV-001	FAIL	backlog knows the repair	0	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-GOV-001.log
+HARNESS-GOV-002	FAIL	Track E statuses done	0	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-GOV-002.log
+HARNESS-GOV-003	FAIL	ledger vocabulary + harness ids	0	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-GOV-003.log
+HARNESS-GOV-004	FAIL	ADR-0001 points to ADR-0007	0	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-GOV-004.log
+HARNESS-GOV-005	FAIL	index.md claim corrected	0	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-GOV-005.log
+HARNESS-GOV-006	FAIL	ADR-0007 status honest	0	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-GOV-006.log
+HARNESS-GOV-007	FAIL	agent-task pointer valid	0	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-GOV-007.log
+HARNESS-GOV-008	MANUAL	ledger citations accurate (see harness.md 3.9)	0	-
+HARNESS-CON-001	FAIL	emitted codes registered	1	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-CON-001.log
+HARNESS-CON-002	FAIL	Diagnostic has code field	1	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-CON-002.log
+HARNESS-CON-003	FAIL	verify .af gives structured error	0	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-CON-003.log
+HARNESS-CON-004	FAIL	validate does not mutate caller	1	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-CON-004.log
+HARNESS-PERF-001	SKIPPED	make check <= 300 s	0	-
+HARNESS-PERF-002	FAIL	resampler cost bounded + documented	1	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-PERF-002.log
+HARNESS-MIG-001	SKIPPED	legacy manifest -> MISMATCH exit 2	0	-
+HARNESS-MIG-002	PASS	repo .af specs compile+render	1	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-MIG-002.log
+HARNESS-MIG-003	PASS	migration flags audio review	1	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-MIG-003.log
+HARNESS-RB-001	PASS	rollback anchor resolves	0	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-RB-001.log
+HARNESS-RB-002	SKIPPED	previous release gate green in export	0	-
+HARNESS-OBS-001	PASS	manifest carries identities	0	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-OBS-001.log
+HARNESS-OBS-002	FAIL	evidence bundle tracked	0	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-OBS-002.log
+HARNESS-SEC-001	SKIPPED	suite offline	0	-
+HARNESS-SEC-002	PASS	no secrets tracked	0	/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/evidence/T0-dryrun/HARNESS-SEC-002.log

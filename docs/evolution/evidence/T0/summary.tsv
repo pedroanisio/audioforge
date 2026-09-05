@@ -1,0 +1,60 @@
+id	result	description	seconds	log
+HARNESS-AUD-001	PASS	A1: instrument layer gain is applied once, including virtual sections, measured through the full renderer on a pinned sa	-	docs/evolution/harness.md §3/§4
+HARNESS-AUD-002	PASS	A2: note duration is gate time; release starts at note-off for synth and sampler, including note-off during attack and s	-	docs/evolution/harness.md §3/§4
+HARNESS-AUD-003	PASS	A3: transposition and rate conversion suppress out-of-band content, preserve in-band pitch and level, including variable	-	docs/evolution/harness.md §3/§4
+HARNESS-AUD-004	PASS	A4: default mastering preserves absolute level below the ceiling; `normalize: peak` is explicit and round-trips; ceiling	-	docs/evolution/harness.md §3/§4
+HARNESS-MUS-001	PASS	M1: chord root and quality resolve across inversions; sevenths preserved; ambiguous (C6/Am7) and unrecognised clusters a	-	docs/evolution/harness.md §3/§4
+HARNESS-MUS-002	PASS	M2: phrases use authored form and slurs; no fabricated cadence or pitch peak; cadence candidates need resolved roots, de	-	docs/evolution/harness.md §3/§4
+HARNESS-MUS-003	PASS	M3: technique fidelity is explicit (`technique_render.fidelity`), survives IR and plan, and `routing: fallbacks=forbid` 	-	docs/evolution/harness.md §3/§4
+HARNESS-MUS-004	PASS	M4: `repeat` executes in the render contract (notes, duration, continuation, tempo, holds, markers, shaped automation, u	-	docs/evolution/harness.md §3/§4
+HARNESS-MUS-005	PASS	M5: gain, pan, metadata and reordering edits leave unrelated stems byte-identical; explicit `performance_seed` changes t	-	docs/evolution/harness.md §3/§4
+HARNESS-MUS-006	PASS	M6: analysis reports observations always and recommendations only under declared expectations; authored rests are not de	-	docs/evolution/harness.md §3/§4
+HARNESS-ACC-001	PASS	The seven measured acceptance cases (seventh, phrase, repeat, release, quiet, alias, sample_gain) pass on the tree under	-	docs/evolution/harness.md §3/§4
+HARNESS-ACC-002	PASS	The same cases expose the targeted defect on the previous engine, proving the assertions discriminate	-	docs/evolution/harness.md §3/§4
+HARNESS-ACC-003	FAIL	A human listening review of the corpus is recorded and cited by the ledger; `listening_status` is no longer `not_reviewe	-	docs/evolution/harness.md §3/§4
+HARNESS-ACC-004	PASS	The acceptance bundle is itself reproducible	-	docs/evolution/harness.md §3/§4
+HARNESS-GATE-001	PASS	The composed local gate passes in the reference environment	-	docs/evolution/harness.md §3/§4
+HARNESS-GATE-002	PASS	Statement coverage meets the repository threshold	-	docs/evolution/harness.md §3/§4
+HARNESS-GATE-003	PASS	Golden corpus reproduces byte-for-byte in the lock's numeric environment	-	docs/evolution/harness.md §3/§4
+HARNESS-GATE-004	PASS	The documentation site builds strictly with the new pages in nav	-	docs/evolution/harness.md §3/§4
+HARNESS-GATE-005	PASS	The backlog registry validates	-	docs/evolution/harness.md §3/§4
+HARNESS-GATE-006	PASS	No whitespace errors in the diff	-	docs/evolution/harness.md §3/§4
+HARNESS-PORT-001	FAIL	`make check` passes under Python 3.10	-	docs/evolution/harness.md §3/§4
+HARNESS-PORT-002	PASS	`make check` passes under Python 3.11	-	docs/evolution/harness.md §3/§4
+HARNESS-PORT-003	PASS	`make check` passes under Python 3.12	-	docs/evolution/harness.md §3/§4
+HARNESS-PORT-004	PASS	Cross-environment golden behaviour is the documented one: advisory when `numeric_env` differs, strict when it matches	-	docs/evolution/harness.md §3/§4
+HARNESS-CI-001	FAIL	A GitHub Actions run for this repository executes at least one job	-	docs/evolution/harness.md §3/§4
+HARNESS-CI-002	FAIL	The `ci` workflow is green on the release branch head for Python 3.10, 3.11 and 3.12	-	docs/evolution/harness.md §3/§4
+HARNESS-CI-003	FAIL	The `ci` workflow is green on `main` after the merge	-	docs/evolution/harness.md §3/§4
+HARNESS-CI-004	FAIL	The `backlog-governance` workflow is green	-	docs/evolution/harness.md §3/§4
+HARNESS-VCS-001	FAIL	The repair is committed; the tree under test is clean	-	docs/evolution/harness.md §3/§4
+HARNESS-VCS-002	FAIL	A second copy exists: the tree is clean and the release branch is pushed and equals local	-	docs/evolution/harness.md §3/§4
+HARNESS-VCS-003	FAIL	The repair was reviewed by someone other than its author and findings were closed	-	docs/evolution/harness.md §3/§4
+HARNESS-VCS-004	FAIL	The tree is clean and the release commit is an ancestor of `origin/main`	-	docs/evolution/harness.md §3/§4
+HARNESS-REL-001	PASS	Every version literal equals `audioforge/version.py`	-	docs/evolution/harness.md §3/§4
+HARNESS-REL-002	FAIL	`CHANGELOG.md` describes one release: the `[3.0.0]` section carries a date and contains both the Track E infrastructure 	-	docs/evolution/harness.md §3/§4
+HARNESS-REL-003	FAIL	Tags `engine-3.0.0` and `dsl-2.0` exist on `origin` and point at an ancestor of `main`	-	docs/evolution/harness.md §3/§4
+HARNESS-REL-004	FAIL	The `uv` lockfile matches `pyproject.toml`	-	docs/evolution/harness.md §3/§4
+HARNESS-GOV-001	FAIL	The musical-correctness work is registered in the backlog system of record with evidence checks	-	docs/evolution/harness.md §3/§4
+HARNESS-GOV-002	FAIL	Registry status agrees with git history for Track E	-	docs/evolution/harness.md §3/§4
+HARNESS-GOV-003	FAIL	The ledger uses the staged status vocabulary and cites harness IDs; no row says `Verified` for uncommitted or un-CI'd wo	-	docs/evolution/harness.md §3/§4
+HARNESS-GOV-004	FAIL	ADR-0001 no longer states that randomness is rooted in the spec hash without pointing to ADR-0007	-	docs/evolution/harness.md §3/§4
+HARNESS-GOV-005	FAIL	The docs-site home page makes the same determinism claim as README and ADR-0007	-	docs/evolution/harness.md §3/§4
+HARNESS-GOV-006	FAIL	ADR-0007 status reflects delivery state: "Implemented" only when `HARNESS-VCS-004` and `HARNESS-CI-003` pass	-	docs/evolution/harness.md §3/§4
+HARNESS-GOV-007	FAIL	The coordination pointer `.agent-tasks/.current_task` names an active task or is absent	-	docs/evolution/harness.md §3/§4
+HARNESS-GOV-008	PARTIAL	Ledger evidence citations are accurate: every cited test file was changed by the repair or is labelled a pre-existing re	-	docs/evolution/harness.md §3/§4
+HARNESS-CON-001	FAIL	Every diagnostic code the engine emits is in `capability_manifest()["diagnostic_codes"]` and therefore in `docs/DIAGNOST	-	docs/evolution/harness.md §3/§4
+HARNESS-CON-002	FAIL	`Diagnostic` carries a machine-readable `code`, exposed through `agent_tools` and MCP envelopes	-	docs/evolution/harness.md §3/§4
+HARNESS-CON-003	FAIL	`audioforge verify` given a non-JSON spec returns a structured diagnostic, not a raw decoder error	-	docs/evolution/harness.md §3/§4
+HARNESS-CON-004	FAIL	`validate_spec` and `run_tool("validate", …)` do not mutate the caller's spec	-	docs/evolution/harness.md §3/§4
+HARNESS-PERF-001	PASS	The composed gate stays inside a five-minute budget	-	docs/evolution/harness.md §3/§4
+HARNESS-PERF-002	PARTIAL	The anti-alias resampler's cost is bounded and documented	-	docs/evolution/harness.md §3/§4
+HARNESS-MIG-001	PASS	A 2.16.0 manifest verified by 3.0.0 fails loudly and non-zero, as ADR-0007 intends	-	docs/evolution/harness.md §3/§4
+HARNESS-MIG-002	PASS	Every `.af` in the repository compiles and renders under 3.0.0 without error diagnostics	-	docs/evolution/harness.md §3/§4
+HARNESS-MIG-003	PASS	Structural IR migration flags that audio review is required	-	docs/evolution/harness.md §3/§4
+HARNESS-RB-001	PASS	A rollback anchor exists and is runnable: the previous release tag exports and renders the acceptance corpus with its do	-	docs/evolution/harness.md §3/§4
+HARNESS-RB-002	PARTIAL	Rollback rehearsal: the previous release's own gate passes in an isolated export with the current toolchain	-	docs/evolution/harness.md §3/§4
+HARNESS-OBS-001	PASS	Render manifests identify both the contract and the take	-	docs/evolution/harness.md §3/§4
+HARNESS-OBS-002	PARTIAL	Each checkpoint leaves a durable evidence bundle in the repository	-	docs/evolution/harness.md §3/§4
+HARNESS-SEC-001	BLOCKED	The test suite and the acceptance tool run without network access	-	docs/evolution/harness.md §3/§4
+HARNESS-SEC-002	PASS	No credentials in tracked files	-	docs/evolution/harness.md §3/§4

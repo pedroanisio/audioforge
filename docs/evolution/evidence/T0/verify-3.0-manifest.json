@@ -1,0 +1,19 @@
+{
+  "bit_depth": 24,
+  "channels": 2,
+  "duration_s": 2.0,
+  "emotion": {},
+  "engine_version": "3.0.0",
+  "file": "synth_voice.wav",
+  "id": "synth_voice",
+  "kind": "cue",
+  "markers": [],
+  "output_sha256": "65f311542467f88bf81f76af003a3a21da22205dad44ffe9ac29ba5388cc961a",
+  "performance_hash": "3364d7c83dfcc6fb1052c0d59dc7d0af001bf143a62a5d59e195d7240234a2d8",
+  "performance_seed": 0,
+  "plan_file": "synth_voice.plan.json",
+  "plan_hash": "fe9152e427820959d39a90e64092cdef18025d65ae63b356708593005bbad24c",
+  "plan_sha256": "955a28f488e7fc470250b329247f4645934595b85468517645ed0048f5a51b7c",
+  "sample_rate": 48000,
+  "spec_hash": "1314eb6ca7e174b8d5e3e10af08f0a554cbddc3095634e9b7fbfb0d10277895c"
+}

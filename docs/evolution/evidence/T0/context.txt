@@ -1,0 +1,5 @@
+checkpoint=T0
+sha=60c0fd5637f75744250a82ec7d98e9f7d8f167e3 (main) + uncommitted repair, later committed as 4a75778 on release/engine-3.0.0
+date=2026-09-05
+dirty_paths=57
+note=T0 was measured by hand with the commands in harness.md before scripts/harness.sh existed; runner-dryrun/ holds the first quick-mode run of the embedded runner against the same tree.
