@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from .constants import LICENSE_EVIDENCE_SCHEMA
@@ -147,7 +147,7 @@ def make_evidence(*, source: str, source_id: str, source_url: str,
                   download_url: str, license_name: str, license_url: str,
                   rights_text: str = "", creator: str = "",
                   fetched_at: str | None = None) -> LicenseEvidence:
-    fetched_at = fetched_at or datetime.now(UTC).replace(microsecond=0).isoformat()
+    fetched_at = fetched_at or datetime.now(timezone.utc).replace(microsecond=0).isoformat()
     ev = LicenseEvidence(
         source=_clean(source),
         source_id=_clean(source_id),

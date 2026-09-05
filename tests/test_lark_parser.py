@@ -6,7 +6,10 @@ covers the parser's externally promised behavior: it is the runtime dependency,
 it produces line-numbered diagnostics, it validates intent fields at parse time,
 and it is the authoritative source the published grammar derives from.
 """
-import tomllib
+try:
+    import tomllib
+except ModuleNotFoundError:  # Python 3.10: tomllib arrived in 3.11
+    import tomli as tomllib
 from pathlib import Path
 
 import pytest

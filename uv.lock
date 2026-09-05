@@ -8,7 +8,7 @@ resolution-markers = [
 
 [[package]]
 name = "audioforge"
-version = "2.16.0"
+version = "3.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "lark" },
@@ -25,6 +25,7 @@ dev = [
     { name = "hypothesis" },
     { name = "pytest" },
     { name = "pyyaml" },
+    { name = "tomli", marker = "python_full_version < '3.11'" },
 ]
 
 [package.metadata]
@@ -37,6 +38,7 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0" },
     { name = "pyyaml", marker = "extra == 'dev'", specifier = ">=6.0" },
     { name = "scipy", specifier = ">=1.8" },
+    { name = "tomli", marker = "python_full_version < '3.11' and extra == 'dev'", specifier = ">=2.0" },
 ]
 provides-extras = ["dev"]
 
