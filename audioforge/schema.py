@@ -24,6 +24,7 @@ Layer shapes (discriminated by "type"):
 """
 from __future__ import annotations
 
+import copy
 import re
 
 from .curves import (
@@ -596,8 +597,15 @@ def _validate_voice(layer: dict, p: str):
 
 
 def validate_spec(spec: dict) -> dict:
+    """Validate and normalise a spec; returns the render-ready IR.
+
+    The caller's object is never modified (ADR-0003: the IR an agent holds is the
+    IR that renders; RM-E-004 / HARNESS-CON-004). Repeat expansion and other
+    normalisations apply to the returned copy only.
+    """
     if not isinstance(spec, dict):
         raise SpecError("spec: must be a JSON object")
+    spec = copy.deepcopy(spec)
     sid = _req(spec, "id", "spec")
     if not isinstance(sid, str) or not sid:
         raise SpecError("spec.id: must be a non-empty string")

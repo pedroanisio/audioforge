@@ -123,16 +123,16 @@ class AudioAsset:
         Pass resolve=False for the pure structural check."""
         out: list[Diagnostic] = []
         try:
-            validate_spec(self.spec)
+            resolved = validate_spec(self.spec)   # pure: self.spec is untouched
         except SpecError as e:
             out.append(Diagnostic("error", str(e)))
             return out
-        out.extend(_timeline_warnings(self.spec))
+        out.extend(_timeline_warnings(resolved))
         out.extend(Diagnostic("warning", m)
-                   for m in run_extra_validators(self.spec))
+                   for m in run_extra_validators(resolved))
         if resolve:
             from .resolve import resolve_spec
-            resource_problems = list(resolve_spec(self.spec))
+            resource_problems = list(resolve_spec(resolved))
             out.extend(Diagnostic("error", m) for m in resource_problems)
             # Route-level advisories (sustain gaps, fallbacks, stretch) come
             # from the render plan. Only reachable once resources bind, so we
@@ -140,16 +140,16 @@ class AudioAsset:
             if not resource_problems:
                 from .plan import build_render_plan
                 try:
-                    for d in build_render_plan(self.spec).diagnostics:
+                    for d in build_render_plan(resolved).diagnostics:
                         out.append(Diagnostic(d.get("severity", "warning"),
                                               d["message"]))
                 except SpecError as e:
                     out.append(Diagnostic("error", str(e)))
-            if self.spec.get("loop_safe") and not any(d.severity == "error" for d in out):
+            if resolved.get("loop_safe") and not any(d.severity == "error" for d in out):
                 # Loop readiness depends on the actual seam and effect tails.
                 # The pure structural path remains available with resolve=False.
                 try:
-                    render(copy.deepcopy(self.spec))
+                    render(resolved)
                 except SpecError as e:
                     out.append(Diagnostic("error", str(e)))
         return out
@@ -167,7 +167,7 @@ class AudioAsset:
             node[int(last)] = value
         else:
             node[last] = value
-        validate_spec(self.spec)
+        self.spec = validate_spec(self.spec)   # keep the asset on expanded, validated IR
         return self
 
     def mutated(self, path: str, value, new_id: str | None = None) -> "AudioAsset":
@@ -375,7 +375,7 @@ class AudioForge:
         result.diagnostics.extend(Diagnostic("warning", w) for w in warns)
         for spec in specs:
             try:
-                validate_spec(spec)
+                spec = validate_spec(spec)      # compiled assets carry the expanded IR
                 result.assets.append(AudioAsset(spec))
             except SpecError as e:
                 result.diagnostics.append(
