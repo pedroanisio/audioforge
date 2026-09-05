@@ -5,7 +5,7 @@
 This work is subject to the methodological caveats and commitments described in DISCLAIMER.md.
 > No statement or premise not backed by a real logical definition or verifiable reference should be taken for granted.
 
-Deferred work captured so it is not lost. Nothing here blocks current use unless a current task explicitly promotes it.
+Deferred work captured so it is not lost. Nothing here blocks current use unless a current task explicitly promotes it. Statuses were reconciled with git history on 2026-09-05 (docs/evolution/harness.md HARNESS-GOV-001/002): delivered Track E items are `done`, BL-002 is `blocked` because no Actions run has ever executed a job, and BL-032..BL-035 register the engine 3.0.0 release.
 
 **System of record:** `docs/backlog.yml`, structured by `docs/schema/backlog.schema.json`. The YAML is canonical; this table is a rendered view. Effort is expressed as **complexity** (["XS","S","M","L","XL"]), never time. `Owner` records the provenance boundary so concurrent work stays attributable. Roadmap-item IDs (AF-*) are carried in each item's tags and trace to `docs/ROADMAP.md`.
 
@@ -19,20 +19,20 @@ node scripts/check-backlog-governance.mjs
 
 | ID | Roadmap | Item | Category | Type | Status | Cx | Priority | Owner | Depends on |
 |----|---------|------|----------|------|--------|----|----------|-------|------------|
-| BL-001 | — | Govern the backlog with schema and drift checks | docs | infra | ready | S | high | shared | — |
-| BL-002 | AF-R01 | CI pipeline that runs the whole gate on every push | ops | infra | done | M | critical | mine | BL-003 |
+| BL-001 | — | Govern the backlog with schema and drift checks | docs | infra | done | S | high | shared | — |
+| BL-002 | AF-R01 | CI pipeline that runs the whole gate on every push | ops | infra | blocked | M | critical | mine | BL-003 |
 | BL-003 | AF-R02 | Makefile composing every gate into one make check | tooling | infra | done | S | critical | mine | — |
-| BL-004 | AF-R03 | AGENTS.md programmatic CLI and tooling reference | docs | infra | ready | S | critical | unassigned | BL-003 |
+| BL-004 | AF-R03 | AGENTS.md programmatic CLI and tooling reference | docs | infra | done | S | critical | unassigned | BL-003 |
 | BL-005 | AF-R04 | Ruff lint, format, and type-check configuration | tooling | infra | ready | S | critical | unassigned | — |
 | BL-006 | AF-R05 | IR-schema generator with --check and --write | tooling | infra | done | S | critical | concurrent | BL-003 |
 | BL-007 | AF-R06 | Golden-audio oracle with a committed hash lockfile | testing | infra | done | M | high | concurrent | BL-003 |
 | BL-008 | AF-R07 | Persisted capability manifest with a status field and drift gate | tooling | infra | done | M | high | concurrent | BL-006 |
-| BL-009 | AF-R08 | Unify the dual IR source of truth into one typed model | tooling | tech-debt | ready | L | high | unassigned | BL-006 |
-| BL-010 | AF-R09 | CHANGELOG.md plus a version-bump tool with --check | docs | infra | ready | S | high | unassigned | — |
-| BL-011 | AF-R10 | MCP server over the agent_tools facade (stdio) | feature | feature | ready | L | medium | unassigned | BL-008 |
-| BL-012 | AF-R11 | Docs site (mkdocs-material) with generated pages and a build gate | docs | infra | ready | M | medium | unassigned | BL-006, BL-008 |
-| BL-013 | AF-R12 | ADR set (docs/adr/) and an adoption rule | docs | infra | ready | S | medium | unassigned | — |
-| BL-014 | AF-R13 | Codebase-standards ratchet and wire drift_inspect.py into the gate | tooling | infra | ready | S | medium | unassigned | BL-003 |
+| BL-009 | AF-R08 | Unify the dual IR source of truth into one typed model | tooling | tech-debt | in-progress | L | high | unassigned | BL-006 |
+| BL-010 | AF-R09 | CHANGELOG.md plus a version-bump tool with --check | docs | infra | done | S | high | unassigned | — |
+| BL-011 | AF-R10 | MCP server over the agent_tools facade (stdio) | feature | feature | done | L | medium | unassigned | BL-008 |
+| BL-012 | AF-R11 | Docs site (mkdocs-material) with generated pages and a build gate | docs | infra | done | M | medium | unassigned | BL-006, BL-008 |
+| BL-013 | AF-R12 | ADR set (docs/adr/) and an adoption rule | docs | infra | done | S | medium | unassigned | — |
+| BL-014 | AF-R13 | Codebase-standards ratchet and wire drift_inspect.py into the gate | tooling | infra | done | S | medium | unassigned | BL-003 |
 | BL-015 | AF-R14 | src/ layout and a package-boundary AST gate | tooling | tech-debt | ready | M | low | unassigned | BL-003 |
 | BL-016 | AF-R15 | Migration codemod keyed to validator rejection codes | tooling | infra | blocked | M | low | unassigned | BL-006, BL-009 |
 | BL-017 | AF-R16 | Cross-platform numeric-determinism pack | testing | research | ready | L | low | unassigned | BL-007 |
@@ -50,5 +50,9 @@ node scripts/check-backlog-governance.mjs
 | BL-029 | AF-X02 | Seeded stochastic composition primitives | feature | feature | ready | L | high | unassigned | — |
 | BL-030 | AF-X03 | Dynamic stochastic synthesis oscillator (GENDYN-style) | feature | feature | blocked | M | low | unassigned | BL-029 |
 | BL-031 | AF-X04 | Positioning decision: deterministic ground truth under generative music AI | docs | research | ready | XS | low | unassigned | — |
+| BL-032 | ADR-0007 | Engine 3.0.0 musical-correctness release (epic) | feature | bug | in-progress | XL | critical | mine | BL-007 |
+| BL-033 | ADR-0007 | Audio semantics A1-A4: gain once, note-off release, anti-alias resampling, explicit mastering | feature | bug | in-progress | L | critical | mine | BL-032 |
+| BL-034 | ADR-0007 | Musical semantics M1-M6: harmony, phrases, technique fidelity, repeats, performance identity, analysis | feature | bug | in-progress | XL | critical | mine | BL-032 |
+| BL-035 | — | Release delivery for engine 3.0.0: CI executes, review, merge, consolidated changelog, tags | ops | infra | blocked | M | critical | mine | BL-002, BL-032 |
 
 See `backlog.yml` for each item's full summary, rationale, acceptance criteria, dependencies, references, and live evidence checks.

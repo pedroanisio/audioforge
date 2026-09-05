@@ -23,7 +23,7 @@ metadata:
   generated_by: "recipe-forge add-backlog-governance; ported from docs/ROADMAP.md via Claude Opus 4.8"
   generated_on: "2026-07-04"
   system_of_record: "docs/backlog.yml"
-  total_items: 31
+  total_items: 35
   id_prefix: "BL"
   decision_prefix: "D"
   categories: ["feature","docs","ops","security","testing","tooling"]
@@ -39,7 +39,7 @@ items:
     summary: "Install a canonical backlog registry, rendered view, schema, and validation command."
     category: "docs"
     type: "infra"
-    status: "ready"
+    status: "done"
     complexity: "S"
     priority: "high"
     rationale: "Backlog drift hides shipped work, duplicate work, and ungrounded requests."
@@ -50,8 +50,15 @@ items:
     references:
       - "docs/BACKLOG.md"
       - "docs/schema/backlog.schema.json"
+    evidence_checks:
+      - kind: file-exists
+        path: "scripts/check-backlog-governance.mjs"
+      - kind: file-exists
+        path: "docs/schema/backlog.schema.json"
+      - kind: file-exists
+        path: ".github/workflows/backlog-governance.yml"
     owner: "shared"
-    source: "Initial backlog governance recipe installation."
+    source: "Initial backlog governance recipe installation.; delivered in 50f504f (status reconciled 2026-09-05, docs/evolution/harness.md HARNESS-GOV-002)"
     tags:
       - "backlog"
       - "governance"
@@ -61,7 +68,7 @@ items:
     summary: "GitHub Actions workflow runs the same composed make check on push and pull_request."
     category: "ops"
     type: "infra"
-    status: "done"
+    status: "blocked"
     complexity: "M"
     priority: "critical"
     rationale: "Without CI the drift, determinism, and regression gates run only when a human remembers; the discipline stays advisory."
@@ -80,8 +87,13 @@ items:
         pattern: "make check"
       - kind: file-exists
         path: "tests/test_ci_make_check_sync.py"
+    evidence_checks:
+      - kind: file-exists
+        path: ".github/workflows/ci.yml"
+      - kind: file-exists
+        path: "tests/test_ci_make_check_sync.py"
     owner: "mine"
-    source: "docs/ROADMAP.md AF-R01 (FrameForge .github/workflows/ci.yml parity)"
+    source: "docs/ROADMAP.md AF-R01 (FrameForge .github/workflows/ci.yml parity); BLOCKED 2026-09-05: every Actions run since 2026-07-04 ends in startup_failure with zero jobs (docs/evolution/harness.md HARNESS-CI-001); the workflow exists, the gate has never run remotely"
     tags:
       - "AF-R01"
       - "ci"
@@ -120,7 +132,7 @@ items:
     summary: "Create the agent-facing command map CLAUDE.md already points to but that does not yet exist."
     category: "docs"
     type: "infra"
-    status: "ready"
+    status: "done"
     complexity: "S"
     priority: "critical"
     rationale: "CLAUDE.md ranks AGENTS.md second in reading order, but the file is absent, so the pointer is dead."
@@ -131,8 +143,13 @@ items:
       - "A sync test fails if a CLI verb lacks an AGENTS.md entry."
     references:
       - "docs/ROADMAP.md"
+    evidence_checks:
+      - kind: file-exists
+        path: "AGENTS.md"
+      - kind: file-exists
+        path: "tests/test_agents_md_sync.py"
     owner: "unassigned"
-    source: "docs/ROADMAP.md AF-R03"
+    source: "docs/ROADMAP.md AF-R03; delivered in 79c2506 (status reconciled 2026-09-05, docs/evolution/harness.md HARNESS-GOV-002)"
     tags:
       - "AF-R03"
       - "agents"
@@ -255,7 +272,7 @@ items:
     summary: "Make ir_schema.py derive its enumerations from schema.py, then optionally introduce a typed IR model."
     category: "tooling"
     type: "tech-debt"
-    status: "ready"
+    status: "in-progress"
     complexity: "L"
     priority: "high"
     rationale: "The same IR facts are encoded twice across schema.py and ir_schema.py; the drift-risk map rates this coupling HIGH."
@@ -267,8 +284,11 @@ items:
       - "All determinism and contract tests stay green (byte-identical renders)."
     references:
       - "docs/ROADMAP.md"
+    evidence_checks:
+      - kind: file-exists
+        path: "docs/adr/0005-ir-source-of-truth.md"
     owner: "unassigned"
-    source: "docs/ROADMAP.md AF-R08; drift-risk-map.md (registry coupling HIGH)"
+    source: "docs/ROADMAP.md AF-R08; drift-risk-map.md (registry coupling HIGH); Phase A delivered in b143218, Phase B deferred per ADR-0005"
     tags:
       - "AF-R08"
       - "ir"
@@ -278,7 +298,7 @@ items:
     summary: "Add a Keep-a-Changelog history and an atomic multi-file version-bump tool with a --check twin."
     category: "docs"
     type: "infra"
-    status: "ready"
+    status: "done"
     complexity: "S"
     priority: "high"
     rationale: "There is no CHANGELOG; version bumping is manual across several literal sites and error-prone."
@@ -287,8 +307,16 @@ items:
       - "bump_version --check fails on a half-bumped tree and is composed into make check."
     references:
       - "docs/ROADMAP.md"
+    evidence_checks:
+      - kind: file-exists
+        path: "CHANGELOG.md"
+      - kind: file-exists
+        path: "audioforge/tools/bump_version.py"
+      - kind: grep
+        path: "Makefile"
+        pattern: "version-check"
     owner: "unassigned"
-    source: "docs/ROADMAP.md AF-R09"
+    source: "docs/ROADMAP.md AF-R09; delivered in c07a54d (status reconciled 2026-09-05, docs/evolution/harness.md HARNESS-GOV-002)"
     tags:
       - "AF-R09"
       - "changelog"
@@ -298,7 +326,7 @@ items:
     summary: "Expose the existing in-process agent_tools ops over the Model Context Protocol with session resources."
     category: "feature"
     type: "feature"
-    status: "ready"
+    status: "done"
     complexity: "L"
     priority: "medium"
     rationale: "PURPOSE makes agents first-class consumers, yet the agent surface is import-only Python with no protocol server."
@@ -310,8 +338,13 @@ items:
       - "The server reuses run_tool with no duplicated render path."
     references:
       - "docs/ROADMAP.md"
+    evidence_checks:
+      - kind: file-exists
+        path: "audioforge/mcp/server.py"
+      - kind: file-exists
+        path: "tests/test_mcp_contract.py"
     owner: "unassigned"
-    source: "docs/ROADMAP.md AF-R10 (FrameForge src/framegraph/mcp parity)"
+    source: "docs/ROADMAP.md AF-R10 (FrameForge src/framegraph/mcp parity); delivered in 15a848f (status reconciled 2026-09-05, docs/evolution/harness.md HARNESS-GOV-002)"
     tags:
       - "AF-R10"
       - "mcp"
@@ -321,7 +354,7 @@ items:
     summary: "A MkDocs-Material site whose reference and capability pages are generated from committed artifacts, gated by a strict build."
     category: "docs"
     type: "infra"
-    status: "ready"
+    status: "done"
     complexity: "M"
     priority: "medium"
     rationale: "There is no docs site and no generated reference; a broken link cannot fail a build today."
@@ -334,8 +367,16 @@ items:
       - "A broken relative link fails the build."
     references:
       - "docs/ROADMAP.md"
+    evidence_checks:
+      - kind: file-exists
+        path: "mkdocs.yml"
+      - kind: file-exists
+        path: "audioforge/tools/gen_docs.py"
+      - kind: grep
+        path: "Makefile"
+        pattern: "docs-gen-check"
     owner: "unassigned"
-    source: "docs/ROADMAP.md AF-R11"
+    source: "docs/ROADMAP.md AF-R11; delivered in 60c0fd5 (status reconciled 2026-09-05, docs/evolution/harness.md HARNESS-GOV-002)"
     tags:
       - "AF-R11"
       - "docs"
@@ -345,7 +386,7 @@ items:
     summary: "Record load-bearing decisions as numbered ADRs and require an ADR for future contract changes."
     category: "docs"
     type: "infra"
-    status: "ready"
+    status: "done"
     complexity: "S"
     priority: "medium"
     rationale: "Architectural rationale is scattered across code comments and long docs and must be reverse-engineered."
@@ -355,8 +396,16 @@ items:
       - "At least one ADR is referenced from the code it governs."
     references:
       - "docs/ROADMAP.md"
+    evidence_checks:
+      - kind: file-exists
+        path: "docs/adr/adr-template.md"
+      - kind: file-exists
+        path: "docs/adr/0001-determinism-oracle.md"
+      - kind: grep
+        path: "AGENTS.md"
+        pattern: "docs/adr/"
     owner: "unassigned"
-    source: "docs/ROADMAP.md AF-R12"
+    source: "docs/ROADMAP.md AF-R12; delivered in 19584a4 (status reconciled 2026-09-05, docs/evolution/harness.md HARNESS-GOV-002)"
     tags:
       - "AF-R12"
       - "adr"
@@ -366,7 +415,7 @@ items:
     summary: "Give drift_inspect.py a --check mode and compose it into the gate; add a tri-state standards doc."
     category: "tooling"
     type: "infra"
-    status: "ready"
+    status: "done"
     complexity: "S"
     priority: "medium"
     rationale: "drift_inspect.py exists but is not wired into the canonical suite, so a built detector never runs."
@@ -377,8 +426,14 @@ items:
       - "docs/codebase-standards.md tags every rule Enforced, Adopted, or Target with a cited gate."
     references:
       - "docs/ROADMAP.md"
+    evidence_checks:
+      - kind: file-exists
+        path: "docs/codebase-standards.md"
+      - kind: grep
+        path: "Makefile"
+        pattern: "drift-check"
     owner: "unassigned"
-    source: "docs/ROADMAP.md AF-R13; drift-risk-map.md (detector not wired, MODERATE)"
+    source: "docs/ROADMAP.md AF-R13; drift-risk-map.md (detector not wired, MODERATE); delivered in b1f0c1d (status reconciled 2026-09-05, docs/evolution/harness.md HARNESS-GOV-002)"
     tags:
       - "AF-R13"
       - "drift"
@@ -798,3 +853,126 @@ items:
       - "positioning"
       - "adr"
       - "music-ai"
+  - id: BL-032
+    title: "Engine 3.0.0 musical-correctness release (epic)"
+    summary: "Fix every finding of the 2026-09-05 audio/music review and deliver it as a CI-verified, tagged engine 3.0.0 / DSL 2.0 / IR 2.0 release governed by docs/evolution/harness.md."
+    category: "feature"
+    type: "bug"
+    status: "in-progress"
+    complexity: "XL"
+    priority: "critical"
+    rationale: "The review reproduced doubled instrument gain, inconsistent note-off semantics, aliased sample transposition, implicit peak normalization, inert repeats and reseeded takes on mix edits; the ledger rows A1-A4, M1-M6, G1 track the fixes."
+    dependencies:
+      - "BL-007"
+    acceptance_criteria:
+      - "docs/evolution/harness.md section 7 holds: every non-waived HARNESS assertion PASS on the tagged commit."
+      - "Tags engine-3.0.0 and dsl-2.0 exist on origin and CI is green on Python 3.10/3.11/3.12 for the merge commit."
+      - "docs/MUSICAL_CORRECTNESS.md rows read released with harness IDs."
+    references:
+      - "docs/MUSICAL_CORRECTNESS.md"
+      - "docs/adr/0007-musical-render-semantics.md"
+      - "docs/MIGRATION_3.md"
+      - "docs/evolution/roadmap.xlsx"
+    evidence_checks:
+      - kind: file-exists
+        path: "docs/MIGRATION_3.md"
+      - kind: file-exists
+        path: "docs/adr/0007-musical-render-semantics.md"
+      - kind: file-exists
+        path: "docs/evolution/harness.md"
+      - kind: grep
+        path: "audioforge/version.py"
+        pattern: "3.0.0"
+    owner: "mine"
+    source: "2026-09-05 audio/music review; docs/evolution/report.md; branch release/engine-3.0.0 (commit 4a75778)"
+    tags:
+      - "ADR-0007"
+      - "engine-3.0"
+      - "musical-correctness"
+  - id: BL-033
+    title: "Audio semantics A1-A4: gain once, note-off release, anti-alias resampling, explicit mastering"
+    summary: "Instrument gain applied exactly once including sections; note duration is gate time with release after note-off; rate-adaptive anti-alias resampling; mastering preserves level unless normalization is explicit."
+    category: "feature"
+    type: "bug"
+    status: "in-progress"
+    complexity: "L"
+    priority: "critical"
+    rationale: "Ledger rows A1-A4; each was reproduced on engine 2.16.0 by the acceptance corpus (docs/evolution/evidence/T0)."
+    dependencies:
+      - "BL-032"
+    acceptance_criteria:
+      - "HARNESS-AUD-001..004 and HARNESS-ACC-001/002 PASS on the tagged commit under CI."
+    references:
+      - "docs/MUSICAL_CORRECTNESS.md"
+      - "docs/evolution/harness.md"
+    evidence_checks:
+      - kind: file-exists
+        path: "tests/test_audio_correctness.py"
+      - kind: grep
+        path: "audioforge/synth.py"
+        pattern: "def note_adsr"
+    owner: "mine"
+    source: "docs/MUSICAL_CORRECTNESS.md rows A1-A4; implemented in 4a75778"
+    tags:
+      - "ADR-0007"
+      - "engine-3.0"
+      - "audio"
+  - id: BL-034
+    title: "Musical semantics M1-M6: harmony, phrases, technique fidelity, repeats, performance identity, analysis"
+    summary: "Evidence-based chord identity; authored-structure phrasing; explicit technique fidelity with strict routing; executable repeats and measured loop safety; performance identity from performance_seed/variant; context-aware analysis."
+    category: "feature"
+    type: "bug"
+    status: "in-progress"
+    complexity: "XL"
+    priority: "critical"
+    rationale: "Ledger rows M1-M6; heuristics previously asserted musical meaning their evidence did not support."
+    dependencies:
+      - "BL-032"
+    acceptance_criteria:
+      - "HARNESS-MUS-001..006 PASS on the tagged commit under CI."
+    references:
+      - "docs/MUSICAL_CORRECTNESS.md"
+      - "docs/evolution/harness.md"
+    evidence_checks:
+      - kind: file-exists
+        path: "audioforge/harmony.py"
+      - kind: file-exists
+        path: "audioforge/arrangement.py"
+      - kind: file-exists
+        path: "audioforge/performance.py"
+      - kind: file-exists
+        path: "tests/test_musical_correctness.py"
+    owner: "mine"
+    source: "docs/MUSICAL_CORRECTNESS.md rows M1-M6; implemented in 4a75778"
+    tags:
+      - "ADR-0007"
+      - "engine-3.0"
+      - "music-theory"
+  - id: BL-035
+    title: "Release delivery for engine 3.0.0: CI executes, review, merge, consolidated changelog, tags"
+    summary: "The delivery layer of docs/evolution/roadmap.xlsx (workstreams B, C, D): Python 3.10 floor, CI root cause, independent review, merge on remote evidence, one dated [3.0.0] changelog section, tags on origin."
+    category: "ops"
+    type: "infra"
+    status: "blocked"
+    complexity: "M"
+    priority: "critical"
+    rationale: "The repair was code-complete on 2026-09-05 but uncommitted, and the repository had never executed a CI job (HARNESS-CI-001)."
+    dependencies:
+      - "BL-002"
+      - "BL-032"
+    acceptance_criteria:
+      - "HARNESS-CI-002/003, HARNESS-VCS-003/004 and HARNESS-REL-001..004 PASS."
+    references:
+      - "docs/evolution/roadmap.xlsx"
+      - "docs/evolution/harness.md"
+    evidence_checks:
+      - kind: file-exists
+        path: "scripts/harness.sh"
+      - kind: file-exists
+        path: "docs/evolution/evidence/T0/summary.tsv"
+    owner: "mine"
+    source: "docs/evolution/report.md section 6; blocked on GitHub Actions startup_failure (repository admin action, RM-B-002)"
+    tags:
+      - "engine-3.0"
+      - "release"
+      - "ci"
