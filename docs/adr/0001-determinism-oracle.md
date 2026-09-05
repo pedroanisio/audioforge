@@ -30,3 +30,16 @@ hash — no wall clocks, no global RNG. A committed golden corpus lock
 Determinism is guaranteed *within one numeric environment*; cross-environment
 float reproducibility is *checked* (the golden gate is env-aware: strict same-env,
 advisory cross-env) rather than assumed — closing that gap loudly is AF-R16.
+
+## Amendment (2026-09-05, engine 3.0.0)
+
+[ADR-0007](0007-musical-render-semantics.md) changes where randomness is rooted.
+Every seeded component now derives from `performance_hash(performance_seed,
+variant)` (`audioforge/determinism.py`) and a stable component path, not from the
+spec hash. `spec_hash` (engine version folded in) remains the identity of the render
+contract, and the SHA-256 re-render oracle described above is unchanged: a manifest
+still records `spec_hash` and `output_sha256`, and `audioforge verify` still
+re-renders and compares bytes. Where the Decision section says randomness is
+"rooted in the spec hash", read ADR-0007. Consequence: mix, pan and metadata edits
+preserve a performance; only `performance_seed`, `variant`, layer names and event
+identities change a take.

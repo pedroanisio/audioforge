@@ -10,9 +10,10 @@ disclaimer:
 
 # AudioForge
 
-**Deterministic audio-asset generation for production pipelines.** One schema +
-one engine version = byte-identical audio, every render, forever. Non-vocal by
-design: music, sound design, SFX, ambience, beats, loops, jingles, transitions,
+**Deterministic audio-asset generation for production pipelines.** A pinned spec
+and engine version reproduce audio byte-for-byte within a verified numeric
+environment; the golden and `verify` oracles check that rather than assume it
+(ADR-0001, ADR-0007). Non-vocal by design: music, sound design, SFX, ambience, beats, loops, jingles, transitions,
 and branded sonic identities.
 
 ```

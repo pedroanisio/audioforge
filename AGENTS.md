@@ -107,6 +107,12 @@ Musical correctness probes: `python -m audioforge.tools.musical_acceptance --out
   vision-capable agent can read back and *see* the output. Pure-Python (no extra
   dependency). Contract-gated by `tests/test_mcp_contract.py`.
 
+- **Coordination state** lives in `.agent-tasks/` (gitignored): `registry.json`
+  holds active tasks, `locks/` one file per locked path, `archive/` closed tasks.
+  `.current_task`, when present, must name a task that is in `registry.json`;
+  a pointer to an archived task is stale and should be removed
+  (`docs/evolution/harness.md` HARNESS-GOV-007).
+
 ## 6 · Generated-artifact policy
 
 These files are **generated** — never hand-edit them; edit the source and rerun

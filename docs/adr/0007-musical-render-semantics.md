@@ -9,7 +9,7 @@ disclaimer:
 
 # ADR-0007: Faithful musical instructions and stable performance identity
 
-- **Status:** Accepted and implemented
+- **Status:** Accepted; merge pending (branch `release/engine-3.0.0`; status becomes "implemented" when `HARNESS-VCS-004` and `HARNESS-CI-003` pass, see `docs/evolution/harness.md`)
 - **Date:** 2026-09-05
 
 ## Context
@@ -47,7 +47,8 @@ the reported subjective judgments. No one layer substitutes for the others.
 
 ## Implementation and validation
 
-Engine 3.0.0 / DSL 2.0 / IR 2.0 implement these decisions. Repeat expansion
+Engine 3.0.0 / DSL 2.0 / IR 2.0 on `release/engine-3.0.0` carry these decisions;
+ADR-0001 is amended to point here for the randomness root. Repeat expansion
 validates its resulting contract, consumes executable repeats, and preserves
 curve functions through explicit input-clock mapping. Shared scheduling drives
 both sample plans and runtime players. Fidelity comes from the technique
