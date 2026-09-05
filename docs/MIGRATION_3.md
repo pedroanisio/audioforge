@@ -142,6 +142,49 @@ complete; they do not replace listening.
 
 Default SDK/CLI/agent validation computes the loop buffer to check these measured conditions before declaring it render-ready. Use SDK `resolve=False`, agent request `resolve: false`, or CLI `--no-resolve` for structural validation only.
 
+## Render cost of anti-alias resampling
+
+Resampling cost now grows with playback rate: the sampler's windowed-sinc kernel
+widens so that content which would fold below Nyquist is filtered. That is the correct
+behaviour and it costs time in proportion to transposition. Measured on the
+reference machine (one 1 s note from a 2 s 48 kHz source, `render_region`, best of
+three):
+
+| Transposition | Engine 2.16.0 | Engine 3.0.0 | Ratio |
+|---|---|---|---|
+| 0 semitones | 41 ms | 57 ms | 1.4× |
+| +12 semitones | 42 ms | 110 ms | 2.7× |
+| +24 semitones | 41 ms | 204 ms | 5.0× |
+
+Playback at or below the source rate costs about the same as before. Large upward
+transpositions of long sampled parts (orchestral libraries pitched far from their
+key centres) render noticeably slower; `--jobs` parallelises across layers, not
+inside one note. `tests/test_perf_budget.py` pins the shape of the curve (ratio
+bounds), and `docs/evolution/harness.md` `HARNESS-PERF-002` pins the absolute
+budget on the reference machine.
+
+## Rolling back to engine 2.16.0
+
+Rollback is a checkout of the previous tag; nothing is deployed anywhere else.
+Four facts were established by rehearsal (`HARNESS-RB-002`):
+
+1. `git checkout engine-2.16.0` (tag `282756e`, 2026-06-12) or `git revert` of the
+   merge. Manifests written by 3.0.0 will then fail `verify` with `MISMATCH`, as
+   3.0.0 fails 2.16.0 manifests; re-render after rolling back.
+2. The tag predates the `Makefile`; its gate is `sh scripts/run_tests.sh`.
+3. That script hardcodes `python3`. Point it at the reference interpreter with a
+   wrapper script on `PATH` (`printf '#!/bin/sh\nexec /path/.venv/bin/python "$@"\n'`),
+   not a symlink: a venv interpreter reached through an outside symlink loses its
+   site-packages.
+4. Its catalog-freshness guard needs the gitignored `libraries/` tree (link it into
+   the checkout), and even then `test_current_txt_matches_fresh_tree_snapshot` fails
+   in this locale because the 2.16.0 test ran `tree -a` without
+   `LC_ALL=C --charset=UTF-8`. Every engine test passes (395 at rehearsal); that one
+   red test is a fixture check, not engine behaviour.
+
+`scripts/harness.sh` implements this as `HARNESS-RB-002` and stores the log under
+`docs/evolution/evidence/<checkpoint>/`.
+
 ## Analysis and acceptance evidence
 
 Audio analysis always reports observations. Suggestions about bass, stereo width,
