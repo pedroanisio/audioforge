@@ -16,14 +16,14 @@ PYTHON ?= $(shell [ -x ./.venv/bin/python ] && printf '%s' ./.venv/bin/python ||
 export PYTHON
 
 .DEFAULT_GOAL := help
-.PHONY: help check test native-check schema-check manifest-check golden-check drift-check version-check docs-gen-check docs docs-check clean
+.PHONY: help check test native-check schema-check manifest-check golden-check drift-check version-check docs-gen-check lock-check floor-check docs docs-check clean
 
 help:  ## List available targets
 	@grep -hE '^[a-zA-Z0-9_.-]+:.*?## ' $(MAKEFILE_LIST) \
 	  | sort \
 	  | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
 
-check: native-check schema-check manifest-check golden-check drift-check version-check docs-gen-check test  ## Run the full local gate (what CI runs)
+check: native-check schema-check manifest-check golden-check drift-check version-check docs-gen-check lock-check floor-check test  ## Run the full local gate (what CI runs)
 
 test:  ## Run the canonical suite (script suites + pytest) via run_tests.sh
 	@sh scripts/run_tests.sh
@@ -55,6 +55,15 @@ docs:  ## Build the docs site: regenerate pages then `mkdocs build --strict` (AF
 
 version-check:  ## Version-consistency gate: every version literal == version.py (AF-R09)
 	@$(PYTHON) -m audioforge.tools.bump_version --check
+
+lock-check:  ## Lockfile gate: uv.lock agrees with pyproject.toml (RM-B-004; CI installs uv; skips loudly without it)
+	@if command -v uv >/dev/null 2>&1; then uv lock --check && echo "lock-check: uv.lock in sync with pyproject.toml"; \
+	else echo "lock-check: SKIPPED — uv is not installed (install uv to enforce; CI does)"; fi
+
+floor-check:  ## Python-floor gate: no 3.11-only stdlib constructs without a guarded fallback (requires-python >= 3.10; RM-B-004)
+	@if grep -rnE 'from datetime import[^#]*\bUTC\b|datetime\.UTC\b|^import tomllib\b|from typing import[^#]*\b(Self|LiteralString|Never)\b|\bStrEnum\b|except\*' --include='*.py' audioforge tests scripts; then \
+	  echo "floor-check: 3.11-only construct found above; guard it or use a 3.10-compatible form"; exit 1; fi
+	@echo "floor-check: no 3.11-only stdlib constructs in audioforge/ tests/ scripts/"
 
 # --- Discrete fast gates (real subsets of the suite, for local iteration) ------
 # Not prerequisites of `check` (the `test` target already runs them all); these

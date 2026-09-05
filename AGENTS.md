@@ -60,13 +60,14 @@ against `cli.py`, so a verb cannot be added or removed without this file failing
 
 | Target | Runs |
 |--------|------|
-| `check` | `native-check schema-check manifest-check golden-check test` — the full local gate. |
+| `check` | `native-check schema-check manifest-check golden-check drift-check version-check docs-gen-check lock-check floor-check test` — the full local gate. |
 | `test` | `scripts/run_tests.sh` — 16 script suites + `pytest -q`. |
 | `native-check` | Assert a C compiler is present. |
 | `schema-check` | IR-schema drift gate: `gen_ir_schema --check` (AF-R05). |
 | `manifest-check` | Capability-manifest drift gate: `gen_capability --check` (AF-R07). |
 | `golden-check` | Golden-audio drift gate: `render_golden --check` (AF-R06). |
 | `docs-check` / `version-check` | Fast doc / version-hygiene subsets. |
+| `lock-check` / `floor-check` | `uv lock --check` (skips loudly without uv; CI installs it) / no 3.11-only stdlib constructs (the Python 3.10 floor, RM-B-004). |
 | `clean` | Remove Python caches. |
 
 Coverage is **not** in `make check`; run it yourself:
@@ -137,4 +138,5 @@ generated artifacts) ships with an ADR — a new `docs/adr/NNNN-*.md` recording
 Context / Decision / Consequences. Current records: ADR-0001 (determinism oracle),
 0002 (non-vocal scope), 0003 (IR-is-truth), 0004 (native kernels fail loud), 0005
 (one IR source of truth; Phase B deferred), 0006 (generator-owns-artifact),
-0007 (musical rendering semantics and stable performance identity).
+0007 (musical rendering semantics and stable performance identity), 0008
+(structured diagnostic codes on every Diagnostic and agent/MCP envelope).

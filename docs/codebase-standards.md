@@ -35,11 +35,20 @@ otherwise.
 | `AGENTS.md` documents exactly the `cli.py` verbs | `[Enforced]` | `tests/test_agents_md_sync.py` (AF-R03) |
 | Documentation does not drift from CLI/schema/version | `[Enforced]` | `tests/test_docs_regression.py`, `test_cli_docs_sync.py`, `test_schema_docs_coverage.py` |
 | Test coverage ≥ 90.1 % | `[Enforced]` | `coverage report` `fail_under = 90.1` (run outside `make check`) |
+| `uv.lock` agrees with `pyproject.toml` | `[Enforced]` | `make lock-check` = `uv lock --check` (RM-B-004; CI installs uv; skipped loudly where uv is absent) |
+| No 3.11-only stdlib constructs without a guarded fallback (Python 3.10 floor) | `[Enforced]` | `make floor-check` (RM-B-004); `HARNESS-PORT-001` runs the full gate on 3.10 |
+| Diagnostics carry a machine-readable `code` from the capability manifest | `[Enforced]` | `tests/test_diagnostic_codes.py`, `tests/test_mcp_contract.py` (ADR-0008) |
 | TDD (Red→Green→Refactor); production-ready only (no stubs) | `[Adopted]` | review convention; `CLAUDE.md` |
 | AI-authored `.md` carries the Rule-5 disclaimer frontmatter | `[Adopted]` | manual — there is **no** automated disclaimer gate in this repo |
 | Lint / format / type-check floor | `[Target]` | AF-R04 (no ruff/mypy config yet) |
 | One IR source of truth (unify `schema.py` + `ir_schema.py`) | `[Target]` | AF-R08 (dual hand-synced source, drift-map HIGH) |
 | MCP agent surface reuses the in-process facade | `[Adopted]` | AF-R10 (`tests/test_mcp_contract.py`) |
+
+> **CI caveat (2026-09-05).** `[Enforced]` presumes the CI workflow executes. Every
+> GitHub Actions run since 2026-07-04 has ended in `startup_failure` with zero jobs
+> (`docs/evolution/harness.md` HARNESS-CI-001), so until the repository admin fixes
+> that, these rules are enforced by the local `make check` only. The sync tests keep
+> CI and the local gate identical, but identical to a gate that does not run.
 
 ## Source of truth per topic
 
