@@ -425,3 +425,14 @@ run    HARNESS-NSEM-001 "score_layer projections"        PT $T -k "score_layer_p
 run    HARNESS-NSEM-002 "tuplets/lyrics projected"       PT $T -k "tuplets or lyrics"
 echo; awk -F'\t' 'NR>1{n[$2]++} END{for(k in n) printf "%s=%d ", k, n[k]; print ""}' "$SUM"
 ```
+
+## 9. Checkpoint log
+
+Rows are appended by the agent that ran `scripts/harness-notation.sh <T>`; the evidence
+bundle is the source, this table is the index. Counts are PASS / FAIL / BLOCKED over all
+53 IDs; "targeted" is the subset whose *Green by* column names the checkpoint.
+
+| Checkpoint | Commit | Run (UTC) | PASS / FAIL / BLOCKED | Targeted rows | Notes |
+|---|---|---|---|---|---|
+| T1 | `8e550c5` | 2026-09-06 | 16 / 37 / 0 | 13 of 13 PASS (NGATE-005 passes once the bundle is committed) | Oracles via `ORACLE_PY`; the first run used the wrong interpreter (worktree has no `.venv`) and was discarded. |
+| T2 | `73728b7` | 2026-09-06 | 31 / 22 / 0 | NXML-002…005/009, NIMP-001…003, NMIDI-002/003 | Run on a clean detached worktree at the commit; a first run on a tree with T3 edits in progress was discarded. |

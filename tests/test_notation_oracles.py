@@ -228,7 +228,8 @@ def test_self_round_trip_notated_export_import_per_fixture():
         layers = _pitched(spec)
         assert [l["name"] for l in back["layers"]] == [l["name"] for l in layers], name
         for layer, imp in zip(layers, back["layers"]):
-            assert {n["start_beat"] for n in imp["notes"]} == _quantized_onsets(layer), name
+            assert {n["start_beat"] for n in imp["notes"]} == \
+                {round(g["on"] / TPQ, 6) for g in _notated_events(spec, layer, NOTATED_GRID)}, name
             assert Counter(n["note"] for n in imp["notes"]) == \
                 Counter(e["note"] for e in layer["notes"] if "note" in e), name
 
@@ -309,6 +310,26 @@ def test_music21_parity_per_fixture():
             xml_ql = sum(int(n.findtext("duration")) for n in root.findall("part")[pi].iter("note")
                          if n.find("rest") is None and n.find("chord") is None) / TPQ
             assert ql == pytest.approx(xml_ql, abs=1e-6), name
+            xml_part = root.findall("part")[pi]
+            dyn = [d.value for d in part.recurse().getElementsByClass(m21.dynamics.Dynamic)]
+            assert dyn == [d[0].tag for d in xml_part.findall(".//direction-type/dynamics")], name
+            assert len(part.recurse().getElementsByClass(m21.dynamics.DynamicWedge)) == \
+                len([w for w in xml_part.findall(".//wedge") if w.get("type") != "stop"]), name
+            assert sum(len(n.articulations) for n in part.recurse().notes) == \
+                len([c for a in xml_part.findall(".//articulations") for c in a]), name
+            assert len(part.recurse().getElementsByClass(m21.spanner.Slur)) == \
+                len(xml_part.findall(".//slur[@type='start']")), name
+            assert sum(1 for n in part.recurse().notesAndRests
+                       if any(isinstance(e, m21.expressions.Fermata) for e in n.expressions)) == \
+                len(xml_part.findall(".//fermata")), name
+            assert sum(1 for n in part.recurse().notes if n.duration.tuplets) == \
+                len(xml_part.findall(".//time-modification")), name
+            assert sum(1 for n in part.recurse().notes if n.lyric) == len(xml_part.findall(".//lyric")), name
+            if xml_part.find(".//repeat") is not None:
+                expanded = m21.repeat.Expander(part).process()
+                assert float(expanded.highestTime) == exp["expected_duration_beats"], name
+        assert len(score.parts[0].recurse().getElementsByClass(m21.expressions.RehearsalMark)) == \
+            len(root.findall("part")[0].findall(".//rehearsal")), name
         marks = score.parts[0].recurse().getElementsByClass(m21.tempo.MetronomeMark)
         assert len(marks) == len(tempo_marks(spec)), name
         if "measures" in exp:
@@ -338,3 +359,301 @@ def test_midi_export_parts_and_notes_survive_music21(tmp_path):
     assert len(score.parts) == 18
     assert sum(len(_m21_notes(p)) for p in score.parts) == 18
     assert len(score.recurse().getElementsByClass(m21.tempo.MetronomeMark)) >= 2
+
+
+# -------------------------------------------------------------- T3: notation marks ----
+from audioforge.musicxml import _notated_events, _note_name  # noqa: E402
+from audioforge.interop import FORMATS  # noqa: E402
+
+ROOT = Path(__file__).resolve().parent.parent
+
+
+def _codes(spec, fmt):
+    return {d["code"] for d in interop.interop_diagnostics(spec, fmt)}
+
+
+def test_dynamics_export_as_marks_and_hairpins_and_import_back():
+    spec = _spec("dynamics_articulations_slurs")
+    xml = interop.export_notated_musicxml(spec)
+    root = _xml(xml)
+    marks = [d[0].tag for d in root.findall(".//direction-type/dynamics")]
+    assert marks == _expected("dynamics_articulations_slurs")["dynamics"] == ["pp", "ff"]
+    assert [w.get("type") for w in root.findall(".//wedge")] == ["crescendo", "stop"]
+    back = interop.import_musicxml(xml)
+    assert back["layers"][0]["dynamic"] == spec["layers"][0]["dynamic"]
+    assert "lossy_dynamic_curve" not in _codes(spec, "musicxml_notated")
+    assert "lossy_dynamic_curve" in _codes(spec, "midi") and "lossy_dynamic_curve" in _codes(spec, "musicxml")
+
+
+def test_articulations_and_slurs_export_and_import_back():
+    spec = _spec("dynamics_articulations_slurs")
+    xml = interop.export_notated_musicxml(spec)
+    root = _xml(xml)
+    arts = [child.tag for a in root.findall(".//articulations") for child in a]
+    assert arts == ["staccato", "strong-accent", "staccato"]
+    assert [(s.get("type"), s.get("number")) for s in root.findall(".//slur")] == [("start", "1"), ("stop", "1")]
+    back = interop.import_musicxml(xml)
+    got = [(n["note"], n.get("art"), n.get("slur")) for n in back["layers"][0]["notes"]]
+    want = [(e["note"], e.get("art"), e.get("slur")) for e in spec["layers"][0]["notes"]]
+    assert got == want
+    assert "lossy_articulation" in _codes(spec, "midi") and "lossy_slur" in _codes(spec, "musicxml")
+    assert not {"lossy_articulation", "lossy_slur"} & _codes(spec, "musicxml_notated")
+
+    # legato runs become slurs; tremolo an ornament; pizzicato a pizz./arco direction pair
+    spec2 = {"id": "arts", "kind": "cue", "duration_s": 4.0, "bpm": 120.0, "layers": [{
+        "name": "v", "type": "notes", "notes": [
+            {"note": "C4", "start_beat": 0.0, "dur_beats": 1.0, "art": "legato"},
+            {"note": "D4", "start_beat": 1.0, "dur_beats": 1.0, "art": "legato"},
+            {"note": "E4", "start_beat": 2.0, "dur_beats": 1.0, "art": "tremolo"},
+            {"note": "F4", "start_beat": 3.0, "dur_beats": 0.5, "art": "pizzicato"},
+            {"note": "G4", "start_beat": 3.5, "dur_beats": 0.5}]}]}
+    root2 = _xml(interop.export_notated_musicxml(spec2))
+    assert [s.get("type") for s in root2.findall(".//slur")] == ["start", "stop"]
+    assert root2.find(".//ornaments/tremolo").text == "3"
+    assert [w.text for w in root2.findall(".//words")] == ["pizz.", "arco"]
+    assert [s.get("pizzicato") for s in root2.findall(".//direction/sound") if s.get("pizzicato")] == ["yes", "no"]
+    back2 = interop.import_musicxml(interop.export_notated_musicxml(spec2))
+    assert [n.get("art") for n in back2["layers"][0]["notes"]] == [None, None, "tremolo", "pizzicato", None]
+    assert back2["layers"][0]["notes"][0]["slur"] == back2["layers"][0]["notes"][1]["slur"]
+
+
+def test_fermata_and_rehearsal_marks_export_with_repeat_barlines_and_import_back():
+    spec = _spec("tempo_changes_fermata")
+    xml = interop.export_notated_musicxml(spec)
+    root = _xml(xml)
+    with_fermata = [n for n in root.iter("note") if n.find("notations/fermata") is not None]
+    assert len(with_fermata) == _expected("tempo_changes_fermata")["holds"] == 1
+    assert with_fermata[0].findtext("pitch/step") == "A"          # the note ending at the hold
+    back = interop.import_musicxml(xml)
+    assert back["holds"] == [{"beat": 8.0, "duration_s": 1.0}]      # a fermata holds the note's own length
+    assert "lossy_hold" in _codes(spec, "midi") and "lossy_hold" not in _codes(spec, "musicxml_notated")
+
+    spec2 = _spec("form_sections_repeat")
+    xml2 = interop.export_notated_musicxml(spec2)
+    root2 = _xml(xml2)
+    assert [r.text for r in root2.findall(".//rehearsal")] == ["intro", "verse", "outro"]
+    assert [(r.get("direction"), r.get("times")) for r in root2.findall(".//repeat")] == \
+        [("forward", None), ("backward", "2")]
+    back2 = interop.import_musicxml(xml2)
+    assert [s["name"] for s in back2["score"]["sections"]] == ["intro", "verse", "outro"]
+    assert back2["score"]["repeats"] == [{"section": "verse", "count": 2}]
+    assert "lossy_repeat" not in _codes(spec2, "musicxml_notated")
+    # MIDI and the exact-tick export carry the performed (expanded) form: 24 beats
+    perf = interop.import_midi_bytes(interop.export_midi_bytes(spec2))
+    assert max(n["start_beat"] + n["dur_beats"] for l in perf["layers"] for n in l["notes"]) == \
+        _expected("form_sections_repeat")["expected_duration_beats"] == 24.0
+    exact = ET.fromstring(interop.export_musicxml(spec2))
+    assert sum(int(n.findtext("duration")) for n in exact.iter("note") if n.find("rest") is None) == 24 * TPQ
+    # the performed form names sections per pass (compile_repeats): intro, verse ×2, outro
+    assert [r.text.split("__")[0] for r in exact.findall(".//rehearsal")] == ["intro", "verse", "verse", "outro"]
+    fmt, _, tracks = interop._split_tracks(interop.export_midi_bytes(spec2))
+    assert tracks[0].count(b"\xff\x06") == 4                       # intro, verse__1, verse__2, outro
+    # a repeat that does not sit on barlines is reported, not written
+    import copy
+    spec3 = copy.deepcopy(spec2)
+    spec3["score"]["sections"][1].update({"start_beat": 5.0, "dur_beats": 7.0, "end_beat": 12.0})
+    assert "lossy_repeat" in _codes(spec3, "musicxml_notated")
+    assert _xml(interop.export_notated_musicxml(spec3)).find(".//repeat") is None
+
+
+def test_tuplets_and_lyrics_project_and_import_back():
+    spec = _spec("tuplet_lyrics")
+    xml = interop.export_notated_musicxml(spec)
+    root = _xml(xml)
+    tms = root.findall(".//time-modification")
+    assert len(tms) == 3 and all((t.findtext("actual-notes"), t.findtext("normal-notes")) == ("3", "2") for t in tms)
+    trip = [n for n in root.iter("note") if n.find("time-modification") is not None]
+    assert [int(n.findtext("duration")) for n in trip] == [320, 320, 320]
+    assert [n.findtext("type") for n in trip] == ["quarter"] * 3
+    assert [t.get("type") for t in root.findall(".//notations/tuplet")] == ["start", "stop"]
+    assert [l.findtext("text") for l in root.findall(".//lyric")] == ["la", "la", "la"]
+    back = interop.import_musicxml(xml)
+    assert back["notation"]["tuplets"] == [{"layer": "v", "start_beat": 0.0, "dur_beats": 2.0, "ratio": [3, 2]}]
+    assert back["notation"]["lyrics"] == [{"layer": "v", "start_beat": 0.0, "text": "la la la"}]
+    assert "lossy_lyrics" in _codes(spec, "musicxml") and "lossy_lyrics" not in _codes(spec, "musicxml_notated")
+    fmt, _, tracks = interop._split_tracks(interop.export_midi_bytes(spec))
+    assert tracks[1].count(b"\xff\x05") == 3                       # one lyric event per syllable
+
+
+def test_lossy_registry_codes_are_registered_and_emitted_for_every_dropped_construct():
+    from audioforge.capabilities import capability_manifest
+    from audioforge.tools.gen_interop import INTEROP, render
+    codes = set(capability_manifest()["diagnostic_codes"])
+    for row in interop.coverage():
+        for fmt in FORMATS:
+            cell = row[fmt]
+            assert cell["status"] in interop.STATUSES, (row["construct"], fmt)
+            if cell["status"] in ("lossy", "unsupported", "conditional"):
+                assert cell["code"] in codes, (row["construct"], fmt, cell["code"])
+    for name in FIXTURES:
+        spec = _spec(name)
+        for fmt in FORMATS:
+            rows = interop.coverage(spec)
+            expected = {r[fmt]["code"] for r in rows
+                        if r["present"] and r[fmt]["status"] in ("lossy", "unsupported")}
+            assert _codes(spec, fmt) == expected, (name, fmt)
+    assert render() == INTEROP.read_text(), "docs/INTEROP.md is stale: run gen_interop --write"
+    with pytest.raises(ValueError, match="unknown interop format"):
+        interop.interop_diagnostics(_spec("polymeter"), "abc")
+
+
+def test_score_layer_projection_defined_for_every_format():
+    rows = {row["construct"]: row for row in interop.coverage()}
+    for construct in ("meter", "pickup", "polymeter", "sections", "repeats", "key", "tempo",
+                      "holds", "tuplets", "lyrics", "tuning", "dynamic_marks", "articulations", "slurs"):
+        assert construct in rows, construct
+        for fmt in FORMATS:
+            cell = rows[construct][fmt]
+            assert cell["status"] in interop.STATUSES
+            assert cell["status"] in ("preserved",) or cell["note"], (construct, fmt)
+    poly = _spec("polymeter")
+    assert {"lossy_polymeter"} == _codes(poly, "midi") == _codes(poly, "musicxml")
+    assert not _codes(poly, "musicxml_notated")
+    pick = _spec("meter_6_8_pickup")
+    assert "lossy_pickup" in _codes(pick, "musicxml") and "lossy_pickup" not in _codes(pick, "midi")
+    fmt, _, tracks = interop._split_tracks(interop.export_midi_bytes(pick))
+    assert tracks[0].count(b"\xff\x58\x04") == 2                   # 1/4 anacrusis, then 6/8
+
+
+def test_ambiguity_set_matches_documentation():
+    from audioforge.harmony import identify_chord
+    from audioforge.theory import CHORD_QUALITIES
+    ambiguous = Counter()
+    for root in range(12):
+        for quality, intervals in CHORD_QUALITIES.items():
+            result = identify_chord([{"note": _note_name(60 + root + iv)} for iv in intervals])
+            assert result["status"] != "unrecognized", (root, quality)
+            if result["status"] == "ambiguous":
+                assert len(result["candidates"]) >= 2
+                ambiguous[quality] += 1
+    assert set(ambiguous) == {"dim7", "aug", "min7", "m7", "6", "min7b5", "m7b5", "m6", "sus2", "sus4"}
+    assert sum(ambiguous.values()) == 120 and len(CHORD_QUALITIES) * 12 == 300
+    doc = (ROOT / "docs" / "MIGRATION_3.md").read_text()
+    for token in ("`dim7`", "`aug`", "`min7`", "`m7b5`", "`m6`", "`sus2`", "`sus4`", "120 of the 300"):
+        assert token in doc, token
+
+
+_LETTERS = "CDEFGAB"
+_NATURAL = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
+
+
+def _degree(semis: int, quality: str) -> int:
+    """Scale degree a chord-tone interval spells as (thirds stack plus sus/add tones)."""
+    if semis == 0:
+        return 1
+    if semis <= 2:
+        return 2
+    if semis <= 4:
+        return 3
+    if semis == 5:
+        return 4
+    if semis == 6:
+        return 5
+    if semis <= 8:
+        return 5
+    if semis == 9:
+        return 7 if quality == "dim7" else 6
+    if semis <= 11:
+        return 7
+    if semis == 14:
+        return 9
+    return 11
+
+
+def _spelled(root: str, semis: int, quality: str) -> str:
+    """Chord tone `semis` above `root` (music21 spelling: '-' flat) with its proper letter."""
+    letter, alter = root[0], root[1:].count("#") - root[1:].count("-")
+    degree = _degree(semis, quality)
+    li = (_LETTERS.index(letter) + degree - 1)
+    target = _LETTERS[li % 7]
+    natural = _NATURAL[target] + 12 * (li // 7) - _NATURAL[letter]
+    acc = alter + semis - natural
+    return f"{target}{'#' * acc if acc > 0 else '-' * -acc}{4 + li // 7}"
+
+
+def test_chord_parity_with_music21():
+    _m21()
+    from music21 import chord as m21chord, pitch
+    from audioforge.harmony import identify_chord
+    from audioforge.theory import CHORD_QUALITIES
+    disputes = {"7sus4", "dom7sus4"}   # music21 names the quartal tetramirror from the fourth
+    agree = total = 0
+    ambiguous = 0
+    for root in ("C", "C#", "D", "E-", "E", "F", "F#", "G", "A-", "A", "B-", "B"):
+        for quality, intervals in CHORD_QUALITIES.items():
+            ps = [pitch.Pitch(_spelled(root, iv, quality)) for iv in intervals]
+            assert [p.midi for p in ps] == [pitch.Pitch(root + "4").midi + iv for iv in intervals]
+            ours = identify_chord([{"note": _note_name(p.midi)} for p in ps])
+            if ours["status"] == "ambiguous":
+                ambiguous += 1
+                continue
+            assert ours["status"] == "resolved"
+            if quality in disputes:
+                continue
+            total += 1
+            agree += ours["root_pc"] == m21chord.Chord(ps).root().pitchClass
+    assert ambiguous == 120
+    assert agree / total >= 0.95, (agree, total)
+
+
+def test_corpus_round_trip_bach_chorale(tmp_path):
+    m21 = _m21()
+    from music21 import corpus
+    from audioforge import AudioForge
+    score = corpus.parse("bach/bwv66.6")
+    path = tmp_path / "bwv66.6.musicxml"
+    score.write("musicxml", fp=str(path))
+    spec = interop.import_musicxml(path.read_text(), asset_id="bwv66_6")
+    assert len(spec["layers"]) == len(score.parts) == 4
+    for part, layer in zip(score.parts, spec["layers"]):
+        starts = _m21_notes(part)
+        assert len(layer["notes"]) == len(starts), layer["name"]
+        assert sorted({n["start_beat"] for n in layer["notes"]}) == \
+            sorted({round(float(n.getOffsetInHierarchy(part)), 6) for n in starts}), layer["name"]
+    ours = max(n["start_beat"] + n["dur_beats"] for l in spec["layers"] for n in l["notes"])
+    assert ours == pytest.approx(float(score.highestTime), abs=1e-6)
+    import math
+    seconds = float(score.seconds)
+    if math.isnan(seconds):
+        # no MetronomeMark in the stream: music21's writer still declares a playback tempo
+        # (<sound tempo>), which is what the import honours; fall back to 120 like both sides do
+        declared = _xml(path.read_text()).find(".//sound[@tempo]")
+        bpm = float(declared.get("tempo")) if declared is not None else 120.0
+        seconds = float(score.highestTime) * 60.0 / bpm
+    # fermatas import as holds of the note's own length; the timeline underneath matches music21
+    fermatas = {round(float(n.getOffsetInHierarchy(score.parts[0])) + float(n.duration.quarterLength), 6)
+                for n in score.parts[0].recurse().notesAndRests
+                if any(isinstance(e, m21.expressions.Fermata) for e in n.expressions)}
+    assert {h["beat"] for h in spec.get("holds", [])} >= fermatas and fermatas
+    held = sum(h["duration_s"] for h in spec.get("holds", []))
+    assert spec["duration_s"] - held == pytest.approx(seconds, rel=0.01)
+    asset = AudioForge().load_spec(spec)                 # validates the parser's claim
+    assert not [d for d in asset.validate() if d.severity == "error"]
+    audio, sample_rate, _meta = asset.render()          # (stereo array, rate, meta)
+    assert audio.shape[0] == pytest.approx(spec["duration_s"] * sample_rate, rel=0.05) and audio.shape[1] == 2
+
+
+def test_lilypond_zero_warnings_for_every_fixture(tmp_path):
+    lilypond = pytest.importorskip("lilypond", reason="install the oracles extra")
+    import subprocess
+    exe = Path(lilypond.executable())
+    musicxml2ly = exe.parent / "musicxml2ly"
+    for name in FIXTURES:
+        xml_path = tmp_path / f"{name}.musicxml"
+        xml_path.write_text(interop.export_notated_musicxml(_spec(name)))
+        ly = tmp_path / f"{name}.ly"
+        r1 = subprocess.run([str(musicxml2ly), "-o", str(ly), str(xml_path)],
+                            capture_output=True, text=True, timeout=300)
+        assert r1.returncode == 0, (name, r1.stderr[-800:])
+        r2 = subprocess.run([str(exe), "-dno-point-and-click", "-o", str(tmp_path / name), str(ly)],
+                            capture_output=True, text=True, timeout=600)
+        assert r2.returncode == 0 and (tmp_path / f"{name}.pdf").exists(), (name, r2.stderr[-800:])
+        import re
+        noise = [l for l in (r1.stderr + r2.stderr).splitlines()
+                 if re.search(r"\b(warning|error)\b\s*:", l, re.IGNORECASE)]
+        if "polymeter" in _expected(name):
+            # musicxml2ly assumes one timing for the score; genuine per-part meters need
+            # LilyPond's per-staff Timing_translator, which it does not emit. The export is
+            # schema-valid and engraves; the bar-check warning is the recorded limitation.
+            noise = [l for l in noise if "bar check failed" not in l]
+        assert not noise, (name, noise[:6])

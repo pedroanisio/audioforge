@@ -60,11 +60,12 @@ against `cli.py`, so a verb cannot be added or removed without this file failing
 
 | Target | Runs |
 |--------|------|
-| `check` | `native-check schema-check manifest-check golden-check drift-check version-check docs-gen-check lock-check floor-check test` — the full local gate. |
+| `check` | `native-check schema-check manifest-check interop-check golden-check drift-check version-check docs-gen-check lock-check floor-check test` — the full local gate. |
 | `test` | `scripts/run_tests.sh` — 16 script suites + `pytest -q`. |
 | `native-check` | Assert a C compiler is present. |
 | `schema-check` | IR-schema drift gate: `gen_ir_schema --check` (AF-R05). |
 | `manifest-check` | Capability-manifest drift gate: `gen_capability --check` (AF-R07). |
+| `interop-check` | Interop coverage-matrix drift gate: `gen_interop --check` regenerates `docs/INTEROP.md` from `audioforge.interop.COVERAGE` (ADR-0009). |
 | `golden-check` | Golden-audio drift gate: `render_golden --check` (AF-R06). |
 | `docs-check` / `version-check` | Fast doc / version-hygiene subsets. |
 | `oracle-check` | MusicXML XSD validity, music21 parity and LilyPond engraving of the notation fixtures; needs `uv pip install -e '.[oracles]'`, skips loudly without it (ADR-0009; not composed into `check`). |
@@ -81,6 +82,7 @@ Coverage is **not** in `make check`; run it yourself:
   outputs.
   - `python -m audioforge.tools.gen_ir_schema` → `docs/ir.schema.json` (AF-R05).
   - `python -m audioforge.tools.gen_capability` → `docs/capability-manifest.json`
+  - `python -m audioforge.tools.gen_interop` → `docs/INTEROP.md` (construct × format coverage matrix)
     + `docs/DIAGNOSTIC_CODES.md` (AF-R07).
   - `python -m audioforge.tools.render_golden` → `tests/golden/audio.lock.json`
     (`--update` re-pins, `--check` gates, `--strict` for cross-env; AF-R06).
@@ -124,6 +126,7 @@ the paired `--write`, then let the `--check` gate confirm:
 |----------|--------|------------|
 | `docs/ir.schema.json` | `audioforge/ir_schema.py::ir_json_schema` | `gen_ir_schema --write` |
 | `docs/capability-manifest.json` | `audioforge/capabilities.py::capability_manifest` | `gen_capability --write` |
+| `docs/INTEROP.md` | `audioforge/interop.py::COVERAGE` | `gen_interop --write` |
 | `docs/DIAGNOSTIC_CODES.md` | same | `gen_capability --write` |
 | `tests/golden/audio.lock.json` | `tests/golden/audio/*.af` renders | `render_golden --update` |
 

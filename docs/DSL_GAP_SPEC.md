@@ -480,19 +480,22 @@ subset, `interop_diagnostics()` emits structured lossy warnings, and
 `export_session_bundle()` writes a deterministic manifest-backed bundle.
 
 **Measured limit (2026-09-06, `docs/evolution/harness-notation.md`).** Against external
-oracles the original contract was narrower than the prose. Checkpoint T2 of
-`docs/evolution/roadmap-notation.xlsx` closed the structural part: the notated exporter
+oracles the original contract was narrower than the prose. Checkpoints T2 and T3 of
+`docs/evolution/roadmap-notation.xlsx` closed the interchange part: the notated exporter
 takes meter beats and unit, bar length, per-part polymeter, `key_map`, `tempo_map` (thinned
-to the quantization grid) and `pickup` from the spec (`HARNESS-NXML-002…005`); the
-exact-tick MusicXML and MIDI exports write one part or track per layer with `<chord/>`
-groups and every tempo point (`HARNESS-NXML-009`, `HARNESS-NMIDI-002/003`); the importer
-reads one layer per `<part>`, honours `<chord/>`, `<backup>`, `<forward>`, voices,
-per-measure divisions, key, time and tempo, and merges ties (`HARNESS-NIMP-001…003`).
-Still open until T3: dynamics, articulations and slurs, fermatas and rehearsal marks in
-MusicXML (`HARNESS-NXML-006…008`), the generated lossy-construct matrix
-(`HARNESS-NXML-011`) and the corpus round trip (`HARNESS-NIMP-004`). Unrepresentable
-imported constructs (unpitched notes, mid-piece time-signature changes, microtonal
-alters, empty parts) are listed under `_meta.import.dropped`, never dropped silently.
+to the quantization grid), `pickup`, dynamics with hairpins, articulations, slurs, tuplets,
+lyrics, fermatas, rehearsal marks and repeat barlines from the spec
+(`HARNESS-NXML-002…008`, `HARNESS-NSEM-001/002`); the exact-tick MusicXML and MIDI exports
+write one part or track per layer with `<chord/>` groups, every tempo point, sections and
+lyrics, as performed (`HARNESS-NXML-009`, `HARNESS-NMIDI-002/003`); the importer reads one
+layer per `<part>`, honours `<chord/>`, `<backup>`, `<forward>`, voices, per-measure
+divisions, key, time and tempo, merges ties and brings the marks back
+(`HARNESS-NIMP-001…005`, Bach chorale round trip included). What each construct becomes in
+each format is the generated matrix in `docs/INTEROP.md` (`make interop-check`); anything
+dropped carries a registered code from `interop_diagnostics()` (`HARNESS-NXML-011`).
+Unrepresentable imported constructs (unpitched notes, mid-piece time-signature changes,
+microtonal alters, empty parts) are listed under `_meta.import.dropped`, never dropped
+silently. Still open: the tuning resolver (G6, T4) and the CI oracle job (T5).
 
 **Definition of Ready**
 

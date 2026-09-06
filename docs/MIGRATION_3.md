@@ -84,8 +84,13 @@ dynamic selection and per-player seed paths as rendering.
 Voicing identifies chord quality and root across inversions and doublings.
 Existing sevenths are preserved. Requested extensions use the key at that chord's
 onset; without a key, documented quality defaults apply. Ambiguous collections
-such as C6/Am7 remain unchanged with a diagnostic unless an authored chord symbol
-resolves them. `voice_leading=on` searches registers/inversions to minimize
+remain unchanged and are reported (`ambiguous_harmony`, with every candidate) unless an
+authored chord symbol resolves them. The ambiguous set is exactly the symmetric and
+relative-equivalent qualities of the chord table: `dim7` (four roots share one
+collection), `aug` (three roots), `min7`/`m7` ≡ `6` of the relative major (C6/Am7),
+`min7b5`/`m7b5` ≡ `m6` of the relative minor (F#m7b5/Am6), and `sus2` ≡ `sus4`
+(Csus2/Gsus4) — 120 of the 300 root × quality collections. Every other collection
+resolves to one root; parity with music21 is measured by `HARNESS-NANA-001/002`. `voice_leading=on` searches registers/inversions to minimize
 squared voice motion while preserving chord tones, timing, gates and event count.
 This is a bounded transformation, not a claim of stylistic musical judgment.
 

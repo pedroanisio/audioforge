@@ -30,6 +30,16 @@ _Notation and interchange line (ADR-0009; `docs/evolution/roadmap-notation.xlsx`
 - `tuning_not_rendered` diagnostic: a non-12-EDO `tuning:` directive compiles with a loud
   warning instead of rendering 12-TET silently.
 - `audioforge.musicxml`: the MusicXML exporters and importer, re-exported by `audioforge.interop`.
+- `audioforge.interop.COVERAGE` / `coverage()`: the construct × format registry that drives
+  `interop_diagnostics()`, the capability manifest (`interop.coverage`, `notation.directives`)
+  and the generated `docs/INTEROP.md` (`python -m audioforge.tools.gen_interop`,
+  `make interop-check`). New codes: `lossy_slur`, `lossy_hold`, `lossy_polymeter`,
+  `lossy_pickup`, `lossy_meter_unit`, `lossy_repeat`, `lossy_key_change`, `lossy_tuning`,
+  `lossy_string_fret`, `lossy_marker`, `unsupported_layer_type`; the four legacy lossy codes
+  are now registered too.
+- `tests/test_notation_oracles.py` gains the chord-root parity and ambiguity-set tests
+  (`docs/MIGRATION_3.md` names the 120 ambiguous collections), the Bach chorale corpus round
+  trip, and a LilyPond zero-warning engraving pass over the fixture corpus.
 
 ### Changed
 - The notated MusicXML export takes meter beats and unit, bar length, per-part polymeter,
@@ -43,6 +53,13 @@ _Notation and interchange line (ADR-0009; `docs/evolution/roadmap-notation.xlsx`
   MusicXML cursor (`<chord/>`, `<backup>`, `<forward>`, voices), honours per-measure
   divisions, key, time and tempo, merges ties, and lists unrepresentable constructs under
   `_meta.import.dropped`.
+- The notated MusicXML export also writes dynamics (marks and hairpins), articulations
+  (staccato, spiccato, marcato, tremolo; legato as a slur; pizzicato as pizz./arco), slurs,
+  tuplets (`<time-modification>`), lyrics, fermatas (from `holds`), rehearsal marks (from
+  `score.sections`), repeat barlines (when the section sits on barlines) and note velocities
+  (`dynamics` attribute); the importer reads all of them back. MIDI and the exact-tick export
+  carry the performed form (repeats expanded) with section markers, lyric events and key
+  changes.
 - `audioforge score` is labelled a proof sheet, not engraving.
 
 ### Fixed

@@ -138,8 +138,9 @@ def test_exact_musicxml_exports_rests_meter_accidentals_and_imports_them():
     assert imported["id"] == "from_xml"
     assert imported["bpm"] == 90.0
     assert imported["score"]["meter"] == {"beats": 3, "unit": 4}
-    assert notes[0] == {"note": "C#4", "start_beat": 0.0, "dur_beats": 1.5}
+    assert notes[0] == {"note": "C#4", "start_beat": 0.0, "dur_beats": 1.5, "vel": 0.0}
     assert [n["note"] for n in imported["layers"][1]["notes"]] == ["D2"]
+    assert imported["layers"][1]["notes"][0]["vel"] == 0.6          # the `dynamics` attribute
 
 
 def test_musicxml_bend_import_expands_to_pitch_curve():

@@ -11,7 +11,7 @@
   "slur_groups": 1,
   "articulations": [
     "staccato",
-    "tenuto",
+    "marcato",
     "staccato"
   ],
   "constructs": [

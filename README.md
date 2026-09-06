@@ -167,9 +167,10 @@ AudioForge is a render contract, not a notation program (ADR-0009). What it offe
 * **Interchange** — `audioforge export-musicxml` (exact-tick, and `--notated` quantized to
   measures), `export-midi`, `import-musicxml`, `import-midi`. The notated export is judged by
   the MusicXML 3.1 schema, by music21 and by LilyPond (`make oracle-check`, needs
-  `uv pip install -e '.[oracles]'`). Parts, chords, meter, key and tempo changes and the
-  pickup survive both directions; `docs/INTEROP.md` states what each format keeps and what
-  `interop_diagnostics()` reports as lossy.
+  `uv pip install -e '.[oracles]'`). Parts, chords, meter, key and tempo changes, the pickup,
+  dynamics, articulations, slurs, tuplets, lyrics, fermatas, sections and repeats survive
+  the notated round trip; `docs/INTEROP.md` is the generated construct × format matrix, and
+  anything an export drops carries a registered code from `interop_diagnostics()`.
 * **Analysis** — chord identity from evidence (ambiguous or unrecognised collections are
   reported, never guessed), key-aware extensions, conservative cadence candidates, a
   pitch-class-set core (normal/prime form, interval-class vector). No key finding, no

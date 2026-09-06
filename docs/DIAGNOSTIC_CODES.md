@@ -16,7 +16,7 @@ Every diagnostic code the engine can emit, with its repair hint. Generated from
 `capability_manifest()["diagnostic_codes"]` and gated by `gen_capability.py --check`
 (`make manifest-check`), so a new code cannot land undocumented.
 
-There are **41** diagnostic codes.
+There are **55** diagnostic codes.
 
 | Code | Repair hint |
 |------|-------------|
@@ -30,6 +30,19 @@ There are **41** diagnostic codes.
 | `invalid_curve` | Use a supported curve target, time basis, point encoding, and interpolation shape from performance_curves. |
 | `loop_boundary_tail` | _(see repair_hints in the manifest)_ |
 | `lossy_articulation` | _(see repair_hints in the manifest)_ |
+| `lossy_dynamic_curve` | _(see repair_hints in the manifest)_ |
+| `lossy_hold` | _(see repair_hints in the manifest)_ |
+| `lossy_key_change` | _(see repair_hints in the manifest)_ |
+| `lossy_lyrics` | _(see repair_hints in the manifest)_ |
+| `lossy_marker` | _(see repair_hints in the manifest)_ |
+| `lossy_meter_unit` | _(see repair_hints in the manifest)_ |
+| `lossy_pickup` | _(see repair_hints in the manifest)_ |
+| `lossy_pitch_curve` | _(see repair_hints in the manifest)_ |
+| `lossy_polymeter` | _(see repair_hints in the manifest)_ |
+| `lossy_repeat` | _(see repair_hints in the manifest)_ |
+| `lossy_slur` | _(see repair_hints in the manifest)_ |
+| `lossy_string_fret` | _(see repair_hints in the manifest)_ |
+| `lossy_tuning` | _(see repair_hints in the manifest)_ |
 | `low_foundation_weak` | _(see repair_hints in the manifest)_ |
 | `mono_image` | _(see repair_hints in the manifest)_ |
 | `near_ceiling` | _(see repair_hints in the manifest)_ |
@@ -59,5 +72,6 @@ There are **41** diagnostic codes.
 | `tuning_required_for_string_fret` | Add layer.tuning before using note string/fret fields. |
 | `unknown_property` | Remove the property or replace it with one listed for the asset/layer/master scope in this manifest. |
 | `unrecognized_harmony` | _(see repair_hints in the manifest)_ |
+| `unsupported_layer_type` | _(see repair_hints in the manifest)_ |
 | `validate_render_ready` | Run validate without --no-resolve before render; clean validation is the render-ready predicate. |
 | `very_bright` | _(see repair_hints in the manifest)_ |
