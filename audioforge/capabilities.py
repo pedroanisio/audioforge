@@ -1,6 +1,7 @@
 """Machine-readable AudioForge capability manifest for AI agents."""
 from __future__ import annotations
 
+from . import interop
 from .dsl import (ARTICULATIONS, DSL_VERSION, DYNAMIC_MARKS, EMOTIONS,
                   GROOVE_TEMPLATES)
 from .schema import (AUTO_TARGETS, BIT_DEPTHS, FX_TYPES, KINDS, LAYER_TYPES,
@@ -469,10 +470,31 @@ def capability_manifest() -> dict:
             },
         },
         "interop": {
-            "exports": ["midi", "musicxml"],
+            "exports": list(interop.FORMATS),
             "imports": ["midi", "musicxml"],
             "cli": ["export-midi", "export-musicxml",
                     "import-midi", "import-musicxml"],
+            # ADR-0011: the construct × format matrix the exporters, the lossy
+            # diagnostics and docs/INTEROP.md all read from (audioforge.interop.COVERAGE).
+            "formats": list(interop.FORMATS),
+            "coverage": interop.coverage(),
+        },
+        "score": {
+            "proof_sheet": {"cli": "score", "format": "pdf", "layout": "proportional"},
+            "engraving_backend": None,
+        },
+        "notation": {
+            # Directives that compile to `spec.notation`; `rendering` says what the
+            # renderer does with them today (HARNESS-NTUN-003 / NSEM-002).
+            "directives": {
+                "tuning": {"ir": "notation.tuning", "rendering": "metadata_only",
+                           "diagnostic": "tuning_not_rendered",
+                           "roadmap": "RN-T-002 (n-EDO resolver), RN-T-003 (microtonal interop)"},
+                "tuplet": {"ir": "notation.tuplets", "rendering": "authored_durations",
+                           "note": "groups notes whose durations are already explicit; "
+                                   "notation only, no change in sound"},
+                "lyrics": {"ir": "notation.lyrics", "rendering": "metadata_only"},
+            },
         },
         "cli": {
             "commands": list(CLI_COMMANDS),
@@ -639,6 +661,55 @@ def capability_manifest() -> dict:
             "render_plan_sustain_gap": {
                 "repair_hint": "A held sampled note outlasts its recording without a usable loop; "
                                "shorten the note, pick a region with a sustain loop, or accept the gap."
+            },
+            # Interop coverage (ADR-0011): codes the registry in audioforge.interop may emit.
+            "lossy_lyrics": {
+                "repair_hint": "Lyrics survive in MIDI (lyric events) and the notated MusicXML export; the exact-tick view drops them."
+            },
+            "lossy_pitch_curve": {
+                "repair_hint": "Arbitrary pitch_cents curves are not projected by any export; bake them into notes or accept the loss."
+            },
+            "lossy_dynamic_curve": {
+                "repair_hint": "Layer dynamic marks survive only in the notated MusicXML export; through-note dynamic curves are not projected."
+            },
+            "lossy_slur": {
+                "repair_hint": "Slurs survive only in the notated MusicXML export; use `--notated` or accept the loss."
+            },
+            "lossy_hold": {
+                "repair_hint": "Fermata lengths are not written; the notated MusicXML export keeps the sign."
+            },
+            "lossy_polymeter": {
+                "repair_hint": "Only the notated MusicXML export writes per-part meters; other formats keep the score meter."
+            },
+            "lossy_pickup": {
+                "repair_hint": "Declare a pickup that is a whole number of 64ths for MIDI, or use the notated MusicXML export."
+            },
+            "lossy_meter_unit": {
+                "repair_hint": "MIDI time signatures need a power-of-two unit; change the meter or use MusicXML."
+            },
+            "lossy_repeat": {
+                "repair_hint": "Start and end repeated sections on barlines so the notated export can write repeat signs, or export the performed form (MIDI, exact-tick)."
+            },
+            "lossy_key_change": {
+                "repair_hint": "Key changes need the notated MusicXML export or MIDI; the exact-tick view keeps the initial key."
+            },
+            "lossy_tuning": {
+                "repair_hint": "Non-12-EDO tuning is metadata until the resolver lands (RN-T-002/003); exports carry 12-TET pitches."
+            },
+            "lossy_string_fret": {
+                "repair_hint": "String and fret fields are not projected by any export yet."
+            },
+            "lossy_marker": {
+                "repair_hint": "Markers live in real seconds and are not written by the exports; use sections for beat-based labels."
+            },
+            "unsupported_layer_type": {
+                "repair_hint": "Only layers with note events export; render other layers to audio or leave them out of the interchange."
+            },
+            # Notation (ADR-0011): the tuning directive is metadata until the resolver lands.
+            "tuning_not_rendered": {
+                "repair_hint": "The tuning directive is stored but the renderer stays 12-TET; "
+                               "remove it, or wait for the n-EDO resolver (engine 3.1 line) "
+                               "that applies it and proves the frequencies by FFT."
             },
             # Harmony (RM-E-001): unresolved pitch collections are preserved and reported.
             "ambiguous_harmony": {

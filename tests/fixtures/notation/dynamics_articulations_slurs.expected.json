@@ -1,0 +1,23 @@
+{
+  "meter": [
+    4,
+    4
+  ],
+  "parts": 1,
+  "dynamics": [
+    "pp",
+    "ff"
+  ],
+  "slur_groups": 1,
+  "articulations": [
+    "staccato",
+    "marcato",
+    "staccato"
+  ],
+  "constructs": [
+    "dynamic",
+    "slur",
+    "art"
+  ],
+  "measures": 4
+}

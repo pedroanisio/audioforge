@@ -19,9 +19,53 @@ structured, per-version summary. Version consistency across sites is gated by
 
 ## [Unreleased]
 
+_Notation and interchange line (ADR-0011; `docs/evolution/roadmap-notation.xlsx`)._
+
+### Added
+- `oracles` and `engrave` extras (music21, xmlschema, LilyPond) and `make oracle-check`, which
+  runs `tests/test_notation_oracles.py` against the MusicXML 3.1 XSD and music21 and skips
+  loudly when the extra is absent.
+- `tests/fixtures/notation`: a ten-piece notation corpus with expected structure; the MusicXML
+  3.1 schema is vendored under `tests/fixtures/musicxml/xsd`.
+- `tuning_not_rendered` diagnostic: a non-12-EDO `tuning:` directive compiles with a loud
+  warning instead of rendering 12-TET silently.
+- `audioforge.musicxml`: the MusicXML exporters and importer, re-exported by `audioforge.interop`.
+- `audioforge.interop.COVERAGE` / `coverage()`: the construct × format registry that drives
+  `interop_diagnostics()`, the capability manifest (`interop.coverage`, `notation.directives`)
+  and the generated `docs/INTEROP.md` (`python -m audioforge.tools.gen_interop`,
+  `make interop-check`). New codes: `lossy_slur`, `lossy_hold`, `lossy_polymeter`,
+  `lossy_pickup`, `lossy_meter_unit`, `lossy_repeat`, `lossy_key_change`, `lossy_tuning`,
+  `lossy_string_fret`, `lossy_marker`, `unsupported_layer_type`; the four legacy lossy codes
+  are now registered too.
+- `tests/test_notation_oracles.py` gains the chord-root parity and ambiguity-set tests
+  (`docs/MIGRATION_3.md` names the 120 ambiguous collections), the Bach chorale corpus round
+  trip, and a LilyPond zero-warning engraving pass over the fixture corpus.
+
+### Changed
+- The notated MusicXML export takes meter beats and unit, bar length, a global meter with `lossy_polymeter`,
+  `key_map`, `tempo_map` (thinned to the quantization grid, stepped at its points) and
+  `pickup` (an implicit first measure) from the spec; `export-musicxml --bars` is now an
+  override that defaults to the spec meter.
+- The exact-tick MusicXML export writes one part per pitched layer with `<chord/>` groups and
+  `<backup>` cursor moves; the MIDI export is a format-1 file with a conductor track (time
+  and key signature, every tempo point) and one track per layer on its own channel.
+- `import_musicxml` reads one layer per `<part>` (named from `part-name`), follows the
+  MusicXML cursor (`<chord/>`, `<backup>`, `<forward>`, voices), honours per-measure
+  divisions, key, time and tempo, merges ties, and lists unrepresentable constructs under
+  `_meta.import.dropped`.
+- The notated MusicXML export also writes dynamics (marks and hairpins), articulations
+  (staccato, spiccato, marcato, tremolo; legato as a slur; pizzicato as pizz./arco), slurs,
+  tuplets (`<time-modification>`), lyrics, fermatas (from `holds`), rehearsal marks (from
+  `score.sections`), repeat barlines (when the section sits on barlines) and note velocities
+  (`dynamics` attribute); the importer reads all of them back. MIDI and the exact-tick export
+  carry the performed form (repeats expanded) with section markers, lyric events and key
+  changes.
+- `audioforge score` is labelled a proof sheet, not engraving.
+
 ## [3.1.0]
 
 _Engine 3.1.0 · DSL 2.0._
+
 
 Native stereo instrument recordings retain their channels through sample
 playback, velocity crossfades, loops, effects, seating and stems. Stereo layers

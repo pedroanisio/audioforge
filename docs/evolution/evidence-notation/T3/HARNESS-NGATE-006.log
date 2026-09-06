@@ -1,0 +1,2 @@
+["node", "scripts/check-backlog-governance.mjs"]
+backlog-governance: 50 item(s) verified

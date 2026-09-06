@@ -1,0 +1,12 @@
+asset meter_3_4_two_parts { kind: cue
+  duration: 8s
+  tempo: 120bpm
+  key: G major
+  meter: 3 4
+  layer melody : notes { osc: sine
+    gain: -12db
+    notes: G4 @ 0b for 1b, A4 @ 1b for 0.5b, B4 @ 1.5b for 0.5b, D5 @ 2b for 2.5b, C5 @ 4.5b for 0.75b, B4 @ 5.25b for 0.75b, A4 @ 6b for 3b, G4 @ 9b for 3b }
+  layer bass : notes { osc: sine
+    gain: -12db
+    notes: G2 @ 0b for 3b, D3maj @ 3b for 3b, G2 @ 6b for 6b }
+}

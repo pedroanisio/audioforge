@@ -101,6 +101,45 @@
     "lossy_articulation": {
       "repair_hint": "Use MusicXML for notation metadata or accept MIDI loss."
     },
+    "lossy_dynamic_curve": {
+      "repair_hint": "Layer dynamic marks survive only in the notated MusicXML export; through-note dynamic curves are not projected."
+    },
+    "lossy_hold": {
+      "repair_hint": "Fermata lengths are not written; the notated MusicXML export keeps the sign."
+    },
+    "lossy_key_change": {
+      "repair_hint": "Key changes need the notated MusicXML export or MIDI; the exact-tick view keeps the initial key."
+    },
+    "lossy_lyrics": {
+      "repair_hint": "Lyrics survive in MIDI (lyric events) and the notated MusicXML export; the exact-tick view drops them."
+    },
+    "lossy_marker": {
+      "repair_hint": "Markers live in real seconds and are not written by the exports; use sections for beat-based labels."
+    },
+    "lossy_meter_unit": {
+      "repair_hint": "MIDI time signatures need a power-of-two unit; change the meter or use MusicXML."
+    },
+    "lossy_pickup": {
+      "repair_hint": "Declare a pickup that is a whole number of 64ths for MIDI, or use the notated MusicXML export."
+    },
+    "lossy_pitch_curve": {
+      "repair_hint": "Arbitrary pitch_cents curves are not projected by any export; bake them into notes or accept the loss."
+    },
+    "lossy_polymeter": {
+      "repair_hint": "Only the notated MusicXML export writes per-part meters; other formats keep the score meter."
+    },
+    "lossy_repeat": {
+      "repair_hint": "Start and end repeated sections on barlines so the notated export can write repeat signs, or export the performed form (MIDI, exact-tick)."
+    },
+    "lossy_slur": {
+      "repair_hint": "Slurs survive only in the notated MusicXML export; use `--notated` or accept the loss."
+    },
+    "lossy_string_fret": {
+      "repair_hint": "String and fret fields are not projected by any export yet."
+    },
+    "lossy_tuning": {
+      "repair_hint": "Non-12-EDO tuning is metadata until the resolver lands (RN-T-002/003); exports carry 12-TET pitches."
+    },
     "low_foundation_weak": {
       "repair_hint": "Check the declared bass part, its register, gain and filtering, or declare expect_bass=false when the piece has no bass by design."
     },
@@ -176,6 +215,9 @@
     "technique_unsupported_voice": {
       "repair_hint": "technique_unsupported_voice"
     },
+    "tuning_not_rendered": {
+      "repair_hint": "The tuning directive is stored but the renderer stays 12-TET; remove it, or wait for the n-EDO resolver (engine 3.1 line) that applies it and proves the frequencies by FFT."
+    },
     "tuning_required_for_string_fret": {
       "repair_hint": "tuning_required_for_string_fret"
     },
@@ -184,6 +226,9 @@
     },
     "unrecognized_harmony": {
       "repair_hint": "The pitch collection matches no known chord quality; notes are kept unchanged. Author a chord symbol or leave the cluster as written."
+    },
+    "unsupported_layer_type": {
+      "repair_hint": "Only layers with note events export; render other layers to audio or leave them out of the interchange."
     },
     "validate_render_ready": {
       "repair_hint": "validate_render_ready"
@@ -367,9 +412,492 @@
       "import-midi",
       "import-musicxml"
     ],
+    "coverage": [
+      {
+        "construct": "pitch",
+        "description": "note pitch",
+        "midi": {
+          "code": null,
+          "note": "note number",
+          "status": "preserved"
+        },
+        "musicxml": {
+          "code": null,
+          "note": "step, alter, octave",
+          "status": "preserved"
+        },
+        "musicxml_notated": {
+          "code": null,
+          "note": "step, alter, octave",
+          "status": "preserved"
+        }
+      },
+      {
+        "construct": "timing",
+        "description": "note start and duration",
+        "midi": {
+          "code": null,
+          "note": "exact to the tick (480 per quarter)",
+          "status": "preserved"
+        },
+        "musicxml": {
+          "code": null,
+          "note": "exact `<duration>` in divisions",
+          "status": "preserved"
+        },
+        "musicxml_notated": {
+          "code": null,
+          "note": "snapped to the grid (default a 16th); independent durations and overlapping voices survive",
+          "status": "quantized"
+        }
+      },
+      {
+        "construct": "velocity",
+        "description": "note velocity (`vel`)",
+        "midi": {
+          "code": null,
+          "note": "velocity 1..127 (vel × 96)",
+          "status": "preserved"
+        },
+        "musicxml": {
+          "code": null,
+          "note": "note `dynamics` attribute (% of velocity 90)",
+          "status": "preserved"
+        },
+        "musicxml_notated": {
+          "code": null,
+          "note": "note `dynamics` attribute (% of velocity 90)",
+          "status": "preserved"
+        }
+      },
+      {
+        "construct": "layers",
+        "description": "one part or track per pitched layer, named after it",
+        "midi": {
+          "code": null,
+          "note": "one track per layer with an independent MIDI port/channel pair",
+          "status": "preserved"
+        },
+        "musicxml": {
+          "code": null,
+          "note": "one `<part>` per layer",
+          "status": "preserved"
+        },
+        "musicxml_notated": {
+          "code": null,
+          "note": "one `<part>` per layer",
+          "status": "preserved"
+        }
+      },
+      {
+        "construct": "chords",
+        "description": "simultaneous onsets within a layer",
+        "midi": {
+          "code": null,
+          "note": "same channel, independent note-offs",
+          "status": "preserved"
+        },
+        "musicxml": {
+          "code": null,
+          "note": "`<chord/>`; one group per duration, joined with `<backup>`",
+          "status": "preserved"
+        },
+        "musicxml_notated": {
+          "code": null,
+          "note": "equal-duration chord tones share a voice; other durations retain independent voices",
+          "status": "quantized"
+        }
+      },
+      {
+        "construct": "unpitched_layers",
+        "description": "layers without note events (drums, noise, samples, tone, sweeps)",
+        "midi": {
+          "code": "unsupported_layer_type",
+          "note": "no note events to write",
+          "status": "unsupported"
+        },
+        "musicxml": {
+          "code": "unsupported_layer_type",
+          "note": "no note events to write",
+          "status": "unsupported"
+        },
+        "musicxml_notated": {
+          "code": "unsupported_layer_type",
+          "note": "no note events to write",
+          "status": "unsupported"
+        }
+      },
+      {
+        "construct": "meter",
+        "description": "`score.meter` (beats and unit)",
+        "midi": {
+          "code": "lossy_meter_unit",
+          "note": "time-signature meta event when the unit is a power of two",
+          "status": "conditional"
+        },
+        "musicxml": {
+          "code": null,
+          "note": "`<time>` (declared; the exact-tick view is one measure)",
+          "status": "preserved"
+        },
+        "musicxml_notated": {
+          "code": null,
+          "note": "`<time>` and the bar length",
+          "status": "preserved"
+        }
+      },
+      {
+        "construct": "pickup",
+        "description": "`score.pickup_beats` (anacrusis)",
+        "midi": {
+          "code": "lossy_pickup",
+          "note": "a partial first bar when the anacrusis is a whole number of 64ths",
+          "status": "conditional"
+        },
+        "musicxml": {
+          "code": "lossy_pickup",
+          "note": "single measure; no barlines to phase",
+          "status": "lossy"
+        },
+        "musicxml_notated": {
+          "code": null,
+          "note": "implicit measure 0",
+          "status": "preserved"
+        }
+      },
+      {
+        "construct": "polymeter",
+        "description": "`score.polymeter` (per-layer meter)",
+        "midi": {
+          "code": "lossy_polymeter",
+          "note": "one time signature per file",
+          "status": "lossy"
+        },
+        "musicxml": {
+          "code": "lossy_polymeter",
+          "note": "the single-measure view carries the score meter only",
+          "status": "lossy"
+        },
+        "musicxml_notated": {
+          "code": "lossy_polymeter",
+          "note": "global score meter used for reliable engraving; pitches and timing survive",
+          "status": "lossy"
+        }
+      },
+      {
+        "construct": "sections",
+        "description": "`score.sections` (form)",
+        "midi": {
+          "code": null,
+          "note": "marker meta events",
+          "status": "preserved"
+        },
+        "musicxml": {
+          "code": null,
+          "note": "rehearsal-mark directions",
+          "status": "preserved"
+        },
+        "musicxml_notated": {
+          "code": null,
+          "note": "rehearsal-mark directions",
+          "status": "preserved"
+        }
+      },
+      {
+        "construct": "repeats",
+        "description": "`score.repeats`",
+        "midi": {
+          "code": null,
+          "note": "expanded as performed",
+          "status": "preserved"
+        },
+        "musicxml": {
+          "code": null,
+          "note": "expanded as performed",
+          "status": "preserved"
+        },
+        "musicxml_notated": {
+          "code": "lossy_repeat",
+          "note": "repeat barlines when the section sits on barlines",
+          "status": "conditional"
+        }
+      },
+      {
+        "construct": "key",
+        "description": "`key` and `key_map`",
+        "midi": {
+          "code": null,
+          "note": "key-signature meta events, one per change",
+          "status": "preserved"
+        },
+        "musicxml": {
+          "code": "lossy_key_change",
+          "note": "initial key; changes need the notated view",
+          "status": "conditional"
+        },
+        "musicxml_notated": {
+          "code": null,
+          "note": "key signatures at their authored offsets, including within measures",
+          "status": "preserved"
+        }
+      },
+      {
+        "construct": "tempo",
+        "description": "`bpm` and `tempo_map`",
+        "midi": {
+          "code": null,
+          "note": "one tempo event per point (ramps stepped)",
+          "status": "preserved"
+        },
+        "musicxml": {
+          "code": null,
+          "note": "one metronome direction per point (ramps stepped)",
+          "status": "preserved"
+        },
+        "musicxml_notated": {
+          "code": null,
+          "note": "thinned to the grid; changes under 0.1 bpm collapse; ramps stepped",
+          "status": "quantized"
+        }
+      },
+      {
+        "construct": "holds",
+        "description": "`holds` (fermata with a length in seconds)",
+        "midi": {
+          "code": "lossy_hold",
+          "note": "no pause is inserted",
+          "status": "lossy"
+        },
+        "musicxml": {
+          "code": "lossy_hold",
+          "note": "no pause is inserted",
+          "status": "lossy"
+        },
+        "musicxml_notated": {
+          "code": "lossy_hold",
+          "note": "fermata sign projected; its duration in seconds is not encoded",
+          "status": "lossy"
+        }
+      },
+      {
+        "construct": "dynamic_marks",
+        "description": "layer `dynamic` points (pp … fff)",
+        "midi": {
+          "code": "lossy_dynamic_curve",
+          "note": "no controller data is written",
+          "status": "lossy"
+        },
+        "musicxml": {
+          "code": "lossy_dynamic_curve",
+          "note": "marks are not written in the exact-tick view",
+          "status": "lossy"
+        },
+        "musicxml_notated": {
+          "code": null,
+          "note": "dynamic marks, with hairpins between differing marks",
+          "status": "preserved"
+        }
+      },
+      {
+        "construct": "note_dynamic_curves",
+        "description": "through-note `dynamic` curves",
+        "midi": {
+          "code": "lossy_dynamic_curve",
+          "note": "through-note shaping is not projected",
+          "status": "lossy"
+        },
+        "musicxml": {
+          "code": "lossy_dynamic_curve",
+          "note": "through-note shaping is not projected",
+          "status": "lossy"
+        },
+        "musicxml_notated": {
+          "code": "lossy_dynamic_curve",
+          "note": "through-note shaping is not projected",
+          "status": "lossy"
+        }
+      },
+      {
+        "construct": "pitch_curves",
+        "description": "`pitch_cents` note curves and layer automation",
+        "midi": {
+          "code": "lossy_pitch_curve",
+          "note": "arbitrary pitch curves are not projected",
+          "status": "lossy"
+        },
+        "musicxml": {
+          "code": "lossy_pitch_curve",
+          "note": "arbitrary pitch curves are not projected",
+          "status": "lossy"
+        },
+        "musicxml_notated": {
+          "code": "lossy_pitch_curve",
+          "note": "arbitrary pitch curves are not projected",
+          "status": "lossy"
+        }
+      },
+      {
+        "construct": "articulations",
+        "description": "note `art`",
+        "midi": {
+          "code": "lossy_articulation",
+          "note": "SMF carries no articulation data",
+          "status": "lossy"
+        },
+        "musicxml": {
+          "code": "lossy_articulation",
+          "note": "marks are not written in the exact-tick view",
+          "status": "lossy"
+        },
+        "musicxml_notated": {
+          "code": "lossy_articulation",
+          "note": "known articulations project as notation; unknown marks are diagnosed",
+          "status": "conditional"
+        }
+      },
+      {
+        "construct": "slurs",
+        "description": "`slur( … )` groups",
+        "midi": {
+          "code": "lossy_slur",
+          "note": "SMF carries no phrasing data",
+          "status": "lossy"
+        },
+        "musicxml": {
+          "code": "lossy_slur",
+          "note": "slurs are not written in the exact-tick view",
+          "status": "lossy"
+        },
+        "musicxml_notated": {
+          "code": null,
+          "note": "`<slur>` start and stop",
+          "status": "preserved"
+        }
+      },
+      {
+        "construct": "tuplets",
+        "description": "`notation.tuplets`",
+        "midi": {
+          "code": null,
+          "note": "sounding durations are exact",
+          "status": "preserved"
+        },
+        "musicxml": {
+          "code": null,
+          "note": "sounding durations are exact",
+          "status": "preserved"
+        },
+        "musicxml_notated": {
+          "code": null,
+          "note": "`<time-modification>` and tuplet brackets",
+          "status": "preserved"
+        }
+      },
+      {
+        "construct": "lyrics",
+        "description": "`notation.lyrics`",
+        "midi": {
+          "code": null,
+          "note": "lyric meta events, one per syllable",
+          "status": "preserved"
+        },
+        "musicxml": {
+          "code": "lossy_lyrics",
+          "note": "not written in the exact-tick view",
+          "status": "lossy"
+        },
+        "musicxml_notated": {
+          "code": null,
+          "note": "`<lyric>` per syllable",
+          "status": "preserved"
+        }
+      },
+      {
+        "construct": "phonemes",
+        "description": "lyric phonemes",
+        "midi": {
+          "code": "lossy_lyrics",
+          "note": "phonemes omitted; lyric text may be retained",
+          "status": "lossy"
+        },
+        "musicxml": {
+          "code": "lossy_lyrics",
+          "note": "phonemes omitted",
+          "status": "lossy"
+        },
+        "musicxml_notated": {
+          "code": "lossy_lyrics",
+          "note": "phonemes omitted; lyric text retained",
+          "status": "lossy"
+        }
+      },
+      {
+        "construct": "tuning",
+        "description": "`notation.tuning` other than 12-EDO",
+        "midi": {
+          "code": "lossy_tuning",
+          "note": "12-TET pitches until the tuning resolver lands (RN-T-002/003)",
+          "status": "lossy"
+        },
+        "musicxml": {
+          "code": "lossy_tuning",
+          "note": "12-TET pitches until the tuning resolver lands (RN-T-002/003)",
+          "status": "lossy"
+        },
+        "musicxml_notated": {
+          "code": "lossy_tuning",
+          "note": "12-TET pitches until the tuning resolver lands (RN-T-002/003)",
+          "status": "lossy"
+        }
+      },
+      {
+        "construct": "string_fret",
+        "description": "note `string` / `fret` fields",
+        "midi": {
+          "code": "lossy_string_fret",
+          "note": "not written",
+          "status": "lossy"
+        },
+        "musicxml": {
+          "code": "lossy_string_fret",
+          "note": "not written",
+          "status": "lossy"
+        },
+        "musicxml_notated": {
+          "code": "lossy_string_fret",
+          "note": "not written",
+          "status": "lossy"
+        }
+      },
+      {
+        "construct": "markers",
+        "description": "`markers` (labels in real seconds)",
+        "midi": {
+          "code": "lossy_marker",
+          "note": "markers are in seconds and are not converted to ticks",
+          "status": "lossy"
+        },
+        "musicxml": {
+          "code": "lossy_marker",
+          "note": "not written",
+          "status": "lossy"
+        },
+        "musicxml_notated": {
+          "code": "lossy_marker",
+          "note": "not written",
+          "status": "lossy"
+        }
+      }
+    ],
     "exports": [
       "midi",
-      "musicxml"
+      "musicxml",
+      "musicxml_notated"
+    ],
+    "formats": [
+      "midi",
+      "musicxml",
+      "musicxml_notated"
     ],
     "imports": [
       "midi",
@@ -1268,6 +1796,25 @@
       }
     }
   },
+  "notation": {
+    "directives": {
+      "lyrics": {
+        "ir": "notation.lyrics",
+        "rendering": "metadata_only"
+      },
+      "tuning": {
+        "diagnostic": "tuning_not_rendered",
+        "ir": "notation.tuning",
+        "rendering": "metadata_only",
+        "roadmap": "RN-T-002 (n-EDO resolver), RN-T-003 (microtonal interop)"
+      },
+      "tuplet": {
+        "ir": "notation.tuplets",
+        "note": "groups notes whose durations are already explicit; notation only, no change in sound",
+        "rendering": "authored_durations"
+      }
+    }
+  },
   "note_scope_targets": {
     "ranges": {
       "cutoff_hz": [
@@ -1595,6 +2142,14 @@
     }
   },
   "schema": "audioforge.capabilities/1",
+  "score": {
+    "engraving_backend": null,
+    "proof_sheet": {
+      "cli": "score",
+      "format": "pdf",
+      "layout": "proportional"
+    }
+  },
   "score_layer": {
     "properties": {
       "form": "form: section STARTb for DURb, ...",

@@ -1,0 +1,15 @@
+{
+  "meter": [
+    4,
+    4
+  ],
+  "parts": 1,
+  "sections": 3,
+  "repeat_expanded": true,
+  "expected_duration_beats": 24,
+  "constructs": [
+    "form",
+    "repeat"
+  ],
+  "measures": 4
+}

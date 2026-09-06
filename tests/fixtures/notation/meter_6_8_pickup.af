@@ -1,0 +1,10 @@
+asset meter_6_8_pickup { kind: cue
+  duration: 8s
+  tempo: 120bpm
+  key: D major
+  meter: 6 8
+  pickup: 1b
+  layer m : notes { osc: sine
+    gain: -12db
+    notes: A4 @ 0b for 1b, D5 @ 1b for 1.5b, F#5 @ 2.5b for 1.5b, E5 @ 4b for 3b, D5 @ 7b for 3b }
+}

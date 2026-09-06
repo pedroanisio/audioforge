@@ -1,0 +1,12 @@
+asset polyphony { kind: cue
+  duration: 4s
+  tempo: 120bpm
+  key: C major
+  meter: 4 4
+  layer upper : notes { osc: sine
+    gain: -12db
+    notes: C4 @ 0b for 5b, E4 @ 0b for 1b, G4 @ 1b for 2b, B4 @ 6b for 2b }
+  layer lower : notes { osc: sine
+    gain: -12db
+    notes: C2 @ 0b for 8b }
+}

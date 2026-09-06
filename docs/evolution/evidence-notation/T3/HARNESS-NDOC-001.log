@@ -1,0 +1,2 @@
+["/tmp/audioforge-notation-acceptance/.venv/bin/python", "-m", "audioforge.tools.gen_interop", "--check"]
+interop-check: docs/INTEROP.md is in sync with audioforge.interop.COVERAGE

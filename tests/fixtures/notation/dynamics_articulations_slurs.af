@@ -1,0 +1,10 @@
+asset dynamics_articulations_slurs { kind: cue
+  duration: 8s
+  tempo: 120bpm
+  key: F major
+  meter: 4 4
+  layer m : notes { osc: sine
+    gain: -12db
+    dynamic: 0b=pp, 4b=ff
+    notes: slur(F4 @ 0b for 1b, G4 @ 1b for 1b, A4 @ 2b for 1b), Bb4 @ 3b for 1b art staccato, C5 @ 4b for 1b art marcato, D5 @ 5b for 1b art staccato, C5 @ 6b for 2b }
+}

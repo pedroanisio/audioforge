@@ -31,6 +31,17 @@ dev = [
     "pyyaml>=6.0",
     "tomli>=2.0; python_version < '3.11'",
 ]
+# External oracles for the notation surface (ADR-0009): never a runtime dependency.
+# `make oracle-check` skips loudly when they are absent.
+# music21 10.x needs Python >= 3.11; on 3.10 the extra installs the other two (floor stays 3.10).
+oracles = [
+    "music21==10.5.0; python_version >= '3.11'",
+    "lilypond==2.25.12",
+    "xmlschema==4.3.2",
+]
+engrave = [
+    "lilypond==2.25.12",
+]
 
 [project.scripts]
 audioforge = "audioforge.cli:main"

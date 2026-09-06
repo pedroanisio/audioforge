@@ -48,7 +48,7 @@ Three additions specific to this surface:
 - **Lossy is acceptable, silent is not.** Every construct of the score and notation layers
   has a declared projection per format: preserved, quantized, lossy with a registered
   diagnostic code, or unsupported with a code. Silence on a dropped construct is a FAIL.
-- **Position is stated.** Deep musicology and engraving are delegated (ADR-0009); the harness
+- **Position is stated.** Deep musicology and engraving are delegated (ADR-0011); the harness
   never asserts that AudioForge analyses or engraves better than the oracles, only that what it
   claims is true.
 
@@ -184,7 +184,7 @@ Failure meaning: the DSL accepts a microtuning instruction and renders 12-TET wi
 | HARNESS-NANA-002 | Symmetric and relative collections are declared ambiguous with candidates, and the documented set matches exactly | same run; `docs/MIGRATION_3.md` / `DSL_SPEC.md` list | ambiguous set == {dim7, aug, min7≡6, m7b5≡m6, sus2≡sus4} (120 collections) and the docs name it | A | PARTIAL: behaviour present (120 ambiguous, 0 unrecognized); docs mention only C6/Am7 | PASS | RN-A-001 | T3 |
 | HARNESS-NANA-003 | Analysis reports state their scope; no key-finding, roman-numeral or realism claim is made | `analyze_audio` report has `assessment_scope`; grep docs for unbacked claims | present; none found | A | PASS: `signal_and_declared_expectations; musical merit requires listening`; voicing documented as a bounded transformation | PASS | RN-O-003 (regression) | T1 |
 | HARNESS-NANA-004 | Pitch-class-set theory (AF-M01) is reachable through `analyze` (normal form, prime form, IC vector, set class) | `run_tool("analyze", {"pitch_classes": [0,4,7]})` | fields returned; MCP contract test | A | FAIL: `theory_pcset` is internal only | PASS | RN-A-002 | T5 |
-| HARNESS-NANA-005 | The music21-bridge decision (D3) is recorded | ADR-0009 names the choice | recorded | A | FAIL | PASS | RN-A-003, RN-D-004 | T1 |
+| HARNESS-NANA-005 | The music21-bridge decision (D3) is recorded | ADR-0011 names the choice | recorded | A | FAIL | PASS | RN-A-003, RN-D-004 | T1 |
 
 ### 3.7 NENG — proof sheet and engraving
 
@@ -203,7 +203,7 @@ Failure meaning: the DSL accepts a microtuning instruction and renders 12-TET wi
 | HARNESS-NDOC-002 | The capability manifest lists notation directives (`tuning`, `tuplet`, `lyrics`) with rendering status and the interop coverage | read `docs/capability-manifest.json` | keys present; manifest-check green | A | FAIL: `tuplet` and `lyrics` absent; `score_layer` covers five properties only | PASS | RN-D-001 | T3 |
 | HARNESS-NDOC-003 | README has a "Notation and analysis" section stating scope and delegation | grep README | section present and guarded by `tests/test_docs_regression.py` | A | FAIL: README never mentions score, notation or MusicXML | PASS | RN-D-002 | T1 |
 | HARNESS-NDOC-004 | `DSL_GAP_SPEC.md` G6/G8 state the measured limits (inert tuning, flattened import) with harness IDs instead of "closed" | grep | statements present | A | FAIL: both say closed | PASS | RN-D-003 | T1 |
-| HARNESS-NDOC-005 | ADR-0009 records the positioning: semantic score contract, oracle-verified interchange, engraving and musicology delegated, proof sheet retained | `ls docs/adr/0009-*.md`; sections | accepted | A | FAIL | PASS | RN-D-004 | T1 |
+| HARNESS-NDOC-005 | ADR-0011 records the positioning: semantic score contract, oracle-verified interchange, engraving and musicology delegated, proof sheet retained | `ls docs/adr/0009-*.md`; sections | accepted | A | FAIL | PASS | RN-D-004 | T1 |
 
 ### 3.9 NGATE — fixtures, gate and evidence
 
@@ -309,7 +309,7 @@ coverage: 23 %.
 | Contract gate | T3 → T4 | NDOC-001, NDOC-002 | Generated matrix and manifest before the tuning change adds more rows. |
 | Render-truth gate | T4 → T5 | NTUN-001, NTUN-002 (goldens), plus the release harness `GATE-003` | A tuning that changes 12-TET bytes is a regression, not a feature. |
 | Performance gate | T5 → T6 | NPERF-001…004 | Budgets measured on the reference machine. |
-| Release gate | T6 | all non-waived rows; ADR-0009 accepted; version per D2 | Completion is demonstrated, not declared. |
+| Release gate | T6 | all non-waived rows; ADR-0011 accepted; version per D2 | Completion is demonstrated, not declared. |
 
 Classification: all rows blocking at their gate except `NORA-004` (accepted temporarily while
 Actions are down; waivable with the release harness's owner and expiry), `NANA-004` and
@@ -326,102 +326,46 @@ exports preserve parts, chords and tempo; the importer reconstructs the vendored
 1 % duration and exact per-part note counts and round-trips our own exports; the tuning
 directive moves the fundamental to the declared cents while the goldens stay byte-identical;
 chord parity holds and the ambiguity set is documented; the manifest, generated INTEROP matrix,
-README, DSL_GAP_SPEC and ADR-0009 agree; budgets hold; zero unexplained failures; zero
+README, DSL_GAP_SPEC and ADR-0011 agree; budgets hold; zero unexplained failures; zero
 blocked rows; waivers, if any, named with owner and expiry. The proof sheet is still a proof
 sheet, and says so.
 
 ## 8. Runner
 
-`RN-O-005` materializes this as `scripts/harness-notation.sh`. Rows that need the oracle venv
-read `ORACLE_PY` (path to its interpreter); without it they report `BLOCKED`. Rows for tests
-that do not exist yet fail, which is the intended T0 semantics.
+The executable runner is `scripts/harness-notation.sh`; its implementation is
+`audioforge/tools/notation_acceptance.py`. The registry in §3 owns the 53 assertion IDs.
+The runner supports T1, T2 and T3, classifying future milestone rows as N/A with their due
+checkpoint. An exploratory `--skip-full` run records NGATE-003 as BLOCKED and exits nonzero.
+The default run executes the complete local gate and coverage.
 
 ```bash
-#!/usr/bin/env bash
-# scripts/harness-notation.sh — assertions of docs/evolution/harness-notation.md
-# usage: scripts/harness-notation.sh <checkpoint> [evidence-root]
-# env:   PYTHON (default ./.venv/bin/python)  ORACLE_PY (interpreter with music21+lilypond+xmlschema)
-#        HARNESS_ONLY="ID ID" (subset)  RELEASE_SHA (default HEAD)
-set -u
-CP=${1:?checkpoint label}; EVROOT=${2:-docs/evolution/evidence-notation}; mkdir -p "$EVROOT"; EV="$(cd "$EVROOT" && pwd)/$CP"; W="$EV/work"; mkdir -p "$W"
-PY=${PYTHON:-./.venv/bin/python}; PY="$(cd "$(dirname "$PY")" && pwd)/$(basename "$PY")"; OPY=${ORACLE_PY:-}
-SHA=${RELEASE_SHA:-$(git rev-parse HEAD)}; SUM="$EV/summary.tsv"; printf 'id\tresult\tdescription\tseconds\tlog\n' > "$SUM"
-{ echo "checkpoint=$CP"; echo "sha=$SHA"; echo "date=$(date -u +%FT%TZ)"; echo "oracle_py=${OPY:-none}"; } > "$EV/context.txt"
-sel() { [ -z "${HARNESS_ONLY:-}" ] && return 0; case " $HARNESS_ONLY " in *" $1 "*) return 0;; *) return 1;; esac; }
-run() { local id=$1 desc=$2; shift 2; local log="$EV/$id.log" t0=$SECONDS r
-  sel "$id" || { printf '%s\tSKIPPED\t%s (filtered)\t0\t-\n' "$id" "$desc" | tee -a "$SUM"; return; }
-  if "$@" >"$log" 2>&1; then r=PASS; else r=FAIL; fi
-  printf '%s\t%s\t%s\t%s\t%s\n' "$id" "$r" "$desc" "$((SECONDS-t0))" "$log" | tee -a "$SUM"; }
-oracle() { local id=$1 desc=$2; shift 2; sel "$id" || { printf '%s\tSKIPPED\t%s (filtered)\t0\t-\n' "$id" "$desc" | tee -a "$SUM"; return; }
-  if [ -z "$OPY" ] || ! "$OPY" -c "import music21, xmlschema, lilypond" >/dev/null 2>&1; then printf '%s\tBLOCKED\t%s (ORACLE_PY lacks music21/xmlschema/lilypond)\t0\t-\n' "$id" "$desc" | tee -a "$SUM"; return; fi
-  run "$id" "$desc" "$@"; }
-T="tests/test_notation_oracles.py"     # created by RN-O-003; selectors below fail until then (intended at T0)
-PT() { "$PY" -m pytest -q -p no:cacheprovider "$@"; }
-# --- NORA
-run    HARNESS-NORA-001 "oracles extra installs"        bash -c "grep -q '^oracles' pyproject.toml && d=\$(mktemp -d) && uv venv \$d --python 3.12 -q && uv pip install -q --python \$d/bin/python -e '.[oracles]' && \$d/bin/python -c 'import music21, xmlschema, lilypond, subprocess; print(subprocess.run([lilypond.executable(), \"--version\"], capture_output=True, text=True).stdout.splitlines()[0])'"
-run    HARNESS-NORA-002 "XSD vendored"                  bash -c "ls tests/fixtures/musicxml/xsd/musicxml.xsd tests/fixtures/musicxml/xsd/xml.xsd tests/fixtures/musicxml/xsd/xlink.xsd tests/fixtures/musicxml/xsd/LICENSE* >/dev/null"
-run    HARNESS-NORA-003 "make oracle-check exists"      bash -c "grep -q '^oracle-check:' Makefile && make -n oracle-check >/dev/null"
-run    HARNESS-NORA-004 "CI oracle job green"           bash -c "gh run list --workflow ci -L 1 --json conclusion --jq '.[0].conclusion' | grep -qx success && gh run view \"\$(gh run list --workflow ci -L 1 --json databaseId --jq '.[0].databaseId')\" --json jobs --jq '.jobs[].name' | grep -qi oracle"
-# --- NXML (oracle rows use the oracle test module; structural rows use the projection tests)
-oracle HARNESS-NXML-001 "notated export XSD-valid"       PT $T -k "xsd_valid"
-run    HARNESS-NXML-002 "meter beats+unit from spec"     PT $T -k "meter_unit"
-run    HARNESS-NXML-003 "key changes exported"           PT $T -k "key_changes"
-run    HARNESS-NXML-004 "tempo changes exported"         PT $T -k "tempo_changes"
-run    HARNESS-NXML-005 "pickup exported"                PT $T -k "pickup"
-run    HARNESS-NXML-006 "dynamics exported"              PT $T -k "dynamics"
-run    HARNESS-NXML-007 "articulations/slurs exported"   PT $T -k "articulations or slurs"
-run    HARNESS-NXML-008 "fermata/rehearsal exported"     PT $T -k "fermata or rehearsal"
-run    HARNESS-NXML-009 "exact-tick export parts+chords" PT $T -k "exact_tick"
-oracle HARNESS-NXML-010 "music21 structural parity"      PT $T -k "music21_parity"
-run    HARNESS-NXML-011 "lossy codes + generated matrix" bash -c "$PY -m audioforge.tools.gen_interop --check && $PY -m pytest -q -p no:cacheprovider $T -k lossy_registry"
-# --- NIMP / NMIDI
-run    HARNESS-NIMP-001 "import: one layer per part"     PT $T -k "import_parts"
-run    HARNESS-NIMP-002 "import: chords/backup/voices"   PT $T -k "import_chords"
-run    HARNESS-NIMP-003 "import: attribute changes+ties" PT $T -k "import_attributes"
-oracle HARNESS-NIMP-004 "corpus round trip"              PT $T -k "corpus_round_trip"
-run    HARNESS-NIMP-005 "self round trip"                PT $T -k "self_round_trip"
-run    HARNESS-NMIDI-001 "multi-track MIDI import"       PT tests/test_interop.py -k "midi" 
-oracle HARNESS-NMIDI-002 "MIDI export parts+notes"       PT $T -k "midi_export_parts"
-run    HARNESS-NMIDI-003 "MIDI export tempo map"         PT $T -k "midi_tempo_map"
-# --- NTUN
-run    HARNESS-NTUN-001 "tuning drives render (FFT)"     PT tests/test_tuning.py -k "edo_fft"
-run    HARNESS-NTUN-002 "12-TET default byte-identical"  "$PY" -m audioforge.tools.render_golden --check
-run    HARNESS-NTUN-003 "tuning_not_rendered diagnostic" "$PY" - <<'PYEOF'
-import sys; from audioforge import AudioForge
-r = AudioForge().compile("asset t { kind: cue\n duration: 1s\n tempo: 120bpm\n tuning: edo divisions=19 base=A4 hz=440\n layer m : notes { osc: sine\n notes: A4 @ 0b for 1b }\n}")
-msgs = " ".join(d.message for d in r.diagnostics); print(msgs); sys.exit(0 if "tuning_not_rendered" in msgs or "renders 19" in msgs else 1)
-PYEOF
-run    HARNESS-NTUN-004 "microtonal interop"             PT tests/test_tuning.py -k "interop"
-# --- NANA
-oracle HARNESS-NANA-001 "chord roots agree with music21" PT $T -k "chord_parity"
-run    HARNESS-NANA-002 "ambiguity set documented"       bash -c "grep -q 'dim7' docs/MIGRATION_3.md && grep -q 'sus2' docs/MIGRATION_3.md && $PY -m pytest -q -p no:cacheprovider $T -k ambiguity_set"
-run    HARNESS-NANA-003 "analysis scope stated"          "$PY" -c "import numpy as np, sys; from audioforge.analysis import analyze_audio; r = analyze_audio(np.zeros((8000,2)), 8000); sys.exit(0 if r.get('assessment_scope') else 1)"
-run    HARNESS-NANA-004 "pc-set via analyze"             "$PY" -c "import sys; from audioforge.agent_tools import run_tool; r = run_tool('analyze', {'pitch_classes': [0,4,7]}); sys.exit(0 if r['ok'] and any('prime_form' in str(a) for a in r['artifacts']) else 1)"
-run    HARNESS-NANA-005 "music21 bridge decision"        bash -c "grep -qiE 'music21' docs/adr/0009-*.md"
-# --- NENG
-oracle HARNESS-NENG-001 "LilyPond engraves, 0 warnings"  PT $T -k "lilypond_zero_warnings"
-run    HARNESS-NENG-002 "score --engrave backend"        bash -c "$PY -m audioforge.cli score --help | grep -q -- '--engrave'"
-run    HARNESS-NENG-003 "proof sheet labelled"           bash -c "! grep -qi 'engrav' audioforge/score.py"
-run    HARNESS-NENG-004 "no missing-glyph warnings"      PT -W error::UserWarning tests/test_score.py tests/test_score_layout.py
-# --- NDOC
-run    HARNESS-NDOC-001 "INTEROP matrix generated"       "$PY" -m audioforge.tools.gen_interop --check
-run    HARNESS-NDOC-002 "manifest notation coverage"     "$PY" -c "import json, sys; m = json.load(open('docs/capability-manifest.json')); s = json.dumps(m); sys.exit(0 if 'tuplet' in s and 'lyric' in s and 'coverage' in json.dumps(m.get('interop', {})) else 1)"
-run    HARNESS-NDOC-003 "README notation section"        bash -c "grep -qiE '^## .*(notation|score)' README.md"
-run    HARNESS-NDOC-004 "DSL_GAP_SPEC limits stated"     bash -c "grep -q 'HARNESS-NTUN' docs/DSL_GAP_SPEC.md && grep -q 'HARNESS-NIMP' docs/DSL_GAP_SPEC.md"
-run    HARNESS-NDOC-005 "ADR-0009 present"               bash -c "ls docs/adr/0009-*.md >/dev/null && grep -q '## Decision' docs/adr/0009-*.md"
-# --- NGATE
-run    HARNESS-NGATE-001 "fixture corpus"                bash -c "test \"\$(ls tests/fixtures/notation/*.af 2>/dev/null | wc -l)\" -ge 8"
-run    HARNESS-NGATE-002 "surface tests pass"            PT tests/test_interop.py tests/test_score.py tests/test_score_layout.py tests/test_theory_pcset.py tests/test_gap_closure.py
-run    HARNESS-NGATE-003 "make check + coverage"         bash -c "make check PYTHON=$PY && $PY -m coverage run -m pytest -q -p no:cacheprovider && $PY -m coverage report"
-run    HARNESS-NGATE-004 "goldens unchanged"             "$PY" -m audioforge.tools.render_golden --check
-run    HARNESS-NGATE-005 "evidence tracked"              bash -c "test -s $SUM && git ls-files --error-unmatch docs/evolution/evidence-notation >/dev/null 2>&1"
-run    HARNESS-NGATE-006 "backlog registered"            bash -c "grep -q 'harness-notation' docs/backlog.yml && node scripts/check-backlog-governance.mjs >/dev/null"
-# --- NPERF / NSEM
-run    HARNESS-NPERF-001 "export budgets"                PT tests/test_notation_perf.py -k "export"
-oracle HARNESS-NPERF-002 "lilypond budget"               PT tests/test_notation_perf.py -k "lilypond"
-run    HARNESS-NPERF-003 "proof sheet budget"            PT tests/test_notation_perf.py -k "proof_sheet"
-run    HARNESS-NPERF-004 "import budget"                 PT tests/test_notation_perf.py -k "import"
-run    HARNESS-NSEM-001 "score_layer projections"        PT $T -k "score_layer_projection"
-run    HARNESS-NSEM-002 "tuplets/lyrics projected"       PT $T -k "tuplets or lyrics"
-echo; awk -F'\t' 'NR>1{n[$2]++} END{for(k in n) printf "%s=%d ", k, n[k]; print ""}' "$SUM"
+ORACLE_PY=/path/to/oracle-venv/bin/python scripts/harness-notation.sh T3
 ```
+
+Missing oracles yield BLOCKED for dependent rows. Pytest selections must contain at least
+one test and no skip, failure or error in their JUnit report. A failed or blocked required
+row makes the runner exit nonzero. NORA-001 installs the pinned extra in a fresh environment
+using the local uv cache (populate it with `uv pip install -e '.[dev,oracles]'` first).
+Schema access is local-only. No warning category is filtered from the LilyPond logs.
+
+Evidence includes all row logs, the command/interpreter/commit context, JUnit reports, and
+XSD, music21 and LilyPond reports. Generated heavy artifacts and environments stay in
+`work/`, which is gitignored. The evidence must be tracked for NGATE-005 to pass; a first
+run produces that bundle before the final tracked verification run.
+
+The original proposed shell runner checked several file names rather than behavior and
+could report a skipped oracle selection as PASS. This implementation replaces that draft.
+The original notation branch's ADR-0009 is integrated as ADR-0011 because the main branch
+already assigned ADR-0009 to stereo playback. The original proposed 3.1/2.1 release numbers
+remain historical; this checkpoint is Unreleased on engine 3.1 / DSL 2.0.
+
+## 9. Checkpoint log
+
+Rows are appended by the agent that ran `scripts/harness-notation.sh <T>`; the evidence
+bundle is the source, this table is the index. Counts are PASS / FAIL / BLOCKED over all
+53 IDs; "targeted" is the subset whose *Green by* column names the checkpoint.
+
+| Checkpoint | Commit | Run (UTC) | PASS / FAIL / BLOCKED | Targeted rows | Notes |
+|---|---|---|---|---|---|
+| T1 | `8e550c5` | 2026-09-06 | 16 / 37 / 0 | 13 of 13 PASS (NGATE-005 passes once the bundle is committed) | Oracles via `ORACLE_PY`; the first run used the wrong interpreter (worktree has no `.venv`) and was discarded. |
+| T2 | `73728b7` | 2026-09-06 | 31 / 22 / 0 | NXML-002…005/009, NIMP-001…003, NMIDI-002/003 | Run on a clean detached worktree at the commit; a first run on a tree with T3 edits in progress was discarded. |

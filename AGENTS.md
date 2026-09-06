@@ -49,7 +49,7 @@ against `cli.py`, so a verb cannot be added or removed without this file failing
 | `repair` | Apply structured repairs to a spec. |
 | `capabilities` | Emit the machine-readable capability manifest (see §6). |
 | `grammar` | Emit the DSL grammar (EBNF/GBNF), derived from the single Lark grammar. |
-| `score` | Score-layout output. |
+| `score` | Proportional proof-sheet PDF: pitch, meter, dynamics, stage plot, intensity, provenance. Typeset engraving uses external LilyPond (ADR-0011); an integrated backend remains notation M5. |
 | `verify` | Re-render a spec (compiled JSON IR or a single-asset `.af`) and SHA-256 compare against a manifest. Exit **0** = `REPRODUCIBLE`, **2** = `MISMATCH`, **1** = structured input error. |
 <!-- END cli-verbs -->
 
@@ -60,13 +60,15 @@ against `cli.py`, so a verb cannot be added or removed without this file failing
 
 | Target | Runs |
 |--------|------|
-| `check` | `native-check schema-check manifest-check golden-check drift-check version-check docs-gen-check lock-check floor-check test` — the full local gate. |
+| `check` | `native-check schema-check manifest-check interop-check golden-check drift-check version-check docs-gen-check lock-check floor-check test` — the full local gate. |
 | `test` | `scripts/run_tests.sh` — 16 script suites + `pytest -q`. |
 | `native-check` | Assert a C compiler is present. |
 | `schema-check` | IR-schema drift gate: `gen_ir_schema --check` (AF-R05). |
 | `manifest-check` | Capability-manifest drift gate: `gen_capability --check` (AF-R07). |
+| `interop-check` | Interop coverage-matrix drift gate: `gen_interop --check` regenerates `docs/INTEROP.md` from `audioforge.interop.COVERAGE` (ADR-0011). |
 | `golden-check` | Golden-audio drift gate: `render_golden --check` (AF-R06). |
 | `docs-check` / `version-check` | Fast doc / version-hygiene subsets. |
+| `oracle-check` | MusicXML XSD validity, music21 parity and LilyPond engraving of the notation fixtures; needs `uv pip install -e '.[oracles]'`, skips loudly without it (ADR-0011; not composed into `check`). |
 | `lock-check` / `floor-check` | `uv lock --check` (skips loudly without uv; CI installs it) / no 3.11-only stdlib constructs (the Python 3.10 floor, RM-B-004). |
 | `clean` | Remove Python caches. |
 
@@ -80,6 +82,7 @@ Coverage is **not** in `make check`; run it yourself:
   outputs.
   - `python -m audioforge.tools.gen_ir_schema` → `docs/ir.schema.json` (AF-R05).
   - `python -m audioforge.tools.gen_capability` → `docs/capability-manifest.json`
+  - `python -m audioforge.tools.gen_interop` → `docs/INTEROP.md` (construct × format coverage matrix)
     + `docs/DIAGNOSTIC_CODES.md` (AF-R07).
   - `python -m audioforge.tools.render_golden` → `tests/golden/audio.lock.json`
     (`--update` re-pins, `--check` gates, `--strict` for cross-env; AF-R06).
@@ -123,6 +126,7 @@ the paired `--write`, then let the `--check` gate confirm:
 |----------|--------|------------|
 | `docs/ir.schema.json` | `audioforge/ir_schema.py::ir_json_schema` | `gen_ir_schema --write` |
 | `docs/capability-manifest.json` | `audioforge/capabilities.py::capability_manifest` | `gen_capability --write` |
+| `docs/INTEROP.md` | `audioforge/interop.py::COVERAGE` | `gen_interop --write` |
 | `docs/DIAGNOSTIC_CODES.md` | same | `gen_capability --write` |
 | `tests/golden/audio.lock.json` | `tests/golden/audio/*.af` renders | `render_golden --update` |
 
@@ -139,4 +143,5 @@ Context / Decision / Consequences. Current records: ADR-0001 (determinism oracle
 0002 (non-vocal scope), 0003 (IR-is-truth), 0004 (native kernels fail loud), 0005
 (one IR source of truth; Phase B deferred), 0006 (generator-owns-artifact),
 0007 (musical rendering semantics and stable performance identity), 0008
-(structured diagnostic codes on every Diagnostic and agent/MCP envelope).
+(structured diagnostic codes on every Diagnostic and agent/MCP envelope), 0009
+(notation: semantic contract with oracle-verified interchange; engraving and musicology delegated).

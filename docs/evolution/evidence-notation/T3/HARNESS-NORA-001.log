@@ -1,0 +1,54 @@
+["uv", "venv", "/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/installed-oracles-1788696945456126137", "--python", "/tmp/audioforge-notation-oracles/bin/python"]
+Using CPython 3.12.3 interpreter at: /tmp/audioforge-notation-oracles/bin/python
+Creating virtual environment at: docs/evolution/evidence-notation/T3/work/installed-oracles-1788696945456126137
+Activate with: source docs/evolution/evidence-notation/T3/work/installed-oracles-1788696945456126137/bin/activate
+["uv", "pip", "install", "--offline", "--python", "/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/installed-oracles-1788696945456126137/bin/python", "-e", ".[oracles]"]
+Using Python 3.12.3 environment at: docs/evolution/evidence-notation/T3/work/installed-oracles-1788696945456126137
+Resolved 29 packages in 17ms
+   Building audioforge @ file:///tmp/audioforge-notation-acceptance
+      Built audioforge @ file:///tmp/audioforge-notation-acceptance
+Prepared 1 package in 1.27s
+Installed 29 packages in 303ms
+ + audioforge==3.1.0 (from file:///tmp/audioforge-notation-acceptance)
+ + certifi==2026.7.22
+ + chardet==7.6.0
+ + charset-normalizer==3.5.1
+ + cloudpickle==3.1.2
+ + contourpy==1.3.3
+ + cycler==0.12.1
+ + elementpath==5.1.4
+ + fonttools==4.64.0
+ + idna==3.19
+ + joblib==1.6.0
+ + jsonpickle==4.1.2
+ + kiwisolver==1.5.1
+ + lark==1.3.1
+ + lilypond==2.25.12
+ + matplotlib==3.11.1
+ + more-itertools==11.1.0
+ + music21==10.5.0
+ + numpy==2.5.2
+ + packaging==26.3
+ + pillow==12.3.0
+ + pyparsing==3.3.2
+ + python-dateutil==2.9.0.post0
+ + requests==2.34.2
+ + scipy==1.18.1
+ + six==1.17.0
+ + urllib3==2.7.0
+ + webcolors==25.10.0
+ + xmlschema==4.3.2
+["/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/installed-oracles-1788696945456126137/bin/python", "-c", "import importlib.metadata as m, lilypond, subprocess; print({n:m.version(n) for n in ('music21','xmlschema','lilypond')}); subprocess.run([lilypond.executable(), '--version'], check=True)"]
+GNU LilyPond 2.25.12 (running Guile 3.0)
+
+Copyright (c) 1996--2023 by
+  Han-Wen Nienhuys <hanwen@xs4all.nl>
+  Jan Nieuwenhuizen <janneke@gnu.org>
+  and others.
+
+This program is free software.  It is covered by the GNU General Public
+License and you are welcome to change it and/or distribute copies of it
+under certain conditions.  Invoke as `lilypond --warranty' for more
+information.
+
+{'music21': '10.5.0', 'xmlschema': '4.3.2', 'lilypond': '2.25.12'}

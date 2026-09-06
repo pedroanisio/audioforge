@@ -419,9 +419,10 @@ def main(argv=None) -> int:
     p.add_argument("-o", "--out", required=True)
     p.add_argument("--notated", action="store_true",
                    help="formal quantized score (figures+rests) for MuseScore")
-    p.add_argument("--bars", type=int, default=4, help="beats per measure")
+    p.add_argument("--bars", type=int, default=None,
+                   help="override beats per measure (default: the global score meter)")
 
-    p = sub.add_parser("score"); p.add_argument("spec")
+    p = sub.add_parser("score", help="Proportional proof-sheet PDF of the compiled spec (not a typeset score; ADR-0011)"); p.add_argument("spec")
     p.add_argument("-o", "--out", default=None)
     p.add_argument("--title", default=None)
     p.add_argument("--bars", type=int, default=10)
@@ -491,18 +492,24 @@ def main(argv=None) -> int:
             from .grammar import dsl_ebnf, dsl_gbnf
             print(dsl_ebnf() if args.format == "ebnf" else dsl_gbnf())
         elif args.cmd == "export-midi":
-            from .interop import export_midi_bytes
+            from .interop import export_midi_bytes, interop_diagnostics
             assets = list(_assets(args.spec))
             if len(assets) != 1:
                 raise SpecError("export-midi expects exactly one asset")
+            for diagnostic in interop_diagnostics(assets[0].spec, "midi"):
+                print(f"warning [{diagnostic['code']}]: {diagnostic['message']}", file=sys.stderr)
             Path(args.out).write_bytes(export_midi_bytes(assets[0].spec))
             print(f"MIDI -> {args.out}")
         elif args.cmd == "export-musicxml":
-            from .interop import export_musicxml, export_notated_musicxml
+            from .interop import export_musicxml, export_notated_musicxml, interop_diagnostics
             exporter = ((lambda s: export_notated_musicxml(s, beats_per_bar=args.bars))
                         if args.notated else export_musicxml)
             assets = list(_assets(args.spec))
             out = Path(args.out)
+            for asset in assets:
+                fmt = "musicxml_notated" if args.notated else "musicxml"
+                for diagnostic in interop_diagnostics(asset.spec, fmt):
+                    print(f"warning [{diagnostic['code']}]: {diagnostic['message']}", file=sys.stderr)
             if len(assets) == 1:
                 out.write_text(exporter(assets[0].spec))
                 print(f"MusicXML -> {out}")

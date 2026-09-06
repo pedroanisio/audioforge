@@ -1,0 +1,17 @@
+["/tmp/audioforge-notation-acceptance/.venv/bin/python", "-m", "pytest", "-q", "tests/test_interop.py", "tests/test_score.py", "tests/test_score_layout.py", "tests/test_theory_pcset.py", "tests/test_gap_closure.py", "tests/test_notation_projection.py", "tests/test_notation_contract.py", "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NGATE-002.xml", "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NGATE-002-pytest"]
+............................................................             [100%]
+=============================== warnings summary ===============================
+tests/test_score.py::test_score_pdf_renders_rich_extended_score
+tests/test_score.py::test_score_pdf_handles_multi_asset_and_no_pitched_cases
+tests/test_score_layout.py::test_long_header_dense_seating_draws
+  /tmp/audioforge-notation-acceptance/audioforge/score.py:705: UserWarning: Glyph 108 (l) missing from font(s) Noto Music.
+    pdf.savefig(fig)
+
+tests/test_score.py::test_score_pdf_renders_rich_extended_score
+tests/test_score.py::test_score_pdf_handles_multi_asset_and_no_pitched_cases
+tests/test_score_layout.py::test_long_header_dense_seating_draws
+  /tmp/audioforge-notation-acceptance/audioforge/score.py:705: UserWarning: Glyph 112 (p) missing from font(s) Noto Music.
+    pdf.savefig(fig)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+60 passed, 6 warnings in 15.26s

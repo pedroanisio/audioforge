@@ -7,73 +7,312 @@ import struct
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from . import theory
 from .determinism import spec_hash
+from .musicxml import (TPQ, _key_fifths, _key_points, _midi_note, _note_name,  # noqa: F401
+                       _pitched_layers, _sections, export_musicxml,
+                       export_notated_musicxml, import_musicxml, layer_ident,
+                       performed, repeats_align_with_barlines, tempo_marks,
+                       tempo_points)
 
-TPQ = 480
+_layer_ident = layer_ident
+
+
+# ------------------------------------------------------------- coverage ----
+# One registry says what every export keeps. `coverage()` renders it (manifest,
+# docs/INTEROP.md via audioforge.tools.gen_interop) and `interop_diagnostics()`
+# reports from it, so a construct can never be dropped silently: it is either
+# preserved, quantized (documented), or carries a registered lossy code.
+FORMATS = ("midi", "musicxml", "musicxml_notated")
+STATUSES = ("preserved", "quantized", "lossy", "unsupported", "conditional")
+
+
+def _P(note: str = "") -> tuple:
+    return ("preserved", None, note)
+
+
+def _Q(note: str) -> tuple:
+    return ("quantized", None, note)
+
+
+def _L(code: str, note: str) -> tuple:
+    return ("lossy", code, note)
+
+
+def _U(code: str, note: str) -> tuple:
+    return ("unsupported", code, note)
+
+
+def _cond(fn, code: str, note: str):
+    """A per-spec cell; its documentation form is `conditional` with the code it may emit."""
+    fn.static = ("conditional", code, note)
+    return fn
+
+
+def _score(spec: dict) -> dict:
+    return spec.get("score") or {}
+
+
+def _notation(spec: dict) -> dict:
+    return spec.get("notation") or {}
+
+
+def _note_events(spec: dict):
+    for li, layer in enumerate(spec.get("layers", [])):
+        for ni, ev in enumerate(layer.get("notes") or []):
+            if "note" in ev:
+                yield li, layer, ni, ev
+
+
+def _curve_paths(spec: dict, target: str) -> list[str]:
+    paths = []
+    for li, layer in enumerate(spec.get("layers", [])):
+        for ni, ev in enumerate(layer.get("notes") or []):
+            if any(c.get("target") == target for c in ev.get("curves") or []):
+                paths.append(f"layers[{li}].notes[{ni}].curves")
+        for ci, curve in enumerate(layer.get("automation") or []):
+            if curve.get("target") == target:
+                paths.append(f"layers[{li}].automation[{ci}]")
+    return paths
+
+
+def _note_curve_paths(spec: dict, target: str) -> list[str]:
+    return [p for p in _curve_paths(spec, target) if ".notes[" in p]
+
+
+def _layer_paths(spec: dict, pred) -> list[str]:
+    return [f"layer:{layer.get('name', layer.get('type'))}"
+            for layer in spec.get("layers", []) if pred(layer)]
+
+
+def _has_chords(spec: dict) -> bool:
+    for layer in _pitched_layers(spec):
+        starts = [round(e["start_beat"], 6) for e in layer["notes"] if "note" in e]
+        if len(starts) != len(set(starts)):
+            return True
+    return False
+
+
+def _pow2(n: int) -> bool:
+    return n > 0 and n & (n - 1) == 0
+
+
+def _pickup_signature(beats: float):
+    """(numerator, denominator) writing an anacrusis of `beats` quarter notes as a
+    time signature, or None when it is not a whole number of 64th notes."""
+    for den in (4, 8, 16, 32, 64):
+        num = beats * den / 4
+        if abs(num - round(num)) < 1e-9 and round(num) >= 1:
+            return int(round(num)), den
+    return None
+
+
+def _midi_meter(spec):
+    unit = int((_score(spec).get("meter") or {}).get("unit", 4))
+    return _P("time-signature meta event") if _pow2(unit) else \
+        _L("lossy_meter_unit", "MIDI time signatures need a power-of-two unit; none is written")
+
+
+def _midi_pickup(spec):
+    return _P("the anacrusis is its own time signature before the meter") \
+        if _pickup_signature(float(_score(spec).get("pickup_beats", 0.0))) else \
+        _L("lossy_pickup", "the anacrusis is not a whole number of 64ths; bar phase starts at beat 0")
+
+
+def _notated_repeats(spec):
+    return _P("repeat barlines with `times`") if repeats_align_with_barlines(spec) else \
+        _L("lossy_repeat", "a repeated section starts or ends inside a bar; "
+                           "MIDI and the exact-tick export carry the performed form")
+
+
+def _exact_key(spec):
+    return _L("lossy_key_change", "initial key only in the single-measure view") \
+        if len(spec.get("key_map") or []) > 1 else _P("key signature")
+
+
+def _has_dynamic_marks(spec: dict) -> bool:
+    return any(layer.get("dynamic") for layer in spec.get("layers", [])) or \
+        any(".automation[" in p for p in _curve_paths(spec, "dynamic"))
+
+
+def _notated_articulations(spec):
+    from .musicxml import ARTICULATION_XML
+    supported = set(ARTICULATION_XML) | {"sustain", "legato", "pizzicato", None}
+    if any(event.get("art") not in supported for *_, event in _note_events(spec)):
+        return _L("lossy_articulation", "unrepresentable articulation omitted")
+    return _P("articulations, slurs or pizzicato directions")
+
+
+COVERAGE: list[dict] = [
+    dict(construct="pitch", description="note pitch",
+         present=lambda s: bool(_pitched_layers(s)),
+         midi=_P("note number"), musicxml=_P("step, alter, octave"),
+         musicxml_notated=_P("step, alter, octave")),
+    dict(construct="timing", description="note start and duration",
+         present=lambda s: bool(_pitched_layers(s)),
+         midi=_P("exact to the tick (480 per quarter)"),
+         musicxml=_P("exact `<duration>` in divisions"),
+         musicxml_notated=_Q("snapped to the grid (default a 16th); independent durations and overlapping voices survive")),
+    dict(construct="velocity", description="note velocity (`vel`)",
+         present=lambda s: any("vel" in ev for *_, ev in _note_events(s)),
+         midi=_P("velocity 1..127 (vel × 96)"),
+         musicxml=_P("note `dynamics` attribute (% of velocity 90)"),
+         musicxml_notated=_P("note `dynamics` attribute (% of velocity 90)")),
+    dict(construct="layers", description="one part or track per pitched layer, named after it",
+         present=lambda s: bool(_pitched_layers(s)),
+         midi=_P("one track per layer with an independent MIDI port/channel pair"),
+         musicxml=_P("one `<part>` per layer"), musicxml_notated=_P("one `<part>` per layer")),
+    dict(construct="chords", description="simultaneous onsets within a layer",
+         present=_has_chords,
+         midi=_P("same channel, independent note-offs"),
+         musicxml=_P("`<chord/>`; one group per duration, joined with `<backup>`"),
+         musicxml_notated=_Q("equal-duration chord tones share a voice; other durations retain independent voices")),
+    dict(construct="unpitched_layers",
+         description="layers without note events (drums, noise, samples, tone, sweeps)",
+         present=lambda s: any(layer not in _pitched_layers(s) for layer in s.get("layers", [])),
+         midi=_U("unsupported_layer_type", "no note events to write"),
+         musicxml=_U("unsupported_layer_type", "no note events to write"),
+         musicxml_notated=_U("unsupported_layer_type", "no note events to write"),
+         paths=lambda s: _layer_paths(s, lambda l: l not in _pitched_layers(s))),
+    dict(construct="meter", description="`score.meter` (beats and unit)",
+         present=lambda s: "meter" in _score(s),
+         midi=_cond(_midi_meter, "lossy_meter_unit", "time-signature meta event when the unit is a power of two"),
+         musicxml=_P("`<time>` (declared; the exact-tick view is one measure)"),
+         musicxml_notated=_P("`<time>` and the bar length")),
+    dict(construct="pickup", description="`score.pickup_beats` (anacrusis)",
+         present=lambda s: float(_score(s).get("pickup_beats", 0.0)) > 0,
+         midi=_cond(_midi_pickup, "lossy_pickup", "a partial first bar when the anacrusis is a whole number of 64ths"),
+         musicxml=_L("lossy_pickup", "single measure; no barlines to phase"),
+         musicxml_notated=_P("implicit measure 0")),
+    dict(construct="polymeter", description="`score.polymeter` (per-layer meter)",
+         present=lambda s: bool(_score(s).get("polymeter")),
+         midi=_L("lossy_polymeter", "one time signature per file"),
+         musicxml=_L("lossy_polymeter", "the single-measure view carries the score meter only"),
+         musicxml_notated=_L("lossy_polymeter", "global score meter used for reliable engraving; pitches and timing survive")),
+    dict(construct="sections", description="`score.sections` (form)",
+         present=lambda s: bool(_sections(s)),
+         midi=_P("marker meta events"), musicxml=_P("rehearsal-mark directions"),
+         musicxml_notated=_P("rehearsal-mark directions")),
+    dict(construct="repeats", description="`score.repeats`",
+         present=lambda s: bool(_score(s).get("repeats")),
+         midi=_P("expanded as performed"), musicxml=_P("expanded as performed"),
+         musicxml_notated=_cond(_notated_repeats, "lossy_repeat", "repeat barlines when the section sits on barlines")),
+    dict(construct="key", description="`key` and `key_map`",
+         present=lambda s: bool(s.get("key") or s.get("key_map")),
+         midi=_P("key-signature meta events, one per change"),
+         musicxml=_cond(_exact_key, "lossy_key_change", "initial key; changes need the notated view"),
+         musicxml_notated=_P("key signatures at their authored offsets, including within measures")),
+    dict(construct="tempo", description="`bpm` and `tempo_map`",
+         present=lambda s: "bpm" in s or "tempo_map" in s,
+         midi=_P("one tempo event per point (ramps stepped)"),
+         musicxml=_P("one metronome direction per point (ramps stepped)"),
+         musicxml_notated=_Q("thinned to the grid; changes under 0.1 bpm collapse; ramps stepped")),
+    dict(construct="holds", description="`holds` (fermata with a length in seconds)",
+         present=lambda s: bool(s.get("holds")),
+         midi=_L("lossy_hold", "no pause is inserted"),
+         musicxml=_L("lossy_hold", "no pause is inserted"),
+         musicxml_notated=_L("lossy_hold", "fermata sign projected; its duration in seconds is not encoded")),
+    dict(construct="dynamic_marks", description="layer `dynamic` points (pp … fff)",
+         present=_has_dynamic_marks,
+         midi=_L("lossy_dynamic_curve", "no controller data is written"),
+         musicxml=_L("lossy_dynamic_curve", "marks are not written in the exact-tick view"),
+         musicxml_notated=_P("dynamic marks, with hairpins between differing marks"),
+         paths=lambda s: [p for p in _curve_paths(s, "dynamic") if ".automation[" in p]),
+    dict(construct="note_dynamic_curves", description="through-note `dynamic` curves",
+         present=lambda s: bool(_note_curve_paths(s, "dynamic")),
+         midi=_L("lossy_dynamic_curve", "through-note shaping is not projected"),
+         musicxml=_L("lossy_dynamic_curve", "through-note shaping is not projected"),
+         musicxml_notated=_L("lossy_dynamic_curve", "through-note shaping is not projected"),
+         paths=lambda s: _note_curve_paths(s, "dynamic")),
+    dict(construct="pitch_curves", description="`pitch_cents` note curves and layer automation",
+         present=lambda s: bool(_curve_paths(s, "pitch_cents")),
+         midi=_L("lossy_pitch_curve", "arbitrary pitch curves are not projected"),
+         musicxml=_L("lossy_pitch_curve", "arbitrary pitch curves are not projected"),
+         musicxml_notated=_L("lossy_pitch_curve", "arbitrary pitch curves are not projected"),
+         paths=lambda s: _curve_paths(s, "pitch_cents")),
+    dict(construct="articulations", description="note `art`",
+         present=lambda s: any(ev.get("art") not in (None, "sustain") for *_, ev in _note_events(s)),
+         midi=_L("lossy_articulation", "SMF carries no articulation data"),
+         musicxml=_L("lossy_articulation", "marks are not written in the exact-tick view"),
+         musicxml_notated=_cond(_notated_articulations, "lossy_articulation",
+                               "known articulations project as notation; unknown marks are diagnosed"),
+         paths=lambda s: _layer_paths(s, lambda l: any(e.get("art") not in (None, "sustain")
+                                                       for e in l.get("notes") or []))),
+    dict(construct="slurs", description="`slur( … )` groups",
+         present=lambda s: any(ev.get("slur") is not None for *_, ev in _note_events(s)),
+         midi=_L("lossy_slur", "SMF carries no phrasing data"),
+         musicxml=_L("lossy_slur", "slurs are not written in the exact-tick view"),
+         musicxml_notated=_P("`<slur>` start and stop")),
+    dict(construct="tuplets", description="`notation.tuplets`",
+         present=lambda s: bool(_notation(s).get("tuplets")),
+         midi=_P("sounding durations are exact"), musicxml=_P("sounding durations are exact"),
+         musicxml_notated=_P("`<time-modification>` and tuplet brackets")),
+    dict(construct="lyrics", description="`notation.lyrics`",
+         present=lambda s: bool(_notation(s).get("lyrics")),
+         midi=_P("lyric meta events, one per syllable"),
+         musicxml=_L("lossy_lyrics", "not written in the exact-tick view"),
+         musicxml_notated=_P("`<lyric>` per syllable")),
+    dict(construct="phonemes", description="lyric phonemes",
+         present=lambda s: any(e.get("phonemes") for e in _notation(s).get("lyrics", [])),
+         midi=_L("lossy_lyrics", "phonemes omitted; lyric text may be retained"),
+         musicxml=_L("lossy_lyrics", "phonemes omitted"),
+         musicxml_notated=_L("lossy_lyrics", "phonemes omitted; lyric text retained")),
+    dict(construct="tuning", description="`notation.tuning` other than 12-EDO",
+         present=lambda s: int((_notation(s).get("tuning") or {}).get("divisions", 12)) != 12,
+         midi=_L("lossy_tuning", "12-TET pitches until the tuning resolver lands (RN-T-002/003)"),
+         musicxml=_L("lossy_tuning", "12-TET pitches until the tuning resolver lands (RN-T-002/003)"),
+         musicxml_notated=_L("lossy_tuning", "12-TET pitches until the tuning resolver lands (RN-T-002/003)")),
+    dict(construct="string_fret", description="note `string` / `fret` fields",
+         present=lambda s: any("string" in ev or "fret" in ev for *_, ev in _note_events(s)),
+         midi=_L("lossy_string_fret", "not written"), musicxml=_L("lossy_string_fret", "not written"),
+         musicxml_notated=_L("lossy_string_fret", "not written")),
+    dict(construct="markers", description="`markers` (labels in real seconds)",
+         present=lambda s: bool(s.get("markers")),
+         midi=_L("lossy_marker", "markers are in seconds and are not converted to ticks"),
+         musicxml=_L("lossy_marker", "not written"), musicxml_notated=_L("lossy_marker", "not written")),
+]
+
+
+def _cell(cell, spec: dict | None) -> tuple:
+    if callable(cell):
+        return cell(spec) if spec is not None else cell.static
+    return cell
+
+
+def coverage(spec: dict | None = None) -> list[dict]:
+    """The construct × format matrix. Without a spec: the documentation form
+    (conditional cells name the code they may emit). With a spec: cells evaluated
+    for that spec plus a `present` flag."""
+    rows = []
+    for entry in COVERAGE:
+        row = {"construct": entry["construct"], "description": entry["description"]}
+        if spec is not None:
+            row["present"] = bool(entry["present"](spec))
+        for fmt in FORMATS:
+            status, code, note = _cell(entry[fmt], spec)
+            row[fmt] = {"status": status, "code": code, "note": note}
+        rows.append(row)
+    return rows
 
 
 def interop_diagnostics(spec: dict, format: str) -> list[dict]:
-    """Return structured lossy-conversion warnings for an export target."""
+    """Structured lossy-conversion warnings for an export target, read from the
+    coverage registry: one warning per dropped construct (per path where known)."""
+    if format not in FORMATS:
+        raise ValueError(f"unknown interop format {format!r}; expected one of {FORMATS}")
     warnings = []
-    if spec.get("notation", {}).get("lyrics") and format in {"midi", "musicxml"}:
-        warnings.append({
-            "severity": "warning",
-            "code": "lossy_lyrics",
-            "message": f"{format} exporter preserves notes but not lyric metadata",
-        })
-    for layer_i, layer in enumerate(spec.get("layers", [])):
-        for note_i, ev in enumerate(layer.get("notes", [])):
-            if ev.get("art") and format == "midi":
-                warnings.append({
-                    "severity": "warning",
-                    "code": "lossy_articulation",
-                    "message": "MIDI export drops note articulation metadata",
-                    "path": f"layer:{layer.get('name', layer.get('type'))}",
-                })
-            for curve in ev.get("curves", []) or []:
-                target = curve.get("target")
-                if target == "pitch_cents":
-                    warnings.append({
-                        "severity": "warning",
-                        "code": "lossy_pitch_curve",
-                        "message": (
-                            f"{format} exporter does not project arbitrary "
-                            "AudioForge pitch_cents note curves"
-                        ),
-                        "path": f"layers[{layer_i}].notes[{note_i}].curves",
-                    })
-                elif target == "dynamic":
-                    warnings.append({
-                        "severity": "warning",
-                        "code": "lossy_dynamic_curve",
-                        "message": (
-                            f"{format} exporter preserves notes but not "
-                            "AudioForge through-note dynamic curves"
-                        ),
-                        "path": f"layers[{layer_i}].notes[{note_i}].curves",
-                    })
-        for curve_i, curve in enumerate(layer.get("automation", []) or []):
-            if curve.get("target") == "pitch_cents":
-                warnings.append({
-                    "severity": "warning",
-                    "code": "lossy_pitch_curve",
-                    "message": (
-                        f"{format} exporter does not project arbitrary "
-                        "AudioForge pitch_cents automation curves"
-                    ),
-                    "path": f"layers[{layer_i}].automation[{curve_i}]",
-                })
-            elif curve.get("target") == "dynamic":
-                warnings.append({
-                    "severity": "warning",
-                    "code": "lossy_dynamic_curve",
-                    "message": (
-                        f"{format} exporter preserves notes but not "
-                        "AudioForge dynamic automation curves"
-                    ),
-                    "path": f"layers[{layer_i}].automation[{curve_i}]",
-                })
+    for entry in COVERAGE:
+        if not entry["present"](spec):
+            continue
+        status, code, note = _cell(entry[format], spec)
+        if status not in ("lossy", "unsupported") or not code:
+            continue
+        paths = entry["paths"](spec) if "paths" in entry else [None]
+        for path in paths or [None]:
+            w = {"severity": "warning", "code": code,
+                 "message": f"{format} export: {entry['description']} — {note}"}
+            if path:
+                w["path"] = path
+            warnings.append(w)
     return warnings
 
 
@@ -150,14 +389,6 @@ def _read_vlq(data: bytes, i: int) -> tuple[int, int]:
             return n, i
 
 
-def _midi_note(note: str) -> int:
-    return theory.note_to_semis(note) + 12
-
-
-def _note_name(midi: int) -> str:
-    return theory.semis_to_note(midi - 12)
-
-
 def _notes(spec: dict) -> list[dict]:
     out = []
     for layer in spec.get("layers", []):
@@ -167,18 +398,19 @@ def _notes(spec: dict) -> list[dict]:
     return sorted(out, key=lambda e: (e["start_beat"], e["note"]))
 
 
-def export_midi_bytes(spec: dict) -> bytes:
-    bpm = float(spec.get("bpm", 120.0))
-    tempo_us = int(round(60_000_000 / bpm))
-    events = [(0, b"\xff\x51\x03" + tempo_us.to_bytes(3, "big"))]
-    for ev in _notes(spec):
-        start = int(round(ev["start_beat"] * TPQ))
-        end = int(round((ev["start_beat"] + ev["dur_beats"]) * TPQ))
-        note = max(0, min(127, _midi_note(ev["note"])))
-        vel = max(1, min(127, int(round(96 * float(ev.get("vel", 0.8))))))
-        events.append((start, bytes([0x90, note, vel])))
-        events.append((end, bytes([0x80, note, 0])))
-    events.sort(key=lambda x: (x[0], x[1][0] == 0x90))
+def _midi_channel(index: int) -> int:
+    """Layer index -> MIDI channel, skipping the GM percussion channel (10)."""
+    ch = index % 15
+    return ch if ch < 9 else ch + 1
+
+
+def _meta(kind: int, payload: bytes) -> bytes:
+    return b"\xff" + bytes([kind]) + _vlq(len(payload)) + payload
+
+
+def _track_chunk(events: list[tuple[int, bytes]]) -> bytes:
+    # At equal ticks note-offs precede note-ons so a re-struck pitch is not cut.
+    events.sort(key=lambda x: (x[0], (x[1][0] & 0xF0) == 0x90))
     track = bytearray()
     last = 0
     for tick, payload in events:
@@ -187,8 +419,71 @@ def export_midi_bytes(spec: dict) -> bytes:
         last = tick
     track.extend(_vlq(0))
     track.extend(b"\xff\x2f\x00")
-    return (b"MThd" + struct.pack(">IHHH", 6, 0, 1, TPQ)
-            + b"MTrk" + struct.pack(">I", len(track)) + bytes(track))
+    return b"MTrk" + struct.pack(">I", len(track)) + bytes(track)
+
+
+def midi_tempo_events(spec: dict) -> list[tuple[float, float]]:
+    """The ``(beat, bpm)`` tempo meta-events the MIDI export writes: every
+    ``tempo_map`` point (ramps are stepped at their points), or the single ``bpm``."""
+    return tempo_points(spec)
+
+
+def _time_signature(beats: int, unit: int) -> bytes:
+    return _meta(0x58, bytes([beats, unit.bit_length() - 1, 24, 8]))
+
+
+def export_midi_bytes(spec: dict) -> bytes:
+    """Format-1 Standard MIDI File of the spec *as performed* (repeats expanded):
+    a conductor track (sequence name, time signature — with the anacrusis as its
+    own signature when it is a whole number of 64ths — key signatures for every
+    key change, one tempo event per `tempo_map` point, a marker per section)
+    plus one track per pitched layer on its own channel (so equal pitches in
+    different layers never cut each other off) carrying its notes and lyric
+    events. What is not written is listed by ``interop_diagnostics(spec, "midi")``."""
+    spec = performed(spec)
+    score = spec.get("score") or {}
+    conductor = [(0, _meta(0x03, str(spec.get("id", "AudioForge")).encode("latin-1", "replace")))]
+    meter = score.get("meter")
+    if meter and _pow2(int(meter.get("unit", 4))):
+        pickup = float(score.get("pickup_beats", 0.0))
+        sig = _pickup_signature(pickup) if pickup > 0 else None
+        if sig:
+            conductor.append((0, _time_signature(*sig)))
+            conductor.append((int(round(pickup * TPQ)), _time_signature(int(meter["beats"]), int(meter["unit"]))))
+        else:
+            conductor.append((0, _time_signature(int(meter["beats"]), int(meter["unit"]))))
+    if spec.get("key") or spec.get("key_map"):
+        for tick, fifths, mode in _key_points(spec):
+            conductor.append((tick, _meta(0x59, bytes([fifths & 0xFF, int(mode == "minor")]))))
+    for beat, bpm in tempo_points(spec):
+        conductor.append((int(round(beat * TPQ)),
+                          _meta(0x51, int(round(60_000_000 / bpm)).to_bytes(3, "big"))))
+    for sec in _sections(spec):
+        conductor.append((int(round(float(sec["start_beat"]) * TPQ)),
+                          _meta(0x06, str(sec["name"]).encode("latin-1", "replace"))))
+    chunks = [_track_chunk(conductor)]
+    lyrics = (spec.get("notation") or {}).get("lyrics") or []
+    for i, layer in enumerate(_pitched_layers(spec)):
+        ch = _midi_channel(i)
+        events = [(0, _meta(0x03, str(layer.get("name", f"layer{i + 1}")).encode("latin-1", "replace"))),
+                  (0, _meta(0x21, bytes([i // 15])))]
+        notes = sorted((e for e in layer["notes"] if "note" in e), key=lambda e: (e["start_beat"], e["note"]))
+        for ev in notes:
+            start = int(round(ev["start_beat"] * TPQ))
+            end = int(round((ev["start_beat"] + ev["dur_beats"]) * TPQ))
+            note = max(0, min(127, _midi_note(ev["note"])))
+            vel = max(1, min(127, int(round(96 * float(ev.get("vel", 0.8))))))
+            events.append((start, bytes([0x90 | ch, note, vel])))
+            events.append((end, bytes([0x80 | ch, note, 0])))
+        onsets = sorted({int(round(e["start_beat"] * TPQ)) for e in notes})
+        for entry in lyrics:
+            if entry.get("layer") != layer.get("name"):
+                continue
+            first = int(round(float(entry.get("start_beat", 0.0)) * TPQ))
+            for tick, syllable in zip([t for t in onsets if t >= first], str(entry.get("text", "")).split()):
+                events.append((tick, _meta(0x05, syllable.encode("latin-1", "replace"))))
+        chunks.append(_track_chunk(events))
+    return (b"MThd" + struct.pack(">IHHH", 6, 1, len(chunks), TPQ) + b"".join(chunks))
 
 
 # General MIDI program-number families -> a renderable (non-native) osc shape.
@@ -206,27 +501,6 @@ _GM_DRUM_CHANNEL = 9
 # Floor for imported note duration (beats); keeps zero-length percussion hits
 # above the IR's dur_beats minimum while staying rhythmically negligible.
 _MIN_DUR_BEATS = 0.02
-
-
-def _layer_ident(text: str, fallback: str, used: set[str]) -> str:
-    """Coerce a MIDI track name into a unique DSL IDENT.
-
-    The grammar's IDENT is ``letter , { letter | digit | "_" | "#" }`` — no
-    hyphens, spaces, or leading digits — and layer names must be unique so the
-    decompiled ``.af`` round-trips. Invalid runs collapse to ``_``; a numeric
-    suffix disambiguates collisions.
-    """
-    import re
-
-    cleaned = re.sub(r"[^A-Za-z0-9_#]+", "_", (text or "").strip()).strip("_")
-    if not cleaned or not cleaned[0].isalpha():
-        cleaned = fallback if (fallback and fallback[0].isalpha()) else f"L_{cleaned}"
-    candidate = cleaned
-    n = 2
-    while candidate in used:
-        candidate = f"{cleaned}_{n}"
-        n += 1
-    return candidate
 
 
 def _osc_for_program(program: int) -> str:
@@ -276,7 +550,7 @@ def import_midi_bytes(data: bytes, asset_id: str = "imported_midi") -> dict:
     _fmt, division, tracks = _split_tracks(data)
 
     bpm = 120.0
-    bpm_set = False
+    tempo_events = {}
     # (track_index, channel) -> accumulated state for that voice.
     voices: dict[tuple[int, int], dict] = {}
 
@@ -303,9 +577,8 @@ def import_midi_bytes(data: bytes, asset_id: str = "imported_midi") -> dict:
                 meta = track[i]; i += 1
                 ln, i = _read_vlq(track, i)
                 payload = track[i:i + ln]; i += ln
-                if meta == 0x51 and ln == 3 and not bpm_set:
-                    bpm = 60_000_000 / int.from_bytes(payload, "big")
-                    bpm_set = True
+                if meta == 0x51 and ln == 3:
+                    tempo_events[tick / division] = 60_000_000 / int.from_bytes(payload, "big")
                 elif meta == 0x03 and ti not in track_name:
                     track_name[ti] = payload.decode("latin-1", "replace").strip()
                 elif meta == 0x2F:
@@ -399,261 +672,15 @@ def import_midi_bytes(data: bytes, asset_id: str = "imported_midi") -> dict:
         (n["start_beat"] + n["dur_beats"]
          for layer in layers for n in layer["notes"]),
         default=1.0)
-    return {
-        "id": asset_id, "kind": "cue", "duration_s": round(dur_beats * 60 / bpm, 3),
-        "bpm": round(bpm, 6),
-        "layers": layers,
+    from .musicxml import stepped_tempo_map
+    from .sequencer import TempoMap
+    points = stepped_tempo_map(sorted(tempo_events.items()) or [(0, 120)])
+    bpm = points[0][1]
+    result = {
+        "id": asset_id, "kind": "cue", "duration_s": round(TempoMap(points).sec(dur_beats), 6),
+        "bpm": round(bpm, 6), "layers": layers,
         "master": {"target_peak_dbfs": -1.0},
     }
-
-
-def export_musicxml(spec: dict) -> str:
-    bpm = float(spec.get("bpm", 120.0))
-    root = ET.Element("score-partwise", version="3.1")
-    plist = ET.SubElement(root, "part-list")
-    score_part = ET.SubElement(plist, "score-part", id="P1")
-    ET.SubElement(score_part, "part-name").text = spec.get("id", "AudioForge")
-    part = ET.SubElement(root, "part", id="P1")
-    measure = ET.SubElement(part, "measure", number="1")
-    attrs = ET.SubElement(measure, "attributes")
-    ET.SubElement(attrs, "divisions").text = str(TPQ)
-    if "score" in spec and "meter" in spec["score"]:
-        time = ET.SubElement(attrs, "time")
-        ET.SubElement(time, "beats").text = str(spec["score"]["meter"]["beats"])
-        ET.SubElement(time, "beat-type").text = str(spec["score"]["meter"]["unit"])
-    sound = ET.SubElement(measure, "sound")
-    sound.set("tempo", str(round(bpm, 3)))
-    cursor = 0
-    for ev in _notes(spec):
-        start = int(round(ev["start_beat"] * TPQ))
-        if start > cursor:
-            rest = ET.SubElement(measure, "note")
-            ET.SubElement(rest, "rest")
-            ET.SubElement(rest, "duration").text = str(start - cursor)
-            cursor = start
-        note = ET.SubElement(measure, "note")
-        pitch = ET.SubElement(note, "pitch")
-        name = ev["note"]
-        step = name[0].upper()
-        idx = 1
-        ET.SubElement(pitch, "step").text = step
-        if idx < len(name) and name[idx] in "#b":
-            ET.SubElement(pitch, "alter").text = "1" if name[idx] == "#" else "-1"
-            idx += 1
-        ET.SubElement(pitch, "octave").text = name[idx:]
-        dur = int(round(ev["dur_beats"] * TPQ))
-        ET.SubElement(note, "duration").text = str(dur)
-        cursor = start + dur
-    return ET.tostring(root, encoding="unicode")
-
-
-# --------------------------------------------------------- notated score ----
-# A *formal* MusicXML projection: one staff per layer, durations quantized to a
-# grid so they map to standard figures, gaps filled with rests, real measures /
-# key / time signature, cross-barline ties. Lossy by construction (the IR's
-# non-metric timing is snapped) — the "as notated" view, distinct from the
-# exact-tick interchange `export_musicxml` above. Open in MuseScore/LilyPond.
-_MAJ_FIFTHS = {"C": 0, "G": 1, "D": 2, "A": 3, "E": 4, "B": 5, "F#": 6, "C#": 7,
-               "F": -1, "Bb": -2, "Eb": -3, "Ab": -4, "Db": -5, "Gb": -6, "Cb": -7}
-_MIN_FIFTHS = {"A": 0, "E": 1, "B": 2, "F#": 3, "C#": 4, "G#": 5, "D#": 6,
-               "D": -1, "G": -2, "C": -3, "F": -4, "Bb": -5, "Eb": -6, "Ab": -7}
-# (quarter-fraction, MusicXML type, dots) — largest first, for greedy split
-_FIG = [(4.0, "whole", 0), (3.0, "half", 1), (2.0, "half", 0),
-        (1.5, "quarter", 1), (1.0, "quarter", 0), (0.75, "eighth", 1),
-        (0.5, "eighth", 0), (0.375, "16th", 1), (0.25, "16th", 0),
-        (0.125, "32nd", 0)]
-
-
-def _key_fifths(key: str) -> int:
-    p = (key or "C major").split()
-    mode = p[1].lower() if len(p) > 1 else "major"
-    return (_MIN_FIFTHS if mode == "minor" else _MAJ_FIFTHS).get(p[0], 0)
-
-
-def _decompose(ticks: int, tpq: int):
-    figs = [(int(round(q * tpq)), t, d) for q, t, d in _FIG]
-    out, rem, guard = [], ticks, 0
-    while rem > 0 and guard < 128:
-        for ft, t, d in figs:
-            if ft <= rem:
-                out.append((ft, t, d))
-                rem -= ft
-                break
-        else:
-            break
-        guard += 1
-    return out or [(ticks, "quarter", 0)]
-
-
-def _xml_pitch(parent, name: str):
-    pit = ET.SubElement(parent, "pitch")
-    ET.SubElement(pit, "step").text = name[0].upper()
-    i = 1
-    if i < len(name) and name[i] in "#b":
-        ET.SubElement(pit, "alter").text = "1" if name[i] == "#" else "-1"
-        i += 1
-    ET.SubElement(pit, "octave").text = name[i:]
-
-
-def _emit_rest(measure, ticks: int, tpq: int):
-    for ft, typ, dots in _decompose(ticks, tpq):
-        n = ET.SubElement(measure, "note")
-        ET.SubElement(n, "rest")
-        ET.SubElement(n, "duration").text = str(ft)
-        ET.SubElement(n, "type").text = typ
-        for _ in range(dots):
-            ET.SubElement(n, "dot")
-
-
-def _emit_seg(measure, seg, tpq: int):
-    figs = _decompose(seg["dur"], tpq)
-    for fi, (ft, typ, dots) in enumerate(figs):
-        tie_back = (fi > 0) or seg["tie_stop"]
-        tie_fwd = (fi < len(figs) - 1) or seg["tie_start"]
-        for pi, name in enumerate(seg["pitches"]):
-            n = ET.SubElement(measure, "note")
-            if pi > 0:
-                ET.SubElement(n, "chord")
-            _xml_pitch(n, name)
-            ET.SubElement(n, "duration").text = str(ft)
-            if tie_back:
-                ET.SubElement(n, "tie", type="stop")
-            if tie_fwd:
-                ET.SubElement(n, "tie", type="start")
-            ET.SubElement(n, "type").text = typ
-            for _ in range(dots):
-                ET.SubElement(n, "dot")
-            if tie_back or tie_fwd:
-                nots = ET.SubElement(n, "notations")
-                if tie_back:
-                    ET.SubElement(nots, "tied", type="stop")
-                if tie_fwd:
-                    ET.SubElement(nots, "tied", type="start")
-
-
-def export_notated_musicxml(spec: dict, *, beats_per_bar: int = 4,
-                            grid: float = 0.25) -> str:
-    """Formal, engraver-ready MusicXML (quantized; open in MuseScore)."""
-    tpq, mt = TPQ, beats_per_bar * TPQ
-    fifths = _key_fifths(spec.get("key", "C major"))
-    bpm = float(spec.get("bpm", 120.0))
-
-    parts = []
-    for layer in spec.get("layers", []):
-        raw = [e for e in (layer.get("notes") or []) if "note" in e]
-        if not raw:
-            continue
-        groups = {}
-        for e in raw:
-            on = round(round(e["start_beat"] / grid) * grid, 4)
-            du = max(grid, round(e["dur_beats"] / grid) * grid)
-            g = groups.setdefault(on, {"p": set(), "dur": 0.0})
-            g["p"].add(e["note"])
-            g["dur"] = max(g["dur"], du)
-        onsets = sorted(groups)
-        events = []
-        for i, on in enumerate(onsets):
-            nxt = onsets[i + 1] if i + 1 < len(onsets) else on + groups[on]["dur"]
-            dur = min(groups[on]["dur"], round(nxt - on, 4))
-            if dur > 0:
-                events.append((int(round(on * tpq)), int(round(dur * tpq)),
-                               sorted(groups[on]["p"], key=_midi_note)))
-        if events:
-            mids = sorted(_midi_note(p) for _, _, ps in events for p in ps)
-            parts.append({"id": f"P{len(parts) + 1}",
-                          "name": layer.get("name", "part"),
-                          "clef": "G" if mids[len(mids) // 2] >= 60 else "F",
-                          "events": events})
-    if not parts:
-        raise ValueError("no pitched layers to notate")
-
-    total = max(ev[0] + ev[1] for p in parts for ev in p["events"])
-    measures = max(1, (total + mt - 1) // mt)
-
-    root = ET.Element("score-partwise", version="3.1")
-    ET.SubElement(ET.SubElement(root, "work"), "work-title").text = \
-        spec.get("id", "AudioForge")
-    plist = ET.SubElement(root, "part-list")
-    for p in parts:
-        ET.SubElement(ET.SubElement(plist, "score-part", id=p["id"]),
-                      "part-name").text = p["name"]
-    for pi, p in enumerate(parts):
-        part = ET.SubElement(root, "part", id=p["id"])
-        by_m = {}
-        for on, dur, pitches in p["events"]:        # split at barlines, tie
-            t, end = on, on + dur
-            while t < end:
-                m = t // mt
-                seg_end = min(end, (m + 1) * mt)
-                by_m.setdefault(int(m), []).append(
-                    {"start": t - m * mt, "dur": seg_end - t, "pitches": pitches,
-                     "tie_stop": t > on, "tie_start": seg_end < end})
-                t = seg_end
-        for m in range(measures):
-            measure = ET.SubElement(part, "measure", number=str(m + 1))
-            if m == 0:
-                at = ET.SubElement(measure, "attributes")
-                ET.SubElement(at, "divisions").text = str(tpq)
-                ET.SubElement(ET.SubElement(at, "key"), "fifths").text = str(fifths)
-                tm = ET.SubElement(at, "time")
-                ET.SubElement(tm, "beats").text = str(beats_per_bar)
-                ET.SubElement(tm, "beat-type").text = "4"
-                cl = ET.SubElement(at, "clef")
-                ET.SubElement(cl, "sign").text = p["clef"]
-                ET.SubElement(cl, "line").text = "2" if p["clef"] == "G" else "4"
-                if pi == 0:
-                    ET.SubElement(measure, "sound").set("tempo", str(round(bpm, 3)))
-            pos = 0
-            for s in sorted(by_m.get(m, []), key=lambda s: s["start"]):
-                if s["start"] > pos:
-                    _emit_rest(measure, s["start"] - pos, tpq)
-                _emit_seg(measure, s, tpq)
-                pos = s["start"] + s["dur"]
-            if pos < mt:
-                _emit_rest(measure, mt - pos, tpq)
-    return '<?xml version="1.0" encoding="UTF-8"?>\n' + \
-        ET.tostring(root, encoding="unicode")
-
-
-def import_musicxml(text: str, asset_id: str = "imported_musicxml") -> dict:
-    root = ET.fromstring(text)
-    divisions = int(root.findtext(".//divisions", default=str(TPQ)))
-    sound = root.find(".//sound")
-    bpm = float(sound.get("tempo", 120.0)) if sound is not None else 120.0
-    tick = 0
-    notes = []
-    for n in root.findall(".//part/measure/note"):
-        dur = int(n.findtext("duration", default="0"))
-        if n.find("rest") is not None:
-            tick += dur
-            continue
-        pitch = n.find("pitch")
-        step = pitch.findtext("step")
-        alter = int(pitch.findtext("alter", default="0"))
-        octave = pitch.findtext("octave")
-        acc = "#" if alter > 0 else "b" if alter < 0 else ""
-        dur_beats = round(dur / divisions, 6)
-        event = {"note": f"{step}{acc}{octave}",
-                 "start_beat": round(tick / divisions, 6),
-                 "dur_beats": dur_beats}
-        bend_alter = n.findtext(".//bend/bend-alter")
-        if bend_alter is not None:
-            event["curves"] = [{
-                "target": "pitch_cents",
-                "time_basis": "note_beats",
-                "points": [[0.0, 0.0],
-                           [dur_beats, round(float(bend_alter) * 100.0, 6)]],
-            }]
-        notes.append(event)
-        tick += dur
-    dur_beats = max((n["start_beat"] + n["dur_beats"] for n in notes),
-                    default=1.0)
-    return {
-        "id": asset_id, "kind": "cue", "duration_s": round(dur_beats * 60 / bpm, 3),
-        "bpm": bpm,
-        "layers": [{"name": "musicxml", "type": "notes", "osc": "sine",
-                    "env": {"attack": 0.01, "decay": 0.1,
-                            "sustain": 0.8, "release": 0.1},
-                    "notes": notes}],
-        "master": {"target_peak_dbfs": -1.0},
-    }
+    if len(points) > 1:
+        result["tempo_map"] = points
+    return result

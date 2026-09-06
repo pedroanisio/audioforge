@@ -1,0 +1,112 @@
+[
+  {
+    "errors": [],
+    "fixture": "chords_ties_rests",
+    "format": "notated"
+  },
+  {
+    "errors": [],
+    "fixture": "chords_ties_rests",
+    "format": "exact"
+  },
+  {
+    "errors": [],
+    "fixture": "dynamics_articulations_slurs",
+    "format": "notated"
+  },
+  {
+    "errors": [],
+    "fixture": "dynamics_articulations_slurs",
+    "format": "exact"
+  },
+  {
+    "errors": [],
+    "fixture": "form_sections_repeat",
+    "format": "notated"
+  },
+  {
+    "errors": [],
+    "fixture": "form_sections_repeat",
+    "format": "exact"
+  },
+  {
+    "errors": [],
+    "fixture": "meter_3_4_two_parts",
+    "format": "notated"
+  },
+  {
+    "errors": [],
+    "fixture": "meter_3_4_two_parts",
+    "format": "exact"
+  },
+  {
+    "errors": [],
+    "fixture": "meter_6_8_pickup",
+    "format": "notated"
+  },
+  {
+    "errors": [],
+    "fixture": "meter_6_8_pickup",
+    "format": "exact"
+  },
+  {
+    "errors": [],
+    "fixture": "meter_7_8_key_change",
+    "format": "notated"
+  },
+  {
+    "errors": [],
+    "fixture": "meter_7_8_key_change",
+    "format": "exact"
+  },
+  {
+    "errors": [],
+    "fixture": "microtonal_19edo",
+    "format": "notated"
+  },
+  {
+    "errors": [],
+    "fixture": "microtonal_19edo",
+    "format": "exact"
+  },
+  {
+    "errors": [],
+    "fixture": "polymeter",
+    "format": "notated"
+  },
+  {
+    "errors": [],
+    "fixture": "polymeter",
+    "format": "exact"
+  },
+  {
+    "errors": [],
+    "fixture": "polyphony",
+    "format": "notated"
+  },
+  {
+    "errors": [],
+    "fixture": "polyphony",
+    "format": "exact"
+  },
+  {
+    "errors": [],
+    "fixture": "tempo_changes_fermata",
+    "format": "notated"
+  },
+  {
+    "errors": [],
+    "fixture": "tempo_changes_fermata",
+    "format": "exact"
+  },
+  {
+    "errors": [],
+    "fixture": "tuplet_lyrics",
+    "format": "notated"
+  },
+  {
+    "errors": [],
+    "fixture": "tuplet_lyrics",
+    "format": "exact"
+  }
+]

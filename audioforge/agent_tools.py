@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from .analysis import analyze_audio
 from .decompile import decompile_diagnostics, spec_to_dsl
-from .interop import export_midi_bytes, export_musicxml, interop_diagnostics
+from .interop import export_midi_bytes, export_musicxml, export_notated_musicxml, interop_diagnostics
 from .repair import plan_repair
 from .schema import SpecError, validate_spec
 from .sdk import AudioForge
@@ -52,6 +52,12 @@ def tool_schemas() -> dict:
         "properties": {"audio": {"type": "array"}, "sample_rate": {"type": "integer", "minimum": 1},
                        "context": {"type": "object", "description": "Compiled spec or declared analysis expectations"}},
     }
+    schemas["export"]["request"] = {
+        "type": "object", "required": ["spec"],
+        "properties": {"spec": {"type": "object"},
+                       "format": {"enum": ["midi", "musicxml", "musicxml_notated"]},
+                       "grid": {"type": "number", "exclusiveMinimum": 0, "multipleOf": .03125, "default": .25}},
+    }
     return schemas
 
 
@@ -94,8 +100,12 @@ def run_tool(operation: str, request: dict) -> dict:
             fmt = request.get("format", "midi")
             if fmt == "musicxml":
                 data = export_musicxml(spec)
-            else:
+            elif fmt == "musicxml_notated":
+                data = export_notated_musicxml(spec, grid=float(request.get("grid", .25)))
+            elif fmt == "midi":
                 data = export_midi_bytes(spec).hex()
+            else:
+                raise ValueError(f"unknown interop format: {fmt}")
             return _response(
                 True,
                 artifacts=[{"format": fmt, "data": data}],

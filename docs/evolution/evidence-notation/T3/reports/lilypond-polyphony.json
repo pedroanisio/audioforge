@@ -1,0 +1,6 @@
+{
+  "lilypond_exit": 0,
+  "log": "musicxml2ly: Reading MusicXML from /tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NGATE-003-pytest/test_lilypond_zero_warnings_fo0/polyphony.musicxml ...\nmusicxml2ly: Converting to LilyPond expressions...\nmusicxml2ly: Converting to LilyPond expressions...\nmusicxml2ly: Converting to LilyPond expressions...\nmusicxml2ly: Output to `/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NGATE-003-pytest/test_lilypond_zero_warnings_fo0/polyphony.ly'\n/bin/sh: 1: lilypond: not found\nmusicxml2ly: Converting to current version () notations ...\nChanging working directory to: `/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NGATE-003-pytest/test_lilypond_zero_warnings_fo0'\nProcessing `/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NGATE-003-pytest/test_lilypond_zero_warnings_fo0/polyphony.ly'\nParsing...\nInterpreting music...\nPreprocessing graphical objects...\nFinding the ideal number of pages...\nFitting music on 1 page...\nDrawing systems...\nConverting to `polyphony.pdf'...\nSuccess: compilation successfully completed\n",
+  "musicxml2ly_exit": 0,
+  "pdf_bytes": 49795
+}

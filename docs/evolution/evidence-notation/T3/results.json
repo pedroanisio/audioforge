@@ -1,0 +1,426 @@
+[
+  {
+    "id": "HARNESS-NORA-001",
+    "description": "The `oracles` dev extra installs music21, the LilyPond wheel and xmlschema",
+    "due": 1,
+    "result": "PASS",
+    "seconds": 1.956,
+    "log": "HARNESS-NORA-001.log"
+  },
+  {
+    "id": "HARNESS-NORA-002",
+    "description": "The MusicXML 3.1 XSD is vendored with its licence and used offline",
+    "due": 1,
+    "result": "PASS",
+    "seconds": 1.347,
+    "log": "HARNESS-NORA-002.log"
+  },
+  {
+    "id": "HARNESS-NORA-003",
+    "description": "`make oracle-check` runs the oracle tests and skips loudly without the extra",
+    "due": 3,
+    "result": "PASS",
+    "seconds": 29.582,
+    "log": "HARNESS-NORA-003.log"
+  },
+  {
+    "id": "HARNESS-NORA-004",
+    "description": "A CI job installs the extra and runs `make oracle-check`",
+    "due": 5,
+    "result": "N/A",
+    "seconds": 0.0,
+    "log": "HARNESS-NORA-004.log"
+  },
+  {
+    "id": "HARNESS-NXML-001",
+    "description": "(oracle) Every fixture's notated export validates against the MusicXML 3.1 XSD",
+    "due": 3,
+    "result": "PASS",
+    "seconds": 5.354,
+    "log": "HARNESS-NXML-001.log"
+  },
+  {
+    "id": "HARNESS-NXML-002",
+    "description": "Meter beats and unit come from the spec; bar length from the spec, not a CLI flag; per-part polymeter as per-part time signatures or a lossy code",
+    "due": 2,
+    "result": "PASS",
+    "seconds": 2.633,
+    "log": "HARNESS-NXML-002.log"
+  },
+  {
+    "id": "HARNESS-NXML-003",
+    "description": "`key_map` changes appear as `<key>` at the measure of change",
+    "due": 2,
+    "result": "PASS",
+    "seconds": 2.667,
+    "log": "HARNESS-NXML-003.log"
+  },
+  {
+    "id": "HARNESS-NXML-004",
+    "description": "`tempo_map` changes appear as `<direction>`/`<sound tempo>` at their measures (dense rubato maps thinned to a documented resolution)",
+    "due": 2,
+    "result": "PASS",
+    "seconds": 2.632,
+    "log": "HARNESS-NXML-004.log"
+  },
+  {
+    "id": "HARNESS-NXML-005",
+    "description": "`pickup:` exports as an anacrusis (implicit measure) and downbeats align",
+    "due": 2,
+    "result": "PASS",
+    "seconds": 2.541,
+    "log": "HARNESS-NXML-005.log"
+  },
+  {
+    "id": "HARNESS-NXML-006",
+    "description": "`dynamic` marks export as `<dynamics>`",
+    "due": 3,
+    "result": "PASS",
+    "seconds": 2.614,
+    "log": "HARNESS-NXML-006.log"
+  },
+  {
+    "id": "HARNESS-NXML-007",
+    "description": "`art` and slur groups export as `<articulations>` and `<slur>`; unrepresentable ones carry `lossy_articulation` for MusicXML too",
+    "due": 3,
+    "result": "PASS",
+    "seconds": 1.882,
+    "log": "HARNESS-NXML-007.log"
+  },
+  {
+    "id": "HARNESS-NXML-008",
+    "description": "`holds` export as `<fermata>`; form sections as `<rehearsal>` marks",
+    "due": 3,
+    "result": "PASS",
+    "seconds": 2.304,
+    "log": "HARNESS-NXML-008.log"
+  },
+  {
+    "id": "HARNESS-NXML-009",
+    "description": "The exact-tick exporter (`export_musicxml`) emits one part per layer and `<chord/>` for simultaneous onsets",
+    "due": 2,
+    "result": "PASS",
+    "seconds": 2.509,
+    "log": "HARNESS-NXML-009.log"
+  },
+  {
+    "id": "HARNESS-NXML-010",
+    "description": "(oracle) music21 structural parity per fixture: parts = pitched layers, measures = ceil(duration / bar), time signatures = meter(s), key signatures = key_map, pitch multiset per part = spec, total quarterLength per part = spec sum within quantization",
+    "due": 3,
+    "result": "PASS",
+    "seconds": 3.612,
+    "log": "HARNESS-NXML-010.log"
+  },
+  {
+    "id": "HARNESS-NXML-011",
+    "description": "Lossy diagnostics enumerate exactly the constructs each export dropped, and the INTEROP.md matrix is generated from the same registry",
+    "due": 3,
+    "result": "PASS",
+    "seconds": 2.823,
+    "log": "HARNESS-NXML-011.log"
+  },
+  {
+    "id": "HARNESS-NIMP-001",
+    "description": "One layer per `<part>`, named from `part-name`",
+    "due": 2,
+    "result": "PASS",
+    "seconds": 2.547,
+    "log": "HARNESS-NIMP-001.log"
+  },
+  {
+    "id": "HARNESS-NIMP-002",
+    "description": "`<chord/>`, `<backup>`, `<forward>`, `<voice>` produce simultaneous onsets and voice-aware cursors",
+    "due": 2,
+    "result": "PASS",
+    "seconds": 2.119,
+    "log": "HARNESS-NIMP-002.log"
+  },
+  {
+    "id": "HARNESS-NIMP-003",
+    "description": "`divisions`, `<time>`, `<key>`, `<sound tempo>` changes are honoured per measure; ties merge into one event",
+    "due": 2,
+    "result": "PASS",
+    "seconds": 4.49,
+    "log": "HARNESS-NIMP-003.log"
+  },
+  {
+    "id": "HARNESS-NIMP-004",
+    "description": "(oracle) Corpus round trip: music21 corpus piece \u2192 our import: duration within 1 %, notes per part equal, spec validates and renders",
+    "due": 3,
+    "result": "PASS",
+    "seconds": 8.1,
+    "log": "HARNESS-NIMP-004.log"
+  },
+  {
+    "id": "HARNESS-NIMP-005",
+    "description": "Self round trip: notated export \u2192 import \u2192 same parts, onsets and pitch multisets (quantization documented)",
+    "due": 3,
+    "result": "PASS",
+    "seconds": 2.873,
+    "log": "HARNESS-NIMP-005.log"
+  },
+  {
+    "id": "HARNESS-NMIDI-001",
+    "description": "Multi-track MIDI import keeps parts and timing",
+    "due": 1,
+    "result": "PASS",
+    "seconds": 4.185,
+    "log": "HARNESS-NMIDI-001.log"
+  },
+  {
+    "id": "HARNESS-NMIDI-002",
+    "description": "(oracle) MIDI export writes one track per layer and every note survives",
+    "due": 2,
+    "result": "PASS",
+    "seconds": 4.109,
+    "log": "HARNESS-NMIDI-002.log"
+  },
+  {
+    "id": "HARNESS-NMIDI-003",
+    "description": "MIDI export carries the tempo map as tempo events",
+    "due": 2,
+    "result": "PASS",
+    "seconds": 4.005,
+    "log": "HARNESS-NMIDI-003.log"
+  },
+  {
+    "id": "HARNESS-NTUN-001",
+    "description": "`tuning: edo divisions=19` drives the render",
+    "due": 4,
+    "result": "N/A",
+    "seconds": 0.0,
+    "log": "HARNESS-NTUN-001.log"
+  },
+  {
+    "id": "HARNESS-NTUN-002",
+    "description": "Without a tuning directive, renders are byte-identical to today",
+    "due": 4,
+    "result": "N/A",
+    "seconds": 0.0,
+    "log": "HARNESS-NTUN-002.log"
+  },
+  {
+    "id": "HARNESS-NTUN-003",
+    "description": "Until NTUN-001 passes, a non-12-EDO tuning compiles with a registered `tuning_not_rendered` diagnostic (the row becomes N/A once NTUN-001 passes)",
+    "due": 1,
+    "result": "PASS",
+    "seconds": 3.275,
+    "log": "HARNESS-NTUN-003.log"
+  },
+  {
+    "id": "HARNESS-NTUN-004",
+    "description": "Microtonal pitches export as MIDI pitch bend and MusicXML decimal `<alter>`; unrepresentable cases carry a code",
+    "due": 4,
+    "result": "N/A",
+    "seconds": 0.0,
+    "log": "HARNESS-NTUN-004.log"
+  },
+  {
+    "id": "HARNESS-NANA-001",
+    "description": "(oracle) Chord roots agree with music21 for non-symmetric qualities",
+    "due": 3,
+    "result": "PASS",
+    "seconds": 3.248,
+    "log": "HARNESS-NANA-001.log"
+  },
+  {
+    "id": "HARNESS-NANA-002",
+    "description": "Symmetric and relative collections are declared ambiguous with candidates, and the documented set matches exactly",
+    "due": 3,
+    "result": "PASS",
+    "seconds": 3.082,
+    "log": "HARNESS-NANA-002.log"
+  },
+  {
+    "id": "HARNESS-NANA-003",
+    "description": "Analysis reports state their scope; no key-finding, roman-numeral or realism claim is made",
+    "due": 1,
+    "result": "PASS",
+    "seconds": 2.792,
+    "log": "HARNESS-NANA-003.log"
+  },
+  {
+    "id": "HARNESS-NANA-004",
+    "description": "Pitch-class-set theory (AF-M01) is reachable through `analyze` (normal form, prime form, IC vector, set class)",
+    "due": 5,
+    "result": "N/A",
+    "seconds": 0.0,
+    "log": "HARNESS-NANA-004.log"
+  },
+  {
+    "id": "HARNESS-NANA-005",
+    "description": "The music21-bridge decision (D3) is recorded",
+    "due": 1,
+    "result": "PASS",
+    "seconds": 3.235,
+    "log": "HARNESS-NANA-005.log"
+  },
+  {
+    "id": "HARNESS-NENG-001",
+    "description": "(oracle) Every fixture's notated export engraves through `musicxml2ly` + `lilypond` with zero warnings",
+    "due": 3,
+    "result": "PASS",
+    "seconds": 15.779,
+    "log": "HARNESS-NENG-001.log"
+  },
+  {
+    "id": "HARNESS-NENG-002",
+    "description": "`audioforge score --engrave` uses the LilyPond backend when the extra is installed and gives a structured hint otherwise",
+    "due": 5,
+    "result": "N/A",
+    "seconds": 0.0,
+    "log": "HARNESS-NENG-002.log"
+  },
+  {
+    "id": "HARNESS-NENG-003",
+    "description": "The matplotlib PDF is named a proportional proof sheet everywhere; the word \"engrave\" is reserved for LilyPond",
+    "due": 1,
+    "result": "PASS",
+    "seconds": 3.376,
+    "log": "HARNESS-NENG-003.log"
+  },
+  {
+    "id": "HARNESS-NENG-004",
+    "description": "The proof sheet renders dynamics text without missing-glyph warnings",
+    "due": 5,
+    "result": "N/A",
+    "seconds": 0.0,
+    "log": "HARNESS-NENG-004.log"
+  },
+  {
+    "id": "HARNESS-NDOC-001",
+    "description": "`docs/INTEROP.md` carries a generated coverage matrix (construct \u00d7 format \u2192 preserved / quantized / lossy code / unsupported) with a `--check` twin",
+    "due": 3,
+    "result": "PASS",
+    "seconds": 1.867,
+    "log": "HARNESS-NDOC-001.log"
+  },
+  {
+    "id": "HARNESS-NDOC-002",
+    "description": "The capability manifest lists notation directives (`tuning`, `tuplet`, `lyrics`) with rendering status and the interop coverage",
+    "due": 3,
+    "result": "PASS",
+    "seconds": 3.146,
+    "log": "HARNESS-NDOC-002.log"
+  },
+  {
+    "id": "HARNESS-NDOC-003",
+    "description": "README has a \"Notation and analysis\" section stating scope and delegation",
+    "due": 1,
+    "result": "PASS",
+    "seconds": 3.26,
+    "log": "HARNESS-NDOC-003.log"
+  },
+  {
+    "id": "HARNESS-NDOC-004",
+    "description": "`DSL_GAP_SPEC.md` G6/G8 state the measured limits (inert tuning, flattened import) with harness IDs instead of \"closed\"",
+    "due": 1,
+    "result": "PASS",
+    "seconds": 3.204,
+    "log": "HARNESS-NDOC-004.log"
+  },
+  {
+    "id": "HARNESS-NDOC-005",
+    "description": "ADR-0011 records the positioning: semantic score contract, oracle-verified interchange, engraving and musicology delegated, proof sheet retained",
+    "due": 1,
+    "result": "PASS",
+    "seconds": 4.3,
+    "log": "HARNESS-NDOC-005.log"
+  },
+  {
+    "id": "HARNESS-NGATE-001",
+    "description": "A committed fixture corpus with expected-features JSON exists (\u2265 8 specs)",
+    "due": 1,
+    "result": "PASS",
+    "seconds": 4.898,
+    "log": "HARNESS-NGATE-001.log"
+  },
+  {
+    "id": "HARNESS-NGATE-002",
+    "description": "The surface's existing tests keep passing",
+    "due": 1,
+    "result": "PASS",
+    "seconds": 17.214,
+    "log": "HARNESS-NGATE-002.log"
+  },
+  {
+    "id": "HARNESS-NGATE-003",
+    "description": "`make check` green and coverage \u2265 90.1 % with the new code",
+    "due": 1,
+    "result": "PASS",
+    "seconds": 3133.745,
+    "log": "HARNESS-NGATE-003.log"
+  },
+  {
+    "id": "HARNESS-NGATE-004",
+    "description": "Goldens unchanged by notation work",
+    "due": 1,
+    "result": "PASS",
+    "seconds": 1.052,
+    "log": "HARNESS-NGATE-004.log"
+  },
+  {
+    "id": "HARNESS-NGATE-005",
+    "description": "The runner exists and evidence bundles are tracked",
+    "due": 1,
+    "result": "PASS",
+    "seconds": 0.002,
+    "log": "HARNESS-NGATE-005.log"
+  },
+  {
+    "id": "HARNESS-NGATE-006",
+    "description": "The plan is registered in `docs/backlog.yml`",
+    "due": 1,
+    "result": "PASS",
+    "seconds": 0.027,
+    "log": "HARNESS-NGATE-006.log"
+  },
+  {
+    "id": "HARNESS-NPERF-001",
+    "description": "Notated MusicXML export \u2264 1 s and MIDI export \u2264 0.5 s for a 3 000-note spec",
+    "due": 5,
+    "result": "N/A",
+    "seconds": 0.0,
+    "log": "HARNESS-NPERF-001.log"
+  },
+  {
+    "id": "HARNESS-NPERF-002",
+    "description": "(oracle) `musicxml2ly` + `lilypond` \u2264 30 s for 116 measures",
+    "due": 5,
+    "result": "N/A",
+    "seconds": 0.0,
+    "log": "HARNESS-NPERF-002.log"
+  },
+  {
+    "id": "HARNESS-NPERF-003",
+    "description": "Proof-sheet PDF \u2264 15 s for 116 measures",
+    "due": 5,
+    "result": "N/A",
+    "seconds": 0.0,
+    "log": "HARNESS-NPERF-003.log"
+  },
+  {
+    "id": "HARNESS-NPERF-004",
+    "description": "MusicXML import \u2264 1 s for a four-part ten-measure chorale",
+    "due": 5,
+    "result": "N/A",
+    "seconds": 0.0,
+    "log": "HARNESS-NPERF-004.log"
+  },
+  {
+    "id": "HARNESS-NSEM-001",
+    "description": "Every `score_layer` property (meter, pickup, form, repeat, polymeter) has a defined projection or a registered lossy code in both exporters",
+    "due": 3,
+    "result": "PASS",
+    "seconds": 1.034,
+    "log": "HARNESS-NSEM-001.log"
+  },
+  {
+    "id": "HARNESS-NSEM-002",
+    "description": "`notation.tuplets` and `notation.lyrics` project to `<time-modification>` and `<lyric>`, or carry a code",
+    "due": 3,
+    "result": "PASS",
+    "seconds": 1.041,
+    "log": "HARNESS-NSEM-002.log"
+  }
+]

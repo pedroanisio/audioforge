@@ -1,0 +1,6 @@
+{
+  "lilypond_exit": 0,
+  "log": "musicxml2ly: Reading MusicXML from /tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NGATE-003-pytest/test_lilypond_zero_warnings_fo0/dynamics_articulations_slurs.musicxml ...\nmusicxml2ly: Converting to LilyPond expressions...\nmusicxml2ly: Output to `/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NGATE-003-pytest/test_lilypond_zero_warnings_fo0/dynamics_articulations_slurs.ly'\n/bin/sh: 1: lilypond: not found\nmusicxml2ly: Converting to current version () notations ...\nChanging working directory to: `/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NGATE-003-pytest/test_lilypond_zero_warnings_fo0'\nProcessing `/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NGATE-003-pytest/test_lilypond_zero_warnings_fo0/dynamics_articulations_slurs.ly'\nParsing...\nInterpreting music...\nPreprocessing graphical objects...\nFinding the ideal number of pages...\nFitting music on 1 page...\nDrawing systems...\nConverting to `dynamics_articulations_slurs.pdf'...\nSuccess: compilation successfully completed\n",
+  "musicxml2ly_exit": 0,
+  "pdf_bytes": 50751
+}

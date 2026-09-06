@@ -1,0 +1,14 @@
+{
+  "meter": [
+    4,
+    4
+  ],
+  "parts": 1,
+  "tuplets": 1,
+  "lyrics": 1,
+  "constructs": [
+    "tuplet",
+    "lyrics"
+  ],
+  "measures": 3
+}

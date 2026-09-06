@@ -536,7 +536,7 @@ audioforge capabilities
 audioforge grammar  [--format ebnf|gbnf]
 audioforge export-midi spec.(af|json) -o out.mid
 audioforge import-midi out.mid [--id ID]
-audioforge export-musicxml spec.(af|json) -o out.musicxml
+audioforge export-musicxml spec.(af|json) -o out.musicxml [--notated [--bars N]]
 audioforge import-musicxml out.musicxml [--id ID]
 audioforge score    spec.(af|json) [-o out.pdf] [--title T] [--bars N]
 audioforge render   spec.(af|json) [-o dir] [--preset P] [--stems] [--variant T] [--intensity K] [--analyze]

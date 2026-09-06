@@ -1,0 +1,18 @@
+{
+  "parts": 2,
+  "meter": [
+    4,
+    4
+  ],
+  "key_fifths": [
+    0
+  ],
+  "measures": 2,
+  "duration_beats": 8,
+  "constructs": [
+    "independent_voices",
+    "unequal_duration_chord",
+    "cross_bar_ties",
+    "rests"
+  ]
+}

@@ -1,0 +1,826 @@
+{
+  "checkpoint": "T3",
+  "started_utc": "2026-09-06T12:15:45.403219+00:00",
+  "commit": "f2f7e3d2ab1dc417c05cf0f22bef879fb4c20294",
+  "working_tree": " M .gitignore\n M AGENTS.md\n M CHANGELOG.md\n M Makefile\n M README.md\n M audioforge/agent_tools.py\n M audioforge/capabilities.py\n M audioforge/cli.py\n M audioforge/dsl.py\n M audioforge/interop.py\n M audioforge/schema.py\n M audioforge/score.py\n M audioforge/sdk.py\n M docs/AGENT_TOOLS.md\n M docs/BACKLOG.md\n M docs/DIAGNOSTIC_CODES.md\n M docs/DSL_GAP_SPEC.md\n M docs/DSL_SPEC.md\n M docs/INTEROP.md\n M docs/MIGRATION_3.md\n M docs/backlog.yml\n M docs/capabilities.md\n M docs/capability-manifest.json\nA  docs/evolution/evidence-notation/T3/HARNESS-NANA-001.log\nA  docs/evolution/evidence-notation/T3/HARNESS-NANA-002.log\nA  docs/evolution/evidence-notation/T3/HARNESS-NANA-003.log\nA  docs/evolution/evidence-notation/T3/HARNESS-NANA-004.log\nA  docs/evolution/evidence-notation/T3/HARNESS-NANA-005.log\nA  docs/evolution/evidence-notation/T3/HARNESS-NDOC-001.log\nA  docs/evolution/evidence-notation/T3/HARNESS-NDOC-002.log\nA  docs/evolution/evidence-notation/T3/HARNESS-NDOC-003.log\nA  docs/evolution/evidence-notation/T3/HARNESS-NDOC-004.log\nA  docs/evolution/evidence-notation/T3/HARNESS-NDOC-005.log\nA  docs/evolution/evidence-notation/T3/HARNESS-NENG-001.log\nA  docs/evolution/evidence-notation/T3/HARNESS-NENG-002.log\nA  docs/evolution/evidence-notation/T3/HARNESS-NENG-003.log\nA  docs/evolution/evidence-notation/T3/HARNESS-NENG-004.log\nA  docs/evolution/evidence-notation/T3/HARNESS-NGATE-001.log\nA  docs/evolution/evidence-notation/T3/HARNESS-NGATE-002.log\nA  docs/evolution/evidence-notation/T3/HARNESS-NGATE-003.log\nA  docs/evolution/evidence-notation/T3/HARNESS-NGATE-004.log\nA  docs/evolution/evidence-notation/T3/HARNESS-NGATE-005.log\nA  docs/evolution/evidence-notation/T3/HARNESS-NGATE-006.log\nAM docs/evolution/evidence-notation/T3/HARNESS-NIMP-001.log\nAM docs/evolution/evidence-notation/T3/HARNESS-NIMP-002.log\nAM docs/evolution/evidence-notation/T3/HARNESS-NIMP-003.log\nAM docs/evolution/evidence-notation/T3/HARNESS-NIMP-004.log\nAM docs/evolution/evidence-notation/T3/HARNESS-NIMP-005.log\nAM docs/evolution/evidence-notation/T3/HARNESS-NMIDI-001.log\nAM docs/evolution/evidence-notation/T3/HARNESS-NMIDI-002.log\nAM docs/evolution/evidence-notation/T3/HARNESS-NMIDI-003.log\nAM docs/evolution/evidence-notation/T3/HARNESS-NORA-001.log\nA  docs/evolution/evidence-notation/T3/HARNESS-NORA-002.log\nAM docs/evolution/evidence-notation/T3/HARNESS-NORA-003.log\nA  docs/evolution/evidence-notation/T3/HARNESS-NORA-004.log\nA  docs/evolution/evidence-notation/T3/HARNESS-NPERF-001.log\nA  docs/evolution/evidence-notation/T3/HARNESS-NPERF-002.log\nA  docs/evolution/evidence-notation/T3/HARNESS-NPERF-003.log\nA  docs/evolution/evidence-notation/T3/HARNESS-NPERF-004.log\nA  docs/evolution/evidence-notation/T3/HARNESS-NSEM-001.log\nA  docs/evolution/evidence-notation/T3/HARNESS-NSEM-002.log\nA  docs/evolution/evidence-notation/T3/HARNESS-NTUN-001.log\nA  docs/evolution/evidence-notation/T3/HARNESS-NTUN-002.log\nA  docs/evolution/evidence-notation/T3/HARNESS-NTUN-003.log\nA  docs/evolution/evidence-notation/T3/HARNESS-NTUN-004.log\nAM docs/evolution/evidence-notation/T3/HARNESS-NXML-001.log\nAM docs/evolution/evidence-notation/T3/HARNESS-NXML-002.log\nAM docs/evolution/evidence-notation/T3/HARNESS-NXML-003.log\nAM docs/evolution/evidence-notation/T3/HARNESS-NXML-004.log\nAM docs/evolution/evidence-notation/T3/HARNESS-NXML-005.log\nAM docs/evolution/evidence-notation/T3/HARNESS-NXML-006.log\nAM docs/evolution/evidence-notation/T3/HARNESS-NXML-007.log\nAM docs/evolution/evidence-notation/T3/HARNESS-NXML-008.log\nAM docs/evolution/evidence-notation/T3/HARNESS-NXML-009.log\nAM docs/evolution/evidence-notation/T3/HARNESS-NXML-010.log\nAM docs/evolution/evidence-notation/T3/HARNESS-NXML-011.log\nA  docs/evolution/evidence-notation/T3/context.json\nA  docs/evolution/evidence-notation/T3/reports/chord-parity.json\nA  docs/evolution/evidence-notation/T3/reports/corpus-bwv4.8.json\nA  docs/evolution/evidence-notation/T3/reports/corpus-bwv66.6.json\nAM docs/evolution/evidence-notation/T3/reports/lilypond-chords_ties_rests.json\nAM docs/evolution/evidence-notation/T3/reports/lilypond-dynamics_articulations_slurs.json\nAM docs/evolution/evidence-notation/T3/reports/lilypond-form_sections_repeat.json\nAM docs/evolution/evidence-notation/T3/reports/lilypond-meter_3_4_two_parts.json\nAM docs/evolution/evidence-notation/T3/reports/lilypond-meter_6_8_pickup.json\nAM docs/evolution/evidence-notation/T3/reports/lilypond-meter_7_8_key_change.json\nAM docs/evolution/evidence-notation/T3/reports/lilypond-microtonal_19edo.json\nAM docs/evolution/evidence-notation/T3/reports/lilypond-polymeter.json\nAM docs/evolution/evidence-notation/T3/reports/lilypond-polyphony.json\nAM docs/evolution/evidence-notation/T3/reports/lilypond-tempo_changes_fermata.json\nAM docs/evolution/evidence-notation/T3/reports/lilypond-tuplet_lyrics.json\nAM docs/evolution/evidence-notation/T3/reports/music21-parity.json\nA  docs/evolution/evidence-notation/T3/reports/xsd.json\nA  docs/evolution/evidence-notation/T3/results.json\nAM docs/evolution/evidence-notation/T3/summary.tsv\n M docs/evolution/harness-notation.md\n M mkdocs.yml\n M pyproject.toml\n M tests/golden/dsl_ast.json\n M tests/test_interop.py\n M tests/test_score_layout.py\n M uv.lock\n?? .venv\n?? audioforge/musicxml.py\n?? audioforge/tools/gen_interop.py\n?? audioforge/tools/notation_acceptance.py\n?? audioforge/tools/oracle_check.py\n?? docs/adr/0011-notation-interchange-oracles.md\n?? docs/evolution/NOTATION_PHASE3.md\n?? libraries\n?? scripts/harness-notation.sh\n?? scripts/update_notation_roadmap.py\n?? tests/fixtures/musicxml/\n?? tests/fixtures/notation/\n?? tests/test_notation_contract.py\n?? tests/test_notation_oracles.py\n?? tests/test_notation_projection.py\n?? tests/test_tuning.py\n",
+  "python": "/tmp/audioforge-notation-acceptance/.venv/bin/python",
+  "oracle_python": "/tmp/audioforge-notation-oracles/bin/python",
+  "commands": {
+    "NORA-001": [
+      [
+        "uv",
+        "venv",
+        "/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/installed-oracles-1788696945456126137",
+        "--python",
+        "/tmp/audioforge-notation-oracles/bin/python"
+      ],
+      [
+        "uv",
+        "pip",
+        "install",
+        "--offline",
+        "--python",
+        "/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/installed-oracles-1788696945456126137/bin/python",
+        "-e",
+        ".[oracles]"
+      ],
+      [
+        "/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/installed-oracles-1788696945456126137/bin/python",
+        "-c",
+        "import importlib.metadata as m, lilypond, subprocess; print({n:m.version(n) for n in ('music21','xmlschema','lilypond')}); subprocess.run([lilypond.executable(), '--version'], check=True)"
+      ]
+    ],
+    "NORA-002": [
+      [
+        "/tmp/audioforge-notation-oracles/bin/python",
+        "-c",
+        "import xmlschema; from pathlib import Path; p=Path('tests/fixtures/musicxml/xsd'); assert (p/'LICENSE.md').exists(); xmlschema.XMLSchema(p/'musicxml.xsd', allow='local'); print('MusicXML 3.1 schema loaded with local-only access')"
+      ]
+    ],
+    "NORA-003": [
+      [
+        "make",
+        "oracle-check",
+        "PYTHON=/tmp/audioforge-notation-oracles/bin/python"
+      ],
+      [
+        "/tmp/audioforge-notation-acceptance/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_notation_contract.py",
+        "-k",
+        "oracle_gate",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NORA-003.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NORA-003-pytest"
+      ]
+    ],
+    "NXML-001": [
+      [
+        "/tmp/audioforge-notation-oracles/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_notation_oracles.py",
+        "-k",
+        "xsd_valid",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NXML-001.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NXML-001-pytest"
+      ]
+    ],
+    "NXML-002": [
+      [
+        "/tmp/audioforge-notation-acceptance/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_notation_oracles.py",
+        "-k",
+        "meter_unit",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NXML-002.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NXML-002-pytest"
+      ]
+    ],
+    "NXML-003": [
+      [
+        "/tmp/audioforge-notation-acceptance/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_notation_oracles.py",
+        "-k",
+        "key_changes",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NXML-003.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NXML-003-pytest"
+      ]
+    ],
+    "NXML-004": [
+      [
+        "/tmp/audioforge-notation-acceptance/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_notation_oracles.py",
+        "-k",
+        "tempo_changes",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NXML-004.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NXML-004-pytest"
+      ]
+    ],
+    "NXML-005": [
+      [
+        "/tmp/audioforge-notation-acceptance/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_notation_oracles.py",
+        "-k",
+        "pickup",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NXML-005.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NXML-005-pytest"
+      ]
+    ],
+    "NXML-006": [
+      [
+        "/tmp/audioforge-notation-acceptance/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_notation_oracles.py",
+        "-k",
+        "dynamics",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NXML-006.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NXML-006-pytest"
+      ]
+    ],
+    "NXML-007": [
+      [
+        "/tmp/audioforge-notation-acceptance/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_notation_oracles.py",
+        "-k",
+        "articulations or slurs",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NXML-007.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NXML-007-pytest"
+      ]
+    ],
+    "NXML-008": [
+      [
+        "/tmp/audioforge-notation-acceptance/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_notation_oracles.py",
+        "-k",
+        "fermata or rehearsal",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NXML-008.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NXML-008-pytest"
+      ]
+    ],
+    "NXML-009": [
+      [
+        "/tmp/audioforge-notation-acceptance/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_notation_oracles.py",
+        "-k",
+        "exact_tick",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NXML-009.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NXML-009-pytest"
+      ]
+    ],
+    "NXML-010": [
+      [
+        "/tmp/audioforge-notation-oracles/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_notation_oracles.py",
+        "-k",
+        "music21_parity",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NXML-010.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NXML-010-pytest"
+      ]
+    ],
+    "NXML-011": [
+      [
+        "/tmp/audioforge-notation-acceptance/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_notation_oracles.py",
+        "-k",
+        "lossy_registry",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NXML-011.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NXML-011-pytest"
+      ]
+    ],
+    "NIMP-001": [
+      [
+        "/tmp/audioforge-notation-acceptance/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_notation_oracles.py",
+        "-k",
+        "import_parts",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NIMP-001.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NIMP-001-pytest"
+      ]
+    ],
+    "NIMP-002": [
+      [
+        "/tmp/audioforge-notation-acceptance/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_notation_oracles.py",
+        "-k",
+        "import_chords",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NIMP-002.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NIMP-002-pytest"
+      ]
+    ],
+    "NIMP-003": [
+      [
+        "/tmp/audioforge-notation-acceptance/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_notation_oracles.py",
+        "-k",
+        "import_attributes",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NIMP-003.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NIMP-003-pytest"
+      ]
+    ],
+    "NIMP-004": [
+      [
+        "/tmp/audioforge-notation-oracles/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_notation_oracles.py",
+        "-k",
+        "corpus_round_trip",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NIMP-004.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NIMP-004-pytest"
+      ]
+    ],
+    "NIMP-005": [
+      [
+        "/tmp/audioforge-notation-acceptance/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_notation_oracles.py",
+        "-k",
+        "self_round_trip",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NIMP-005.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NIMP-005-pytest"
+      ]
+    ],
+    "NMIDI-001": [
+      [
+        "/tmp/audioforge-notation-acceptance/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_interop.py",
+        "-k",
+        "midi",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NMIDI-001.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NMIDI-001-pytest"
+      ]
+    ],
+    "NMIDI-002": [
+      [
+        "/tmp/audioforge-notation-oracles/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_notation_oracles.py",
+        "-k",
+        "midi_export_parts",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NMIDI-002.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NMIDI-002-pytest"
+      ]
+    ],
+    "NMIDI-003": [
+      [
+        "/tmp/audioforge-notation-acceptance/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_notation_oracles.py",
+        "-k",
+        "midi_tempo_map",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NMIDI-003.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NMIDI-003-pytest"
+      ]
+    ],
+    "NTUN-003": [
+      [
+        "/tmp/audioforge-notation-acceptance/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_tuning.py",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NTUN-003.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NTUN-003-pytest"
+      ]
+    ],
+    "NANA-001": [
+      [
+        "/tmp/audioforge-notation-oracles/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_notation_oracles.py",
+        "-k",
+        "chord_parity",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NANA-001.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NANA-001-pytest"
+      ]
+    ],
+    "NANA-002": [
+      [
+        "/tmp/audioforge-notation-acceptance/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_notation_oracles.py",
+        "-k",
+        "ambiguity_set",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NANA-002.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NANA-002-pytest"
+      ]
+    ],
+    "NANA-003": [
+      [
+        "/tmp/audioforge-notation-acceptance/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_notation_contract.py",
+        "-k",
+        "documented_contract",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NANA-003.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NANA-003-pytest"
+      ]
+    ],
+    "NANA-005": [
+      [
+        "/tmp/audioforge-notation-acceptance/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_notation_contract.py",
+        "-k",
+        "documented_contract",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NANA-005.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NANA-005-pytest"
+      ]
+    ],
+    "NENG-001": [
+      [
+        "/tmp/audioforge-notation-oracles/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_notation_oracles.py",
+        "-k",
+        "lilypond_zero_warnings",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NENG-001.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NENG-001-pytest"
+      ]
+    ],
+    "NENG-003": [
+      [
+        "/tmp/audioforge-notation-acceptance/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_notation_contract.py",
+        "-k",
+        "documented_contract",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NENG-003.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NENG-003-pytest"
+      ]
+    ],
+    "NDOC-001": [
+      [
+        "/tmp/audioforge-notation-acceptance/.venv/bin/python",
+        "-m",
+        "audioforge.tools.gen_interop",
+        "--check"
+      ]
+    ],
+    "NDOC-002": [
+      [
+        "/tmp/audioforge-notation-acceptance/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_notation_contract.py",
+        "-k",
+        "documented_contract",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NDOC-002.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NDOC-002-pytest"
+      ]
+    ],
+    "NDOC-003": [
+      [
+        "/tmp/audioforge-notation-acceptance/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_notation_contract.py",
+        "-k",
+        "documented_contract",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NDOC-003.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NDOC-003-pytest"
+      ]
+    ],
+    "NDOC-004": [
+      [
+        "/tmp/audioforge-notation-acceptance/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_notation_contract.py",
+        "-k",
+        "documented_contract",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NDOC-004.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NDOC-004-pytest"
+      ]
+    ],
+    "NDOC-005": [
+      [
+        "/tmp/audioforge-notation-acceptance/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_notation_contract.py",
+        "-k",
+        "documented_contract",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NDOC-005.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NDOC-005-pytest"
+      ]
+    ],
+    "NGATE-001": [
+      [
+        "/tmp/audioforge-notation-acceptance/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_notation_contract.py",
+        "-k",
+        "documented_contract",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NGATE-001.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NGATE-001-pytest"
+      ]
+    ],
+    "NGATE-002": [
+      [
+        "/tmp/audioforge-notation-acceptance/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_interop.py",
+        "tests/test_score.py",
+        "tests/test_score_layout.py",
+        "tests/test_theory_pcset.py",
+        "tests/test_gap_closure.py",
+        "tests/test_notation_projection.py",
+        "tests/test_notation_contract.py",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NGATE-002.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NGATE-002-pytest"
+      ]
+    ],
+    "NGATE-003": [
+      [
+        "make",
+        "check",
+        "PYTHON=/tmp/audioforge-notation-acceptance/.venv/bin/python"
+      ],
+      [
+        "/tmp/audioforge-notation-oracles/bin/python",
+        "-m",
+        "coverage",
+        "run",
+        "-m",
+        "pytest",
+        "-q",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NGATE-003-pytest"
+      ],
+      [
+        "/tmp/audioforge-notation-oracles/bin/python",
+        "-m",
+        "coverage",
+        "report"
+      ],
+      [
+        "/tmp/audioforge-notation-oracles/bin/python",
+        "-m",
+        "coverage",
+        "json",
+        "-o",
+        "/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/coverage.json"
+      ]
+    ],
+    "NGATE-004": [
+      [
+        "/tmp/audioforge-notation-acceptance/.venv/bin/python",
+        "-m",
+        "audioforge.tools.render_golden",
+        "--check"
+      ]
+    ],
+    "NGATE-005": [
+      [
+        "git",
+        "ls-files",
+        "--error-unmatch",
+        "docs/evolution/evidence-notation/T3/summary.tsv"
+      ]
+    ],
+    "NGATE-006": [
+      [
+        "node",
+        "scripts/check-backlog-governance.mjs"
+      ]
+    ],
+    "NSEM-001": [
+      [
+        "/tmp/audioforge-notation-acceptance/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_notation_oracles.py",
+        "-k",
+        "score_layer_projection",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NSEM-001.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NSEM-001-pytest"
+      ]
+    ],
+    "NSEM-002": [
+      [
+        "/tmp/audioforge-notation-acceptance/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_notation_oracles.py",
+        "-k",
+        "tuplets or lyrics",
+        "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NSEM-002.xml",
+        "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NSEM-002-pytest"
+      ]
+    ]
+  },
+  "source_inputs": {
+    "Makefile": "c7f43c9c1d6bb471da0da63507eda05ed78504676a2de80413a6dc546ba210cc",
+    "audioforge/__init__.py": "4ba41707231c13a86fae18963e70fcfe89eb648d81efe6a56092166707f621bc",
+    "audioforge/_native.py": "0e16e224bcb8942fce5708f25ad759dbd90370c741fea83b6dfcd4d2a5762dc5",
+    "audioforge/_sndfile.py": "346f0d67914294aaefc849093e5944dbc3a497fd0b5706deddab3e295fca200e",
+    "audioforge/agent_tools.py": "4cd3884cb62e8674db70e4882438e89bce75a406edc0c9feb34e7b2603ba14e4",
+    "audioforge/analysis.py": "6363307a05651571af711cbaf1649e40c4effcfa074bbfdfcb3cd0a0996ca248",
+    "audioforge/arrangement.py": "37f290359e5e7197741f311312ff44f6d315d266e7e7639daff505b8e0f8bc88",
+    "audioforge/capabilities.py": "c62fce885c487852246eb5198fc0b71cd6baa99f107964ee2eedf8394c039dd5",
+    "audioforge/catalog.py": "8808b464e1f9ea328ea63b309ca1170d31730cd75f2544b3d84bab3524bcd8d3",
+    "audioforge/cli.py": "5d07aa6082943f8f55cd5b37c058d567a8200f5cebd1c267627849e477bb3fb9",
+    "audioforge/compose.py": "a687b97bfc07c9507297160810a9667028a267cc36df8d01d144b69ccf1b20a5",
+    "audioforge/curves.py": "2b3cda760f05cf70ad656bbd35a24f057a8c4c8abad53dabd60ac6cdc66a6e74",
+    "audioforge/decompile.py": "bf3a9c1e9734ae3c0d8984a8360b68a10721360639e92d53dfb5f644cf645eb2",
+    "audioforge/determinism.py": "371b72ea6ff7c04dae09f08ebe5b9744713c69ce60f26e1dd4b456619a7d7e95",
+    "audioforge/distribute.py": "1f0af28f9e962927e29abf08657ac0791cf2ee2c07f9929c88d2d745d8f10de9",
+    "audioforge/dsl.py": "5aef073cec002db1c95116c835952aec6784919e183f6e6f990a745f85d7c103",
+    "audioforge/dynamics.py": "8941bec8f9e84abe09119988cc061dc1ca813dd4705835a63b0149d16f609c30",
+    "audioforge/foley.py": "cfe33c0fb2550d00bd7e24a998408e960958421958f4487e20117f9c5a8614c5",
+    "audioforge/fx.py": "f89a248e9560b51565689984147a6daf10599982ee8bb04c119458e59457fef7",
+    "audioforge/grammar.py": "8cb997ab11e631936bb217028296d586d30644b63bff0cdef24ee7090aa68019",
+    "audioforge/harmony.py": "f1a8f6e0b9f22c9d9a2fc7358c2c36ad89117e8ee5cf31f163d7742b1d5fd684",
+    "audioforge/interop.py": "f91087cbb9c9ecf5e81827ed10d21f6de5b98c9fe0af2e67284abc38a2ce01f6",
+    "audioforge/ir_schema.py": "ca172ba18f5a004d722a06a873543d865abc98cc5f1a487bf3d4c5c0aa80530d",
+    "audioforge/lark_parser.py": "a89ff9336e44469f9fb103988386db5cb7c17c669c900704068233c89a9062f9",
+    "audioforge/library.py": "9421ec3fbf1ce294c5c311b95b3e97ce4a61009a77df357362b65dbfac7b913a",
+    "audioforge/loudness.py": "573419fd55cc21703765fd4540d01346a7843575f0f09bfe09a0174cb07068c5",
+    "audioforge/mcp/__init__.py": "2c453b5d05f7ab78a956bfbb3b6430c6d6418e707b1d46bc87045c2851b7ff2b",
+    "audioforge/mcp/__main__.py": "4f29679d5b9d62bfce138cc4ba7040b1736b31b08a02ecb7c33643bf0be4eb36",
+    "audioforge/mcp/server.py": "9e220f1181664bbd2804653b8a0d45527eb06b41f8f6ed20af122cb4d99a566b",
+    "audioforge/musicxml.py": "7edc8334a094f2a7a83f2b848225b4b8d7904590bc768906d980fe82f561c908",
+    "audioforge/native/blown.c": "1537956b58a12553431b88ee6dae3a813dc5ba8f499f41e37447961f57cc622f",
+    "audioforge/native/bowed.c": "bf57ac9ec3af2d7863a7d32d60e08a38772b6a9c673478dc4ff703ae42d00a06",
+    "audioforge/native/brass.c": "e74b4cd088871b151d4e9bacf7aa7ae8820e161751481198c6d00ea3cffde5bf",
+    "audioforge/native/ladder.c": "a5f2ae68a60308af30fcf06b4958016ddc5a7e70b4a105c6141fdec68abe009a",
+    "audioforge/native/plate_mod.c": "611089d42fb0044cebf80e54417c235e7d79ecf0ac0f7e59921d3471b888e806",
+    "audioforge/native/struck.c": "f37e016a017288ec7ccf24b84840f8be28930d2425ef25a0174a09260ddca53f",
+    "audioforge/native/sympathetic.c": "f81008644c05e88356d4e198d4b2147badbaf3a56e03fb3ef0c1b0facfec4490",
+    "audioforge/native/tape.c": "1709c7dfbf1d9b7ef98db59f306293f4389755a66769eed88e2706898c4ba778",
+    "audioforge/performance.py": "ac34b954aea8f1de34e42b8dff271c2b5ea7d0284168278d1a7269124a6c85a2",
+    "audioforge/plan.py": "7984e7bd7188dc24eefe8a6fbb709fc1542601f8af5fd378cc3d9300de7ae17e",
+    "audioforge/plugins.py": "5e6de5371802eaabc5254c792dc8b17b6608a02820b21109d7960a0e0f87281a",
+    "audioforge/render.py": "318434403c8d0955d576fe121ee1c312c93c1cc4a3e8d91722beccabfc7fc474",
+    "audioforge/repair.py": "eed9de2662c3a092e7a573ff4cab8989df86a3bab9063eef3fb7b7d58513a6ca",
+    "audioforge/resolve.py": "e3ae906f4ce36082662b937bda812721df84e8acd229ff5a87b4a5b584ebf62c",
+    "audioforge/sample_catalog/__init__.py": "c26d6a46a8cf03c57aad4952adbe86b89fbcda7c1b485cd9e38e19200bb81f3d",
+    "audioforge/sample_catalog/analyze.py": "d84480fbe9796ce4d0b671829bb19c038d415a4911213eb5d52cdffa023469d1",
+    "audioforge/sample_catalog/constants.py": "c459f43de5d80443cdba622898cc91baf23d1c8e92b1120792af7c0cb52960f6",
+    "audioforge/sample_catalog/download.py": "dabcae3ed7acb7f186419379b0b1fc1b928460b84068d7de709ea1c8a74bb72d",
+    "audioforge/sample_catalog/group.py": "f511fdad2049a89f6d013020801ecddde740e476ab8330ca554a3019cc33695c",
+    "audioforge/sample_catalog/licenses.py": "e01cbe0d81a403785ef3734447df42b691f986862df8da24a2cca79404b5bc06",
+    "audioforge/sample_catalog/manifest.py": "844edede9904850c74825d7842378ea436481efdf469162c6e59a72063a5653c",
+    "audioforge/sample_catalog/review.py": "1a991cb55edc1a0d513c06d73e707334a60624d830e6453411c6f781ade6e607",
+    "audioforge/sample_catalog/sfz.py": "62ef893d489ba043c157533ed15dc490fb8b1b5ea338de73dd44d99ebc6b6657",
+    "audioforge/sample_catalog/sources.py": "8a0e2937fbec4733237c82ba0dd88c8e1ce25ce6d3bf1e95e621c23d24070a0f",
+    "audioforge/sampler.py": "3bf8453a0c2302d9e0780ea2f180120194235122296ce29dc446ad9d34d03a5b",
+    "audioforge/samples.py": "6820905fa818bbb9e0325ec678dfab6ec9a2ce2425dcf201b9168faab9f0ffad",
+    "audioforge/schema.py": "fc761aade6b5f52f043be9b1f63f216e3a35329a701a39c607c4c4da50bc4fe8",
+    "audioforge/score.py": "92c6f436e4b67a87f415249f12e2bbbaa8082bd84604eb7f87725e8a67c6481f",
+    "audioforge/sdk.py": "f99042ec699f7c7b225571721dd170a41458629eac88389a755195feeaf658a8",
+    "audioforge/sequencer.py": "9dcb3b262f9f04385d20c1bf9c1baf5716f9aea53fdd786ae3ff0a16ea45df53",
+    "audioforge/spaces.py": "8bafa5cc7e2c02541e5f1226c0cfc271b6e8620503a1c7c77187261cf067b72c",
+    "audioforge/stage.py": "118e9ac002a1eb1305489f9a774d94aea2e47ffa698dd1be48d4e491577afa74",
+    "audioforge/styles.py": "7c14ca8d85878c416fff08c40f19fda8f71be49309fd28c6a1ccdb00368de574",
+    "audioforge/synth.py": "39802d59797f9aac4f3c47c39f52e23f408996b85a0870c2af75e6436c45f40a",
+    "audioforge/theory.py": "617f03ded9fb57ee6d6ae23025440d3fd681053facd293f982d5d12744540ad2",
+    "audioforge/theory_pcset.py": "27ab6f41f4a6341bacef5aacc3e65ce03a37372cd77080b9488cc5a91736a486",
+    "audioforge/tools/__init__.py": "0044d196e40b84fe00971af4b3829f72e6b06cfbe9c91a2c9a62d8b49ae7198f",
+    "audioforge/tools/bump_version.py": "26720c63dd5e341c14eac6100b2c5ec96bcb30e4cb6798d7fce6fd79e93af9d7",
+    "audioforge/tools/gen_capability.py": "008a97f65d9cea5f335baddcc1ea788c86e7a11a784cd7a449876b54278aacf3",
+    "audioforge/tools/gen_docs.py": "38d9c153e9a241f4dca9bdabc64fb77822d20013cdb8ee18c3b8b99e2c6b2d43",
+    "audioforge/tools/gen_interop.py": "0323dd72c3ad03d5c0fefceb77a88fc5b4b3f5f89f381822acc04cb9d2f6b41f",
+    "audioforge/tools/gen_ir_schema.py": "1ea1d41d51ca453f80e44d31c7b7a25757854fb735969844534dbc13f00f8da2",
+    "audioforge/tools/musical_acceptance.py": "eab8dca496e976382876f049d0389e8bfb6b2e6fd9338db21b73b59ad7f3fd86",
+    "audioforge/tools/notation_acceptance.py": "aa68a239e54a3b74400873e4e15ff0b8a09d2806f304513a79ec33ffe2a7cb10",
+    "audioforge/tools/oracle_check.py": "d03122f296dea7c2162bc23bf46920bf1cd8094eec985718cf7b1ad19b9cccb1",
+    "audioforge/tools/render_golden.py": "1d103dc856e1c84212cf9d39f28fc26eed13cedfc85e63fa00ac003094f818b9",
+    "audioforge/transitions.py": "fd2a3393db5d62b3fa5ebdd0f7bdc939d8f46bfa5d1c0d93d3b8b1fe05fdc953",
+    "audioforge/version.py": "c99c152d62d7e90f14b31cc78e24ce64d277452841a508348ef3bcf979397c60",
+    "docs/examples/archive/bwv949/bwv949.af": "a7f6c864db5b8a38e0edfe746282acd942226f591754de28e3124920038cb9df",
+    "docs/examples/archive/cancoes-sertao/cancoes_sertao.af": "1c1d4af5fc79eecc3aedc2026bec78d4e78a274a069ce66430f0f1bbe9d230c5",
+    "docs/examples/archive/unser-leben/unser_leben.af": "6f3eb07bdc47b756a174e112f247ad1bd566e080a1c998045c4d5d9f588ede0f",
+    "docs/examples/arrangements/mysong/mysong.af": "0ee6015c92cc9401cb7b2aa1f5b79a6d95a21990635deffdda3e5cafb244aa8a",
+    "docs/examples/arrangements/sweet-child-o-mine-library/sweet_child_o_mine.library.af": "ca344e4d53141d6346465130d61e893a2b9ee25ebe6ed6b3183b236ef963f081",
+    "docs/examples/arrangements/sweet-child-o-mine-tuned/sweet_child_o_mine.tuned.af": "db67b3d7623dd6a500da760d076be74f52b479edbb74fe937880e431d8da1b1d",
+    "docs/examples/arrangements/sweet-child-o-mine/sweet_child_o_mine.af": "b77310fb1fe9d56df9e945c8677392b1f1190e7e745a9f75b432682cb107a5d3",
+    "docs/examples/catalog.json": "d4a90bcc218de68e1e5b2de67988614138f37c35e3be8e52f49474a7217c249b",
+    "docs/examples/electronic/2030-synth/2030-synth.af": "e897f200c1edf5f7cc599499379d0be006d59641984713480fdcc4699c2bacfd",
+    "docs/examples/electronic/last-24h/last_24h.af": "21fbc5fb9d2f13ec19642332f0d3ae96b3912e2b982e9632e42d3c60f2e3229a",
+    "docs/examples/electronic/neon-voltage/neon_voltage.af": "efe64fe36011369702c7ee6c75685e767768f54f1f63b46b92c8d125fdf33757",
+    "docs/examples/guitar/slash-inspired-v3/slash_inspired_v3.af": "e9d70e32b6f8ee30aafb6a36b9ced2333b46d2fe7e11046750bbb207f097fbcb",
+    "docs/examples/guitar/slash-sfz-guitar-experiment/slash_sfz_guitar_experiment.af": "b08284825d36faf2662b473c8a7c6e2b91201633a15cd0d72e849ebec2e2c5f8",
+    "docs/examples/guitar/slash-style-solo/slash_style_solo.af": "56b06a09992d17da54766411f40e10572d22083faf8e6570da04e1280b85ecc5",
+    "docs/examples/jazz/blue-in-five/blue_in_five.af": "e31fbecc375ddbd62c924660e2799a94a5d857a70456b7a319c106dd37c4a0b6",
+    "docs/examples/orchestral/2030/2030.af": "9bb279eb0303e3607d997394cfecd2f9c9db45231b0e3cd8c09bae5bff9e50d1",
+    "docs/examples/orchestral/fable-symphony-orchestral-v2/fable_symphony_orchestral_v2.af": "fd325991e4a92c7f647ae8d1882ea179f17e70f45412a8dee87e82ad3547f3d3",
+    "docs/examples/orchestral/fable-symphony-orchestral/fable_symphony_orchestral.af": "d409e802f6d2076b85befc83ce7c1163a4dc0bb6911f708672e013e995aafb88",
+    "docs/examples/orchestral/fable-symphony/fable_symphony.af": "3783aa044f4e3f97bdbe1475983e429c35f65937cddb9bace9d09f081e03ecdb",
+    "docs/examples/orchestral/ode-to-fable-symphonic-v2/ode_to_fable_symphonic_v2.af": "95cc3ebcdff53bec5aadcbf7d21a313b0c2d54c15d4d026d98b761c9268f1540",
+    "docs/examples/orchestral/ode-to-fable-symphonic/ode_to_fable_symphonic.af": "9d338567cec326362c908470cfa950b8ab10a335551cb5e462663184264bcb9e",
+    "docs/examples/orchestral/ode-to-fable/ode_to_fable.af": "bd65158a5dce3bae1b9486777b5aa0f2bb1308c06f1c1b61da77adc5f29fe39a",
+    "docs/examples/orchestral/the-first-light-revised/the_first_light.af": "49eec868a2ab88281930a4e9bbe679970a769d80d5e3ef2ea978a9cf590b903f",
+    "docs/examples/orchestral/the-first-light/the_first_light.af": "9a05499c9b274ee61f7f322a3bf8d118ac486cfd7702213117c680e1c3d72376",
+    "docs/examples/orchestral/to-be-alive/to_be_alive.af": "3a9f010dab703cf4c7da31ab36ae8ee280f4f1ffc9e0ed442eb63d6e1ecca804",
+    "docs/examples/road-trip/s01-departure/s01_departure.af": "a471ed867632a6c724fcec5fce1162d2e23d6d85284527afb268b427144ce545",
+    "docs/examples/road-trip/s02-leaving-town/s02_leaving_town.af": "b9ce3eac13a46ec683d2e64319a8cb673099756d1dbe3c2770c435746ae251e2",
+    "docs/examples/road-trip/s03-highway-opens/s03_highway_opens.af": "b8d23d7c16404ec10a9b2f91f095b67763d54beba20892c3a99f32a45397843b",
+    "docs/examples/road-trip/s04-daydream/s04_daydream.af": "dad4c4ef0708d461d7ec34e1d35ee605d5f5a05e275fc3e84f992eaf23e21571",
+    "docs/examples/road-trip/s05a-road-game-pt1/s05a_road_game_pt1.af": "9e71d8709b42f0ee3d6ce075a66f724b3fbff61ea705252157360cebd33a2f71",
+    "docs/examples/road-trip/s05b-road-game-pt2/s05b_road_game_pt2.af": "a080c2357ff183cbf97375e644a7c06c66bc26ad52a5795348dbd2e273721679",
+    "docs/examples/road-trip/s06-big-view/s06_big_view.af": "b33060f5ed675cd45b0f0c55d99879c282c9d2281d6b5367d239060b0d9895bd",
+    "docs/examples/road-trip/s07-rest-stop/s07_rest_stop.af": "034acbf3b162cecc10ffa8f0435ff145474c19086a4bd61faaf7def370fbe836",
+    "docs/examples/road-trip/s08-golden-hour/s08_golden_hour.af": "758d595a93b20e8d0552b2ecaa86743d32f6efb10d06357c77eaa3869e82f113",
+    "docs/examples/road-trip/s09-arrival/s09_arrival.af": "01fb95737c8f76628eefaf6982cf9bc046cae05f1e04e0a9a411c490a2f0273d",
+    "docs/examples/sound-design/transition-sweep/transition_sweep.af": "7efcc4b16a162166dd73e8f246369bc59a1f94373c9373ef6f374ba29d941037",
+    "pyproject.toml": "0a8c559c358c8a7decbf4b40493465c5d44b54314ed8e676de1c9c33b358c6e4",
+    "scripts/run_tests.sh": "560d5669f7a157fefacafcfdd07ff9d8ad195cf79ee5dadc581d1f6b12ae5b0c",
+    "tests/af_corpus.py": "45b7eb495a081b4e530274ca1e6316e8c83925c8a63183969f438a5be52208d4",
+    "tests/conftest.py": "cc4636524f36cb290cf27011940d9970a6187070fac3d7b1d4fe5530b9db0321",
+    "tests/fixtures/musicxml/xsd/LICENSE.md": "7154b050acf9255e948b9ef09be91bdaa4e614eedce950ecfbbecd2041db8f76",
+    "tests/fixtures/musicxml/xsd/musicxml.xsd": "49ae9e34e04ba5b72004687994f70d598323eb3353eadb62faedcc9e9dc4bd7f",
+    "tests/fixtures/musicxml/xsd/xlink.xsd": "67c7f7a02491babc51e11c10268150b1a76070da36d5abe88e68515009611966",
+    "tests/fixtures/musicxml/xsd/xml.xsd": "616a3077df5cfc954ac74a75abe9697b95eef7a85dbe09367d995a483e840eb5",
+    "tests/fixtures/notation/README.md": "11ebc8b325e4b49db00eea3a0ab2d7ebb581797cf2eacb9f7a4c6e14ac564181",
+    "tests/fixtures/notation/chords_ties_rests.af": "018be0304b69e0947ebbc597dd7d8bfd25db5adbeabee646c375f444127555f3",
+    "tests/fixtures/notation/chords_ties_rests.expected.json": "46598c1dd9fb2a7f66866efed9661020535665f6b27cf549ad51b5b34bd7f05f",
+    "tests/fixtures/notation/corpus/README.md": "0b2634eb9d62d1d3eb6193919d69c46341ffb6c928bcc8821dcdfa2828465d6b",
+    "tests/fixtures/notation/corpus/bwv4.8.musicxml": "a8d049dabb570388a75905d96f445905f9df19a84dc97c0e648576584c4f0dd1",
+    "tests/fixtures/notation/corpus/bwv66.6.musicxml": "2c11892d62242fa77ea6767df95a104c00fd98923d89d70228a839cb0ac03cca",
+    "tests/fixtures/notation/dynamics_articulations_slurs.af": "f89b0c10f4ff65d886f35228ae74e0cbebe8d010a42a113eb2991b5c8e74cd70",
+    "tests/fixtures/notation/dynamics_articulations_slurs.expected.json": "3cd651da2a6704815165895b1f4165c20833b1b3c4b404c99bb4383273ef3a01",
+    "tests/fixtures/notation/form_sections_repeat.af": "d943c66eea7d803d3b6e2d4f2d437cfd8a6e323a2c809c40b46fcff75163b185",
+    "tests/fixtures/notation/form_sections_repeat.expected.json": "3e22100b90f8344c6e7bb47f67f91a5eef12158b4e8cbd717de16de4e360da14",
+    "tests/fixtures/notation/meter_3_4_two_parts.af": "c0244671416e5ba7caf801b41196d0a1195a47ca79868d5938dd02b5d6030b18",
+    "tests/fixtures/notation/meter_3_4_two_parts.expected.json": "7a6674622b8e8c44b4d4fb6d9227e0a27d077561113838197f3ffa58dffdad35",
+    "tests/fixtures/notation/meter_6_8_pickup.af": "8487de46f877ccd9ce69cfcf8beb080f2b62b22ac0ceaa2b59de71dbf55e97e6",
+    "tests/fixtures/notation/meter_6_8_pickup.expected.json": "c8297abe359bb2f7d4cab62879ffa03c7aecdee3a7793b5f1380faec48892f8b",
+    "tests/fixtures/notation/meter_7_8_key_change.af": "d901dd62382d8bd488c938824b45b2fb5b0be1a34cac7152388baa16cae90f69",
+    "tests/fixtures/notation/meter_7_8_key_change.expected.json": "3cb4473c672bc55165f200bcce76e4e445d3f83feb00835f996536a0c6ba8470",
+    "tests/fixtures/notation/microtonal_19edo.af": "241a22afead0015ca260b95862d0206ec2be72958376e07c8291397476d1f530",
+    "tests/fixtures/notation/microtonal_19edo.expected.json": "7dec797902b40c04560f0fae3a636dbe1b9c765e08573dcedd9394a99bb26f99",
+    "tests/fixtures/notation/polymeter.af": "913c744f080250fe36dc7571978553987e9296f85ae4dcb1026230a291b1e9a3",
+    "tests/fixtures/notation/polymeter.expected.json": "4db46a8ee6dbc6cf6e1f692fff6c9c4de37e3add5e96d5896dc2443e2a13effc",
+    "tests/fixtures/notation/polyphony.af": "0f8195237aa557b833722c3f948f62e5e6c533b5c622fcb2a054d20c81467590",
+    "tests/fixtures/notation/polyphony.expected.json": "79ead385052899342cc4b18917f6d128abf4ddd1efc37092f5dc5d1cb41a9f69",
+    "tests/fixtures/notation/tempo_changes_fermata.af": "72d9eff04821015f9ea8d636cf72a91eb4843b795c15cbd202bddb8d0a1bcb23",
+    "tests/fixtures/notation/tempo_changes_fermata.expected.json": "00caf398ccbd89c0e34b8298eab7833e07e94eae7382a15a5a2b5c16bae8a8f2",
+    "tests/fixtures/notation/tuplet_lyrics.af": "bc17a53a2d11f10400907f6e9dc35c56f13b5ba8472d098a31acc7c1939fa0d8",
+    "tests/fixtures/notation/tuplet_lyrics.expected.json": "0f3e932e5564efbcdad2b8fddf2dbc95e460c1e591054f7d0a92894f5c252d1d",
+    "tests/fixtures/sample_catalog/tiny_approved/LICENSES.json": "36a3d8982c36af4c3412d8263ee66e8df853a674afc10a64a6a829c6d35247f0",
+    "tests/fixtures/sample_catalog/tiny_approved/instrument.sfz": "1bc28277891a6125055fdc9bcce63d822b8d27c07ff193116bc846a081a76729",
+    "tests/fixtures/sample_catalog/tiny_approved/library.manifest.json": "c012ee7b846bcc8fbca2769b947c4c4061ccc968af1d3c6b952a90a181c937b6",
+    "tests/fixtures/sample_catalog/tiny_approved/samples/C4.wav": "77775d6e0e4c6216d250040a9842672999192efb59938ff6228d34daf6566732",
+    "tests/golden/audio.lock.json": "2a2a94369456d5057688fe4c8ee6691121403ecab89d9ec555d1bd925f66bc6f",
+    "tests/golden/audio/fx_filter_sweep.af": "de3ee9015de67fb95e9da69d45e6a2c7da852a89749de2ba7101b040e7c39ba2",
+    "tests/golden/audio/groove_beat.af": "e9301bd47b70a1dda26d94f1d2478549f22982011c3248f4bb9b4a8302c19efe",
+    "tests/golden/audio/loudness_limiter.af": "184a652106d73266fd80446bfa24723c877f9d045c0ce5d3f6a9c8a3e8225bd6",
+    "tests/golden/audio/multi_layer.af": "c1373f11f655e277793bb8e293b95038d6cb46d25eb2acde2df25a9b991a0450",
+    "tests/golden/audio/synth_voice.af": "0517eda270571948ba92f0135a2abc176b849643cd20f1307e1bb8ffcc38eec2",
+    "tests/golden/dsl_ast.json": "0b0afae02a13575184b533c3e77f24059890bec50d853f28c99841d5eceaa0e7",
+    "tests/test_agents_md_sync.py": "614454a69df3ba7ac0040ad67a73c3f714e2657517f3af9eb348e37b7b0f128a",
+    "tests/test_ai_agent_dsl.py": "01b94d9c4954b25fdbf0dc8c687430c30c78ee2bb2be13104a35c1a56e5a90d4",
+    "tests/test_arrangement_correctness.py": "331140483e948f66839cb91cca4316f570a1a53ef9b995d95025bbe97fab8ec2",
+    "tests/test_audio_correctness.py": "7f38fe2682211d0a4f41b6cf158aa16618451308778ff38b6dbca24f92cd4c92",
+    "tests/test_bump_version.py": "42c8818d9f1d2138a6a406adbcb91c55270b99931ff79d22a0224ed5495540d3",
+    "tests/test_catalog.py": "9e5257f8c5c47970817f1ef34da738b61fc55b50dcd49afdeebf6cc7358aa535",
+    "tests/test_catalog_freshness.py": "3df515e8053b2f2918acba2d2d05f7f7a065e4d2f4c5a1852180c2a582688645",
+    "tests/test_ci_make_check_sync.py": "eb231f242633acba0e3cc7f067bc51412df39f469164a35214188d83a185af69",
+    "tests/test_cli.py": "360aee23f2829ac0157ba476fcc5b3a2e043a1628d794a1d18e2785cdaa1dbd3",
+    "tests/test_cli_docs_sync.py": "55a94cf8a7fa8d4b24ff5918e899fd543211066e1bb1347252eb2188dc28b1c2",
+    "tests/test_compose.py": "8a7a09fb845c11595e139de6b78788002665024bc4e33801eb3fa4286d5208ff",
+    "tests/test_composer.py": "a67445b385123cac5fbc2bdf117adcff959c426d7e60aa407830b5230119ce8f",
+    "tests/test_contract.py": "b9a6b217fbd6054a88338bee316406f6084e4c4cac9387702e007cff0f19dd98",
+    "tests/test_contract_audit.py": "8a50be4c178cc7b2c514fa4cce082176589ce9775d4414d146a80ff65b2fe794",
+    "tests/test_curves.py": "c331042e5532a3846b97173e85fa8f710cca24bad4364988dbd6210fb3d14708",
+    "tests/test_determinism.py": "8c3c6b28a9561ca682610a03e974ba735131709cddc14cadaabfe2c9d964390a",
+    "tests/test_diagnostic_codes.py": "2d5c6435575590d4754788cdf68cbf9a628d44bb6191c6f376ef9434adbf2b44",
+    "tests/test_distribute.py": "a842f6db11280febe261d3f774f2dee19eff290fe6e9e68511782d4f1edab02d",
+    "tests/test_docs_regression.py": "4146e70fadaaab41f9bdc901417ada700f7476400718737cd3fe92e279e82879",
+    "tests/test_docs_site.py": "4d552b2aaca88f33ef359e4b6582ee978c4ce95a21f85609c45f57d612fdeb1d",
+    "tests/test_drift_check.py": "4f8cfa80f73f24a31e555f3bf7f95f02223516bdca095b5c9069b211556f4c67",
+    "tests/test_dynamics.py": "81eef45e2612deeef6e742cce21d63e9c06267dc3c43e018c7db9dbb3cca4308",
+    "tests/test_examples_catalog.py": "48b9de9f1088a3d38ecff59fbabf47bd888263bc4df3c33d2acd6956aa0480f1",
+    "tests/test_export_presets_docs.py": "536b10bad810c9c1c83112fcaa43e6d3d4b3783ad64d5ce9aa86a4932cfcf63c",
+    "tests/test_expressive_techniques_acceptance.py": "dd58ad3c5a61102006a3174eacb2ab4748818e21c8a73153605effc96ee4f881",
+    "tests/test_expressive_techniques_lowering.py": "88bea18a95932e4a971393fd8e3ea471b4c8ffae2a44f9ba02f3abf9c781a674",
+    "tests/test_expressive_techniques_schema.py": "2f924daa790dbe843a0910f3655c2eaed4ef3035ccdc38f32cd101024c827e5a",
+    "tests/test_expressive_timing.py": "f77f68dd7406d98247e1fc4a0004dca3e8068c271a5f2f40b2b7ab17ba990119",
+    "tests/test_gap_closure.py": "c6fe550db49bd16aac8046f1211fb1c49eb558cd9af5c7a5c4b017291baab471",
+    "tests/test_gen_capability.py": "d5604bbde863424ef10dbeccb2f21dbea5c9809c32bc9677f788682053eee809",
+    "tests/test_gen_ir_schema.py": "20ed2dbf156981428e51b2dfba8cfbf41798239d5cedb35369bf381a9b9d631e",
+    "tests/test_grammar_token_sync.py": "60637a2fa4c341c3336f11d52532f2f601b27421764ea55301ee36d8aaa6be16",
+    "tests/test_instruments.py": "720f7bea23fd18d241dba5a147c36e690acbfbb64fd9e0efc69e0965c3153a11",
+    "tests/test_interop.py": "d01b6e93368313ff16d92c1b7102acb4902f8b61abd2a43b34201c3a7bba88f2",
+    "tests/test_ir_schema.py": "a17db6624ef33933ca27edf1c8a42436f129ba3ee9af849bb647219cd6f9c7ba",
+    "tests/test_lark_parser.py": "5b16dd0b561e1d2d45c81ee39cf2f174ebd290a087cc48dbef60ed1b72ae29f5",
+    "tests/test_lark_single_path.py": "aa55b04272d1436f54a76cd46c03a0e581464f87ec90f670e562c8288903da6e",
+    "tests/test_library_pin_integrity.py": "596724d4ae91c843cd019a4b69307a02226fe0ea5915c9dc57a9424195733f4e",
+    "tests/test_makefile_targets.py": "f2619db1c561713cd04aa83e3148a68481533028e7f3910e2ae68ed48de764bb",
+    "tests/test_manifest_registry_coverage.py": "6acf280f8f4b023d1f75bf9d3ce4a71c40511309ab72bc18151186b0434a7ab2",
+    "tests/test_mcp_contract.py": "53f85db2ed5b7e56ba970087ba643125cc5bc49e0ebda9ab52c5678f212f1942",
+    "tests/test_mix.py": "6127d0d6f332ed62aae4282f14e863e919e1236b3ea68659b5afc91552046401",
+    "tests/test_musical_acceptance.py": "d6d393740810f1db2299363f4cab89534d142c513f8caece0cb6273dd3268233",
+    "tests/test_musical_correctness.py": "2a7a40b7eb4d3b16a043841c845b3d82a7286c15d119b4169bfc5e5c4b655b50",
+    "tests/test_native_kernel_docs.py": "2626fc9090022b7ced79e142012253f076bc0ff041c81a08ff1a0f04c6744883",
+    "tests/test_notation_contract.py": "785a20a73f7c8f40e08591c66f5e7c6198059664a7f1bd43c66a6bea2c6e2982",
+    "tests/test_notation_oracles.py": "156e1023bfcf11c9ab33e8c9d210558d9449d3bf3810940a6285778ee1a50a1d",
+    "tests/test_notation_projection.py": "c37744471d3c6bfcd222befa90a56f27a214c136a8e945000591fe25362c0124",
+    "tests/test_palette.py": "89f25f59a3d5d1eca1a696c6d6c3fa298a5bc5e0eb647137171a2963b2f02eaf",
+    "tests/test_parallel_render.py": "b7bf056ac965f2a9de53900607db126f953f86e270d7ab345b9b900c4aaedca3",
+    "tests/test_perf_budget.py": "f2f7c530a16a6db9dd2f6273866fdefcaf8edc7d0b7235bd60c69a97e707f0a1",
+    "tests/test_performance.py": "ddf55155e3affef6b8a1c91811c56e9648a1d69ab77cbe2fc86e447783af35b9",
+    "tests/test_performance_curves_compile.py": "77f411d53578b4ac3fbf3bf187fc6306b104db95a18c89b66f42e0aedc6386d2",
+    "tests/test_performance_curves_render.py": "75ab71aa9bd607c16525ab264bcb1b17c2f3976f84e4621ca50078243db814a0",
+    "tests/test_performance_model.py": "91a19798a53bfb3af4a3cc90ea5b92c35316e872291222c222d9c69d1f11ab58",
+    "tests/test_properties.py": "5389424e0d3ea2e30c3db4436770221d3e8fb7b7f9da1c9bad84e33caa31a4a1",
+    "tests/test_quickstart_paths.py": "72d587af649970e13989d810d99fce91329cc9c0b69e0fc66d5a6e886ec70525",
+    "tests/test_recorded_legato.py": "70e1c5a283ee16c7fa8a16e075950204f8b15216152b214c6d6d21c7a91083df",
+    "tests/test_release_review_regressions.py": "76857f237c877acb7aa09d0ceb73025fddf6a4fd1c5a0e79f48f74ea062183b5",
+    "tests/test_render_golden.py": "c99f2150c617b5a857f5b86bc5f277910eec3feaffaea52f8bb2ca3bfee81f77",
+    "tests/test_render_guardrails.py": "d4965edb75252127700945a46e09effcc6767a9af1233c9a7cf5d0207b47f946",
+    "tests/test_render_plan.py": "d9327c98ef0754f6bcdb285577b3c28f4de2de40ffc2eca96f7ff3fe999d7d87",
+    "tests/test_run_tests_script.py": "174938ca874ae93390c16dba8a13454720b1d7506acfed78ac1595be7306b2e6",
+    "tests/test_sample_catalog_analysis.py": "96da35e60f3c1f3348265ed00763c858225622bea856ffef35088b92c9034462",
+    "tests/test_sample_catalog_cli.py": "bba45ce3ab0313882a859b725c6519c0e95ffdd154cefdc934b8d112be0d3155",
+    "tests/test_sample_catalog_download.py": "b8e93f32605b36567edaa494fb72e65ae1a77373e0b30d242b99b2db820ae036",
+    "tests/test_sample_catalog_fixture.py": "4539dd8ace615ffd791102cfb041e2f32c5d5441ac9b44e78d1be2225d30e327",
+    "tests/test_sample_catalog_freesound.py": "8e2f808d6004090b8d52ebb8b90e9e337bfd9aba777ed26a966488d03c87c4f8",
+    "tests/test_sample_catalog_hardening.py": "d1c2590ae1b4b4b78bf3fc42bf7200598eb5d40c275e9b4e0ca76b4110e3cd85",
+    "tests/test_sample_catalog_license.py": "0ef21788210acd3b12b7a2d29b0961c3b734a51af9e79a88333143621e085a85",
+    "tests/test_sample_catalog_manifest.py": "1fa13300bc2742a0d370358ebafe554698f268d48d50f0ef54cc80b7fdddba08",
+    "tests/test_sample_catalog_review.py": "604a1ad907aa1776fa62e51de3d5df33c5f3248b777896b9d344991b269fdab2",
+    "tests/test_sample_catalog_sfz.py": "b9053235e6110032bbbe093c54b8a0bdb1ffa370de955073aaa312517e8cf864",
+    "tests/test_sample_catalog_sources.py": "aa0d70edebda4e2650f18fb5dc86d2d20e68440d610901ff3bae06d426e47235",
+    "tests/test_sampler.py": "736c8a7a1cc6ffb297fca755d46c98a1ab2ac277655667a64304e267cb058c98",
+    "tests/test_sampler_stereo.py": "e5d8725c528851ad6bf1674bd2cecc0dca3017f15142ef9ad635ac7c8b96ef35",
+    "tests/test_samples_edges.py": "6d47b5c9bef0eb4b0915a669948dc341a9577be20f0dfe380b2216cdc02d2bd5",
+    "tests/test_schema_docs_coverage.py": "60726f0ca86c8226be166ff37ab1d9c1f1dcfedbd237cba0c129a5fc27010265",
+    "tests/test_schema_edges.py": "aa46a6c27c04fcb3891a992ef7c6c74b1b855307dfa24f6124329d7e52b31ac2",
+    "tests/test_schema_sources_sync.py": "fa6a310867f8a5acf04fe2805db5935e70a5b06294686a1a47a630090497e649",
+    "tests/test_score.py": "08e4b2fac27e5a8e73373334bb8a647a78bb86ee843c4d3b206c0768a0fad508",
+    "tests/test_score_layout.py": "e32990c3a85da91dd19544ca200706b39537566ea5e0a6002e11e9b1a06415c6",
+    "tests/test_score_timing_validation.py": "f6b18de2d93f5be0cd0aad616aacfd4783f45c1b34057ca2ff33955c78a4d701",
+    "tests/test_sdk_edges.py": "663407651f9174e1b15d894650bc68d63c8b9ae7d6ad128152e92aa39ca7d726",
+    "tests/test_sndfile.py": "20932e98dad1fa804182fbda9ee53d30bd9eaac55835af7f3842f97b93fac287",
+    "tests/test_stage.py": "25ce41e3a5de45c35bcff78ccf0c312685d1f7fe51c805d89e86be2f0e9321eb",
+    "tests/test_sustain_gap.py": "03c8a53aa37eb1843365922c8812c6572558bc71344c27a6c3ee36e6d78473a6",
+    "tests/test_t2.py": "059be10404ed5d2987d6f2a8050580cdd8b6ac69ba94038e3a4ee4fc21e2566a",
+    "tests/test_t3.py": "608f98888c82467973d376b11c520c2c181a2e95bef34557d651565d5f5c5748",
+    "tests/test_theory_pcset.py": "62ba60c2e2b5b7b1e9eb3af316cb7e4063712969954482d2e34315798e0e5601",
+    "tests/test_tuning.py": "f1e703d2fa73c2a7de768dbb8f309c7fd0e5a090ed2a1d6b362c6de772a1d40c",
+    "tests/test_universal_music_pillars.py": "0a56be96a5bfd0b8b898258d0aa281451e142740f3931fbd4e278b38dc1bd105",
+    "tests/test_v2.py": "753be4b533cdc49580cba2eb80ef4484a4ce7b803e94beaaeca615f63af48c11",
+    "tests/test_v21.py": "4f9fe05613c95b788803cf71808aba08511c3ba6d720e0ff13e671bdddbb6dfb",
+    "tests/test_validation_purity.py": "005dfc8504476400eb035472b7f3d0c84d52c8365ff8bab5075f84638ad62ded",
+    "tests/test_variation.py": "c2c86ef7b58cd55fff8bfa9978c03d7e7c7dcce36a2c0e062dcbdb2e9df0b891",
+    "tests/test_version_sources.py": "b0853df303548305154e0c758cd47ef6d7ea04ba960f223c2c169b68effb4017",
+    "uv.lock": "7df13a76c3491101b35daecc13e9808a67d3e83bb8ac6f1b33c9eb7959a27a84"
+  },
+  "finished_utc": "2026-09-06T13:10:51.931488+00:00",
+  "source_inputs_changed": [],
+  "summary_sha256": "46cb9fe254fd84c8420b5d1e8ea5e60def9c7c3cf295922ee941deadda8d5cdc"
+}

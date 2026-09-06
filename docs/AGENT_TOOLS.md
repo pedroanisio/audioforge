@@ -53,3 +53,11 @@ seven measured acceptance cases and a standalone listening-review page. Add
 `--baseline-root CHECKOUT` for a comparison. The page embeds WAVs and exports
 listener-entered judgments; it never invents ratings. See [migration and
 review details](MIGRATION_3.md).
+
+## Notated MusicXML export
+
+`export` accepts `format: "musicxml_notated"` and an optional `grid` in quarter-note
+beats (a positive multiple of 1/32; default 0.25). SDK callers use `asset.to_musicxml(notated=True, grid=0.25)`.
+MCP exposes the same export request schema and response. Artifacts contain the XML;
+`diagnostics` lists registered losses, including `lossy_polymeter` when using the global
+score meter. Unknown formats return an error envelope. See [INTEROP.md](INTEROP.md).

@@ -1,0 +1,2 @@
+["/tmp/audioforge-notation-oracles/bin/python", "-c", "import xmlschema; from pathlib import Path; p=Path('tests/fixtures/musicxml/xsd'); assert (p/'LICENSE.md').exists(); xmlschema.XMLSchema(p/'musicxml.xsd', allow='local'); print('MusicXML 3.1 schema loaded with local-only access')"]
+MusicXML 3.1 schema loaded with local-only access

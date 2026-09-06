@@ -33,3 +33,7 @@ docs/examples/**/validation.json
 docs/examples/**/*.pdf
 docs/examples/listen.html
 docs/examples/render-report.json
+
+# Notation oracle evidence: retain reports; generated scores and environments are local.
+docs/evolution/evidence-notation/**/work/
+docs/evolution/evidence-notation/**/*.wav

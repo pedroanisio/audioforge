@@ -1,7 +1,8 @@
 """Regression tests for score title-page layout robustness.
 
-Engraving a dense, long-header orchestral score
+Drawing a dense, long-header orchestral proof sheet
 (``docs/examples/orchestral/fable-symphony-orchestral-v2/fable_symphony_orchestral_v2.af``) surfaced two title-page
+
 pollution bugs:
 
   1. the program-notes blurb overran its column and overprinted the footer
@@ -11,7 +12,7 @@ pollution bugs:
      ``Contrabass Pizz``, ``Violins``/``Harp``).
 
 These lock the two pure layout helpers that fix both, plus an end-to-end smoke
-test that the exact conditions which polluted the page now engrave a valid PDF.
+test that the exact conditions which polluted the page now draw a valid PDF.
 """
 import pytest
 
@@ -107,7 +108,7 @@ def test_family_geo_is_roomier_than_packed_floor():
     assert roomy > packed * 1.4
 
 
-def test_long_header_dense_seating_engraves(tmp_path):
+def test_long_header_dense_seating_draws(tmp_path):
     """Reproduce the pollution conditions: a very long program blurb plus many
     sources at an identical seat. Must produce a valid PDF without raising."""
     spec = {

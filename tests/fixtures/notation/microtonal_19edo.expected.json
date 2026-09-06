@@ -1,0 +1,15 @@
+{
+  "meter": [
+    4,
+    4
+  ],
+  "parts": 1,
+  "tuning": {
+    "system": "edo",
+    "divisions": 19
+  },
+  "constructs": [
+    "tuning"
+  ],
+  "measures": 2
+}

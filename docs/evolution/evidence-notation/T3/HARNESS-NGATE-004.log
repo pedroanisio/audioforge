@@ -1,0 +1,2 @@
+["/tmp/audioforge-notation-acceptance/.venv/bin/python", "-m", "audioforge.tools.render_golden", "--check"]
+golden-check: all 5 golden specs reproduce byte-for-byte (env match: True)

@@ -1,0 +1,9 @@
+asset chords_ties_rests { kind: cue
+  duration: 8s
+  tempo: 120bpm
+  key: Eb major
+  meter: 4 4
+  layer keys : notes { osc: sine
+    gain: -12db
+    notes: Eb3maj @ 0b for 3b, Ab3maj @ 4b for 6b, Bb37 @ 10b for 2b, Eb3maj @ 12b for 4b }
+}

@@ -369,9 +369,15 @@ articulations, and basic MIDI/MusicXML interop.
 
 **Gap**
 
-Closed for G6 first extension set. Asset-level `tuning:`, `tuplet:`, and
+Closed for G6 first extension set *as metadata*. Asset-level `tuning:`, `tuplet:`, and
 `lyrics:` compile into typed `notation` metadata; notation metadata is
 hash-excluded unless future render passes lower it into explicit render IR.
+
+**Measured limit (2026-09-06, `docs/evolution/harness-notation.md`).** The `tuning:`
+directive is accepted and never read by any render path: a 19-EDO spec renders in 12-TET
+(`HARNESS-NTUN-001` FAIL). Until the resolver lands (roadmap `RN-T-002`), a non-12-EDO
+tuning compiles with the diagnostic `tuning_not_rendered` (`HARNESS-NTUN-003`). Tuplets and
+lyrics are not projected to MusicXML (`HARNESS-NSEM-002`).
 
 **Definition of Ready**
 
@@ -472,6 +478,25 @@ interop layer is useful but intentionally scoped.
 Closed for G8 initial contract. `docs/INTEROP.md` documents the MIDI/MusicXML
 subset, `interop_diagnostics()` emits structured lossy warnings, and
 `export_session_bundle()` writes a deterministic manifest-backed bundle.
+
+**Measured limit (2026-09-06, `docs/evolution/harness-notation.md`).** Against external
+oracles the original contract was narrower than the prose. Checkpoints T2 and T3 of
+`docs/evolution/roadmap-notation.xlsx` closed the interchange part: the notated exporter
+takes meter beats and unit, bar length (polymeter uses the global meter with `lossy_polymeter`), `key_map`, `tempo_map` (thinned
+to the quantization grid), `pickup`, dynamics with hairpins, articulations, slurs, tuplets,
+lyrics, fermatas, rehearsal marks and repeat barlines from the spec
+(`HARNESS-NXML-002…008`, `HARNESS-NSEM-001/002`); the exact-tick MusicXML and MIDI exports
+write one part or track per layer with simultaneous notes, every tempo point and sections,
+as performed (MIDI also writes lyric events) (`HARNESS-NXML-009`, `HARNESS-NMIDI-002/003`); the importer reads one
+layer per `<part>`, honours `<chord/>`, `<backup>`, `<forward>`, voices, per-measure
+divisions, key, time and tempo, merges ties and brings supported marks back. Fermata
+pause lengths are unspecified on import and recorded in `_meta.import.dropped`
+(`HARNESS-NIMP-001…005`, Bach chorale round trip included). What each construct becomes in
+each format is the generated matrix in `docs/INTEROP.md` (`make interop-check`); anything
+dropped carries a registered code from `interop_diagnostics()` (`HARNESS-NXML-011`).
+Unrepresentable imported constructs (unpitched notes, mid-piece time-signature changes,
+microtonal alters, empty parts) are listed under `_meta.import.dropped`, never dropped
+silently. Still open: the tuning resolver (G6, T4) and the CI oracle job (T5).
 
 **Definition of Ready**
 

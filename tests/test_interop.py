@@ -62,7 +62,9 @@ def test_midi_export_import_clamps_velocity_and_preserves_tempo():
     assert midi.startswith(b"MThd")
 
     imported = interop.import_midi_bytes(midi, asset_id="from_midi")
-    notes = imported["layers"][0]["notes"]
+    # one track per pitched layer, named after it (format 1; track 0 is the conductor)
+    assert [layer["name"] for layer in imported["layers"]] == ["lead", "bass"]
+    notes = [n for layer in imported["layers"] for n in layer["notes"]]
 
     assert imported["id"] == "from_midi"
     assert imported["bpm"] == pytest.approx(90.0, abs=0.0001)
@@ -122,18 +124,23 @@ def test_exact_musicxml_exports_rests_meter_accidentals_and_imports_them():
     xml = interop.export_musicxml(_interop_spec())
     root = ET.fromstring(xml)
 
-    assert root.findtext(".//part-name") == "interop_depth"
+    assert [p.text for p in root.findall(".//part-name")] == ["lead", "bass"]
+    assert root.findtext(".//work-title") == "interop_depth"
     assert root.findtext(".//time/beats") == "3"
     assert root.findtext(".//time/beat-type") == "4"
     assert root.find(".//rest") is not None
     assert root.findtext(".//pitch[step='C']/alter") == "1"
 
     imported = interop.import_musicxml(xml, asset_id="from_xml")
+    # one layer per <part>, named from <part-name>; the exact-tick export round-trips
+    assert [layer["name"] for layer in imported["layers"]] == ["lead", "bass"]
     notes = imported["layers"][0]["notes"]
     assert imported["id"] == "from_xml"
     assert imported["bpm"] == 90.0
-    assert notes[0] == {"note": "C#4", "start_beat": 0.0, "dur_beats": 1.5}
-    assert any(n["note"] == "D2" for n in notes)
+    assert imported["score"]["meter"] == {"beats": 3, "unit": 4}
+    assert notes[0] == {"note": "C#4", "start_beat": 0.0, "dur_beats": 1.5, "vel": 0.0}
+    assert [n["note"] for n in imported["layers"][1]["notes"]] == ["D2"]
+    assert imported["layers"][1]["notes"][0]["vel"] == 0.6          # the `dynamics` attribute
 
 
 def test_musicxml_bend_import_expands_to_pitch_curve():

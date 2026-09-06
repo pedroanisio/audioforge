@@ -1,0 +1,10 @@
+asset microtonal_19edo { kind: cue
+  duration: 4s
+  tempo: 120bpm
+  key: C major
+  meter: 4 4
+  tuning: edo divisions=19 base=A4 hz=440
+  layer m : notes { osc: sine
+    gain: -12db
+    notes: A4 @ 0b for 2b, B4 @ 2b for 2b, C#5 @ 4b for 2b, E5 @ 6b for 2b }
+}

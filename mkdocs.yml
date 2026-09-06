@@ -59,3 +59,4 @@ nav:
       - ADR-0006 Generator owns artifact: adr/0006-generator-owns-artifact.md
       - ADR-0007 Musical rendering semantics: adr/0007-musical-render-semantics.md
       - ADR-0008 Structured diagnostic codes: adr/0008-structured-diagnostic-codes.md
+      - ADR-0009 Notation positioning: adr/0011-notation-interchange-oracles.md

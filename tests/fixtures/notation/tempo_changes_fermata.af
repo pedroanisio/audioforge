@@ -1,0 +1,10 @@
+asset tempo_changes_fermata { kind: cue
+  duration: 10s
+  tempo: 90bpm, 4b=120bpm, 8b=100bpm
+  key: A minor
+  meter: 4 4
+  fermata: 8b=1s
+  layer m : notes { osc: sine
+    gain: -12db
+    notes: A3 @ 0b for 2b, C4 @ 2b for 2b, E4 @ 4b for 2b, A4 @ 6b for 2b, G4 @ 8b for 4b }
+}

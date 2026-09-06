@@ -1,0 +1,19 @@
+{
+  "meter": [
+    7,
+    8
+  ],
+  "parts": 1,
+  "measures": 5,
+  "key_fifths": [
+    0,
+    -1
+  ],
+  "key_change_beats": [
+    3.5
+  ],
+  "constructs": [
+    "meter_unit",
+    "key_map"
+  ]
+}

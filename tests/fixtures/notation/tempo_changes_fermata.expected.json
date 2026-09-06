@@ -1,0 +1,17 @@
+{
+  "meter": [
+    4,
+    4
+  ],
+  "parts": 1,
+  "tempo_points": 3,
+  "holds": 1,
+  "key_fifths": [
+    0
+  ],
+  "constructs": [
+    "tempo_map",
+    "fermata"
+  ],
+  "measures": 4
+}

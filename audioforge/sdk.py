@@ -309,9 +309,13 @@ class AudioAsset:
         from .interop import export_midi_bytes
         return export_midi_bytes(self.spec)
 
-    def to_musicxml(self) -> str:
-        from .interop import export_musicxml
-        return export_musicxml(self.spec)
+    def to_musicxml(self, *, notated: bool = False, grid: float = 0.25) -> str:
+        """Export exact ticks or a formal score on the requested beat grid.
+
+        Use ``interop_diagnostics(spec, "musicxml_notated")`` to inspect losses.
+        """
+        from .interop import export_musicxml, export_notated_musicxml
+        return export_notated_musicxml(self.spec, grid=grid) if notated else export_musicxml(self.spec)
 
     @classmethod
     def from_json(cls, text: str) -> "AudioAsset":

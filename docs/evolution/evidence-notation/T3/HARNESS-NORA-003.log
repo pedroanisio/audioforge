@@ -1,0 +1,6 @@
+["make", "oracle-check", "PYTHON=/tmp/audioforge-notation-oracles/bin/python"]
+........................                                                 [100%]
+24 passed in 24.34s
+["/tmp/audioforge-notation-acceptance/.venv/bin/python", "-m", "pytest", "-q", "tests/test_notation_contract.py", "-k", "oracle_gate", "--junitxml=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NORA-003.xml", "--basetemp=/tmp/audioforge-notation-acceptance/docs/evolution/evidence-notation/T3/work/NORA-003-pytest"]
+.                                                                        [100%]
+1 passed, 8 deselected in 1.49s
