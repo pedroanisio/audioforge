@@ -1227,7 +1227,7 @@ items:
     evidence_checks:
       - kind: grep
         path: "pyproject.toml"
-        pattern: "^oracles"
+        pattern: "oracles = "
       - kind: file-exists
         path: "tests/fixtures/musicxml/xsd/musicxml.xsd"
       - kind: grep
