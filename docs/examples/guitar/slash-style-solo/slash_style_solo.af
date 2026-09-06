@@ -1,0 +1,163 @@
+# =============================================================================
+# GOLDEN TARGET FIXTURE — slash_style_solo.af
+# Original composition in the lead-guitar idiom of a Slash-style rock ballad.
+# NOT a transcription of any recorded solo. Style is the target; notes are new.
+#
+# Purpose: the acceptance artifact for docs/goal.md (Continuous Performance
+# Curves, AF-P1/G11). Everything in this file is current DSL 1.9 surface
+# EXCEPT the per-note curve sugar bend(...) / vib(...) / dyn(...), which is
+# the proposed DSL 1.10 surface lowering to the goal's Required IR Contract
+# (notes[].curves: pitch_cents + dynamic; note_beats basis; linear/hold/pow:k).
+# See GOLDEN_FIXTURE_slash_style_solo.md for the construct-by-construct
+# conformance table, the expected IR for the signature note, and gates.
+#
+# Library pin is a deliberate all-zeros UNBOUND PLACEHOLDER (DSL_SPEC §4):
+# the catalog currently contains zero guitars; structural compile must pass,
+# validate must report the placeholder distinctly, render-ready arrives with
+# guitar-library onboarding (design review F5).
+# =============================================================================
+
+asset slash_style_solo {
+  kind: cue
+  duration: 42s
+  samplerate: 48000
+  bitdepth: 24
+  tempo: 76bpm
+  key: A minor
+  groove: laidback 0.35
+  # rubato is the in-repo precedent for macro -> dense explicit points [1.9]
+  perform: style=cinematic expressivity=0.8 rubato=arch amount=0.10 segment=0.5b
+  library: "singlecut-bridge-v1@0000000000000000000000000000000000000000000000000000000000000000"
+
+  marker solo_start @ 1.6s
+  marker climax @ 25.3s
+  marker peak_hold @ 31.6s
+
+  # ---- climax run: ascending A-minor-pentatonic sixteenths (0.25b grid) ----
+  motif run_up {
+    A4 @ 0b for 0.25b vel 0.78
+    C5 @ 0.25b for 0.25b vel 0.8
+    D5 @ 0.5b for 0.25b vel 0.82
+    E5 @ 0.75b for 0.25b vel 0.85
+    G5 @ 1b for 0.25b vel 0.88
+    A5 @ 1.25b for 0.75b vel 0.92
+  }
+
+  # ================= BACKING (all current 1.9 surface, render-ready) ========
+  bus band {
+    gain: -2db
+    fx: hall(rt60=1.9, damp=0.45, mix=0.16)
+  }
+
+  layer pad : tone {
+    osc: pad
+    note: A3
+    bandwidth: 35c
+    env: a=1.2 d=0.5 s=0.8 r=2.5
+    gain: -14db
+    bus: band
+  }
+
+  layer keys : notes {
+    osc: organ
+    gain: -13db
+    pan: -0.25
+    bus: band
+    notes: A3min @ 0b for 8b vel 0.5 voicing spread,
+           F3maj7 @ 8b for 8b vel 0.5 voicing spread,
+           C3maj @ 16b for 8b vel 0.52 voicing open,
+           G3maj @ 24b for 8b vel 0.55 voicing open,
+           A3min @ 32b for 8b vel 0.58 voicing spread,
+           F3maj7 @ 40b for 8b vel 0.5 voicing spread
+  }
+
+  layer bass : notes {
+    osc: pluck
+    damping: 0.4
+    brightness: 0.45
+    gain: -8db
+    notes: A1 @ 0b for 7.5b vel 0.7, F1 @ 8b for 7.5b vel 0.7,
+           C2 @ 16b for 7.5b vel 0.72, G1 @ 24b for 7.5b vel 0.75,
+           A1 @ 32b for 7.5b vel 0.78, F1 @ 40b for 7.5b vel 0.7
+  }
+
+  layer drums : drums {
+    voice: kick
+    pattern: x.......x.......
+    gain: -6db
+    humanize: 0.25
+  }
+  layer snare : drums {
+    voice: snare
+    pattern: ....x.......x...
+    gain: -8db
+    humanize: 0.25
+  }
+  layer hat : drums {
+    voice: hat
+    pattern: x.x.x.x.x.x.x.x.
+    gain: -16db
+    humanize: 0.3
+  }
+
+  # ================= LEAD (the fixture's reason to exist) ====================
+  # Tone chain: drive -> mid push -> hash-pinned 4x12 cab IR (placeholder)
+  # -> tempo-ish delay -> plate. All FX are current 1.9 surface.
+  layer lead : instrument {
+    instrument: "SingleCut Bridge - Sustain"
+    articulation: sustain
+    legato: 0.06s
+    phrasing: 0.7
+    humanize: 0.15
+    dynamic: 0b=mf, 24b=f, 36b=ff, 44b=mf
+    gain: -4db
+    pan: 0.08
+    fx: drive(0.55),
+        peak(820hz, gain=3.5, q=0.9),
+        convolve(file="cab_4x12_ribbon.wav", sha256="0000000000000000000000000000000000000000000000000000000000000000", mix=1),
+        delay(time=0.31, feedback=0.2, mix=0.16),
+        plate(decay=0.6, damp=0.35, mix=0.12)
+
+    # Phrase map (note-relative curve times; bend/vib/dyn are [1.10 PROPOSED]):
+    #  P1  2b..8b    slide-in; THE SIGNATURE NOTE (AF-P1 §2 verbatim:
+    #                accelerating +2st bend over first 40%, hold, vibrato
+    #                widening 0->35c into the hold, release -1st in final 15%)
+    #  P2  8b..15b   pre-bend release (start +2st, fall to written pitch),
+    #                answer down the box, long low vibrato tail
+    #  P3 16b..23b   unison double-stop: static D5 over C5 bent up to meet it
+    #                (per-note polyphonic pitch — the channel-bend impossible)
+    #  P4 24b..31b   climax: slurred pentatonic runs (motif, current surface)
+    #  P5 31b..38b   peak: 4-beat held bend, vibrato + dynamic growing
+    #                through the hold (time-varying velocity crossfade),
+    #                then a -5st fall-off
+    #  P6 38b..46b   outro: resolve to A4, slow late vibrato, decrescendo
+    notes: A4 @ 2b for 1b vel 0.8 bend(0b=-2st, 0.12b=0c),
+           D5 @ 4b for 2b vel 0.86 bend(0b=0c, 0.8b=+2st pow2.5, 1.7b=+2st, 2b=+1st) vib(rate=5.6 depth=0c..35c @0.9b..1.7b) dyn(0b=mf, 1.2b=ff, 2b=f),
+           C5 @ 6.5b for 0.75b vel 0.78,
+           A4 @ 7.25b for 0.75b vel 0.74,
+           D5 @ 8.5b for 1.5b vel 0.85 bend(0b=+2st, 0.7b=0c pow0.6) vib(rate=5 depth=22c delay=0.8s),
+           slur( C5 @ 10.5b for 0.5b vel 0.78,
+                 A4 @ 11b for 0.5b vel 0.76,
+                 G4 @ 11.5b for 2.5b vel 0.74 vib(rate=4.8 depth=0c..28c @0.8b..2.5b) ),
+           E5 @ 14.5b for 1b vel 0.8 bend(0b=-2st, 0.18b=0c pow1.6),
+           D5 @ 17b for 1.5b vel 0.8,
+           C5 @ 17b for 1.5b vel 0.84 bend(0b=0c, 0.4b=+2st pow2, 1.5b=+2st),
+           A4 @ 19b for 0.5b vel 0.76,
+           C5 @ 19.5b for 0.5b vel 0.78,
+           D5 @ 20b for 2.5b vel 0.82 vib(rate=5.2 depth=0c..30c @0.6b..2.5b),
+           A5 @ 31b for 4.5b vel 0.95 bend(0b=0c, 1.2b=+2st pow2.2, 3.6b=+2st, 4.1b=+2st, 4.5b=-5st pow2) vib(rate=5.8 depth=0c..45c @1.4b..3.6b) dyn(0b=f, 2.5b=fff, 4.5b=f),
+           E5 @ 36.5b for 1b vel 0.8,
+           D5 @ 37.5b for 0.5b vel 0.76,
+           C5 @ 38b for 1b vel 0.74,
+           A4 @ 39.5b for 5b vel 0.72 vib(rate=4.4 depth=0c..24c @1.5b..5b) dyn(0b=mf, 5b=p)
+    play run_up @ 24b legato
+    play run_up @ 26b legato
+    play run_up @ 28b stretch 0.5 vel 1.05 legato
+  }
+
+  master {
+    lufs: -14
+    peak: -1db
+    fx: mbcomp(threshold=-20, ratio=1.8)
+  }
+}

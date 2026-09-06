@@ -10,7 +10,8 @@ AST. The legacy parser is gone.
 This module locks the consolidation in two ways:
 
 1. **Golden AST regression** — a comprehensive synthetic battery plus every
-   checked-in `.af` file is parsed and compared against a committed snapshot
+   cataloged composition and focused fixture `.af` file is parsed and compared
+   against a committed snapshot
    (`tests/golden/dsl_ast.json`). The snapshot was generated while the legacy
    parser still existed and was proven byte-identical to it, so it encodes the
    historical behavior without depending on the deleted code. Regenerate
@@ -21,7 +22,6 @@ This module locks the consolidation in two ways:
 import hashlib
 import json
 import os
-import subprocess
 from pathlib import Path
 
 import pytest
@@ -150,15 +150,10 @@ asset g {
 
 def _af_cases() -> dict[str, str]:
     cases = {}
-    result = subprocess.run(
-        ["git", "ls-files", "--", "*.af"],
-        cwd=ROOT,
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    for name in sorted(line for line in result.stdout.splitlines() if line):
-        path = ROOT / name
+    from af_corpus import source_paths
+
+    for path in source_paths(ROOT):
+        name = str(path.relative_to(ROOT))
         cases[name] = path.read_text()
     return cases
 
@@ -219,7 +214,7 @@ def test_compile_dsl_routes_through_parse_assets(monkeypatch):
         return real(src)
 
     monkeypatch.setattr(dsl, "parse_assets", spy)
-    src = (ROOT / "static" / "samples" / "transition_sweep.af").read_text()
+    src = (ROOT / "docs" / "examples" / "sound-design" / "transition-sweep" / "transition_sweep.af").read_text()
     specs, diags = compile_dsl(src)
     assert calls, "compile_dsl did not reach parse_assets"
     assert specs and specs[0]["id"]

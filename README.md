@@ -30,21 +30,25 @@ Every spec is canonically hashed (with the engine version folded in). The manife
 Engine 3.0 changes audible behavior. Read the [migration guide](docs/MIGRATION_3.md) for gate/release, gain, mastering, repeat and performance-seed changes. The [acceptance ledger](docs/MUSICAL_CORRECTNESS.md) separates measured correctness from listening judgments.
 
 ```bash
-python -m audioforge.cli validate static/samples/transition_sweep.af
-python -m audioforge.cli compile  static/samples/transition_sweep.af   # inspect the IR
-python -m audioforge.cli render   static/samples/transition_sweep.af -o out --stems
-python -m audioforge.cli batch    static/samples -o out
+python -m audioforge.cli validate docs/examples/sound-design/transition-sweep/transition_sweep.af
+python -m audioforge.cli compile  docs/examples/sound-design/transition-sweep/transition_sweep.af   # inspect the IR
+python -m audioforge.cli render   docs/examples/sound-design/transition-sweep/transition_sweep.af -o out --stems
+python -m audioforge.cli batch    docs/examples/sound-design/transition-sweep -o out
 ```
 
 ```python
 from audioforge import AudioForge
 
 forge = AudioForge()
-result = forge.compile(open("static/samples/transition_sweep.af").read())
+result = forge.compile(open("docs/examples/sound-design/transition-sweep/transition_sweep.af").read())
 asset = result.assets[0]                      # diagnostics in result.diagnostics
 asset.set("layers.2.gain_db", -10)            # schema-checked mutation
 meta = asset.export("out", preset="social_video", stems=True)
 ```
+
+## Composition examples
+
+Browse [all compositions](docs/examples/index.md) for the DSL, source requirements and render commands. Generate the local listening gallery with `.venv/bin/python scripts/examples.py gallery`, then open `docs/examples/listen.html`.
 
 ## The DSL
 
@@ -96,7 +100,7 @@ Five extension points (`audioforge.plugins`): oscillators, fx, drum voices, expo
 
 ## The validate/render contract (v2.14)
 
-From an external review (2026-06-10): `validate` now performs resource **binding**, not just shape checks — `OK: valid` means render-ready, placeholder pins get a distinct diagnostic, render refuses with structured line-cited lists instead of raw tracebacks, and a property test locks the contract (render-time SpecErrors must be pre-reported by validate). DSL ergonomics: multiline `auto` continuation, self-explaining `notes:`/`play` diagnostics, and `slur( play …, play … )` support. `pytest -q` now collects cleanly; `scripts/run_tests.sh` is the canonical full runner. The review's three fixtures live in `static/fixtures/` as diagnostic regressions.
+From an external review (2026-06-10): `validate` now performs resource **binding**, not just shape checks — `OK: valid` means render-ready, placeholder pins get a distinct diagnostic, render refuses with structured line-cited lists instead of raw tracebacks, and a property test locks the contract (render-time SpecErrors must be pre-reported by validate). DSL ergonomics: multiline `auto` continuation, self-explaining `notes:`/`play` diagnostics, and `slur( play …, play … )` support. `pytest -q` now collects cleanly; `scripts/run_tests.sh` is the canonical full runner. The review's three historical scores live in `docs/examples/archive/` and remain diagnostic regressions.
 
 ## Stage & room (v2.13 — P4)
 
@@ -147,8 +151,9 @@ Research-grade, fully mechanized voices — no samples, all seed-deterministic: 
 ```
 audioforge/          engine: determinism, synth, fx, sequencer, loudness,
                      schema (IR validation), render, dsl, sdk, plugins, cli
-static/samples/      reference .af corpus (quick-start; e.g. transition_sweep.af)
-static/fixtures/     diagnostic-regression fixtures (.af)
+docs/examples/sound-design/  self-contained quick-start DSL
+docs/examples/       compositions: DSL, documentation and local rendered audio
+static/fixtures/     focused acceptance/rejection fixtures (.af)
 AI-CORE.md           agent-facing core concepts (consumption model,
                      IR-is-truth, universality claim, open pillars)
 docs/DSL_SPEC.md     full DSL grammar + emotion mapping table
@@ -166,4 +171,4 @@ tests/               determinism suite + v2 suite (DSL, SDK, plugins,
 * Determinism is guaranteed within an environment; cross-platform float reproducibility is *checked* by the `verify` gate rather than assumed.
 * Recorded material uses content-addressed WAV sample layers or pinned SFZ-subset instrument libraries. Recorded transitions and ensemble realism depend on the source material; synthesized approximations are declared in the render plan.
 
-Requires Python 3.10+, numpy, scipy. Engine 3.0.0 · DSL 2.0.
+Requires Python 3.10+, numpy, scipy. Engine 3.1.0 · DSL 2.0.

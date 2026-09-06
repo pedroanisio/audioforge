@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate `tracks/blue_in_five.af` — a ~5 minute medium-swing jazz quartet.
+"""Generate `docs/examples/jazz/blue-in-five/blue_in_five.af` — a ~5 minute medium-swing jazz quartet.
 
 A 16-bar form in F major, looped by the rhythm section, with *composed*
 solos (idiomatic chord-relative licks with rests and phrasing — not
@@ -12,9 +12,11 @@ Map (132 bpm, 16-bar/64-beat form):
   intro 0-7 · head 8-23 · tenor solo 24-71 (3 chr) · vibes solo 72-135
   (4 chr) · head out 136-151 · outro/ritard 152+
 """
+from pathlib import Path
+
 from audioforge import theory
 
-OUT = "tracks/blue_in_five.af"
+OUT = "docs/examples/jazz/blue-in-five/blue_in_five.af"
 SN = theory.semis_to_note
 
 
@@ -360,6 +362,7 @@ asset blue_in_five {{
 }}
 """
 
+Path(OUT).parent.mkdir(parents=True, exist_ok=True)
 with open(OUT, "w") as f:
     f.write(AF)
 print(f"wrote {OUT} ({len(AF)} bytes)")

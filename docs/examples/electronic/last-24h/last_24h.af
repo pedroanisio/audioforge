@@ -1,0 +1,183 @@
+# last_24h — a 10-minute techno arc of the last day in the codebase.
+# 128 BPM · A minor · four-on-the-floor, sidechained bass, acid, stabs, lead.
+# boot → groove → build → the bug (breakdown) → the fix (drop) → the joy
+# (uplift) → tools & cover (breakdown) → the concept paper (climax) → committed.
+
+asset last_24h {
+  kind: soundtrack
+  duration: 600s
+  tempo: 128bpm
+  key: A minor
+  groove: swing16 0.18
+  emotion: urgency=0.5, triumph=0.45, cinematic_intensity=0.5, wonder=0.3
+
+  marker boot       @ 0s
+  marker groove     @ 60s
+  marker build      @ 150s
+  marker the_bug    @ 210s
+  marker the_fix    @ 270s
+  marker the_joy    @ 330s
+  marker the_tools  @ 420s
+  marker the_paper  @ 480s
+  marker committed  @ 570s
+
+  # sidechain bus — the techno pump: bass, stabs and pad ducked by the kick
+  bus pump {
+    duck: source=kick amount=7db attack=0.006s release=0.15s threshold=-42db
+    fx: saturate(amount=0.12, warmth=0.2)
+  }
+  # shared space for stabs and lead
+  bus air {
+    fx: delay(time=0.234, feedback=0.28, mix=0.16), hall(rt60=1.8, mix=0.12)
+  }
+
+  # --- drums ---------------------------------------------------------------
+  layer kick : drums {
+    voice: kick
+    pattern: X...X...X...X...
+    tune: -5st
+    decay: 0.55
+    snap: 0.55
+    bend: 0.4
+    gain: -3db
+    humanize: 0.04
+    auto gain: 0s=-45, 16s=-20, 40s=-4, 150s=-4, 206s=-30, 210s=-55, 266s=-55, 270s=-3, 330s=-3.5, 416s=-30, 420s=-55, 476s=-55, 480s=-3, 566s=-5, 588s=-22, 600s=-48
+  }
+
+  layer clap : drums {
+    voice: clap
+    pattern: ....X.......X...
+    gain: -11db
+    humanize: 0.06
+    fx: reverb(decay=1.1s, mix=0.18)
+    auto gain: 0s=-60, 60s=-60, 74s=-16, 150s=-12, 208s=-55, 270s=-11, 330s=-11, 418s=-55, 480s=-10, 566s=-14, 594s=-50
+  }
+
+  layer chats : drums {
+    voice: hat
+    pattern: ..x.x.x.x.x.x.x.
+    tune: 2st
+    decay: 0.3
+    gain: -15db
+    humanize: 0.05
+    auto gain: 0s=-60, 30s=-30, 60s=-20, 90s=-15, 150s=-14, 210s=-26, 240s=-19, 270s=-14, 330s=-14, 420s=-30, 480s=-13, 566s=-18, 596s=-46
+  }
+
+  layer ohat : drums {
+    voice: open_hat
+    pattern: ....x.......x...
+    decay: 0.6
+    gain: -19db
+    auto gain: 0s=-60, 150s=-60, 152s=-22, 210s=-55, 270s=-20, 330s=-20, 420s=-55, 480s=-19, 566s=-24, 596s=-50
+  }
+
+  # --- rolling sidechained bass (offbeat) ----------------------------------
+  layer bass : notes {
+    osc: saw
+    bus: pump
+    gain: -6db
+    env: a=0.004s d=0.11s s=0.35 r=0.06s
+    velbright: 0.5
+    notes: A1 @ 0.5b for 0.45b, A1 @ 1.5b for 0.45b, A1 @ 2.5b for 0.45b, A1 @ 3.5b for 0.45b, G1 @ 3b for 0.4b vel 0.8
+    loop: 4b
+    fx: lowpass(700hz), drive(amount=0.25)
+    auto cutoff: 0s=260, 60s=520, 150s=1100, 210s=300, 270s=900, 330s=1300, 420s=320, 480s=1500, 570s=520, 600s=280
+  }
+
+  # --- atmospheric pad (breakdowns), sidechained ---------------------------
+  layer pad : notes {
+    osc: pad
+    bus: pump
+    bandwidth: 60c
+    gain: -14db
+    env: a=1.6s d=1.2s s=0.85 r=3s
+    notes: A2 @ 0b for 16b, C3 @ 0b for 16b, E3 @ 0b for 16b, A3 @ 0b for 16b, G3 @ 8b for 8b
+    loop: 16b
+    fx: lowpass(2200hz), reverb(decay=4s, mix=0.4)
+    auto cutoff: 0s=700, 210s=1900, 270s=800, 420s=2200, 480s=800, 570s=1600, 600s=900
+    auto gain: 0s=-22, 40s=-16, 60s=-30, 150s=-40, 210s=-13, 250s=-11, 270s=-34, 330s=-34, 420s=-12, 460s=-12, 480s=-34, 560s=-30, 570s=-16, 600s=-30
+  }
+
+  # --- chord stabs (syncopated), through air + pump ------------------------
+  layer stab : notes {
+    osc: square
+    unison: 3
+    spread: 18c
+    bus: pump
+    gain: -13db
+    env: a=0.004s d=0.16s s=0.0 r=0.14s
+    velbright: 0.6
+    notes: A3min7 @ 1b for 0.2b, A3min7 @ 2.5b for 0.2b, F3maj7 @ 3b for 0.2b vel 0.9, A3min7 @ 3.75b for 0.2b
+    loop: 4b
+    fx: bandpass(1400hz), delay(time=0.351, feedback=0.24, mix=0.2)
+    auto gain: 0s=-60, 150s=-60, 156s=-16, 206s=-40, 270s=-13, 330s=-13, 420s=-40, 480s=-11, 560s=-13, 596s=-46
+  }
+
+  # --- acid line (ladder filter squelch) -----------------------------------
+  layer acid : notes {
+    osc: saw
+    gain: -13db
+    env: a=0.003s d=0.09s s=0.25 r=0.04s
+    notes: A2 @ 0b for 0.24b, A2 @ 0.5b for 0.24b vel 0.9, A3 @ 1b for 0.24b, C3 @ 1.5b for 0.24b, A2 @ 2b for 0.24b, E3 @ 2.5b for 0.24b, A2 @ 3b for 0.24b vel 1.0, G2 @ 3.5b for 0.24b
+    loop: 4b
+    fx: ladder(cutoff=350, resonance=0.82, drive=0.5)
+    auto cutoff: 150s=280, 206s=3200, 270s=500, 300s=3600, 312s=600, 480s=600, 520s=4200, 556s=700
+    auto gain: 0s=-60, 150s=-60, 168s=-20, 206s=-34, 210s=-60, 270s=-14, 312s=-14, 330s=-60, 480s=-14, 556s=-14, 596s=-48
+  }
+
+  # --- supersaw lead motif — the progress theme (uplift + climax) ----------
+  layer lead : notes {
+    osc: saw
+    unison: 6
+    spread: 22c
+    bus: air
+    gain: -13db
+    env: a=0.01s d=0.2s s=0.6 r=0.3s
+    velbright: 0.5
+    notes: A3 @ 0b for 0.5b vel 0.7, E4 @ 0.5b for 0.5b vel 0.72, A4 @ 1b for 0.5b vel 0.74, C5 @ 1.5b for 0.5b vel 0.76, B4 @ 2b for 0.5b vel 0.7, E4 @ 2.5b for 0.5b vel 0.72, G4 @ 3b for 0.5b vel 0.74, D5 @ 3.5b for 0.5b vel 0.76, A3 @ 4b for 0.5b vel 0.7, E4 @ 4.5b for 0.5b vel 0.72, A4 @ 5b for 0.5b vel 0.74, D5 @ 5.5b for 0.5b vel 0.76, C5 @ 6b for 0.5b vel 0.7, G4 @ 6.5b for 0.5b vel 0.72, E4 @ 7b for 0.5b vel 0.74, A4 @ 7.5b for 0.5b vel 0.76
+    loop: 8b
+    fx: lowpass(3200hz)
+    auto cutoff: 330s=1400, 360s=3600, 420s=1200, 480s=1600, 520s=4200, 566s=2000
+    auto gain: 0s=-60, 330s=-60, 338s=-12, 360s=-9, 418s=-20, 420s=-60, 480s=-60, 496s=-11, 540s=-8, 566s=-12, 592s=-40
+  }
+
+  # --- transition risers into the drops ------------------------------------
+  layer riser_fix : sweep {
+    shape: saw
+    from: 120hz
+    to: 5000hz
+    start: 262s
+    duration: 8s
+    gain: -18db
+    env: a=7s d=0.1s s=0.95 r=0.8s
+    curve: exp
+  }
+  layer riser_paper : sweep {
+    shape: saw
+    from: 140hz
+    to: 6000hz
+    start: 472s
+    duration: 8s
+    gain: -17db
+    env: a=7.5s d=0.1s s=0.95 r=0.5s
+    curve: exp
+  }
+  layer noise_lift : noise {
+    color: white
+    start: 200s
+    duration: 12s
+    gain: -30db
+    env: a=9s d=0.1s s=0.9 r=2s
+    fx: bandpass(3000hz), highpass(1200hz)
+  }
+
+  master {
+    width: 0.92
+    lufs: -9
+    peak: -1db
+    fadein: 0.5s
+    fadeout: 6s
+    fx: lowpass(19000hz), highpass(28hz), fdn(rt60=1.5, rt60_high=0.9, mix=0.07), comp(threshold=-14, ratio=2.2, attack=0.01, release=0.12, knee=5), saturate(amount=0.12, warmth=0.25)
+    auto cutoff: 0s=1400, 40s=19000, 200s=19000, 235s=650, 270s=19000, 410s=19000, 445s=700, 480s=19000, 570s=19000, 596s=2200
+  }
+}

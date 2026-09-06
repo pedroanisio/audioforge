@@ -19,14 +19,21 @@ structured, per-version summary. Version consistency across sites is gated by
 
 ## [Unreleased]
 
-### Added
-- Nothing yet.
+## [3.1.0]
 
-### Changed
-- Nothing yet.
+_Engine 3.1.0 · DSL 2.0._
 
-### Fixed
-- Nothing yet.
+Native stereo instrument recordings retain their channels through sample
+playback, velocity crossfades, loops, effects, seating and stems. Stereo layers
+use balance panning with unity at center; mono layers retain constant-power pan.
+Older sampled renders can change level and image and should be remastered.
+
+Libraries can declare pinned recordings of exact note-to-note transitions,
+including trim offsets, arrival lead, handover time and source provenance.
+Plans expose the selected recording and its hash. Missing intervals remain
+explicit approximations and fail when fallbacks are forbidden. See
+[orchestral playback](docs/ORCHESTRAL_PLAYBACK.md) and
+[ADR-0009](docs/adr/0009-native-stereo-recorded-transitions.md).
 
 ## [3.0.0] - 2026-09-05
 

@@ -1,0 +1,3771 @@
+{
+    "name": "",
+    "balance": 0,
+    "volume": 1,
+    "measures": [
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "velocity": "f",
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        }
+                    ]
+                }
+            ],
+            "signature": [
+                4,
+                4
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 41,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 41,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 41,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 41,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 41,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 41,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 41,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 41,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 41,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 41,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 41,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 41,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 51,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 51,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 51,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 51,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 51,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 51,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 42,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 42,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 42,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 42,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 42,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 42,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 51,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 51,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 51,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 51,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 51,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 51,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 36,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 38,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 4,
+                            "duration": [
+                                1,
+                                4
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 49,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 51,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 51,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 51,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 51,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 51,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 51,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 51,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 51,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 51,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 51,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 51,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 51,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 51,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 51,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 51,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "voices": [
+                {
+                    "beats": [
+                        {
+                            "notes": [
+                                {
+                                    "fret": 42,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 42,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 42,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 42,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 42,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStart": true
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 42,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 42,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ]
+                        },
+                        {
+                            "notes": [
+                                {
+                                    "fret": 42,
+                                    "string": null
+                                }
+                            ],
+                            "type": 8,
+                            "duration": [
+                                1,
+                                8
+                            ],
+                            "beamStop": true
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "capo": 0,
+    "frets": 24,
+    "strings": 6,
+    "instrumentId": 1024,
+    "instrument": "Drums",
+    "newLyrics": [
+        {
+            "line": 1,
+            "offset": 1,
+            "text": ""
+        },
+        {
+            "line": 2,
+            "offset": 1,
+            "text": ""
+        },
+        {
+            "line": 3,
+            "offset": 1,
+            "text": ""
+        },
+        {
+            "line": 4,
+            "offset": 1,
+            "text": ""
+        },
+        {
+            "line": 5,
+            "offset": 1,
+            "text": ""
+        }
+    ],
+    "voices": 1,
+    "automations": {
+        "tempo": [
+            {
+                "linear": false,
+                "measure": 0,
+                "position": 0,
+                "visible": false,
+                "bpm": 123,
+                "type": 4
+            }
+        ]
+    },
+    "version": 8,
+    "songId": 696517,
+    "partId": 0,
+    "revisionId": 853997
+}

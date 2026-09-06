@@ -1,0 +1,174 @@
+# 06 — Big View / Mountain or Ocean Reveal. Everyone sees something
+# beautiful outside. D major (the album's emotional lift). The road motif
+# returns as the main theme, wide and bright but never harsh. 124 BPM.
+asset s06_big_view {
+  kind: soundtrack
+  duration: 540s
+  tempo: 124bpm
+  key: D major
+  groove: pushed 0.12
+  emotion: awe=0.7, triumph=0.6, wonder=0.5, cinematic_intensity=0.5
+
+  marker the_reveal  @ 0s
+  marker breath_taken @ 60s
+  marker full_view    @ 300s
+  marker held_gaze     @ 480s
+
+  motif road {
+    D5  @ 0b   for 1b   vel 0.7
+    F#5 @ 1b   for 1b   vel 0.75
+    A5  @ 2b   for 1b   vel 0.8
+    G5  @ 3b   for 1.5b vel 0.78
+    F#5 @ 4.5b for 0.5b vel 0.7
+    D5  @ 5b   for 3b   vel 0.65
+  }
+
+  bus pump {
+    duck: source=kick amount=5db attack=0.008s release=0.16s threshold=-36db
+    fx: saturate(amount=0.1, warmth=0.24)
+  }
+  bus air {
+    fx: delay(time=0.234, feedback=0.26, mix=0.18), hall(rt60=2.4, mix=0.2)
+  }
+
+  layer intro_riser : sweep {
+    shape: saw
+    from: 100hz
+    to: 3000hz
+    start: 0s
+    duration: 6s
+    gain: -20db
+    env: a=5.5s d=0.1s s=0.9 r=0.5s
+    curve: exp
+  }
+
+  layer kick : drums {
+    voice: kick
+    pattern: X...X...X...X...
+    tune: -2st
+    decay: 0.55
+    snap: 0.5
+    bend: 0.35
+    gain: -6db
+    humanize: 0.03
+    auto gain: 0s=-9.2, 540s=-7.6
+  }
+
+  layer clap : drums {
+    voice: clap
+    pattern: ....X.......X...
+    gain: -10db
+    humanize: 0.05
+    fx: reverb(decay=1.4s, mix=0.22)
+    auto gain: 0s=-12.4, 540s=-11.2
+  }
+
+  layer hat : drums {
+    voice: hat
+    pattern: x.x.x.x.x.x.x.x.
+    tune: 2st
+    decay: 0.28
+    gain: -13db
+    humanize: 0.04
+    auto gain: 0s=-14.4, 540s=-13.7
+  }
+
+  layer ohat : drums {
+    voice: open_hat
+    pattern: ....x.......x...
+    decay: 0.55
+    gain: -16db
+    auto gain: 0s=-17.6, 540s=-16.8
+  }
+
+  layer bass : notes {
+    osc: saw
+    bus: pump
+    gain: -8db
+    env: a=0.006s d=0.12s s=0.42 r=0.1s
+    velbright: 0.4
+    notes: D1 @ 0.5b for 0.45b, D1 @ 1.5b for 0.45b, D1 @ 2.5b for 0.45b, B1 @ 3.5b for 0.45b vel 0.85, B1 @ 4.5b for 0.45b, G1 @ 5.5b for 0.45b, G1 @ 6.5b for 0.45b, A1 @ 7.5b for 0.45b vel 0.9
+    loop: 8b
+    fx: lowpass(700hz), drive(amount=0.12)
+    auto cutoff: 0s=980, 540s=1040
+    auto gain: 0s=-10.4, 540s=-9.2
+  }
+
+  layer pad : notes {
+    osc: pad
+    bandwidth: 45c
+    bus: pump
+    gain: -12db
+    env: a=1.2s d=1s s=0.85 r=2.2s
+    notes: D3maj7 @ 0b for 8b voicing spread, B2min7 @ 8b for 8b voicing spread, G3maj7 @ 16b for 8b voicing spread, A3maj7 @ 24b for 8b voicing spread
+    loop: 32b
+    fx: lowpass(2200hz), reverb(decay=3.2s, mix=0.3)
+    auto gain: 0s=-10.4, 540s=-9.7
+  }
+
+  layer lead : notes {
+    osc: saw
+    unison: 5
+    spread: 20c
+    bus: air
+    gain: -10db
+    env: a=0.015s d=0.25s s=0.65 r=0.4s
+    velbright: 0.4
+    play road @ 32b
+    play road @ 48b
+    play road @ 64b transpose +12st
+    play road @ 80b
+    play road @ 96b
+    play road @ 112b vel 0.9
+    play road @ 128b diatonic 1
+    play road @ 144b
+    play road @ 160b
+    play road @ 176b transpose +12st
+    play road @ 192b
+    play road @ 208b
+    play road @ 224b vel 0.9
+    play road @ 240b diatonic 1
+    play road @ 256b
+    play road @ 272b
+    play road @ 288b transpose +12st
+    play road @ 304b
+    play road @ 320b
+    play road @ 336b vel 0.9
+    play road @ 352b diatonic 1
+    play road @ 368b
+    play road @ 384b
+    play road @ 400b transpose +12st
+    play road @ 416b
+    play road @ 432b
+    play road @ 448b vel 0.9
+    play road @ 464b diatonic 1
+    play road @ 480b
+    play road @ 496b
+    loop: 0b
+    fx: lowpass(2600hz)
+    auto cutoff: 0s=2680, 540s=2840
+    auto gain: 0s=-11.6, 540s=-9.8
+    pan: 0.0
+  }
+
+  layer outro_riser : sweep {
+    shape: triangle
+    from: 3000hz
+    to: 120hz
+    start: 531s
+    duration: 8s
+    gain: -22db
+    env: a=6s d=0.2s s=0.85 r=1s
+    curve: exp
+  }
+
+  master {
+    width: 1.0
+    lufs: -11
+    peak: -1db
+    fadein: 0.5s
+    fadeout: 2s
+    fx: lowpass(17000hz), highpass(26hz), fdn(rt60=2.6, rt60_high=1.2, mix=0.2), comp(threshold=-13, ratio=2.0, attack=0.015, release=0.18, knee=6), saturate(amount=0.1, warmth=0.28)
+    auto gain: 0s=-60, 530s=-60, 532s=-14, 539s=-60
+  }
+}

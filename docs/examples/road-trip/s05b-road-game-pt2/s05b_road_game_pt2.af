@@ -1,0 +1,143 @@
+# 05b — Road Game / Momentum, part II. The trip becomes active again;
+# same game continues, denser and brighter, still tasteful — not a rave.
+asset s05b_road_game_pt2 {
+  kind: soundtrack
+  duration: 360s
+  tempo: 121bpm
+  key: A major
+  groove: pushed 0.18
+  emotion: triumph=0.5, wonder=0.3, cinematic_intensity=0.35
+
+  marker bonus_round      @ 0s
+  marker momentum_builds  @ 180s
+  marker crest            @ 320s
+
+  motif road {
+    A4  @ 0b   for 1b   vel 0.7
+    C#5 @ 1b   for 1b   vel 0.75
+    E5  @ 2b   for 1b   vel 0.8
+    D5  @ 3b   for 1.5b vel 0.78
+    C#5 @ 4.5b for 0.5b vel 0.7
+    A4  @ 5b   for 3b   vel 0.65
+  }
+
+  bus pump {
+    duck: source=kick amount=6.5db attack=0.006s release=0.12s threshold=-37db
+    fx: saturate(amount=0.12, warmth=0.22)
+  }
+
+  layer kick : drums {
+    voice: kick
+    pattern: X...X...X...X...
+    tune: -3st
+    decay: 0.45
+    snap: 0.55
+    bend: 0.3
+    gain: -7db
+    humanize: 0.03
+    auto gain: 0s=-13.9, 360s=-11.6
+  }
+
+  layer clap : drums {
+    voice: clap
+    pattern: ....X.x.....X.x.
+    gain: -12db
+    humanize: 0.05
+    fx: reverb(decay=0.8s, mix=0.16)
+    auto gain: 0s=-17.4, 360s=-15.6
+  }
+
+  layer hat : drums {
+    voice: hat
+    pattern: x.xxx.x.x.xxx.xx
+    tune: 2st
+    decay: 0.25
+    gain: -14db
+    humanize: 0.05
+    auto gain: 0s=-18.2, 360s=-16.8
+  }
+
+  layer bass : notes {
+    osc: square
+    bus: pump
+    gain: -8db
+    env: a=0.003s d=0.1s s=0.3 r=0.06s
+    velbright: 0.5
+    notes: A1 @ 0b for 0.4b vel 0.9, A1 @ 0.75b for 0.3b vel 0.65, A2 @ 1.5b for 0.4b vel 0.8, D2 @ 2b for 0.4b vel 0.85, D2 @ 2.75b for 0.3b vel 0.6, E1 @ 3.5b for 0.4b vel 0.8
+    loop: 4b
+    fx: lowpass(650hz), drive(amount=0.18)
+    auto cutoff: 0s=820, 360s=880
+    auto gain: 0s=-14, 360s=-12
+  }
+
+  layer stab : notes {
+    osc: square
+    unison: 3
+    spread: 12c
+    bus: pump
+    gain: -11db
+    env: a=0.004s d=0.16s s=0.0 r=0.12s
+    velbright: 0.55
+    notes: A3maj7 @ 1b for 0.2b, F#3min7 @ 2b for 0.2b, D3maj7 @ 2.75b for 0.2b, E3maj7 @ 3.5b for 0.2b vel 0.9
+    loop: 4b
+    fx: bandpass(1800hz), delay(time=0.234, feedback=0.22, mix=0.2)
+    auto gain: 0s=-17.3, 360s=-15.2
+  }
+
+  layer arp : notes {
+    osc: pluck
+    damping: 0.3
+    brightness: 0.7
+    gain: -14db
+    env: a=0.004s d=0.3s s=0.0 r=0.2s
+    notes: A3maj7 @ 0b for 4b, F#3min7 @ 4b for 4b, D3maj7 @ 8b for 4b, E3maj7 @ 12b for 4b
+    arp: up rate=0.25b octaves=1 gate=0.75
+    loop: 16b
+    fx: bandpass(2600hz), delay(time=0.187, feedback=0.2, mix=0.15)
+    auto gain: 0s=-20.3, 360s=-18.2
+    pan: -0.15
+  }
+
+  layer motif_bounce : notes {
+    osc: pluck
+    damping: 0.3
+    brightness: 0.7
+    gain: -11db
+    env: a=0.004s d=0.2s s=0.25 r=0.2s
+    play road @ 8b
+    play road @ 24b vel 0.9
+    play road @ 40b diatonic 1
+    play road @ 56b transpose +12st vel 0.85
+    play road @ 72b
+    play road @ 88b vel 0.9
+    play road @ 104b diatonic 1
+    play road @ 120b transpose +12st vel 0.85
+    play road @ 136b
+    play road @ 152b vel 0.9
+    play road @ 168b diatonic 1
+    play road @ 184b transpose +12st vel 0.85
+    play road @ 200b
+    play road @ 216b vel 0.9
+    play road @ 232b diatonic 1
+    play road @ 248b transpose +12st vel 0.85
+    play road @ 264b
+    play road @ 280b vel 0.9
+    play road @ 296b diatonic 1
+    play road @ 312b transpose +12st vel 0.85
+    play road @ 328b
+    play road @ 344b vel 0.9
+    loop: 0b
+    fx: lowpass(2800hz), delay(time=0.187, feedback=0.24, mix=0.18)
+    auto gain: 0s=-18.2, 360s=-15.8
+    pan: 0.18
+  }
+
+  master {
+    width: 0.94
+    lufs: -12
+    peak: -1db
+    fadein: 0.3s
+    fadeout: 1.5s
+    fx: lowpass(16000hz), highpass(28hz), fdn(rt60=1.6, rt60_high=0.85, mix=0.13), comp(threshold=-13, ratio=2.3, attack=0.01, release=0.13, knee=5), saturate(amount=0.14, warmth=0.24)
+  }
+}

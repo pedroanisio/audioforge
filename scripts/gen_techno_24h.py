@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate compositions/last_24h.af — a 10-minute techno arc charting the last
+"""Generate docs/examples/electronic/last-24h/last_24h.af — a 10-minute techno arc charting the last
 24 hours in the codebase: boot → first groove → build → the bug (breakdown) →
 the fix ships (drop) → the joy (uplift) → the tools & the cover (breakdown 2) →
 the concept paper (climax) → committed (outro).
@@ -237,6 +237,6 @@ asset last_24h {{
 }}
 """
 
-Path("compositions/last_24h.af").write_text(AF)
-print("wrote compositions/last_24h.af",
+Path("docs/examples/electronic/last-24h/last_24h.af").write_text(AF)
+print("wrote docs/examples/electronic/last-24h/last_24h.af",
       f"({DUR}s · {BPM}bpm · {int(DUR/(240/BPM))} bars)")

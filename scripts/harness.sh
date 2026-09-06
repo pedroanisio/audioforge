@@ -138,7 +138,7 @@ mig001() { local b="$W/baseline-2.16.0"; [ -d "$b" ] || { mkdir -p "$b" && git a
 heavy HARNESS-MIG-001 "legacy manifest -> MISMATCH exit 2" mig001
 run   HARNESS-MIG-002 "repo .af specs compile+render" py <<'PYEOF'
 import sys; from pathlib import Path; from audioforge import AudioForge
-bad=[p.name for p in list(Path("static/samples").glob("*.af"))+list(Path("tests/golden/audio").glob("*.af")) if not AudioForge().compile(p.read_text()).ok]
+bad=[p.name for p in list(Path("docs/examples/sound-design/transition-sweep").glob("*.af"))+list(Path("tests/golden/audio").glob("*.af")) if not AudioForge().compile(p.read_text()).ok]
 print("failed:", bad); sys.exit(1 if bad else 0)
 PYEOF
 run   HARNESS-MIG-003 "migration flags audio review" py <<'PYEOF'

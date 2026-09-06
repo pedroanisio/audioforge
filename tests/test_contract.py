@@ -22,7 +22,7 @@ from audioforge import samples as smod  # noqa: E402
 from audioforge.schema import SpecError  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
-FIXTURES = ROOT / "static" / "fixtures"
+FIXTURES = ROOT / "docs" / "examples" / "archive"
 AF = AudioForge()
 
 
@@ -62,7 +62,7 @@ def test_property_validate_implies_renders():
     """Over the preset corpus: no validate errors => render succeeds."""
     have_vsco = (ROOT / "libraries" / "vsco2-ce-subset").exists()
     checked = rendered = 0
-    corpus = sorted((ROOT / "static" / "samples").glob("*.af"))
+    corpus = sorted((ROOT / "docs" / "examples" / "sound-design" / "transition-sweep").glob("*.af"))
     for f in corpus:
         if not have_vsco and "vsco2-ce-subset" in f.read_text():
             continue
@@ -78,9 +78,7 @@ def test_property_validate_implies_renders():
                 continue                            # keep the suite fast
             asset.render()                          # must not raise
             rendered += 1
-    if checked < 5:
-        if _skip_optional(f"preset corpus has only {checked} compilable assets"):
-            return
+    assert checked >= 1, "canonical quickstart corpus must not be empty"
     assert rendered >= 1, (checked, rendered)
     print(f"PASS  property: {checked} preset assets validated; every "
           f"clean one that was rendered ({rendered}) rendered without error")
@@ -157,7 +155,7 @@ def test_multiline_auto_continuation():
 def test_targeted_grammar_diagnostics_on_fixtures():
     for fx, frag in (("bwv949.af", "layer-body lines"),
                      ("unser_leben.af", "layer-body lines")):
-        res = AF.compile((FIXTURES / fx).read_text())
+        res = AF.compile((FIXTURES / Path(fx).stem.replace("_", "-") / fx).read_text())
         assert not res.ok
         msgs = " ".join(d.message for d in res.diagnostics)
         assert frag in msgs, (fx, msgs[:200])

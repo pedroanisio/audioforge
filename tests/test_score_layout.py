@@ -1,7 +1,7 @@
 """Regression tests for score title-page layout robustness.
 
 Engraving a dense, long-header orchestral score
-(``compositions/fable_symphony_orchestral_v2.af``) surfaced two title-page
+(``docs/examples/orchestral/fable-symphony-orchestral-v2/fable_symphony_orchestral_v2.af``) surfaced two title-page
 pollution bugs:
 
   1. the program-notes blurb overran its column and overprinted the footer

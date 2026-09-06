@@ -1,0 +1,197 @@
+# Original expressive hard-rock guitar solo for AudioForge render testing.
+# Uses the local CC0 Karoryfer Emilyguitar SFZ library plus explicit
+# note-scoped pitch/dynamic curves for bends, vibrato, and falloffs.
+
+asset slash_inspired_v3 {
+  kind: cue
+  duration: 60s
+  samplerate: 48000
+  bitdepth: 24
+  tempo: 76bpm
+  key: A minor
+  groove: laidback 0.28
+  perform: style=expressive_hard_rock expressivity=0.88 rubato=arch amount=0.055 segment=0.5b
+  library: "sfz-guitar-experiment@52d4a8638474a50fc675de788babe5950fccbbefa6b82b5730dfd96ca0a56c9b"
+
+  marker breath_in @ 0s
+  marker first_bend @ 3.4s
+  marker answer @ 11.5s
+  marker climb @ 25.0s
+  marker peak_hold @ 32.5s
+  marker resolve @ 50.5s
+
+  bus band {
+    gain: -3db
+    fx: hall(rt60=1.85, damp=0.48, mix=0.10)
+  }
+
+  layer pad : tone {
+    osc: pad
+    note: A2
+    bandwidth: 28c
+    env: a=1.8 d=0.4 s=0.70 r=2.8
+    gain: -20db
+    bus: band
+  }
+
+  layer keys : notes {
+    osc: organ
+    gain: -18db
+    pan: -0.18
+    bus: band
+    notes: A3min @ 0b for 8b vel 0.42 voicing open,
+           F3maj7 @ 8b for 8b vel 0.40 voicing spread,
+           C3maj @ 16b for 8b vel 0.43 voicing open,
+           G3maj @ 24b for 8b vel 0.45 voicing open,
+           A3min @ 32b for 8b vel 0.46 voicing spread,
+           F3maj7 @ 40b for 8b vel 0.43 voicing spread,
+           C3maj @ 48b for 8b vel 0.45 voicing open,
+           G3maj @ 56b for 8b vel 0.44 voicing open,
+           A3min @ 64b for 10b vel 0.48 voicing open
+  }
+
+  layer bass : notes {
+    osc: pluck
+    damping: 0.50
+    brightness: 0.30
+    gain: -10db
+    notes: A1 @ 0b for 7.5b vel 0.68,
+           F1 @ 8b for 7.5b vel 0.65,
+           C2 @ 16b for 7.5b vel 0.67,
+           G1 @ 24b for 7.5b vel 0.69,
+           A1 @ 32b for 7.5b vel 0.72,
+           F1 @ 40b for 7.5b vel 0.66,
+           C2 @ 48b for 7.5b vel 0.68,
+           G1 @ 56b for 7.5b vel 0.68,
+           A1 @ 64b for 8b vel 0.72
+  }
+
+  layer kick : drums {
+    voice: kick
+    pattern: x.......x.......
+    gain: -9db
+    humanize: 0.20
+  }
+
+  layer snare : drums {
+    voice: snare
+    pattern: ....x.......x...
+    gain: -11db
+    humanize: 0.22
+  }
+
+  layer hat : drums {
+    voice: hat
+    pattern: x...x...x...x...
+    gain: -22db
+    humanize: 0.30
+  }
+
+  layer rhythm_gtr : instrument {
+    instrument: emily_five_voice
+    articulation: sustain
+    section: size=2 spread=0.70 detune=4c timing=0.007s
+    humanize: 0.18
+    dynamic: 0b=mp, 32b=mf, 56b=mp
+    gain: -13db
+    pan: -0.46
+    fx: drive(0.40),
+        peak(760hz, gain=1.7, q=0.9),
+        delay(time=0.19, feedback=0.10, mix=0.07),
+        plate(decay=0.55, damp=0.48, mix=0.08)
+
+    notes: A2 @ 0b for 4b vel 0.56,
+           E3 @ 4b for 4b vel 0.54,
+           F2 @ 8b for 4b vel 0.54,
+           C3 @ 12b for 4b vel 0.52,
+           C3 @ 16b for 4b vel 0.55,
+           G3 @ 20b for 4b vel 0.53,
+           G2 @ 24b for 4b vel 0.57,
+           D3 @ 28b for 4b vel 0.55,
+           A2 @ 32b for 4b vel 0.60,
+           E3 @ 36b for 4b vel 0.58,
+           F2 @ 40b for 4b vel 0.56,
+           C3 @ 44b for 4b vel 0.54,
+           C3 @ 48b for 4b vel 0.56,
+           G3 @ 52b for 4b vel 0.54,
+           G2 @ 56b for 4b vel 0.58,
+           D3 @ 60b for 4b vel 0.56,
+           A2 @ 64b for 8b vel 0.62
+  }
+
+  layer lead : instrument {
+    instrument: emily_clean
+    articulation: sustain
+    legato: 0.075s
+    phrasing: 0.90
+    humanize: time=0.024s vel=0.13
+    dynamic: 0b=mf, 24b=f, 40b=ff, 64b=mp
+    gain: -2db
+    pan: 0.20
+    fx: drive(0.62),
+        peak(820hz, gain=3.4, q=0.8),
+        peak(2800hz, gain=1.8, q=1.1),
+        delay(time=0.315, feedback=0.25, mix=0.18),
+        plate(decay=0.82, damp=0.40, mix=0.12)
+
+    notes: A4 @ 2b for 1.0b vel 0.74,
+           C5 @ 3.35b for 0.45b vel 0.76,
+           D5 @ 4.2b for 2.9b vel 0.88,
+           C5 @ 7.55b for 0.50b vel 0.73,
+           A4 @ 8.15b for 1.55b vel 0.76,
+           D5 @ 11.0b for 2.05b vel 0.86,
+           C5 @ 13.55b for 0.45b vel 0.76,
+           A4 @ 14.15b for 0.45b vel 0.73,
+           G4 @ 15.0b for 3.1b vel 0.74,
+           E5 @ 20.0b for 1.2b vel 0.80,
+           D5 @ 21.65b for 0.65b vel 0.77,
+           C5 @ 22.65b for 1.95b vel 0.83,
+           D5 @ 26.0b for 0.45b vel 0.78,
+           E5 @ 26.7b for 0.45b vel 0.80,
+           G5 @ 27.4b for 0.50b vel 0.84,
+           A5 @ 28.2b for 2.9b vel 0.92,
+           G5 @ 32.05b for 0.65b vel 0.84,
+           E5 @ 33.0b for 0.70b vel 0.80,
+           D5 @ 34.15b for 2.1b vel 0.82,
+           A4 @ 38.0b for 0.35b vel 0.75,
+           C5 @ 38.45b for 0.35b vel 0.77,
+           D5 @ 38.90b for 0.35b vel 0.80,
+           E5 @ 39.35b for 0.35b vel 0.82,
+           G5 @ 39.80b for 0.38b vel 0.86,
+           A5 @ 40.35b for 3.35b vel 0.95,
+           E5 @ 45.0b for 0.90b vel 0.80,
+           D5 @ 46.30b for 0.70b vel 0.77,
+           C5 @ 47.40b for 1.35b vel 0.73,
+           A4 @ 50.0b for 5.3b vel 0.72,
+           C5 @ 57.0b for 1.35b vel 0.70,
+           D5 @ 60.0b for 2.2b vel 0.74,
+           A4 @ 64.0b for 8.4b vel 0.68
+
+    curves: note 0 pitch_cents basis=note_beats 0b=-180c, 0.22b=0c, 1b=0c
+    curves: note 0 dynamic basis=note_beats 0b=0.50, 0.35b=0.68, 1b=0.55
+    curves: note 2 pitch_cents basis=note_beats 0b=0c, 0.85b=200c, 1.70b=200c, 1.88b=226c, 2.06b=176c, 2.24b=222c, 2.42b=182c, 2.65b=204c, 2.9b=120c
+    curves: note 2 dynamic basis=note_beats 0b=0.66, 1.00b=0.98, 2.9b=0.72
+    curves: note 5 pitch_cents basis=note_beats 0b=200c, 0.72b=0c, 2.05b=0c
+    curves: note 5 dynamic basis=note_beats 0b=0.88, 0.75b=0.70, 2.05b=0.58
+    curves: note 8 pitch_cents basis=note_beats 0b=0c, 1.00b=0c, 1.25b=22c, 1.50b=-16c, 1.75b=24c, 2.00b=-20c, 2.35b=18c, 2.75b=-12c, 3.1b=0c
+    curves: note 9 pitch_cents basis=note_beats 0b=-200c, 0.22b=0c, 1.2b=0c
+    curves: note 11 pitch_cents basis=note_beats 0b=0c, 0.55b=200c, 1.55b=200c, 1.72b=226c, 1.90b=178c, 1.95b=190c
+    curves: note 11 dynamic basis=note_beats 0b=0.62, 0.9b=0.90, 1.95b=0.70
+    curves: note 15 pitch_cents basis=note_beats 0b=0c, 0.85b=200c, 1.80b=200c, 2.05b=230c, 2.28b=172c, 2.55b=222c, 2.9b=160c
+    curves: note 15 dynamic basis=note_beats 0b=0.78, 1.25b=1.0, 2.9b=0.76
+    curves: note 18 pitch_cents basis=note_beats 0b=0c, 0.70b=0c, 0.95b=24c, 1.20b=-18c, 1.45b=26c, 1.70b=-22c, 2.1b=0c
+    curves: note 24 pitch_cents basis=note_beats 0b=0c, 1.05b=200c, 2.35b=200c, 2.55b=232c, 2.75b=174c, 3.02b=210c, 3.35b=-320c
+    curves: note 24 dynamic basis=note_beats 0b=0.82, 1.5b=1.0, 3.35b=0.64
+    curves: note 28 pitch_cents basis=note_beats 0b=0c, 1.65b=0c, 2.05b=18c, 2.45b=-14c, 2.85b=22c, 3.25b=-18c, 3.80b=16c, 4.40b=-10c, 5.3b=0c
+    curves: note 28 dynamic basis=note_beats 0b=0.60, 2.5b=0.78, 5.3b=0.42
+    curves: note 31 pitch_cents basis=note_beats 0b=0c, 2.2b=0c, 3.0b=20c, 3.8b=-16c, 4.6b=22c, 5.4b=-18c, 6.2b=16c, 7.2b=-10c, 8.4b=0c
+    curves: note 31 dynamic basis=note_beats 0b=0.58, 3.0b=0.66, 8.4b=0.35
+  }
+
+  master {
+    lufs: -14
+    peak: -1db
+    fadeout: 0.35s
+    fx: mbcomp(threshold=-21, ratio=1.8)
+  }
+}

@@ -135,12 +135,15 @@ def generate_manifest(directory, name: str | None = None,
 
 
 def _decode_wav_bytes(data: bytes, ext: str = "") -> tuple[np.ndarray, int]:
-    """Decode a sample to (mono float64, sample_rate). WAV is read in pure
+    """Decode to native mono (N,) or stereo (N, 2) float64 and sample rate.
+    WAV is read in pure
     Python; FLAC / Ogg / AIFF are routed through libsndfile (see _sndfile)."""
     if not data[:4] == b"RIFF" and (ext.lower().lstrip(".") != "wav"):
         from . import _sndfile
         x, sr = _sndfile.decode(data, ext)          # [frames, channels]
-        return (x.mean(axis=1) if x.ndim > 1 else x), sr
+        if x.ndim == 2 and x.shape[1] > 2:
+            raise ValueError("instrument samples must be mono or stereo")
+        return (x[:, 0] if x.ndim == 2 and x.shape[1] == 1 else x), sr
     with wave.open(io.BytesIO(data)) as w:
         sr, ch, sw, n = (w.getframerate(), w.getnchannels(),
                          w.getsampwidth(), w.getnframes())
@@ -157,7 +160,9 @@ def _decode_wav_bytes(data: bytes, ext: str = "") -> tuple[np.ndarray, int]:
     else:
         raise ValueError(f"unsupported WAV sample width {sw * 8}-bit")
     if ch > 1:
-        x = x.reshape(-1, ch).mean(axis=1)
+        if ch > 2:
+            raise ValueError("instrument samples must be mono or stereo")
+        x = x.reshape(-1, ch)
     return x, sr
 
 

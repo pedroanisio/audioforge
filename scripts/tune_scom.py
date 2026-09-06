@@ -29,8 +29,8 @@ from pathlib import Path
 from audioforge import AudioForge, interop
 from audioforge.decompile import spec_to_dsl
 
-MIDI = Path("static/fixtures/sweetchildofmine.mid")
-OUT = Path("compositions/sweet_child_o_mine.tuned.af")
+MIDI = Path("docs/examples/arrangements/sweet-child-o-mine/inputs/sweetchildofmine.mid")
+OUT = Path("docs/examples/arrangements/sweet-child-o-mine-tuned/sweet_child_o_mine.tuned.af")
 
 # GM percussion -> drum strategy (mirrors scripts/general_translator.py).
 GM_KICK = {35, 36}
@@ -248,7 +248,7 @@ def main() -> int:
     out: list[str] = [
         "# " + "=" * 74,
         "# AudioForge DSL — TUNED arrangement (scripts/tune_scom.py)",
-        "# Source: static/fixtures/sweetchildofmine.mid (import-midi -> tuned mix)",
+        "# Source: docs/examples/arrangements/sweet-child-o-mine/inputs/sweetchildofmine.mid (import-midi -> tuned mix)",
         "# ARCHITECTURAL REQUIREMENT (PALS's LAW): verified by compiling this DSL.",
         "# " + "=" * 74,
         "",

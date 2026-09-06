@@ -259,6 +259,13 @@ def render_region(region: Region, src: np.ndarray, src_sr: int,
     transient; `ramp_from_midi` reads at the previous note's rate first and
     glides to this note's over `ramp_s` (variable-rate read — a real pitch
     smear, not a crossfade artifact)."""
+    if src.ndim == 2:
+        # Both channels use exactly the same deterministic clock and envelope.
+        # Reuse the mono kernel to preserve its established rounding behavior.
+        return np.column_stack([
+            render_region(region, src[:, c], src_sr, midi_float, dur_n, sr,
+                          src_offset_s, ramp_from_midi, ramp_s, pitch_cents)
+            for c in range(src.shape[1])])
     semis = (midi_float - region.pitch_keycenter + region.transpose
              + region.tune / 100.0)
     ratio = (2.0 ** (semis / 12.0)) * (src_sr / sr)
@@ -331,6 +338,38 @@ def render_region(region: Region, src: np.ndarray, src_sr: int,
 
 
 freq_to_midi = synth.freq_to_midi   # single definition lives in synth
+
+
+def pan_signal(sig: np.ndarray, pan: float) -> np.ndarray:
+    """Mono uses constant power; stereo uses balance with unity at center.
+
+    Balance attenuates the opposite channel without folding or crossfeeding
+    the recorded image. At a hard edge that channel is muted deliberately.
+    """
+    theta = (float(np.clip(pan, -1, 1)) + 1) * np.pi / 4
+    if sig.ndim == 1:
+        return np.column_stack([np.cos(theta) * sig, np.sin(theta) * sig])
+    if pan == 0:
+        return sig
+    gains = np.minimum(1., np.sqrt(2.) * np.array([np.cos(theta), np.sin(theta)]))
+    return sig * gains
+
+
+def _scale_frames(sig: np.ndarray, gain) -> np.ndarray:
+    return sig * (gain[:, None] if sig.ndim == 2 and np.ndim(gain) else gain)
+
+
+def _add_frames(out: np.ndarray, part: np.ndarray, start: int = 0) -> np.ndarray:
+    """Promote only when a stereo recording is actually encountered."""
+    if out.ndim != part.ndim:
+        if out.ndim == 1:
+            out = pan_signal(out, 0)
+        else:
+            part = pan_signal(part, 0)
+    n = min(len(part), len(out) - start)
+    if n > 0:
+        out[start:start + n] += part[:n]
+    return out
 
 
 # --- articulation engine (P2) ----------------------------------------------
@@ -450,11 +489,11 @@ def render_instrument_track(track: dict, total_n: int, sr: int, tm,
     (groove slots, tempo map, seeded humanize, velocity clip), each note
     rendered through the library's SFZ regions instead of a synth voice.
 
-    P3 performance model:
-    - slur groups render with legato joins — the outgoing note holds
-      through an equal-power crossfade window (default 50 ms, `legato_s`),
-      the incoming note skips its recorded attack and glides its read rate
-      from the previous pitch (a real smear, not a crossfade artifact);
+    P3 performance model, extended by ADR-0009:
+    - contiguous monophonic slurs use an exact recorded interval when the
+      library maps one, with its declared lead and handover. Otherwise the
+      disclosed approximation crossfades stationary samples and glides pitch
+      (default 50 ms, `legato_s`); strict planning refuses that approximation;
     - an opt-in `phrasing` arch shapes slur groups: velocities rise toward
       the group's temporal midpoint and ease after; authored gates remain
       unchanged (documented constants, fully deterministic);
@@ -562,6 +601,11 @@ def render_instrument_track(track: dict, total_n: int, sr: int, tm,
         if clamp_n and not mods.get("retrigger"):
             dur_n = min(dur_n, clamp_n)
         midi_i = int(round(s["midi"]))
+        from .transitions import resolve_transition, transition_region
+        incoming = resolve_transition(lib, instrument, prev, s, s['art'])
+        outgoing = resolve_transition(lib, instrument, s, nxt, nxt['art'] if nxt else s['art'])
+        if incoming:
+            regions = [transition_region(incoming)]
         kreg = [r for r in regions if r.lokey <= midi_i <= r.hikey]
         if not kreg:
             raise ValueError(
@@ -577,12 +621,23 @@ def render_instrument_track(track: dict, total_n: int, sr: int, tm,
                 * float(s["event"].get("attack_scale", 1)))
 
         def transition_kwargs(region, source_rate):
+            if incoming:
+                return {'src_offset_s': incoming['offset_frames'] / source_rate}
             if not join_in:
                 return {}
             offset = transition_offset(region, source_rate)
             return {"src_offset_s": offset["seconds"],
                     "ramp_from_midi": prev["midi"], "ramp_s": join_w}
-        held_n = dur_n + (join_n if join_out else 0)
+        lead_n = int(round(incoming['lead_s'] * sr)) if incoming else 0
+        hit_start = s['start'] - lead_n
+        # Authored note time denotes the destination onset. A recorded lead
+        # begins early, and the prior note hands over at that actual start.
+        outgoing_lead = int(round(outgoing['lead_s'] * sr)) if outgoing else 0
+        in_fade = int(round(incoming['crossfade_s'] * sr)) if incoming else join_n
+        out_fade = int(round(outgoing['crossfade_s'] * sr)) if outgoing else join_n
+        held_n = dur_n + lead_n
+        if join_out:
+            held_n = max(1, nxt['start'] - outgoing_lead + out_fade - hit_start)
 
         def note_curve(target: str, n: int, offset_n: int = 0):
             env = _sum_note_curve(
@@ -590,9 +645,12 @@ def render_instrument_track(track: dict, total_n: int, sr: int, tm,
                 s["start_time_s"], offset_n + n, sr)
             if env is None:
                 return None
+            if lead_n:
+                env = np.concatenate([np.full(lead_n, env[0]), env])
             return env[offset_n:offset_n + n]
 
         def render_hit(h_start, h_dur_n, h_vel, h_rng):
+            nonlocal out
             note_offset_n = max(0, h_start - s["start"])
             max_rel = max(shaped(r).ampeg_release for r in kreg)
             full_n = h_dur_n + int(round(max_rel * sr))
@@ -637,11 +695,11 @@ def render_instrument_track(track: dict, total_n: int, sr: int, tm,
                         part = render_region(shaped(r), srcb, src_sr,
                                              s["midi"], h_dur_n, sr,
                                              pitch_cents=pitch, **transition_kwargs(r, src_sr))
-                        m = min(part.size, full_n)
-                        sig[:m] += part[:m] * w[:m]
-                sig *= dyn_gain(v_env) * h_vel * extra_g
+                        m = min(len(part), full_n)
+                        sig = _add_frames(sig, _scale_frames(part[:m], w[:m]))
+                sig = _scale_frames(sig, dyn_gain(v_env) * h_vel * extra_g)
                 if note_gain is not None:
-                    sig *= note_gain
+                    sig = _scale_frames(sig, note_gain)
             else:
                 v127 = int(np.clip(round(h_vel * 127), 1, 127))
                 chosen = None
@@ -672,21 +730,25 @@ def render_instrument_track(track: dict, total_n: int, sr: int, tm,
                     part = render_region(shaped(r), srcb, src_sr,
                                          s["midi"], h_dur_n, sr,
                                          pitch_cents=pitch, **transition_kwargs(r, src_sr))
-                    sig[:part.size] += part
+                    sig = _add_frames(sig, part)
                 sig = sig * h_vel * extra_g
                 if note_gain is not None:
-                    sig *= note_gain
+                    sig = _scale_frames(sig, note_gain)
             if join_in:                       # suppressed attack fades in
-                f = min(join_n, sig.size)
-                sig[:f] *= np.sin(np.linspace(0, np.pi / 2, f))
+                f = min(in_fade, len(sig))
+                sig[:f] = _scale_frames(sig[:f], np.sin(np.linspace(0, np.pi / 2, f)))
             if join_out:                      # hold, then hand over
-                cut = min(h_dur_n, sig.size)
-                f = min(join_n, sig.size - (cut - join_n))                     if cut > join_n else cut
-                sig[cut - f:cut] *= np.cos(np.linspace(0, np.pi / 2, f))
+                cut = min(h_dur_n, len(sig))
+                f = min(out_fade, len(sig) - (cut - out_fade)) if cut > out_fade else cut
+                sig[cut - f:cut] = _scale_frames(sig[cut - f:cut], np.cos(np.linspace(0, np.pi / 2, f)))
                 sig = sig[:cut]               # the join replaces the release
-            seg = min(sig.size, total_n - h_start)
+            seg = min(len(sig), total_n - h_start)
             if seg > 0:
-                out[h_start:h_start + seg] += sig[:seg] * env_gain
+                if h_start < 0:
+                    sig = sig[-h_start:]
+                    h_start = 0
+                    seg = min(len(sig), total_n)
+                out = _add_frames(out, sig[:seg] * env_gain, h_start)
 
         if mods.get("retrigger"):        # tremolo fallback: seeded train
             t_off = 0
@@ -699,7 +761,7 @@ def render_instrument_track(track: dict, total_n: int, sr: int, tm,
                            s["rng"])
                 t_off += max(interval, 1)
         else:
-            render_hit(s["start"], held_n, s["vel"], s["rng"])
+            render_hit(hit_start, held_n, s["vel"], s["rng"])
         if report is not None and plan_segment is not None:
             elapsed_ms = (time.perf_counter_ns() - seg_t0) / 1_000_000.0
             report.setdefault("plan_segment_actual_ms", {})[
@@ -728,13 +790,11 @@ def render_section(layer: dict, total_n: int, sr: int, tm, rng, lib,
     scale = 1.0 / np.sqrt(n_players)
     for p in range(n_players):
         dt, dmidi, pos = section_player(layer, p, rng)
-        mono = render_instrument_track(
+        player_signal = render_instrument_track(
             layer, total_n, sr, tm,
             lambda sub, _p=p: rng(f"player{_p}:{sub}"), lib,
             groove=groove, report=report if p == 0 else None,
             time_offset_s=dt, midi_offset=dmidi,
             plan_segments=[seg for seg in (plan_segments or []) if seg.get("player_index", 0) == p])
-        theta = (pos + 1.0) * np.pi / 4.0
-        out[:, 0] += np.cos(theta) * mono * scale
-        out[:, 1] += np.sin(theta) * mono * scale
+        out += pan_signal(player_signal, pos) * scale
     return out

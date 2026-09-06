@@ -16,7 +16,7 @@ from audioforge import (AudioForge, compile_dsl, register_fx,  # noqa: E402
 from audioforge.loudness import integrated_lufs  # noqa: E402
 from audioforge.render import render  # noqa: E402
 
-PRESETS = Path(__file__).resolve().parents[1] / "static" / "samples"
+PRESETS = Path(__file__).resolve().parents[1] / "docs" / "examples" / "sound-design" / "transition-sweep"
 
 
 def _example(name: str) -> Path:
@@ -156,7 +156,7 @@ def test_export_presets_reproducible():
 
 def test_dsl_presets_byte_identical():
     forge = AudioForge()
-    have_vsco = (PRESETS.parents[1] / "libraries" / "vsco2-ce-subset").exists()
+    have_vsco = (Path(__file__).resolve().parents[1] / "libraries" / "vsco2-ce-subset").exists()
     for name in ("transition_sweep.af", "vibe_slow.af", "brand_signature.af"):
         try:
             f = _example(name)

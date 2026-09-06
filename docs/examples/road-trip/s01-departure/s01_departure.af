@@ -1,0 +1,92 @@
+# 01 — Departure / Everyone Gets In. Bags in the trunk, seatbelts, morning
+# anticipation. No real beat yet — a warm sub heartbeat and dashboard clicks.
+asset s01_departure {
+  kind: soundtrack
+  duration: 480s
+  tempo: 84bpm
+  key: A major
+  emotion: calm=0.55, intimacy=0.45, wonder=0.35
+  intensity: 0s=0.1, 480s=0.3
+
+  marker ignition      @ 0s
+  marker doors_close    @ 18s
+  marker pulling_away   @ 240s
+  marker gentle_hum     @ 420s
+
+  motif road {
+    A4  @ 0b   for 1b   vel 0.7
+    C#5 @ 1b   for 1b   vel 0.75
+    E5  @ 2b   for 1b   vel 0.8
+    D5  @ 3b   for 1.5b vel 0.78
+    C#5 @ 4.5b for 0.5b vel 0.7
+    A4  @ 5b   for 3b   vel 0.65
+  }
+
+  layer heartbeat : drums {
+    voice: kick
+    pattern: X...............
+    tune: -6st
+    decay: 0.7
+    snap: 0.15
+    bend: 0.1
+    gain: -30db
+    humanize: 0.1
+    auto gain: 0s=-52.5, 144s=-50, 336s=-48.8, 480s=-47.5
+  }
+
+  layer clicks : drums {
+    voice: hat
+    pattern: ....x.......x...
+    tune: 4st
+    decay: 0.25
+    gain: -34db
+    humanize: 0.15
+    auto gain: 0s=-52.9, 144s=-50.8, 336s=-49.8, 480s=-48.7
+  }
+
+  layer door_thunk : noise {
+    color: brown
+    start: 17s
+    duration: 1.4s
+    gain: -22db
+    env: a=0.01s d=0.3s s=0.1 r=0.9s
+    fx: lowpass(500hz), highpass(90hz)
+  }
+
+  layer pad : notes {
+    osc: pad
+    bandwidth: 45c
+    gain: -20db
+    env: a=3s d=2s s=0.85 r=4s
+    notes: A2maj7 @ 0b for 16b, F#2min7 @ 16b for 16b, D3maj7 @ 32b for 16b, E3maj7 @ 48b for 16b
+    loop: 64b
+    fx: lowpass(1200hz), reverb(decay=4.5s, mix=0.4)
+    auto cutoff: 0s=500, 480s=900
+    auto gain: 0s=-28.8, 144s=-27.6, 336s=-27, 480s=-26.4
+  }
+
+  layer motif_hint : notes {
+    osc: pluck
+    damping: 0.55
+    brightness: 0.4
+    gain: -26db
+    env: a=0.01s d=0.3s s=0.2 r=0.6s
+    play road @ 168b
+    play road @ 184b
+    play road @ 200b
+    play road @ 216b
+    loop: 0b
+    fx: lowpass(2200hz), reverb(decay=3s, mix=0.35)
+    auto gain: 0s=-60, 264s=-60, 297.6s=-26, 408s=-24, 480s=-30
+    pan: 0.15
+  }
+
+  master {
+    width: 0.85
+    lufs: -20
+    peak: -1.5db
+    fadein: 2s
+    fadeout: 3s
+    fx: lowpass(9000hz), highpass(32hz), fdn(rt60=2.2, rt60_high=1.0, mix=0.18), saturate(amount=0.05, warmth=0.2)
+  }
+}

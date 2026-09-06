@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate compositions/road_trip/*.af — "Five Seats, One Horizon", an
+"""Generate docs/examples/road-trip/*/*.af — "Five Seats, One Horizon", an
 80-minute family road-trip electronic journey for a mixed-age audience
 (M46, F49, M21, M17, F10): cinematic, melodic, warm, driving — never dark,
 sexual, aggressive, or repetitive.
@@ -23,7 +23,7 @@ that only swells in at the reveal) just get their own explicit pairs list.
 """
 from pathlib import Path
 
-OUT = Path("compositions/road_trip")
+OUT = Path("docs/examples/road-trip")
 OUT.mkdir(parents=True, exist_ok=True)
 
 
@@ -1205,7 +1205,8 @@ if __name__ == "__main__":
     total = 0
     for fname, fn in SECTIONS:
         text = fn()
-        path = OUT / fname
+        path = OUT / Path(fname).stem.replace("_", "-") / fname
+        path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text)
         print(f"wrote {path}")
         total += 1

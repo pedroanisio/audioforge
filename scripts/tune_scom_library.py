@@ -3,7 +3,7 @@
 
 Where scripts/tune_scom.py voices the arrangement with synthesis, this routes it
 through the **freepats-band** content-addressed instrument library — the same
-patches static/fixtures/mysong.af uses — so the parts play real recordings:
+patches docs/examples/arrangements/mysong/mysong.af uses — so the parts play real recordings:
 
 * bass    -> `finger_bass`
 * guitars -> `eguitar_dist`; the rhythm parts get `section: size=3` ensemble
@@ -28,8 +28,8 @@ from pathlib import Path
 
 from audioforge import AudioForge, interop
 
-MIDI = Path("static/fixtures/sweetchildofmine.mid")
-OUT = Path("compositions/sweet_child_o_mine.library.af")
+MIDI = Path("docs/examples/arrangements/sweet-child-o-mine/inputs/sweetchildofmine.mid")
+OUT = Path("docs/examples/arrangements/sweet-child-o-mine-library/sweet_child_o_mine.library.af")
 LIBRARY = ("freepats-band@"
            "d461fc30624ed0247a8449cd0d6edd39fced8976fbedf79d9a79b9020470f2be")
 
@@ -190,7 +190,7 @@ def main() -> int:
     out: list[str] = [
         "# " + "=" * 74,
         "# AudioForge DSL — sample-backed arrangement (scripts/tune_scom_library.py)",
-        "# Source: static/fixtures/sweetchildofmine.mid via freepats-band library",
+        "# Source: docs/examples/arrangements/sweet-child-o-mine/inputs/sweetchildofmine.mid via freepats-band library",
         "# ARCHITECTURAL REQUIREMENT (PALS's LAW): verified by compiling + resolving.",
         "# " + "=" * 74,
         "",

@@ -1,0 +1,121 @@
+# 08 — Golden Hour Drive. Warm light, second wind, less machine more human.
+# Home key returns (A major). Organic-feeling percussion, warm bass, 112 BPM.
+asset s08_golden_hour {
+  kind: soundtrack
+  duration: 540s
+  tempo: 112bpm
+  key: A major
+  groove: swing16 0.1
+  emotion: calm=0.4, intimacy=0.4, wonder=0.5, triumph=0.3
+
+  marker engine_restarts @ 0s
+  marker second_wind      @ 120s
+  marker warm_light       @ 360s
+  marker long_shadows     @ 480s
+
+  motif road {
+    A4  @ 0b   for 1b   vel 0.7
+    C#5 @ 1b   for 1b   vel 0.75
+    E5  @ 2b   for 1b   vel 0.8
+    D5  @ 3b   for 1.5b vel 0.78
+    C#5 @ 4.5b for 0.5b vel 0.7
+    A4  @ 5b   for 3b   vel 0.65
+  }
+
+  bus pump {
+    duck: source=kick amount=4db attack=0.012s release=0.2s threshold=-42db
+    fx: saturate(amount=0.08, warmth=0.26)
+  }
+
+  layer kick : drums {
+    voice: kick
+    pattern: X.......X.......
+    tune: -3st
+    decay: 0.55
+    snap: 0.3
+    bend: 0.2
+    gain: -13db
+    humanize: 0.08
+    auto gain: 0s=-35.4, 540s=-25.8
+  }
+
+  layer perc : drums {
+    voice: tom
+    pattern: ..x...x...x...x.
+    tune: -2st
+    decay: 0.3
+    gain: -20db
+    humanize: 0.12
+    auto gain: 0s=-34, 540s=-28
+  }
+
+  layer shaker : drums {
+    voice: hat
+    pattern: x.x.x.x.x.x.x.x.
+    tune: 1st
+    decay: 0.25
+    gain: -21db
+    humanize: 0.1
+    auto gain: 0s=-34, 540s=-28
+  }
+
+  layer bass : notes {
+    osc: saw
+    bus: pump
+    gain: -12db
+    env: a=0.015s d=0.16s s=0.45 r=0.2s
+    velbright: 0.35
+    notes: A1 @ 0b for 1.8b vel 0.7, A1 @ 2b for 1.8b vel 0.55, F#1 @ 4b for 1.8b vel 0.7, F#1 @ 6b for 1.8b vel 0.55, D2 @ 8b for 1.8b vel 0.7, D2 @ 10b for 1.8b vel 0.55, E1 @ 12b for 1.8b vel 0.7, E1 @ 14b for 1.8b vel 0.6
+    loop: 16b
+    fx: lowpass(550hz), saturate(amount=0.1, warmth=0.32)
+    auto gain: 0s=-30.2, 540s=-22.4
+  }
+
+  layer pad : notes {
+    osc: pad
+    bandwidth: 45c
+    gain: -18db
+    env: a=1.5s d=1.2s s=0.82 r=2.2s
+    notes: A2maj7 @ 0b for 16b, F#2min7 @ 16b for 16b, D3maj7 @ 32b for 16b, E3maj7 @ 48b for 16b
+    loop: 64b
+    fx: lowpass(1300hz), reverb(decay=3.4s, mix=0.32)
+    auto cutoff: 0s=830, 540s=1160
+    auto gain: 0s=-21, 540s=-18
+  }
+
+  layer motif_return : notes {
+    osc: pluck
+    damping: 0.45
+    brightness: 0.55
+    gain: -13db
+    env: a=0.008s d=0.3s s=0.3 r=0.4s
+    play road @ 32b
+    play road @ 64b
+    play road @ 96b vel 0.85
+    play road @ 128b
+    play road @ 160b
+    play road @ 192b diatonic 1
+    play road @ 224b
+    play road @ 256b
+    play road @ 288b vel 0.85
+    play road @ 320b
+    play road @ 352b
+    play road @ 384b diatonic 1
+    play road @ 416b
+    play road @ 448b
+    play road @ 480b vel 0.85
+    loop: 0b
+    fx: lowpass(2400hz), delay(time=0.31, feedback=0.24, mix=0.2), reverb(decay=2.6s, mix=0.24)
+    auto gain: 0s=-31.9, 540s=-23.8
+    pan: 0.15
+  }
+
+  master {
+    width: 0.9
+    lufs: -14.5
+    peak: -1db
+    fadein: 1.5s
+    fadeout: 2.5s
+    fx: lowpass(13000hz), highpass(30hz), fdn(rt60=2.2, rt60_high=1.0, mix=0.18), comp(threshold=-16, ratio=1.8, attack=0.02, release=0.2, knee=6), saturate(amount=0.09, warmth=0.3)
+  }
+}

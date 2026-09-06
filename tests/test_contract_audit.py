@@ -146,15 +146,9 @@ def test_f8_all_compilable_af_fixtures_parse_under_the_grammar():
     from audioforge.dsl import compile_dsl, DSLError
 
     checked = 0
-    result = subprocess.run(
-        ["git", "ls-files", "--", "*.af"],
-        cwd=ROOT,
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    for name in sorted(line for line in result.stdout.splitlines() if line):
-        path = ROOT / name
+    from af_corpus import source_paths
+
+    for path in source_paths(ROOT):
         src = path.read_text()
         try:
             compile_dsl(src)

@@ -11,10 +11,18 @@ disclaimer:
 
 ## Current Runtime Contract
 
-- Engine 3.0.0
+- Engine 3.1.0
 - DSL 2.0
 - IR schema 2.0
 - Version source of truth: `audioforge.version`
+
+Engine 3.1.0 preserves native stereo instrument recordings and adds explicitly
+mapped recorded note transitions. Stereo mixes change level and image; review
+their balance and regenerate manifests with this engine. DSL 2.0 authoring
+remains compatible. The [playback guide](ORCHESTRAL_PLAYBACK.md) describes the
+library mapping, evidence and limits; [ADR-0009](adr/0009-native-stereo-recorded-transitions.md)
+records the decision. The revised First Light demonstration retains the original
+audio for comparison and validates the complete 300-second delivery.
 
 Migration is required for audio expectations: corrected gain, note gates,
 resampling, mastering, repeats and performance identity intentionally change

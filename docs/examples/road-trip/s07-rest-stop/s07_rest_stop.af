@@ -1,0 +1,80 @@
+# 07 — Rest Stop / Night Air. Gas station lights, snacks, a quiet reset.
+# No kick. Ambient, reflective — a rest, not a mystery. D major, sparse.
+asset s07_rest_stop {
+  kind: soundtrack
+  duration: 420s
+  tempo: 80bpm
+  key: D major
+  emotion: calm=0.6, intimacy=0.5, wonder=0.3
+
+  marker pulling_in   @ 0s
+  marker snacks         @ 60s
+  marker stretch_legs  @ 120s
+  marker quiet_stars   @ 300s
+
+  motif road {
+    D5  @ 0b   for 1b   vel 0.7
+    F#5 @ 1b   for 1b   vel 0.75
+    A5  @ 2b   for 1b   vel 0.8
+    G5  @ 3b   for 1.5b vel 0.78
+    F#5 @ 4.5b for 0.5b vel 0.7
+    D5  @ 5b   for 3b   vel 0.65
+  }
+
+  layer night_air : noise {
+    color: pink
+    start: 0s
+    duration: 420s
+    gain: -40db
+    env: a=6s d=0.2s s=0.9 r=6s
+    fx: bandpass(1200hz), highpass(300hz)
+    auto gain: 0s=-35.6, 50.4s=-45.2, 420s=-45.2
+  }
+
+  layer pad : notes {
+    osc: pad
+    bandwidth: 60c
+    gain: -18db
+    env: a=3s d=2s s=0.85 r=5s
+    notes: D3maj7 @ 0b for 16b, B2min7 @ 16b for 16b, G3maj7 @ 32b for 16b, D3maj7 @ 48b for 16b
+    loop: 64b
+    fx: lowpass(900hz), reverb(decay=5s, mix=0.42)
+    auto gain: 0s=-13.9, 50.4s=-19.3, 420s=-19.3
+  }
+
+  layer shimmer : notes {
+    osc: triangle
+    unison: 2
+    spread: 8c
+    gain: -22db
+    env: a=1.5s d=1s s=0.7 r=2s
+    notes: F#5 @ 0b for 8b vel 0.4, A5 @ 16b for 8b vel 0.4, D5 @ 32b for 8b vel 0.4, F#5 @ 48b for 8b vel 0.4
+    loop: 64b
+    fx: lowpass(4000hz), reverb(decay=4s, mix=0.4)
+    auto gain: 0s=-22, 50.4s=-34, 420s=-34
+    pan: 0.2
+  }
+
+  layer motif_echo : notes {
+    osc: pluck
+    damping: 0.65
+    brightness: 0.4
+    gain: -22db
+    play road @ 80b transpose -12st vel 0.55
+    play road @ 240b stretch 1.5
+    play road @ 400b transpose -12st vel 0.55
+    loop: 0b
+    fx: lowpass(1800hz), reverb(decay=4.5s, mix=0.45), delay(time=0.6, feedback=0.35, mix=0.25)
+    auto gain: 0s=-60, 60s=-60, 75s=-22, 140s=-50, 220s=-60, 240s=-24, 300s=-50, 380s=-60, 400s=-22, 420s=-50
+    pan: -0.12
+  }
+
+  master {
+    width: 0.88
+    lufs: -20
+    peak: -1.5db
+    fadein: 2s
+    fadeout: 3s
+    fx: lowpass(8000hz), highpass(35hz), fdn(rt60=3.2, rt60_high=1.3, mix=0.24), saturate(amount=0.05, warmth=0.3)
+  }
+}

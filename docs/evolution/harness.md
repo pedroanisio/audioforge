@@ -276,7 +276,7 @@ Preconditions: reference machine, otherwise scale thresholds by a documented fac
 | ID | Requirement | Procedure | Pass criteria | Mode | T0 | Target | Roadmap | Green by |
 |---|---|---|---|---|---|---|---|---|
 | HARNESS-MIG-001 | A 2.16.0 manifest verified by 3.0.0 fails loudly and non-zero, as ADR-0007 intends | render `synth_voice.af` in the baseline export, then `audioforge verify <2.16 ir.json> <2.16 manifest>` with the current engine | output `MISMATCH`, exit 2 | A | PASS | PASS | RM-F-011 | T2 |
-| HARNESS-MIG-002 | Every `.af` in the repository compiles and renders under 3.0.0 without error diagnostics | compile `static/samples/*.af` and `tests/golden/audio/*.af`; `render_golden --check` | 0 errors | A | PASS (1 sample + 5 goldens) | PASS | RM-F-011 | T2 |
+| HARNESS-MIG-002 | Every `.af` in the repository compiles and renders under 3.0.0 without error diagnostics | compile `docs/examples/sound-design/transition-sweep/*.af` and `tests/golden/audio/*.af`; `render_golden --check` | 0 errors | A | PASS (1 sample + 5 goldens) | PASS | RM-F-011 | T2 |
 | HARNESS-MIG-003 | Structural IR migration flags that audio review is required | `migrate_ir_spec({'id':'x'}, '1.2')['_meta']['migration']` | `{'from': '1.2', 'to': '2.0', 'audio_review_required': True}` | A | PASS | PASS | RM-F-011 | T2 |
 
 ### 3.13 RB — rollback
@@ -612,7 +612,7 @@ mig001() { local b="$W/baseline-2.16.0"; [ -d "$b" ] || { mkdir -p "$b" && git a
 heavy HARNESS-MIG-001 "legacy manifest -> MISMATCH exit 2" mig001
 run   HARNESS-MIG-002 "repo .af specs compile+render" py <<'PYEOF'
 import sys; from pathlib import Path; from audioforge import AudioForge
-bad=[p.name for p in list(Path("static/samples").glob("*.af"))+list(Path("tests/golden/audio").glob("*.af")) if not AudioForge().compile(p.read_text()).ok]
+bad=[p.name for p in list(Path("docs/examples/sound-design/transition-sweep").glob("*.af"))+list(Path("tests/golden/audio").glob("*.af")) if not AudioForge().compile(p.read_text()).ok]
 print("failed:", bad); sys.exit(1 if bad else 0)
 PYEOF
 run   HARNESS-MIG-003 "migration flags audio review" py <<'PYEOF'

@@ -351,6 +351,19 @@ def capability_manifest() -> dict:
                 "hash": "sha256(canonical_plan_json_without_plan_hash_field)",
             },
         },
+        "sampled_playback": {
+            "channels": "native mono or stereo; stereo balance preserves channel identity",
+            "recorded_transitions": {
+                "manifest_path": "instruments.<name>.recorded_transitions",
+                "selection": "exact from_midi, to_midi and articulation",
+                "required": ["from_midi", "to_midi", "sample", "provenance"],
+                "timing": ["offset_frames", "lead_s", "crossfade_s", "release_s"],
+                "transposition": "recorded_from_midi and recorded_to_midi must preserve interval",
+                "evidence": "pinned sample hash and author-declared recording provenance",
+                "scope": "one recording per interval, containing transition and destination sustain",
+                "missing_interval": "reported stationary-sample approximation; strict policy refuses",
+            },
+        },
         "sample_catalog": {
             "builder_version": SAMPLE_CATALOG_BUILDER_VERSION,
             "artifact_schemas": {

@@ -216,7 +216,7 @@
     "urgency",
     "wonder"
   ],
-  "engine_version": "3.0.0",
+  "engine_version": "3.1.0",
   "examples": {
     "audio_layer": "layer vocal : audio { file: \"take.wav\" sha256: \"...64 hex...\" preserve: stereo }",
     "intent_block": "intent {\n  density: sparse\n  contour: arch\n  texture: smooth\n  affect: tense\n  avoid: clipping, noise\n  repair: \"make the melody less rough\"\n}",
@@ -399,7 +399,7 @@
           "note_seconds"
         ]
       },
-      "engine_version": "3.0.0",
+      "engine_version": "3.1.0",
       "field_layers": {
         "provenance": [
           "_meta"
@@ -1571,6 +1571,29 @@
     ],
     "storage_root": "_catalog"
   },
+  "sampled_playback": {
+    "channels": "native mono or stereo; stereo balance preserves channel identity",
+    "recorded_transitions": {
+      "evidence": "pinned sample hash and author-declared recording provenance",
+      "manifest_path": "instruments.<name>.recorded_transitions",
+      "missing_interval": "reported stationary-sample approximation; strict policy refuses",
+      "required": [
+        "from_midi",
+        "to_midi",
+        "sample",
+        "provenance"
+      ],
+      "scope": "one recording per interval, containing transition and destination sustain",
+      "selection": "exact from_midi, to_midi and articulation",
+      "timing": [
+        "offset_frames",
+        "lead_s",
+        "crossfade_s",
+        "release_s"
+      ],
+      "transposition": "recorded_from_midi and recorded_to_midi must preserve interval"
+    }
+  },
   "schema": "audioforge.capabilities/1",
   "score_layer": {
     "properties": {
@@ -1855,7 +1878,7 @@
   },
   "version_contract": {
     "dsl_version": "2.0",
-    "engine_version": "3.0.0",
+    "engine_version": "3.1.0",
     "source": "audioforge.version"
   }
 }

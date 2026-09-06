@@ -1,0 +1,142 @@
+# Local SFZ guitar experiment using the CC0 Karoryfer Emilyguitar library.
+# This is intentionally current DSL only: sampled guitar notes plus a simple
+# rock-ballad backing bed, no proposed bend/vib/dyn sugar.
+
+asset slash_sfz_guitar_experiment {
+  kind: cue
+  duration: 24s
+  samplerate: 48000
+  bitdepth: 24
+  tempo: 96bpm
+  key: A minor
+  groove: laidback 0.20
+  perform: style=melodic_rock expressivity=0.65 rubato=arch amount=0.035 segment=1b
+  library: "sfz-guitar-experiment@52d4a8638474a50fc675de788babe5950fccbbefa6b82b5730dfd96ca0a56c9b"
+
+  marker motif @ 0s
+  marker answer @ 8s
+  marker peak @ 17s
+
+  bus band {
+    gain: -2db
+    fx: hall(rt60=1.5, damp=0.42, mix=0.13)
+  }
+
+  layer pad : tone {
+    osc: pad
+    note: A3
+    bandwidth: 28c
+    env: a=0.8 d=0.4 s=0.75 r=1.8
+    gain: -17db
+    bus: band
+  }
+
+  layer harmony : notes {
+    osc: organ
+    gain: -14db
+    pan: -0.22
+    bus: band
+    notes: A3min @ 0b for 8b vel 0.48 voicing spread,
+           F3maj7 @ 8b for 8b vel 0.46 voicing spread,
+           G3maj @ 16b for 8b vel 0.50 voicing open,
+           A3min @ 24b for 8b vel 0.52 voicing open
+  }
+
+  layer bass : notes {
+    osc: pluck
+    damping: 0.45
+    brightness: 0.35
+    gain: -9db
+    notes: A1 @ 0b for 7.5b vel 0.70,
+           F1 @ 8b for 7.5b vel 0.68,
+           G1 @ 16b for 7.5b vel 0.72,
+           A1 @ 24b for 7.5b vel 0.75
+  }
+
+  layer kick : drums {
+    voice: kick
+    pattern: x.......x.......
+    gain: -7db
+    humanize: 0.18
+  }
+
+  layer snare : drums {
+    voice: snare
+    pattern: ....x.......x...
+    gain: -9db
+    humanize: 0.20
+  }
+
+  layer hat : drums {
+    voice: hat
+    pattern: x.x.x.x.x.x.x.x.
+    gain: -17db
+    humanize: 0.22
+  }
+
+  layer rhythm_gtr : instrument {
+    instrument: emily_clean
+    articulation: sustain
+    humanize: 0.12
+    dynamic: 0b=mp, 16b=mf, 30b=mp
+    gain: -10db
+    pan: -0.42
+    fx: drive(0.36),
+        delay(time=0.18, feedback=0.12, mix=0.08),
+        plate(decay=0.5, damp=0.45, mix=0.08)
+
+    notes: A2 @ 0b for 2b vel 0.60,
+           E3 @ 2b for 2b vel 0.58,
+           A2 @ 4b for 2b vel 0.60,
+           E3 @ 6b for 2b vel 0.58,
+           F2 @ 8b for 2b vel 0.58,
+           C3 @ 10b for 2b vel 0.56,
+           F2 @ 12b for 2b vel 0.58,
+           C3 @ 14b for 2b vel 0.56,
+           G2 @ 16b for 2b vel 0.62,
+           D3 @ 18b for 2b vel 0.60,
+           G2 @ 20b for 2b vel 0.62,
+           E3 @ 22b for 2b vel 0.60,
+           A2 @ 24b for 4b vel 0.64
+  }
+
+  layer lead : instrument {
+    instrument: emily_clean
+    articulation: sustain
+    legato: 0.04s
+    phrasing: 0.55
+    humanize: 0.10
+    dynamic: 0b=mf, 16b=f, 26b=ff, 31b=mf
+    gain: -3db
+    pan: 0.24
+    fx: drive(0.42),
+        peak(900hz, gain=2.5, q=0.85),
+        delay(time=0.29, feedback=0.22, mix=0.14),
+        plate(decay=0.7, damp=0.38, mix=0.11)
+
+    notes: A3 @ 0b for 0.5b vel 0.70,
+           C4 @ 1b for 0.5b vel 0.74,
+           D4 @ 2b for 0.5b vel 0.78,
+           E4 @ 3b for 1.5b vel 0.84,
+           G4 @ 5b for 0.5b vel 0.80,
+           E4 @ 6b for 1b vel 0.76,
+           C4 @ 7.25b for 0.75b vel 0.72,
+           A3 @ 8b for 1.25b vel 0.74,
+           C4 @ 10b for 0.5b vel 0.76,
+           E4 @ 11b for 0.75b vel 0.82,
+           G4 @ 12.5b for 1.25b vel 0.86,
+           A4 @ 15b for 1.5b vel 0.88,
+           C5 @ 17b for 2b vel 0.92,
+           A4 @ 20b for 0.75b vel 0.84,
+           G4 @ 21b for 0.75b vel 0.80,
+           E4 @ 22b for 1b vel 0.76,
+           A3 @ 24b for 3b vel 0.78
+  }
+
+  master {
+    lufs: -14
+    peak: -1db
+    fadeout: 0.15s
+    fx: mbcomp(threshold=-20, ratio=1.7)
+  }
+}

@@ -8,7 +8,7 @@ from audioforge import agent_tools
 from audioforge.mcp.server import MCPServer
 
 ROOT = Path(__file__).resolve().parents[1]
-DSL = (ROOT / "static" / "samples" / "transition_sweep.af").read_text()
+DSL = (ROOT / "docs" / "examples" / "sound-design" / "transition-sweep" / "transition_sweep.af").read_text()
 
 
 def _rpc(server, method, params=None, rid=1):

@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """Tile the 10-minute lullaby loop body into a 20-minute sleep file.
 
-AudioForge caps a single asset at 600 s, so tracks/lullaby.af renders a
-seamless, grid-aligned 10-minute *body* (no fades). Here we lay two copies
+Supply a rendered, seamless, grid-aligned 10-minute *body* (no fades). Here we lay two copies
 end to end with a short equal-power crossfade at the seam (to smooth the
 reverb tail into the next loop), then apply one 6 s fade-in at the very start
 and a long 30 s fade-out at the very end. Output is 16-bit (ample for a sleep
 track and half the size).
 
     python3 scripts/build_lullaby_20min.py \
-        [tracks/render/lullaby.wav] [tracks/render/lullaby_20min.wav]
+        INPUT.wav OUTPUT.wav
 """
+import argparse
 import sys
 import wave
 from pathlib import Path
@@ -52,8 +52,11 @@ def write_wav16(path: str, x: np.ndarray, sr: int):
 
 
 def main(argv):
-    src = argv[0] if len(argv) > 0 else "tracks/render/lullaby.wav"
-    dst = argv[1] if len(argv) > 1 else "tracks/render/lullaby_20min.wav"
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("source")
+    parser.add_argument("output")
+    args = parser.parse_args(argv)
+    src, dst = args.source, args.output
     body, sr = read_wav(src)
     xf = int(XFADE_S * sr)
     t = np.linspace(0, 1, xf)[:, None]

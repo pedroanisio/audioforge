@@ -198,7 +198,7 @@ def _region_playable_seconds(region, midi_i: int, lib, cache: dict) -> float | N
 
 
 def _sustain_gap_diag(regions, midi_i: int, note_dur_s: float, note_path: str,
-                      lib, cache: dict) -> dict | None:
+                      lib, cache: dict, offset_output_s: float = 0) -> dict | None:
     """Worst-case audible-silence diagnostic for the regions that will actually
     sound this note, or None if every region loops or reaches the note's end."""
     worst = None
@@ -208,6 +208,7 @@ def _sustain_gap_diag(regions, midi_i: int, note_dur_s: float, note_path: str,
         avail = _region_playable_seconds(r, midi_i, lib, cache)
         if avail is None:
             continue
+        avail = max(0, avail - offset_output_s)
         gap = note_dur_s - avail
         if gap > SUSTAIN_GAP_TOLERANCE_S and (worst is None or gap > worst[0]):
             worst = (gap, avail, r.sample)
@@ -229,8 +230,9 @@ def _instrument_segment(spec_hash_value: str, layer: dict, layer_index: int,
                         note_index: int, ev: dict, lib, policy: dict,
                         diagnostics: list[dict], tempo_map,
                         sample_len_cache: dict, scheduled: dict,
-                        sample_rate: int) -> dict:
+                        sample_rate: int, previous=None, following=None) -> dict:
     from .sampler import resolve_articulation_detail, select_regions
+    from .transitions import resolve_transition, transition_region
 
     layer_name = _layer_name(layer, layer_index)
     instrument = layer["instrument"]
@@ -239,6 +241,11 @@ def _instrument_segment(spec_hash_value: str, layer: dict, layer_index: int,
     regions = detail["regions"]
     midi = float(scheduled["midi"])
     midi_i = int(round(midi))
+    incoming = resolve_transition(lib, instrument, previous, scheduled, requested_art)
+    outgoing = resolve_transition(lib, instrument, scheduled, following,
+                                  following['art'] if following else requested_art)
+    if incoming:
+        regions = [transition_region(incoming)]
     kreg = [r for r in regions if r.lokey <= midi_i <= r.hikey]
     if not kreg:
         raise SpecError(
@@ -322,8 +329,19 @@ def _instrument_segment(spec_hash_value: str, layer: dict, layer_index: int,
         clamp = mods.get("dur_clamp_s")
         if clamp is not None:
             note_dur_s = min(note_dur_s, float(clamp))
+        offset_output_s = 0
+        if incoming:
+            speed = 2 ** ((midi - incoming['recorded_to_midi']) / 12)
+            offset_output_s = incoming['offset_frames'] / incoming['source_rate'] / speed
+            note_dur_s += incoming['lead_s']
+        if following:
+            lead_s = outgoing['lead_s'] if outgoing else 0
+            fade_s = outgoing['crossfade_s'] if outgoing else float(layer.get('legato_s', .05))
+            note_dur_s = max(1/sample_rate,
+                (following['start'] - scheduled['start']) / sample_rate - lead_s + fade_s
+                + (incoming['lead_s'] if incoming else 0))
         gap = _sustain_gap_diag(sounding_regions, midi_i, note_dur_s,
-                                note_path, lib, sample_len_cache)
+                                note_path, lib, sample_len_cache, offset_output_s)
         if gap is not None:
             mode = policy.get("sustain_gaps", "warn")
             if mode == "forbid":
@@ -344,6 +362,8 @@ def _instrument_segment(spec_hash_value: str, layer: dict, layer_index: int,
         },
         "route": route,
         "decision": {
+            **({'transition': incoming} if incoming else {}),
+            **({'transition_out': outgoing} if outgoing else {}),
             "instrument": instrument,
             "requested_articulation": requested_art,
             "resolved_articulation": detail["resolved_articulation"],
@@ -411,11 +431,11 @@ def _performance_evidence(segment, layer, event, policy, diagnostics, joined=Fal
         approximations.append("multiplied players from the same sample pool")
     if joined:
         approximations.append("crossfaded stationary samples with pitch glide")
-        segment["decision"]["transition"] = {
+        segment["decision"].setdefault("transition", {
             "fidelity": "approximate", "method": "sample_aware_crossfade",
             "offset_policy": "sfz_loop_start_or_envelope_attack",
             "crossfade_s": layer.get("legato_s", 0.05),
-        }
+        })
     if not approximations:
         return
     message = "approximate performance: " + "; ".join(approximations)
@@ -476,12 +496,15 @@ def build_render_plan(spec: dict) -> RenderPlanResult:
                     note_index, ev = note["note_index"], note["event"]
                     segment = _instrument_segment(
                         take_root, layer, layer_index, note_index, ev, lib, policy,
-                        diagnostics, tempo_map, sample_len_cache, note, sr)
+                        diagnostics, tempo_map, sample_len_cache, note, sr,
+                        scheduled[previous] if previous is not None else None,
+                        scheduled[following] if following is not None else None)
                     if count > 1:
                         segment["player_index"] = player
                         segment["id"] += f":player{player}"
                     _performance_evidence(segment, layer, ev, policy, diagnostics,
-                                          previous is not None or following is not None)
+                                          (previous is not None and 'transition' not in segment['decision'])
+                                          or (following is not None and 'transition_out' not in segment['decision']))
                     segments.append(segment)
         elif layer.get("type") == "notes":
             events = note_events(layer, tempo_map.beat_at(resolved["duration_s"]))

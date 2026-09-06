@@ -12,35 +12,35 @@
       "channels": 2,
       "frames": 96000,
       "output_sha256": "12e3b010f45af7c46bd25d4962d590cb98b7ed8a58ebc7f2982a6f8b82d7ee1f",
-      "spec_hash": "f003c5818efaecd557d448b2a15a7f93b57c44a620e711e0ea33638893686a34",
+      "spec_hash": "1c0a6301fe4fd99a3fb8658fb66a76c16a2166d815d611d39a3be8812a3a2a93",
       "sr": 48000
     },
     "groove_beat": {
       "channels": 2,
       "frames": 96000,
       "output_sha256": "0a85d59c65bb30eac02c4b58eb2eb6162591e9cdfd8e37269a439a8b8f04769e",
-      "spec_hash": "efcc69b7b607c5a30b521b7284402afed52f07c6330ca1f5b89b24440e166b1b",
+      "spec_hash": "c0fcce747ef75e0d4fe849c20fa9af11beda61d4b15243d9f1fe78d98dfec6a2",
       "sr": 48000
     },
     "loudness_limiter": {
       "channels": 2,
       "frames": 96000,
       "output_sha256": "3b1bfe6993a7eb3e07b732d41167b8cb84df51e75ebd996665e39e4431c20948",
-      "spec_hash": "fca798eba693cd38a0969f4a97a6fc94e5c71fb9c0193d97eb31d38b859266f1",
+      "spec_hash": "26d9ce207f7ee518b98afddb85841693a5e2c9d16e0033fcb9f69d24d4bec786",
       "sr": 48000
     },
     "multi_layer": {
       "channels": 2,
       "frames": 96000,
       "output_sha256": "1daa0f510e4acfb4ac435e77e6fb121cb79924c5857411e44eb3f34ac166a9ab",
-      "spec_hash": "9749421e2e9eb5cf84d37291971265e731ce2d9b66756d368346c4b8e86ae778",
+      "spec_hash": "2d3b5f441cc101ffcc30397ce60ef17a74c14d39c26af195b523dd2ecd63647c",
       "sr": 48000
     },
     "synth_voice": {
       "channels": 2,
       "frames": 96000,
       "output_sha256": "65f311542467f88bf81f76af003a3a21da22205dad44ffe9ac29ba5388cc961a",
-      "spec_hash": "1314eb6ca7e174b8d5e3e10af08f0a554cbddc3095634e9b7fbfb0d10277895c",
+      "spec_hash": "c20f94bb5b836f213c7ab7d1fd50f69a968cfe3ba23249a6b345e7ebbf494a01",
       "sr": 48000
     }
   }

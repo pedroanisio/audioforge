@@ -1,0 +1,1851 @@
+{
+  "schema": "audioforge.examples-migration/1",
+  "date": "2026-09-06",
+  "files": [
+    {
+      "old": "compositions/2030-synth.af",
+      "new": "docs/examples/electronic/2030-synth/2030-synth.af",
+      "bytes": 4192,
+      "before_sha256": "e897f200c1edf5f7cc599499379d0be006d59641984713480fdcc4699c2bacfd",
+      "after_sha256": "e897f200c1edf5f7cc599499379d0be006d59641984713480fdcc4699c2bacfd"
+    },
+    {
+      "old": "compositions/2030.af",
+      "new": "docs/examples/orchestral/2030/2030.af",
+      "bytes": 10583,
+      "before_sha256": "9bb279eb0303e3607d997394cfecd2f9c9db45231b0e3cd8c09bae5bff9e50d1",
+      "after_sha256": "9bb279eb0303e3607d997394cfecd2f9c9db45231b0e3cd8c09bae5bff9e50d1"
+    },
+    {
+      "old": "compositions/fable_symphony.af",
+      "new": "docs/examples/orchestral/fable-symphony/fable_symphony.af",
+      "bytes": 17010,
+      "before_sha256": "45c2181ced81e659bbc4fd04b761d2537a0bbf9f2b886fe0b4277eefda58ca2a",
+      "after_sha256": "3783aa044f4e3f97bdbe1475983e429c35f65937cddb9bace9d09f081e03ecdb"
+    },
+    {
+      "old": "compositions/fable_symphony_orchestral.af",
+      "new": "docs/examples/orchestral/fable-symphony-orchestral/fable_symphony_orchestral.af",
+      "bytes": 18760,
+      "before_sha256": "12a2d21d135838ce949626f707680e997dcb75670978e7760f4a4847650c39a9",
+      "after_sha256": "d409e802f6d2076b85befc83ce7c1163a4dc0bb6911f708672e013e995aafb88"
+    },
+    {
+      "old": "compositions/fable_symphony_orchestral_v2.af",
+      "new": "docs/examples/orchestral/fable-symphony-orchestral-v2/fable_symphony_orchestral_v2.af",
+      "bytes": 20526,
+      "before_sha256": "082100e819c1c6a7587ad3db30bd8dfb08ee118e2e6bde4a65806ddf6ef52f19",
+      "after_sha256": "fd325991e4a92c7f647ae8d1882ea179f17e70f45412a8dee87e82ad3547f3d3"
+    },
+    {
+      "old": "compositions/last_24h.af",
+      "new": "docs/examples/electronic/last-24h/last_24h.af",
+      "bytes": 6504,
+      "before_sha256": "21fbc5fb9d2f13ec19642332f0d3ae96b3912e2b982e9632e42d3c60f2e3229a",
+      "after_sha256": "21fbc5fb9d2f13ec19642332f0d3ae96b3912e2b982e9632e42d3c60f2e3229a"
+    },
+    {
+      "old": "compositions/neon_voltage.af",
+      "new": "docs/examples/electronic/neon-voltage/neon_voltage.af",
+      "bytes": 18624,
+      "before_sha256": "efe64fe36011369702c7ee6c75685e767768f54f1f63b46b92c8d125fdf33757",
+      "after_sha256": "efe64fe36011369702c7ee6c75685e767768f54f1f63b46b92c8d125fdf33757"
+    },
+    {
+      "old": "compositions/ode_to_fable.af",
+      "new": "docs/examples/orchestral/ode-to-fable/ode_to_fable.af",
+      "bytes": 22559,
+      "before_sha256": "7abcfc4b27d54f57906b014818f84a1a0d03e3f61b7dfbb9c882fb1214fc4ee4",
+      "after_sha256": "bd65158a5dce3bae1b9486777b5aa0f2bb1308c06f1c1b61da77adc5f29fe39a"
+    },
+    {
+      "old": "compositions/ode_to_fable_symphonic.af",
+      "new": "docs/examples/orchestral/ode-to-fable-symphonic/ode_to_fable_symphonic.af",
+      "bytes": 23114,
+      "before_sha256": "f6e12e556a57569d2e769fe9ccb27951f4b90990088f1fce1a6d52dcbbf3be3d",
+      "after_sha256": "9d338567cec326362c908470cfa950b8ab10a335551cb5e462663184264bcb9e"
+    },
+    {
+      "old": "compositions/ode_to_fable_symphonic_v2.af",
+      "new": "docs/examples/orchestral/ode-to-fable-symphonic-v2/ode_to_fable_symphonic_v2.af",
+      "bytes": 23189,
+      "before_sha256": "f7fecf58c6d883b8bbcbafc01cb9259e2de38ec56da269e6e487d1cb83cbde39",
+      "after_sha256": "95cc3ebcdff53bec5aadcbf7d21a313b0c2d54c15d4d026d98b761c9268f1540"
+    },
+    {
+      "old": "compositions/sweet_child_o_mine.af",
+      "new": "docs/examples/arrangements/sweet-child-o-mine/sweet_child_o_mine.af",
+      "bytes": 369128,
+      "before_sha256": "b77310fb1fe9d56df9e945c8677392b1f1190e7e745a9f75b432682cb107a5d3",
+      "after_sha256": "b77310fb1fe9d56df9e945c8677392b1f1190e7e745a9f75b432682cb107a5d3"
+    },
+    {
+      "old": "compositions/sweet_child_o_mine.library.af",
+      "new": "docs/examples/arrangements/sweet-child-o-mine-library/sweet_child_o_mine.library.af",
+      "bytes": 439776,
+      "before_sha256": "58bb85fcf8a15bfea6f5783184572e94c0c08f8728cb5cbe3d7c7ff4edc4f8df",
+      "after_sha256": "ca344e4d53141d6346465130d61e893a2b9ee25ebe6ed6b3183b236ef963f081"
+    },
+    {
+      "old": "compositions/sweet_child_o_mine.tuned.af",
+      "new": "docs/examples/arrangements/sweet-child-o-mine-tuned/sweet_child_o_mine.tuned.af",
+      "bytes": 351677,
+      "before_sha256": "2a3067dc7f040e7dcd37bebb15e679d8b9df810066bab4bacc2d9c37443dd9cc",
+      "after_sha256": "db67b3d7623dd6a500da760d076be74f52b479edbb74fe937880e431d8da1b1d"
+    },
+    {
+      "old": "compositions/to_be_alive.af",
+      "new": "docs/examples/orchestral/to-be-alive/to_be_alive.af",
+      "bytes": 41586,
+      "before_sha256": "3a9f010dab703cf4c7da31ab36ae8ee280f4f1ffc9e0ed442eb63d6e1ecca804",
+      "after_sha256": "3a9f010dab703cf4c7da31ab36ae8ee280f4f1ffc9e0ed442eb63d6e1ecca804"
+    },
+    {
+      "old": "compositions/road_trip/s01_departure.af",
+      "new": "docs/examples/road-trip/s01-departure/s01_departure.af",
+      "bytes": 2208,
+      "before_sha256": "a471ed867632a6c724fcec5fce1162d2e23d6d85284527afb268b427144ce545",
+      "after_sha256": "a471ed867632a6c724fcec5fce1162d2e23d6d85284527afb268b427144ce545"
+    },
+    {
+      "old": "compositions/road_trip/s02_leaving_town.af",
+      "new": "docs/examples/road-trip/s02-leaving-town/s02_leaving_town.af",
+      "bytes": 3057,
+      "before_sha256": "b9ce3eac13a46ec683d2e64319a8cb673099756d1dbe3c2770c435746ae251e2",
+      "after_sha256": "b9ce3eac13a46ec683d2e64319a8cb673099756d1dbe3c2770c435746ae251e2"
+    },
+    {
+      "old": "compositions/road_trip/s03_highway_opens.af",
+      "new": "docs/examples/road-trip/s03-highway-opens/s03_highway_opens.af",
+      "bytes": 3688,
+      "before_sha256": "b8d23d7c16404ec10a9b2f91f095b67763d54beba20892c3a99f32a45397843b",
+      "after_sha256": "b8d23d7c16404ec10a9b2f91f095b67763d54beba20892c3a99f32a45397843b"
+    },
+    {
+      "old": "compositions/road_trip/s04_daydream.af",
+      "new": "docs/examples/road-trip/s04-daydream/s04_daydream.af",
+      "bytes": 3041,
+      "before_sha256": "dad4c4ef0708d461d7ec34e1d35ee605d5f5a05e275fc3e84f992eaf23e21571",
+      "after_sha256": "dad4c4ef0708d461d7ec34e1d35ee605d5f5a05e275fc3e84f992eaf23e21571"
+    },
+    {
+      "old": "compositions/road_trip/s05a_road_game_pt1.af",
+      "new": "docs/examples/road-trip/s05a-road-game-pt1/s05a_road_game_pt1.af",
+      "bytes": 3099,
+      "before_sha256": "9e71d8709b42f0ee3d6ce075a66f724b3fbff61ea705252157360cebd33a2f71",
+      "after_sha256": "9e71d8709b42f0ee3d6ce075a66f724b3fbff61ea705252157360cebd33a2f71"
+    },
+    {
+      "old": "compositions/road_trip/s05b_road_game_pt2.af",
+      "new": "docs/examples/road-trip/s05b-road-game-pt2/s05b_road_game_pt2.af",
+      "bytes": 3801,
+      "before_sha256": "a080c2357ff183cbf97375e644a7c06c66bc26ad52a5795348dbd2e273721679",
+      "after_sha256": "a080c2357ff183cbf97375e644a7c06c66bc26ad52a5795348dbd2e273721679"
+    },
+    {
+      "old": "compositions/road_trip/s06_big_view.af",
+      "new": "docs/examples/road-trip/s06-big-view/s06_big_view.af",
+      "bytes": 4220,
+      "before_sha256": "b33060f5ed675cd45b0f0c55d99879c282c9d2281d6b5367d239060b0d9895bd",
+      "after_sha256": "b33060f5ed675cd45b0f0c55d99879c282c9d2281d6b5367d239060b0d9895bd"
+    },
+    {
+      "old": "compositions/road_trip/s07_rest_stop.af",
+      "new": "docs/examples/road-trip/s07-rest-stop/s07_rest_stop.af",
+      "bytes": 2185,
+      "before_sha256": "034acbf3b162cecc10ffa8f0435ff145474c19086a4bd61faaf7def370fbe836",
+      "after_sha256": "034acbf3b162cecc10ffa8f0435ff145474c19086a4bd61faaf7def370fbe836"
+    },
+    {
+      "old": "compositions/road_trip/s08_golden_hour.af",
+      "new": "docs/examples/road-trip/s08-golden-hour/s08_golden_hour.af",
+      "bytes": 3110,
+      "before_sha256": "758d595a93b20e8d0552b2ecaa86743d32f6efb10d06357c77eaa3869e82f113",
+      "after_sha256": "758d595a93b20e8d0552b2ecaa86743d32f6efb10d06357c77eaa3869e82f113"
+    },
+    {
+      "old": "compositions/road_trip/s09_arrival.af",
+      "new": "docs/examples/road-trip/s09-arrival/s09_arrival.af",
+      "bytes": 2403,
+      "before_sha256": "01fb95737c8f76628eefaf6982cf9bc046cae05f1e04e0a9a411c490a2f0273d",
+      "after_sha256": "01fb95737c8f76628eefaf6982cf9bc046cae05f1e04e0a9a411c490a2f0273d"
+    },
+    {
+      "old": "compositions/the_first_light/the_first_light.af",
+      "new": "docs/examples/orchestral/the-first-light/the_first_light.af",
+      "bytes": 712372,
+      "before_sha256": "9a05499c9b274ee61f7f322a3bf8d118ac486cfd7702213117c680e1c3d72376",
+      "after_sha256": "9a05499c9b274ee61f7f322a3bf8d118ac486cfd7702213117c680e1c3d72376"
+    },
+    {
+      "old": "compositions/the_first_light/validate.py",
+      "new": "docs/examples/orchestral/the-first-light/validate.py",
+      "bytes": 15276,
+      "before_sha256": "3594d91f07dfb9067e8de005695f88972ea37c61b9dba4c51a7df6cbcc185e03",
+      "after_sha256": "3594d91f07dfb9067e8de005695f88972ea37c61b9dba4c51a7df6cbcc185e03"
+    },
+    {
+      "old": "compositions/the_first_light/README.md",
+      "new": "docs/examples/orchestral/the-first-light/delivery.md",
+      "bytes": 4532,
+      "before_sha256": "b53de47922af904b67ee9af4d23994a94220cd476805cbed9d343402f8e74a23",
+      "after_sha256": "a2f48d8f32a64148955c43f9e6fbe88f7b567ddabc52886b08155980bb03e39d"
+    },
+    {
+      "old": "compositions/the_first_light/compose.py",
+      "new": "docs/examples/orchestral/the-first-light/compose.py",
+      "bytes": 25873,
+      "before_sha256": "1292345dbc29b877fd7eda884fc00b4b31aead0373f6e535d9266e38ad9afb13",
+      "after_sha256": "1292345dbc29b877fd7eda884fc00b4b31aead0373f6e535d9266e38ad9afb13"
+    },
+    {
+      "old": "compositions/the_first_light/validation.json",
+      "new": "docs/examples/orchestral/the-first-light/validation.json",
+      "bytes": 67583,
+      "before_sha256": "62a6b3a162dc6127175baa91f608fe79620d2cf9bb83f2156eb0227bd5d4e9ff",
+      "after_sha256": "62a6b3a162dc6127175baa91f608fe79620d2cf9bb83f2156eb0227bd5d4e9ff"
+    },
+    {
+      "old": "compositions/the_first_light/the_first_light.ir.json",
+      "new": "docs/examples/orchestral/the-first-light/the_first_light.ir.json",
+      "bytes": 1653719,
+      "before_sha256": "51ef44474af1beeb329c6454e5cafb31f4ec9fa65b76b941a0d67ea1d96af2cd",
+      "after_sha256": "51ef44474af1beeb329c6454e5cafb31f4ec9fa65b76b941a0d67ea1d96af2cd"
+    },
+    {
+      "old": "compositions/the_first_light/program.json",
+      "new": "docs/examples/orchestral/the-first-light/program.json",
+      "bytes": 420943,
+      "before_sha256": "de6729be65256ab13a1db156189ec8b2a640fd32a76cb90f2d8fbf4e2a3ef46e",
+      "after_sha256": "de6729be65256ab13a1db156189ec8b2a640fd32a76cb90f2d8fbf4e2a3ef46e"
+    },
+    {
+      "old": "compositions/the_first_light/audio/the_first_light.plan.json",
+      "new": "docs/examples/orchestral/the-first-light/audio/the_first_light.plan.json",
+      "bytes": 10709856,
+      "before_sha256": "caa26a09f9e383e212bfeafce27d0c2cb2f68ba2f175b5352e340046e5cf4b8d",
+      "after_sha256": "caa26a09f9e383e212bfeafce27d0c2cb2f68ba2f175b5352e340046e5cf4b8d"
+    },
+    {
+      "old": "compositions/the_first_light/audio/the_first_light.mp3",
+      "new": "docs/examples/orchestral/the-first-light/audio/the_first_light.mp3",
+      "bytes": 12002135,
+      "before_sha256": "8735d84155bde00cb3f6977432988a7b20d4a909bc6b32a9d8740423928c25cc",
+      "after_sha256": "8735d84155bde00cb3f6977432988a7b20d4a909bc6b32a9d8740423928c25cc"
+    },
+    {
+      "old": "compositions/the_first_light/audio/the_first_light.markers.json",
+      "new": "docs/examples/orchestral/the-first-light/audio/the_first_light.markers.json",
+      "bytes": 514,
+      "before_sha256": "1a4991de5ae1589728ec307605f9f0bf4c54d3b0c8879de8b5de716cf38dbe36",
+      "after_sha256": "1a4991de5ae1589728ec307605f9f0bf4c54d3b0c8879de8b5de716cf38dbe36"
+    },
+    {
+      "old": "compositions/the_first_light/audio/the_first_light.manifest.json",
+      "new": "docs/examples/orchestral/the-first-light/audio/the_first_light.manifest.json",
+      "bytes": 98756,
+      "before_sha256": "43321df822153cfcd3bb145513467cb10566e61717a1b342223c7f35e70ad611",
+      "after_sha256": "43321df822153cfcd3bb145513467cb10566e61717a1b342223c7f35e70ad611"
+    },
+    {
+      "old": "compositions/the_first_light/audio/the_first_light.wav",
+      "new": "docs/examples/orchestral/the-first-light/audio/the_first_light.wav",
+      "bytes": 86400044,
+      "before_sha256": "6dd626027c907823fc05567ba03657d090c17086341f903aca1fb6889c148009",
+      "after_sha256": "6dd626027c907823fc05567ba03657d090c17086341f903aca1fb6889c148009"
+    },
+    {
+      "old": "compositions/the_first_light/evidence/calibration.json",
+      "new": "docs/examples/orchestral/the-first-light/evidence/calibration.json",
+      "bytes": 1865,
+      "before_sha256": "01d146abd27fc368f4bcd155a56a3a043105bf3447f027e7c0ac84c3574c756a",
+      "after_sha256": "01d146abd27fc368f4bcd155a56a3a043105bf3447f027e7c0ac84c3574c756a"
+    },
+    {
+      "old": "compositions/the_first_light/evidence/cli-validate.log",
+      "new": "docs/examples/orchestral/the-first-light/evidence/cli-validate.log",
+      "bytes": 27,
+      "before_sha256": "d7b6cbb7cf36f54e6e6344158502c73151c14eecfa104adff4817a0ce57335e8",
+      "after_sha256": "d7b6cbb7cf36f54e6e6344158502c73151c14eecfa104adff4817a0ce57335e8"
+    },
+    {
+      "old": "compositions/the_first_light/evidence/reproduce.log",
+      "new": "docs/examples/orchestral/the-first-light/evidence/reproduce.log",
+      "bytes": 13,
+      "before_sha256": "7dc409a0af34e3a54e3a8213ebdf6bbf806e01af02a0bfbf30c4ef4e34ff8634",
+      "after_sha256": "7dc409a0af34e3a54e3a8213ebdf6bbf806e01af02a0bfbf30c4ef4e34ff8634"
+    },
+    {
+      "old": "compositions/the_first_light/evidence/make-check.log",
+      "new": "docs/examples/orchestral/the-first-light/evidence/make-check.log",
+      "bytes": 11385,
+      "before_sha256": "c488b3ed9a9adc69de55b9163e6ccde2203e16d7b82c96ea1adf53fa3e5aa7c8",
+      "after_sha256": "c488b3ed9a9adc69de55b9163e6ccde2203e16d7b82c96ea1adf53fa3e5aa7c8"
+    },
+    {
+      "old": "compositions/the_first_light/audio/the_first_light_stems/violins_1.wav",
+      "new": "docs/examples/orchestral/the-first-light/audio/the_first_light_stems/violins_1.wav",
+      "bytes": 86400044,
+      "before_sha256": "98e1f3505548b655762626fbc8ee4461e3da4a2e17bc4dacd130f8bb29c0328c",
+      "after_sha256": "98e1f3505548b655762626fbc8ee4461e3da4a2e17bc4dacd130f8bb29c0328c"
+    },
+    {
+      "old": "compositions/the_first_light/audio/the_first_light_stems/harp.wav",
+      "new": "docs/examples/orchestral/the-first-light/audio/the_first_light_stems/harp.wav",
+      "bytes": 86400044,
+      "before_sha256": "84fd290c59a941f9df2216abd4c9e81953f1caa0e4a008aee90aa56aea70eb71",
+      "after_sha256": "84fd290c59a941f9df2216abd4c9e81953f1caa0e4a008aee90aa56aea70eb71"
+    },
+    {
+      "old": "compositions/the_first_light/audio/the_first_light_stems/bassoon.wav",
+      "new": "docs/examples/orchestral/the-first-light/audio/the_first_light_stems/bassoon.wav",
+      "bytes": 86400044,
+      "before_sha256": "37c957e51e14d09257264ca0a24a73884f2845a70f02eed915d6bc4d26a173a7",
+      "after_sha256": "37c957e51e14d09257264ca0a24a73884f2845a70f02eed915d6bc4d26a173a7"
+    },
+    {
+      "old": "compositions/the_first_light/audio/the_first_light_stems/oboe.wav",
+      "new": "docs/examples/orchestral/the-first-light/audio/the_first_light_stems/oboe.wav",
+      "bytes": 86400044,
+      "before_sha256": "8c017dfe98a445c7895edf416f0c7e3581b95089628151d8b7008def81cd77d2",
+      "after_sha256": "8c017dfe98a445c7895edf416f0c7e3581b95089628151d8b7008def81cd77d2"
+    },
+    {
+      "old": "compositions/the_first_light/audio/the_first_light_stems/cello_spiccato.wav",
+      "new": "docs/examples/orchestral/the-first-light/audio/the_first_light_stems/cello_spiccato.wav",
+      "bytes": 86400044,
+      "before_sha256": "7be770322392eb0bd75b1a76ed38aedb03f3c793339be5512d8cf21d8038d5ba",
+      "after_sha256": "7be770322392eb0bd75b1a76ed38aedb03f3c793339be5512d8cf21d8038d5ba"
+    },
+    {
+      "old": "compositions/the_first_light/audio/the_first_light_stems/cellos.wav",
+      "new": "docs/examples/orchestral/the-first-light/audio/the_first_light_stems/cellos.wav",
+      "bytes": 86400044,
+      "before_sha256": "83281b62ba1f731c08d3c8a087a334426ca49941c8a059d12a0965f7e43c58e4",
+      "after_sha256": "83281b62ba1f731c08d3c8a087a334426ca49941c8a059d12a0965f7e43c58e4"
+    },
+    {
+      "old": "compositions/the_first_light/audio/the_first_light_stems/timpani.wav",
+      "new": "docs/examples/orchestral/the-first-light/audio/the_first_light_stems/timpani.wav",
+      "bytes": 86400044,
+      "before_sha256": "6fedaaf6cc286fdfb12306725791c7728397b379245afe8cf868bf084add31b8",
+      "after_sha256": "6fedaaf6cc286fdfb12306725791c7728397b379245afe8cf868bf084add31b8"
+    },
+    {
+      "old": "compositions/the_first_light/audio/the_first_light_stems/basses.wav",
+      "new": "docs/examples/orchestral/the-first-light/audio/the_first_light_stems/basses.wav",
+      "bytes": 86400044,
+      "before_sha256": "f9ac31d06b0c06b0f9a17e09cdd66abb8b4b58e460bf236b772c4e0929490b75",
+      "after_sha256": "f9ac31d06b0c06b0f9a17e09cdd66abb8b4b58e460bf236b772c4e0929490b75"
+    },
+    {
+      "old": "compositions/the_first_light/audio/the_first_light_stems/viola_pizzicato.wav",
+      "new": "docs/examples/orchestral/the-first-light/audio/the_first_light_stems/viola_pizzicato.wav",
+      "bytes": 86400044,
+      "before_sha256": "22c5122287174a1f54f8a832b710c81f7bc724fe0e5f4d0e54d65a0c17d6b4b5",
+      "after_sha256": "22c5122287174a1f54f8a832b710c81f7bc724fe0e5f4d0e54d65a0c17d6b4b5"
+    },
+    {
+      "old": "compositions/the_first_light/audio/the_first_light_stems/clarinet.wav",
+      "new": "docs/examples/orchestral/the-first-light/audio/the_first_light_stems/clarinet.wav",
+      "bytes": 86400044,
+      "before_sha256": "24a65c1f48aff61224e03c5e621aaa52d179d30f75a203c65d6d862ff7a9a45b",
+      "after_sha256": "24a65c1f48aff61224e03c5e621aaa52d179d30f75a203c65d6d862ff7a9a45b"
+    },
+    {
+      "old": "compositions/the_first_light/audio/the_first_light_stems/cello_pizzicato.wav",
+      "new": "docs/examples/orchestral/the-first-light/audio/the_first_light_stems/cello_pizzicato.wav",
+      "bytes": 86400044,
+      "before_sha256": "a316a0130cc72a826baecf9413e4e449de0a115239872fd2657bbc906773c81a",
+      "after_sha256": "a316a0130cc72a826baecf9413e4e449de0a115239872fd2657bbc906773c81a"
+    },
+    {
+      "old": "compositions/the_first_light/audio/the_first_light_stems/violin_spiccato.wav",
+      "new": "docs/examples/orchestral/the-first-light/audio/the_first_light_stems/violin_spiccato.wav",
+      "bytes": 86400044,
+      "before_sha256": "3c3fa01ab75134791cc4fa180ff6cb186fa17d95800dabf6437cbdff1a2eb050",
+      "after_sha256": "3c3fa01ab75134791cc4fa180ff6cb186fa17d95800dabf6437cbdff1a2eb050"
+    },
+    {
+      "old": "compositions/the_first_light/audio/the_first_light_stems/violins_2.wav",
+      "new": "docs/examples/orchestral/the-first-light/audio/the_first_light_stems/violins_2.wav",
+      "bytes": 86400044,
+      "before_sha256": "1789b251ae4643ab715e047a4d5b86a6323b9dd6197c3c4be20c3a5eb7ce6923",
+      "after_sha256": "1789b251ae4643ab715e047a4d5b86a6323b9dd6197c3c4be20c3a5eb7ce6923"
+    },
+    {
+      "old": "compositions/the_first_light/audio/the_first_light_stems/horns.wav",
+      "new": "docs/examples/orchestral/the-first-light/audio/the_first_light_stems/horns.wav",
+      "bytes": 86400044,
+      "before_sha256": "cf9fe87b23a7bcd2b07e1da5ab988283d6c3e9483955c2ec3c3030c204c30a37",
+      "after_sha256": "cf9fe87b23a7bcd2b07e1da5ab988283d6c3e9483955c2ec3c3030c204c30a37"
+    },
+    {
+      "old": "compositions/the_first_light/audio/the_first_light_stems/flute.wav",
+      "new": "docs/examples/orchestral/the-first-light/audio/the_first_light_stems/flute.wav",
+      "bytes": 86400044,
+      "before_sha256": "4cf33dd264d435a30e8185a3ba80ad717b987e4d53ac9d32a5dcb7af644c5747",
+      "after_sha256": "4cf33dd264d435a30e8185a3ba80ad717b987e4d53ac9d32a5dcb7af644c5747"
+    },
+    {
+      "old": "compositions/the_first_light/audio/the_first_light_stems/viola_spiccato.wav",
+      "new": "docs/examples/orchestral/the-first-light/audio/the_first_light_stems/viola_spiccato.wav",
+      "bytes": 86400044,
+      "before_sha256": "a55ff2374d3ddf8d4b3c6e8228f6fbbb48497328ae46bf9aac49fe986ac3abff",
+      "after_sha256": "a55ff2374d3ddf8d4b3c6e8228f6fbbb48497328ae46bf9aac49fe986ac3abff"
+    },
+    {
+      "old": "compositions/the_first_light/audio/the_first_light_stems/violas.wav",
+      "new": "docs/examples/orchestral/the-first-light/audio/the_first_light_stems/violas.wav",
+      "bytes": 86400044,
+      "before_sha256": "8d0f68f9dce7f30fdb95b5cdb688a305620206d7176201bb4d7a1794c35524c0",
+      "after_sha256": "8d0f68f9dce7f30fdb95b5cdb688a305620206d7176201bb4d7a1794c35524c0"
+    },
+    {
+      "old": "compositions/the_first_light/audio/the_first_light_stems/bass_pizzicato.wav",
+      "new": "docs/examples/orchestral/the-first-light/audio/the_first_light_stems/bass_pizzicato.wav",
+      "bytes": 86400044,
+      "before_sha256": "e618c61e4250ce36ad218d14f06564f2e0cbb9b0e4d17bfa7f64b4ac4b4320e8",
+      "after_sha256": "e618c61e4250ce36ad218d14f06564f2e0cbb9b0e4d17bfa7f64b4ac4b4320e8"
+    },
+    {
+      "old": "compositions/the_first_light_revised/the_first_light.af",
+      "new": "docs/examples/orchestral/the-first-light-revised/the_first_light.af",
+      "bytes": 527984,
+      "before_sha256": "49eec868a2ab88281930a4e9bbe679970a769d80d5e3ef2ea978a9cf590b903f",
+      "after_sha256": "49eec868a2ab88281930a4e9bbe679970a769d80d5e3ef2ea978a9cf590b903f"
+    },
+    {
+      "old": "compositions/the_first_light_revised/validate.py",
+      "new": "docs/examples/orchestral/the-first-light-revised/validate.py",
+      "bytes": 21107,
+      "before_sha256": "a8388fc99b49375aa549e01c8c2dee177894aee7f267a56276c56588e7386fa2",
+      "after_sha256": "503b02a71b9fe45d68c7571dba0fc81d19b62eab58a99fc19ae21780b3877da5"
+    },
+    {
+      "old": "compositions/the_first_light_revised/README.md",
+      "new": "docs/examples/orchestral/the-first-light-revised/delivery.md",
+      "bytes": 4626,
+      "before_sha256": "80c39fc9610b067a85e0cfd89e7d3018385d927c2ff87cac810384a4ca6420a9",
+      "after_sha256": "0f2c8052cc714490942fed3311ad6a75f0436e0619fbfb734227d180cddc0c20"
+    },
+    {
+      "old": "compositions/the_first_light_revised/compose.py",
+      "new": "docs/examples/orchestral/the-first-light-revised/compose.py",
+      "bytes": 29801,
+      "before_sha256": "b7147d02e034a5da6f3fbe5066ef12d707e620ade3de7d00d50d2c634e7421eb",
+      "after_sha256": "9e87af59e08a251373ff2a741711762ad70f84c44ab2634806d29c9abe51be30"
+    },
+    {
+      "old": "compositions/the_first_light_revised/validation.json",
+      "new": "docs/examples/orchestral/the-first-light-revised/validation.json",
+      "bytes": 134977,
+      "before_sha256": "d70bc58aa213ddba7637c82759ce6dfd7e5fc35fcd0a49bf3dfaf8adcba29473",
+      "after_sha256": "d70bc58aa213ddba7637c82759ce6dfd7e5fc35fcd0a49bf3dfaf8adcba29473"
+    },
+    {
+      "old": "compositions/the_first_light_revised/the_first_light.ir.json",
+      "new": "docs/examples/orchestral/the-first-light-revised/the_first_light.ir.json",
+      "bytes": 1229276,
+      "before_sha256": "9fc65cbbab42acd4b062f34f34e31dde5e9be9aa7df90f8c978ad6fb0abed97f",
+      "after_sha256": "9fc65cbbab42acd4b062f34f34e31dde5e9be9aa7df90f8c978ad6fb0abed97f"
+    },
+    {
+      "old": "compositions/the_first_light_revised/prepare_library.py",
+      "new": "docs/examples/orchestral/the-first-light-revised/prepare_library.py",
+      "bytes": 3283,
+      "before_sha256": "8ac045213bd56b27b51d268838b6b801be982fef2451cddf2bae7aa680723da7",
+      "after_sha256": "1dd620b0ffc5cd906761f75213ebb347ac1e546a0d7d855bbdfc748f48c8612e"
+    },
+    {
+      "old": "compositions/the_first_light_revised/program.json",
+      "new": "docs/examples/orchestral/the-first-light-revised/program.json",
+      "bytes": 312348,
+      "before_sha256": "e1e83c45f1123e019a8bca01266e94863d627a0d6aa2d80960486bb641b3f5b4",
+      "after_sha256": "e1e83c45f1123e019a8bca01266e94863d627a0d6aa2d80960486bb641b3f5b4"
+    },
+    {
+      "old": "compositions/the_first_light_revised/audio/the_first_light.plan.json",
+      "new": "docs/examples/orchestral/the-first-light-revised/audio/the_first_light.plan.json",
+      "bytes": 7912730,
+      "before_sha256": "60c5a928a6bdb450c3bfaee93167aa006cc7188077daffe72742c6afdd7023ee",
+      "after_sha256": "60c5a928a6bdb450c3bfaee93167aa006cc7188077daffe72742c6afdd7023ee"
+    },
+    {
+      "old": "compositions/the_first_light_revised/audio/the_first_light.mp3",
+      "new": "docs/examples/orchestral/the-first-light-revised/audio/the_first_light.mp3",
+      "bytes": 12002044,
+      "before_sha256": "6fd1127041b6f59d3e9291747c23ada455696256db0cfcbfe554e79183bf184c",
+      "after_sha256": "6fd1127041b6f59d3e9291747c23ada455696256db0cfcbfe554e79183bf184c"
+    },
+    {
+      "old": "compositions/the_first_light_revised/audio/the_first_light.markers.json",
+      "new": "docs/examples/orchestral/the-first-light-revised/audio/the_first_light.markers.json",
+      "bytes": 514,
+      "before_sha256": "1a4991de5ae1589728ec307605f9f0bf4c54d3b0c8879de8b5de716cf38dbe36",
+      "after_sha256": "1a4991de5ae1589728ec307605f9f0bf4c54d3b0c8879de8b5de716cf38dbe36"
+    },
+    {
+      "old": "compositions/the_first_light_revised/audio/the_first_light.manifest.json",
+      "new": "docs/examples/orchestral/the-first-light-revised/audio/the_first_light.manifest.json",
+      "bytes": 71910,
+      "before_sha256": "64afc27b3c0ef11a08265bff70eebe7a44cf4869afb4fd39a70d88c6b9a2ef56",
+      "after_sha256": "64afc27b3c0ef11a08265bff70eebe7a44cf4869afb4fd39a70d88c6b9a2ef56"
+    },
+    {
+      "old": "compositions/the_first_light_revised/audio/the_first_light.wav",
+      "new": "docs/examples/orchestral/the-first-light-revised/audio/the_first_light.wav",
+      "bytes": 86400044,
+      "before_sha256": "5c4e87549433209a238c894c5e581ab01b423c48b3a3b5e010bb8da45f3ab627",
+      "after_sha256": "5c4e87549433209a238c894c5e581ab01b423c48b3a3b5e010bb8da45f3ab627"
+    },
+    {
+      "old": "compositions/the_first_light_revised/evidence/cli-validate.log",
+      "new": "docs/examples/orchestral/the-first-light-revised/evidence/cli-validate.log",
+      "bytes": 27,
+      "before_sha256": "d7b6cbb7cf36f54e6e6344158502c73151c14eecfa104adff4817a0ce57335e8",
+      "after_sha256": "d7b6cbb7cf36f54e6e6344158502c73151c14eecfa104adff4817a0ce57335e8"
+    },
+    {
+      "old": "compositions/the_first_light_revised/evidence/reproduce.log",
+      "new": "docs/examples/orchestral/the-first-light-revised/evidence/reproduce.log",
+      "bytes": 13,
+      "before_sha256": "7dc409a0af34e3a54e3a8213ebdf6bbf806e01af02a0bfbf30c4ef4e34ff8634",
+      "after_sha256": "7dc409a0af34e3a54e3a8213ebdf6bbf806e01af02a0bfbf30c4ef4e34ff8634"
+    },
+    {
+      "old": "compositions/the_first_light_revised/evidence/render.log",
+      "new": "docs/examples/orchestral/the-first-light-revised/evidence/render.log",
+      "bytes": 1719,
+      "before_sha256": "981a110128f71803a8f790f1ccae35d6f54210bb7d2cad8801d606ec33326acd",
+      "after_sha256": "981a110128f71803a8f790f1ccae35d6f54210bb7d2cad8801d606ec33326acd"
+    },
+    {
+      "old": "compositions/the_first_light_revised/evidence/make-check.log",
+      "new": "docs/examples/orchestral/the-first-light-revised/evidence/make-check.log",
+      "bytes": 11616,
+      "before_sha256": "58cbfb76a46e6eba5086ee5903978724f58e4f57347463abaf1910c9987d6ff5",
+      "after_sha256": "58cbfb76a46e6eba5086ee5903978724f58e4f57347463abaf1910c9987d6ff5"
+    },
+    {
+      "old": "compositions/the_first_light_revised/evidence/coverage.log",
+      "new": "docs/examples/orchestral/the-first-light-revised/evidence/coverage.log",
+      "bytes": 10146,
+      "before_sha256": "c0a8683efcee6906a63ee161535e17635b3b1399ef42d671842a23bdb266a399",
+      "after_sha256": "c0a8683efcee6906a63ee161535e17635b3b1399ef42d671842a23bdb266a399"
+    },
+    {
+      "old": "compositions/the_first_light_revised/evidence/acceptance.log",
+      "new": "docs/examples/orchestral/the-first-light-revised/evidence/acceptance.log",
+      "bytes": 11577,
+      "before_sha256": "81ff266521675e2b85c9b0c245749cedf2c37d47cf64df50d589d5c91b455a6f",
+      "after_sha256": "81ff266521675e2b85c9b0c245749cedf2c37d47cf64df50d589d5c91b455a6f"
+    },
+    {
+      "old": "compositions/the_first_light_revised/audio/the_first_light_stems/violins_1.wav",
+      "new": "docs/examples/orchestral/the-first-light-revised/audio/the_first_light_stems/violins_1.wav",
+      "bytes": 86400044,
+      "before_sha256": "ed151f7b21aecec3b8d7dc568bb836330df92d629ec28a57f1933de93ee92ba9",
+      "after_sha256": "ed151f7b21aecec3b8d7dc568bb836330df92d629ec28a57f1933de93ee92ba9"
+    },
+    {
+      "old": "compositions/the_first_light_revised/audio/the_first_light_stems/harp.wav",
+      "new": "docs/examples/orchestral/the-first-light-revised/audio/the_first_light_stems/harp.wav",
+      "bytes": 86400044,
+      "before_sha256": "3974ee2f50b0db8f3cc7cf90fae325db0a0b425b23755e5dd822966b2f45bcf3",
+      "after_sha256": "3974ee2f50b0db8f3cc7cf90fae325db0a0b425b23755e5dd822966b2f45bcf3"
+    },
+    {
+      "old": "compositions/the_first_light_revised/audio/the_first_light_stems/bassoon.wav",
+      "new": "docs/examples/orchestral/the-first-light-revised/audio/the_first_light_stems/bassoon.wav",
+      "bytes": 86400044,
+      "before_sha256": "56fc2bdcd91bba23d580bc82263ab67f0d652baf708374adfe47ba14436e2e79",
+      "after_sha256": "56fc2bdcd91bba23d580bc82263ab67f0d652baf708374adfe47ba14436e2e79"
+    },
+    {
+      "old": "compositions/the_first_light_revised/audio/the_first_light_stems/oboe.wav",
+      "new": "docs/examples/orchestral/the-first-light-revised/audio/the_first_light_stems/oboe.wav",
+      "bytes": 86400044,
+      "before_sha256": "aff1ccd84a86e442c393d2bf09d16bcfb9b224572e26510a5726a8ab47c6cab0",
+      "after_sha256": "aff1ccd84a86e442c393d2bf09d16bcfb9b224572e26510a5726a8ab47c6cab0"
+    },
+    {
+      "old": "compositions/the_first_light_revised/audio/the_first_light_stems/cello_spiccato.wav",
+      "new": "docs/examples/orchestral/the-first-light-revised/audio/the_first_light_stems/cello_spiccato.wav",
+      "bytes": 86400044,
+      "before_sha256": "10c4ab709d21acb73cc591d051a264cd189f39aa1de094b6ae415331bdcfe758",
+      "after_sha256": "10c4ab709d21acb73cc591d051a264cd189f39aa1de094b6ae415331bdcfe758"
+    },
+    {
+      "old": "compositions/the_first_light_revised/audio/the_first_light_stems/cellos.wav",
+      "new": "docs/examples/orchestral/the-first-light-revised/audio/the_first_light_stems/cellos.wav",
+      "bytes": 86400044,
+      "before_sha256": "18de60651ead8c0c9dc030cd35c9dda7b67cacdbff3b91b6408e10451d7c9d89",
+      "after_sha256": "18de60651ead8c0c9dc030cd35c9dda7b67cacdbff3b91b6408e10451d7c9d89"
+    },
+    {
+      "old": "compositions/the_first_light_revised/audio/the_first_light_stems/timpani.wav",
+      "new": "docs/examples/orchestral/the-first-light-revised/audio/the_first_light_stems/timpani.wav",
+      "bytes": 86400044,
+      "before_sha256": "6a199ba63368afd596a99e7c9ab0810fe46db03cba482adb9ee4905dd61d823f",
+      "after_sha256": "6a199ba63368afd596a99e7c9ab0810fe46db03cba482adb9ee4905dd61d823f"
+    },
+    {
+      "old": "compositions/the_first_light_revised/audio/the_first_light_stems/solo_viola.wav",
+      "new": "docs/examples/orchestral/the-first-light-revised/audio/the_first_light_stems/solo_viola.wav",
+      "bytes": 86400044,
+      "before_sha256": "86785317b3fd1a737222ef42155b515068b1fd2a8f5813615e4e47548f7809c9",
+      "after_sha256": "86785317b3fd1a737222ef42155b515068b1fd2a8f5813615e4e47548f7809c9"
+    },
+    {
+      "old": "compositions/the_first_light_revised/audio/the_first_light_stems/basses.wav",
+      "new": "docs/examples/orchestral/the-first-light-revised/audio/the_first_light_stems/basses.wav",
+      "bytes": 86400044,
+      "before_sha256": "3b8a7b380cf4548c746655eea46cc4a6a3ff6c86516098fdd22a552d61648689",
+      "after_sha256": "3b8a7b380cf4548c746655eea46cc4a6a3ff6c86516098fdd22a552d61648689"
+    },
+    {
+      "old": "compositions/the_first_light_revised/audio/the_first_light_stems/viola_pizzicato.wav",
+      "new": "docs/examples/orchestral/the-first-light-revised/audio/the_first_light_stems/viola_pizzicato.wav",
+      "bytes": 86400044,
+      "before_sha256": "5fb87ac94a23f1483be3e1e75c59fbc3e9e67a72be5f5aa364fee1b1da2e1b1b",
+      "after_sha256": "5fb87ac94a23f1483be3e1e75c59fbc3e9e67a72be5f5aa364fee1b1da2e1b1b"
+    },
+    {
+      "old": "compositions/the_first_light_revised/audio/the_first_light_stems/clarinet.wav",
+      "new": "docs/examples/orchestral/the-first-light-revised/audio/the_first_light_stems/clarinet.wav",
+      "bytes": 86400044,
+      "before_sha256": "02ee634bbdb14334950830910c58a634673113f5f3acee69f18a235b5cb66d88",
+      "after_sha256": "02ee634bbdb14334950830910c58a634673113f5f3acee69f18a235b5cb66d88"
+    },
+    {
+      "old": "compositions/the_first_light_revised/audio/the_first_light_stems/cello_pizzicato.wav",
+      "new": "docs/examples/orchestral/the-first-light-revised/audio/the_first_light_stems/cello_pizzicato.wav",
+      "bytes": 86400044,
+      "before_sha256": "d2ad918edaaaa8d385763456e6198a40b765e03ff6beea02d1fc0082d2ccf8ae",
+      "after_sha256": "d2ad918edaaaa8d385763456e6198a40b765e03ff6beea02d1fc0082d2ccf8ae"
+    },
+    {
+      "old": "compositions/the_first_light_revised/audio/the_first_light_stems/violin_spiccato.wav",
+      "new": "docs/examples/orchestral/the-first-light-revised/audio/the_first_light_stems/violin_spiccato.wav",
+      "bytes": 86400044,
+      "before_sha256": "c4d4590b0c0b5879da66f9c3a1751f436c3f9b977ca1f7a7ff5b0a11dd3faa66",
+      "after_sha256": "c4d4590b0c0b5879da66f9c3a1751f436c3f9b977ca1f7a7ff5b0a11dd3faa66"
+    },
+    {
+      "old": "compositions/the_first_light_revised/audio/the_first_light_stems/violins_2.wav",
+      "new": "docs/examples/orchestral/the-first-light-revised/audio/the_first_light_stems/violins_2.wav",
+      "bytes": 86400044,
+      "before_sha256": "8459114ab28843aad5bdea0238d70c1b9702b53271ebd155d48bdf38964f5b8b",
+      "after_sha256": "8459114ab28843aad5bdea0238d70c1b9702b53271ebd155d48bdf38964f5b8b"
+    },
+    {
+      "old": "compositions/the_first_light_revised/audio/the_first_light_stems/horns.wav",
+      "new": "docs/examples/orchestral/the-first-light-revised/audio/the_first_light_stems/horns.wav",
+      "bytes": 86400044,
+      "before_sha256": "5e82937c1062a13b0949b6aac2b448f05aa8e46f787e4ab8b4d79598a91e7b0c",
+      "after_sha256": "5e82937c1062a13b0949b6aac2b448f05aa8e46f787e4ab8b4d79598a91e7b0c"
+    },
+    {
+      "old": "compositions/the_first_light_revised/audio/the_first_light_stems/flute.wav",
+      "new": "docs/examples/orchestral/the-first-light-revised/audio/the_first_light_stems/flute.wav",
+      "bytes": 86400044,
+      "before_sha256": "e6fb913331f2afd97dc44fe88dc601280bdf978bcab5cc8e74e8c37694a951ad",
+      "after_sha256": "e6fb913331f2afd97dc44fe88dc601280bdf978bcab5cc8e74e8c37694a951ad"
+    },
+    {
+      "old": "compositions/the_first_light_revised/audio/the_first_light_stems/viola_spiccato.wav",
+      "new": "docs/examples/orchestral/the-first-light-revised/audio/the_first_light_stems/viola_spiccato.wav",
+      "bytes": 86400044,
+      "before_sha256": "c3ee66e1277565e95fc9ac6d05719afc4b976646370f1532a788d58354a5d586",
+      "after_sha256": "c3ee66e1277565e95fc9ac6d05719afc4b976646370f1532a788d58354a5d586"
+    },
+    {
+      "old": "compositions/the_first_light_revised/audio/the_first_light_stems/violas.wav",
+      "new": "docs/examples/orchestral/the-first-light-revised/audio/the_first_light_stems/violas.wav",
+      "bytes": 86400044,
+      "before_sha256": "5c9b24ee24bb3b8fead723db44f9de5a9d4b64f9b96ae00cb025b0261e3fefb2",
+      "after_sha256": "5c9b24ee24bb3b8fead723db44f9de5a9d4b64f9b96ae00cb025b0261e3fefb2"
+    },
+    {
+      "old": "compositions/the_first_light_revised/audio/the_first_light_stems/bass_pizzicato.wav",
+      "new": "docs/examples/orchestral/the-first-light-revised/audio/the_first_light_stems/bass_pizzicato.wav",
+      "bytes": 86400044,
+      "before_sha256": "c7db8fe3fe7d170875876d1f2795dfacb52a6c6cb82408a49521bc5fa9787043",
+      "after_sha256": "c7db8fe3fe7d170875876d1f2795dfacb52a6c6cb82408a49521bc5fa9787043"
+    },
+    {
+      "old": "static/fixtures/bwv949.af",
+      "new": "docs/examples/archive/bwv949/bwv949.af",
+      "bytes": 17182,
+      "before_sha256": "a7f6c864db5b8a38e0edfe746282acd942226f591754de28e3124920038cb9df",
+      "after_sha256": "a7f6c864db5b8a38e0edfe746282acd942226f591754de28e3124920038cb9df"
+    },
+    {
+      "old": "static/fixtures/cancoes_sertao.af",
+      "new": "docs/examples/archive/cancoes-sertao/cancoes_sertao.af",
+      "bytes": 49205,
+      "before_sha256": "1c1d4af5fc79eecc3aedc2026bec78d4e78a274a069ce66430f0f1bbe9d230c5",
+      "after_sha256": "1c1d4af5fc79eecc3aedc2026bec78d4e78a274a069ce66430f0f1bbe9d230c5"
+    },
+    {
+      "old": "static/fixtures/mysong.af",
+      "new": "docs/examples/arrangements/mysong/mysong.af",
+      "bytes": 50250,
+      "before_sha256": "0ee6015c92cc9401cb7b2aa1f5b79a6d95a21990635deffdda3e5cafb244aa8a",
+      "after_sha256": "0ee6015c92cc9401cb7b2aa1f5b79a6d95a21990635deffdda3e5cafb244aa8a"
+    },
+    {
+      "old": "static/fixtures/slash_inspired_v3.af",
+      "new": "docs/examples/guitar/slash-inspired-v3/slash_inspired_v3.af",
+      "bytes": 7043,
+      "before_sha256": "e9d70e32b6f8ee30aafb6a36b9ced2333b46d2fe7e11046750bbb207f097fbcb",
+      "after_sha256": "e9d70e32b6f8ee30aafb6a36b9ced2333b46d2fe7e11046750bbb207f097fbcb"
+    },
+    {
+      "old": "static/fixtures/slash_sfz_guitar_experiment.af",
+      "new": "docs/examples/guitar/slash-sfz-guitar-experiment/slash_sfz_guitar_experiment.af",
+      "bytes": 3611,
+      "before_sha256": "b08284825d36faf2662b473c8a7c6e2b91201633a15cd0d72e849ebec2e2c5f8",
+      "after_sha256": "b08284825d36faf2662b473c8a7c6e2b91201633a15cd0d72e849ebec2e2c5f8"
+    },
+    {
+      "old": "static/fixtures/slash_style_solo.af",
+      "new": "docs/examples/guitar/slash-style-solo/slash_style_solo.af",
+      "bytes": 6438,
+      "before_sha256": "56b06a09992d17da54766411f40e10572d22083faf8e6570da04e1280b85ecc5",
+      "after_sha256": "56b06a09992d17da54766411f40e10572d22083faf8e6570da04e1280b85ecc5"
+    },
+    {
+      "old": "static/fixtures/unser_leben.af",
+      "new": "docs/examples/archive/unser-leben/unser_leben.af",
+      "bytes": 17384,
+      "before_sha256": "6f3eb07bdc47b756a174e112f247ad1bd566e080a1c998045c4d5d9f588ede0f",
+      "after_sha256": "6f3eb07bdc47b756a174e112f247ad1bd566e080a1c998045c4d5d9f588ede0f"
+    },
+    {
+      "old": "static/samples/transition_sweep.af",
+      "new": "docs/examples/sound-design/transition-sweep/transition_sweep.af",
+      "bytes": 467,
+      "before_sha256": "7efcc4b16a162166dd73e8f246369bc59a1f94373c9373ef6f374ba29d941037",
+      "after_sha256": "7efcc4b16a162166dd73e8f246369bc59a1f94373c9373ef6f374ba29d941037"
+    },
+    {
+      "old": "renders/ode_to_fable_symphonic.manifest.json",
+      "new": "docs/examples/orchestral/ode-to-fable-symphonic/audio/ode_to_fable_symphonic.manifest.json",
+      "bytes": 1192,
+      "before_sha256": "c54c7622f551832c19638f6e02b1077c916a2f79c7f7ac120ac6780a65e262f2",
+      "after_sha256": "c54c7622f551832c19638f6e02b1077c916a2f79c7f7ac120ac6780a65e262f2"
+    },
+    {
+      "old": "renders/ode_to_fable.manifest.json",
+      "new": "docs/examples/orchestral/ode-to-fable/audio/ode_to_fable.manifest.json",
+      "bytes": 1103,
+      "before_sha256": "2e43d32765b2d820753908cd6d9b8d186069bb3590790143d8cb15d1a2933a7b",
+      "after_sha256": "2e43d32765b2d820753908cd6d9b8d186069bb3590790143d8cb15d1a2933a7b"
+    },
+    {
+      "old": "renders/fable_symphony_orchestral_v2.manifest.json",
+      "new": "docs/examples/orchestral/fable-symphony-orchestral-v2/audio/fable_symphony_orchestral_v2.manifest.json",
+      "bytes": 1162,
+      "before_sha256": "70fd6ca4ba25d946f5083f55a4f5f32ed0b1a6413c8331a0ebea810b094df060",
+      "after_sha256": "70fd6ca4ba25d946f5083f55a4f5f32ed0b1a6413c8331a0ebea810b094df060"
+    },
+    {
+      "old": "renders/fable_symphony__cinematic_master.markers.json",
+      "new": "docs/examples/orchestral/fable-symphony/audio/fable_symphony__cinematic_master.markers.json",
+      "bytes": 399,
+      "before_sha256": "d4fdaa622694c1b882bcc67843087b6741e226cdaa91114492d225f3da42a294",
+      "after_sha256": "d4fdaa622694c1b882bcc67843087b6741e226cdaa91114492d225f3da42a294"
+    },
+    {
+      "old": "renders/fable_symphony_orchestral.markers.json",
+      "new": "docs/examples/orchestral/fable-symphony-orchestral/audio/fable_symphony_orchestral.markers.json",
+      "bytes": 392,
+      "before_sha256": "a57294936a3992371f68adc330a1e267b50ffb720ac2f72c827463e5a73271e9",
+      "after_sha256": "a57294936a3992371f68adc330a1e267b50ffb720ac2f72c827463e5a73271e9"
+    },
+    {
+      "old": "renders/ode_to_fable_symphonic_v2.markers.json",
+      "new": "docs/examples/orchestral/ode-to-fable-symphonic-v2/audio/ode_to_fable_symphonic_v2.markers.json",
+      "bytes": 580,
+      "before_sha256": "2da2768026e2c77cd61702e2bcb610ca8d323117e345880f9ac4082da3be22da",
+      "after_sha256": "2da2768026e2c77cd61702e2bcb610ca8d323117e345880f9ac4082da3be22da"
+    },
+    {
+      "old": "renders/fable_symphony_orchestral_v2.markers.json",
+      "new": "docs/examples/orchestral/fable-symphony-orchestral-v2/audio/fable_symphony_orchestral_v2.markers.json",
+      "bytes": 395,
+      "before_sha256": "358c546e81c33c805dc5cb7126cebbbdeaeffa403a869cba8a1c636a2346ccb9",
+      "after_sha256": "358c546e81c33c805dc5cb7126cebbbdeaeffa403a869cba8a1c636a2346ccb9"
+    },
+    {
+      "old": "renders/ode_to_fable.markers.json",
+      "new": "docs/examples/orchestral/ode-to-fable/audio/ode_to_fable.markers.json",
+      "bytes": 379,
+      "before_sha256": "1b37816749ec56b1e14a6e0c3dee938e0c4c3beedb8c5ebcf34c9980b5548a02",
+      "after_sha256": "1b37816749ec56b1e14a6e0c3dee938e0c4c3beedb8c5ebcf34c9980b5548a02"
+    },
+    {
+      "old": "renders/fable_symphony__cinematic_master.manifest.json",
+      "new": "docs/examples/orchestral/fable-symphony/audio/fable_symphony__cinematic_master.manifest.json",
+      "bytes": 1069,
+      "before_sha256": "ef2d0406beb1d82895af1e4dcc8b6ef96d89bfe3951548c63e35d0851f3d8cf4",
+      "after_sha256": "ef2d0406beb1d82895af1e4dcc8b6ef96d89bfe3951548c63e35d0851f3d8cf4"
+    },
+    {
+      "old": "renders/ode_to_fable_symphonic_v2.manifest.json",
+      "new": "docs/examples/orchestral/ode-to-fable-symphonic-v2/audio/ode_to_fable_symphonic_v2.manifest.json",
+      "bytes": 1318,
+      "before_sha256": "6e20188fe589122beee67a10e78f66cd8dd4ac1ae010f3b4e58a634d3c38d6cd",
+      "after_sha256": "6e20188fe589122beee67a10e78f66cd8dd4ac1ae010f3b4e58a634d3c38d6cd"
+    },
+    {
+      "old": "renders/ode_to_fable_symphonic.markers.json",
+      "new": "docs/examples/orchestral/ode-to-fable-symphonic/audio/ode_to_fable_symphonic.markers.json",
+      "bytes": 457,
+      "before_sha256": "0dd7403abaa673d6d7650b06837c14f996b262aadbb2989d8eb15acb5de53dc4",
+      "after_sha256": "0dd7403abaa673d6d7650b06837c14f996b262aadbb2989d8eb15acb5de53dc4"
+    },
+    {
+      "old": "renders/fable_symphony_orchestral.manifest.json",
+      "new": "docs/examples/orchestral/fable-symphony-orchestral/audio/fable_symphony_orchestral.manifest.json",
+      "bytes": 1157,
+      "before_sha256": "3145f272f856821e4061fc999b4fa94646dba70af46337ca41cc50664804aa22",
+      "after_sha256": "3145f272f856821e4061fc999b4fa94646dba70af46337ca41cc50664804aa22"
+    },
+    {
+      "old": "renders/neon_voltage/neon_voltage.markers.json",
+      "new": "docs/examples/electronic/neon-voltage/audio/neon_voltage.markers.json",
+      "bytes": 515,
+      "before_sha256": "0ef624552d86eb5ed6b4af422f10982c546fecb710407462e562aa457f884758",
+      "after_sha256": "0ef624552d86eb5ed6b4af422f10982c546fecb710407462e562aa457f884758"
+    },
+    {
+      "old": "renders/neon_voltage/neon_voltage.waveform.png",
+      "new": "docs/examples/electronic/neon-voltage/audio/neon_voltage.waveform.png",
+      "bytes": 266629,
+      "before_sha256": "82751595621347389fd539a869c51e91c0226b42a86ec9b93c3c5cc507690ed6",
+      "after_sha256": "82751595621347389fd539a869c51e91c0226b42a86ec9b93c3c5cc507690ed6"
+    },
+    {
+      "old": "renders/neon_voltage/neon_voltage.manifest.json",
+      "new": "docs/examples/electronic/neon-voltage/audio/neon_voltage.manifest.json",
+      "bytes": 4464,
+      "before_sha256": "6b2492eca5e4ed23cd09abbc22b3a2a35e178e20cd0037081833e7633914bfff",
+      "after_sha256": "6b2492eca5e4ed23cd09abbc22b3a2a35e178e20cd0037081833e7633914bfff"
+    },
+    {
+      "old": "renders/neon_voltage/neon_voltage.mp3",
+      "new": "docs/examples/electronic/neon-voltage/audio/neon_voltage.mp3",
+      "bytes": 5761197,
+      "before_sha256": "d66b42e596a792a429696c9ec3756abf7ff54902e96f314b83099f5e31038063",
+      "after_sha256": "d66b42e596a792a429696c9ec3756abf7ff54902e96f314b83099f5e31038063"
+    },
+    {
+      "old": "renders/neon_voltage/neon_voltage.wav",
+      "new": "docs/examples/electronic/neon-voltage/audio/neon_voltage.wav",
+      "bytes": 69120044,
+      "before_sha256": "774b8ce1e45161a99bf810b623a0f9da4bbb29a6ed30d2861f7dac0791a0a8b3",
+      "after_sha256": "774b8ce1e45161a99bf810b623a0f9da4bbb29a6ed30d2861f7dac0791a0a8b3"
+    },
+    {
+      "old": "renders/neon_voltage/neon_voltage.plan.json",
+      "new": "docs/examples/electronic/neon-voltage/audio/neon_voltage.plan.json",
+      "bytes": 7142696,
+      "before_sha256": "4be7b3a8cd0e1cee25cca5690582bf12873bd9d298db55e2e385b69f47850944",
+      "after_sha256": "4be7b3a8cd0e1cee25cca5690582bf12873bd9d298db55e2e385b69f47850944"
+    },
+    {
+      "old": "renders/to_be_alive/to_be_alive.manifest.json",
+      "new": "docs/examples/orchestral/to-be-alive/audio/to_be_alive.manifest.json",
+      "bytes": 35889,
+      "before_sha256": "667a3a0b4ba9dbd6f42a0aa4d56446ae6b9ab29547d439d9e43a592437f00c34",
+      "after_sha256": "667a3a0b4ba9dbd6f42a0aa4d56446ae6b9ab29547d439d9e43a592437f00c34"
+    },
+    {
+      "old": "renders/to_be_alive/to_be_alive.plan.json",
+      "new": "docs/examples/orchestral/to-be-alive/audio/to_be_alive.plan.json",
+      "bytes": 1944351,
+      "before_sha256": "4015d10580f2a1dd88711ac1a906b747ccaf24bb7877d3aaed41730703f493a9",
+      "after_sha256": "4015d10580f2a1dd88711ac1a906b747ccaf24bb7877d3aaed41730703f493a9"
+    },
+    {
+      "old": "renders/to_be_alive/to_be_alive.markers.json",
+      "new": "docs/examples/orchestral/to-be-alive/audio/to_be_alive.markers.json",
+      "bytes": 334,
+      "before_sha256": "89e2fba744826a79d964dda1bfe7d0221ff72c886d4776c3631905f1fb127c6c",
+      "after_sha256": "89e2fba744826a79d964dda1bfe7d0221ff72c886d4776c3631905f1fb127c6c"
+    },
+    {
+      "old": "renders/road_trip/s06_big_view.manifest.json",
+      "new": "docs/examples/road-trip/s06-big-view/audio/s06_big_view.manifest.json",
+      "bytes": 1900,
+      "before_sha256": "14d71d56172463d4de2e297cfebda4a021595d634d22e3607ec5421c5b3cda0a",
+      "after_sha256": "14d71d56172463d4de2e297cfebda4a021595d634d22e3607ec5421c5b3cda0a"
+    },
+    {
+      "old": "renders/road_trip/s07_rest_stop.markers.json",
+      "new": "docs/examples/road-trip/s07-rest-stop/audio/s07_rest_stop.markers.json",
+      "bytes": 294,
+      "before_sha256": "8fa0745a6da5b92daaec56060012c17946ed44f5a66bb4e3fe1283968fe07ecf",
+      "after_sha256": "8fa0745a6da5b92daaec56060012c17946ed44f5a66bb4e3fe1283968fe07ecf"
+    },
+    {
+      "old": "renders/road_trip/s08_golden_hour.wav",
+      "new": "docs/examples/road-trip/s08-golden-hour/audio/s08_golden_hour.wav",
+      "bytes": 155520044,
+      "before_sha256": "ff43eb64dd7eddffa7dd7f7099354f50c079afe8dae9f5532ca51f9cb02688bc",
+      "after_sha256": "ff43eb64dd7eddffa7dd7f7099354f50c079afe8dae9f5532ca51f9cb02688bc"
+    },
+    {
+      "old": "renders/road_trip/s04_daydream.markers.json",
+      "new": "docs/examples/road-trip/s04-daydream/audio/s04_daydream.markers.json",
+      "bytes": 305,
+      "before_sha256": "d77d3af9fe368fb4c9b0ba3f5a7b602aa638a0e78c79fa160e95dc10f29aaaf1",
+      "after_sha256": "d77d3af9fe368fb4c9b0ba3f5a7b602aa638a0e78c79fa160e95dc10f29aaaf1"
+    },
+    {
+      "old": "renders/road_trip/s01_departure.wav",
+      "new": "docs/examples/road-trip/s01-departure/audio/s01_departure.wav",
+      "bytes": 138240044,
+      "before_sha256": "5662d6b566952b9b4b2336ac6317a03b4c724bf4cbfa1aea161ffb2ac51cd08c",
+      "after_sha256": "5662d6b566952b9b4b2336ac6317a03b4c724bf4cbfa1aea161ffb2ac51cd08c"
+    },
+    {
+      "old": "renders/road_trip/s09_arrival.manifest.json",
+      "new": "docs/examples/road-trip/s09-arrival/audio/s09_arrival.manifest.json",
+      "bytes": 1977,
+      "before_sha256": "f513fa177861b7baa7e3488b039ba82a0564e99fa87ed1056399bef0d341d425",
+      "after_sha256": "f513fa177861b7baa7e3488b039ba82a0564e99fa87ed1056399bef0d341d425"
+    },
+    {
+      "old": "renders/road_trip/s01_departure.plan.json",
+      "new": "docs/examples/road-trip/s01-departure/audio/s01_departure.plan.json",
+      "bytes": 26708,
+      "before_sha256": "5507b53f5b2b5d3505bcd281652fb2c894d80a2f4a87e8ed21f160c3c272e2d2",
+      "after_sha256": "5507b53f5b2b5d3505bcd281652fb2c894d80a2f4a87e8ed21f160c3c272e2d2"
+    },
+    {
+      "old": "renders/road_trip/s03_highway_opens.markers.json",
+      "new": "docs/examples/road-trip/s03-highway-opens/audio/s03_highway_opens.markers.json",
+      "bytes": 298,
+      "before_sha256": "86498803fb33c55b1ed6d65e7512a5ea6af8d1422ea93f471e4494ea06780f3b",
+      "after_sha256": "86498803fb33c55b1ed6d65e7512a5ea6af8d1422ea93f471e4494ea06780f3b"
+    },
+    {
+      "old": "renders/road_trip/s06_big_view.markers.json",
+      "new": "docs/examples/road-trip/s06-big-view/audio/s06_big_view.markers.json",
+      "bytes": 294,
+      "before_sha256": "787a9f3577fb767a62ecbc6a51b0b09026e9c019cefb7d4d576d6458c2172d02",
+      "after_sha256": "787a9f3577fb767a62ecbc6a51b0b09026e9c019cefb7d4d576d6458c2172d02"
+    },
+    {
+      "old": "renders/road_trip/s01_departure.manifest.json",
+      "new": "docs/examples/road-trip/s01-departure/audio/s01_departure.manifest.json",
+      "bytes": 1663,
+      "before_sha256": "5e9c994fa58125e2b133eb520081deb74c7505c391e1f23ba9f2147a99f5bdc8",
+      "after_sha256": "5e9c994fa58125e2b133eb520081deb74c7505c391e1f23ba9f2147a99f5bdc8"
+    },
+    {
+      "old": "renders/road_trip/s09_arrival.markers.json",
+      "new": "docs/examples/road-trip/s09-arrival/audio/s09_arrival.markers.json",
+      "bytes": 230,
+      "before_sha256": "9b0f6370c515b0eb46edd3557dda8f62d526eb2bd4df4a0b722f4739e8a97ef6",
+      "after_sha256": "9b0f6370c515b0eb46edd3557dda8f62d526eb2bd4df4a0b722f4739e8a97ef6"
+    },
+    {
+      "old": "renders/road_trip/s05b_road_game_pt2.wav",
+      "new": "docs/examples/road-trip/s05b-road-game-pt2/audio/s05b_road_game_pt2.wav",
+      "bytes": 103680044,
+      "before_sha256": "d322b1725156b0224851c947554bad6b428a6e2fbbc03e5cc3f9b67c96799e2d",
+      "after_sha256": "d322b1725156b0224851c947554bad6b428a6e2fbbc03e5cc3f9b67c96799e2d"
+    },
+    {
+      "old": "renders/road_trip/s09_arrival.plan.json",
+      "new": "docs/examples/road-trip/s09-arrival/audio/s09_arrival.plan.json",
+      "bytes": 46758,
+      "before_sha256": "1d3f9ae52cbe031a1f7c25fddfb8aa2246001ac2e75723138a5d26e47850356c",
+      "after_sha256": "1d3f9ae52cbe031a1f7c25fddfb8aa2246001ac2e75723138a5d26e47850356c"
+    },
+    {
+      "old": "renders/road_trip/s08_golden_hour.markers.json",
+      "new": "docs/examples/road-trip/s08-golden-hour/audio/s08_golden_hour.markers.json",
+      "bytes": 306,
+      "before_sha256": "d19bf78930f41b4a612a8dbcaa6b688c4c15da90c91a6e47ded5c022bf71c95c",
+      "after_sha256": "d19bf78930f41b4a612a8dbcaa6b688c4c15da90c91a6e47ded5c022bf71c95c"
+    },
+    {
+      "old": "renders/road_trip/s05a_road_game_pt1.wav",
+      "new": "docs/examples/road-trip/s05a-road-game-pt1/audio/s05a_road_game_pt1.wav",
+      "bytes": 103680044,
+      "before_sha256": "0495d0bc415384080e94370f0763789ae4202e9b67a29ca59c9ecf41acf89915",
+      "after_sha256": "0495d0bc415384080e94370f0763789ae4202e9b67a29ca59c9ecf41acf89915"
+    },
+    {
+      "old": "renders/road_trip/s06_big_view.plan.json",
+      "new": "docs/examples/road-trip/s06-big-view/audio/s06_big_view.plan.json",
+      "bytes": 135430,
+      "before_sha256": "a4ff6a36837d7d9f5ff02c258951d8cb06f794a7a999bb4f042da8fd28a23602",
+      "after_sha256": "a4ff6a36837d7d9f5ff02c258951d8cb06f794a7a999bb4f042da8fd28a23602"
+    },
+    {
+      "old": "renders/road_trip/s07_rest_stop.plan.json",
+      "new": "docs/examples/road-trip/s07-rest-stop/audio/s07_rest_stop.plan.json",
+      "bytes": 25362,
+      "before_sha256": "ad669aed20637a8d375de4f9f3791da86fa418d8a7c596fa5700ddd359fc9a17",
+      "after_sha256": "ad669aed20637a8d375de4f9f3791da86fa418d8a7c596fa5700ddd359fc9a17"
+    },
+    {
+      "old": "renders/road_trip/s03_highway_opens.manifest.json",
+      "new": "docs/examples/road-trip/s03-highway-opens/audio/s03_highway_opens.manifest.json",
+      "bytes": 1683,
+      "before_sha256": "73c494152e9ae2f3c3239f3e7ef8a95ce69509ded46adb9a95cbd4068cd5cf57",
+      "after_sha256": "73c494152e9ae2f3c3239f3e7ef8a95ce69509ded46adb9a95cbd4068cd5cf57"
+    },
+    {
+      "old": "renders/road_trip/s05b_road_game_pt2.plan.json",
+      "new": "docs/examples/road-trip/s05b-road-game-pt2/audio/s05b_road_game_pt2.plan.json",
+      "bytes": 144858,
+      "before_sha256": "48b61ed2d092428a7ed313661f60b11a1d868791bb6728d9d04ab6920744e6cf",
+      "after_sha256": "48b61ed2d092428a7ed313661f60b11a1d868791bb6728d9d04ab6920744e6cf"
+    },
+    {
+      "old": "renders/road_trip/s08_golden_hour.manifest.json",
+      "new": "docs/examples/road-trip/s08-golden-hour/audio/s08_golden_hour.manifest.json",
+      "bytes": 1695,
+      "before_sha256": "5f33882959e0028dd3c8ce368d4178d04523362bc6a8f66b5df6224e70d62921",
+      "after_sha256": "5f33882959e0028dd3c8ce368d4178d04523362bc6a8f66b5df6224e70d62921"
+    },
+    {
+      "old": "renders/road_trip/s04_daydream.plan.json",
+      "new": "docs/examples/road-trip/s04-daydream/audio/s04_daydream.plan.json",
+      "bytes": 71539,
+      "before_sha256": "3d2337b02297c9442b30257bb0fe3e294042a83e989ce5d4409348dbabb6b1a8",
+      "after_sha256": "3d2337b02297c9442b30257bb0fe3e294042a83e989ce5d4409348dbabb6b1a8"
+    },
+    {
+      "old": "renders/road_trip/s01_departure.markers.json",
+      "new": "docs/examples/road-trip/s01-departure/audio/s01_departure.markers.json",
+      "bytes": 296,
+      "before_sha256": "52c1185e86086c75b5867aa9c5c4d1b05a5b8312a522db3e6a070c35f7358677",
+      "after_sha256": "52c1185e86086c75b5867aa9c5c4d1b05a5b8312a522db3e6a070c35f7358677"
+    },
+    {
+      "old": "renders/road_trip/s02_leaving_town.markers.json",
+      "new": "docs/examples/road-trip/s02-leaving-town/audio/s02_leaving_town.markers.json",
+      "bytes": 309,
+      "before_sha256": "bc31cb8d2ab26b30556168154fe0925805f3015251cc5c9205b52d098d57d99a",
+      "after_sha256": "bc31cb8d2ab26b30556168154fe0925805f3015251cc5c9205b52d098d57d99a"
+    },
+    {
+      "old": "renders/road_trip/s05a_road_game_pt1.manifest.json",
+      "new": "docs/examples/road-trip/s05a-road-game-pt1/audio/s05a_road_game_pt1.manifest.json",
+      "bytes": 1629,
+      "before_sha256": "71a55fab63685587c4f8da6a35452a97d7b580dd4a142096b80e94adb1af54f3",
+      "after_sha256": "71a55fab63685587c4f8da6a35452a97d7b580dd4a142096b80e94adb1af54f3"
+    },
+    {
+      "old": "renders/road_trip/s04_daydream.wav",
+      "new": "docs/examples/road-trip/s04-daydream/audio/s04_daydream.wav",
+      "bytes": 155520044,
+      "before_sha256": "f503f4de3fa7e66069460934adcc0d28fe8c26770307a15afe94df11c27c6e1e",
+      "after_sha256": "f503f4de3fa7e66069460934adcc0d28fe8c26770307a15afe94df11c27c6e1e"
+    },
+    {
+      "old": "renders/road_trip/s05a_road_game_pt1.markers.json",
+      "new": "docs/examples/road-trip/s05a-road-game-pt1/audio/s05a_road_game_pt1.markers.json",
+      "bytes": 242,
+      "before_sha256": "0f4bfb0cb15ef050f1eac27a508f04ea08ec4efca69bb08ec5427b320fd995c0",
+      "after_sha256": "0f4bfb0cb15ef050f1eac27a508f04ea08ec4efca69bb08ec5427b320fd995c0"
+    },
+    {
+      "old": "renders/road_trip/s05b_road_game_pt2.markers.json",
+      "new": "docs/examples/road-trip/s05b-road-game-pt2/audio/s05b_road_game_pt2.markers.json",
+      "bytes": 239,
+      "before_sha256": "e83ca516b13b4d9c2c6ccba8ce5b7f4a5bf2894ab8b4461f45a92dd8e340c77d",
+      "after_sha256": "e83ca516b13b4d9c2c6ccba8ce5b7f4a5bf2894ab8b4461f45a92dd8e340c77d"
+    },
+    {
+      "old": "renders/road_trip/s07_rest_stop.manifest.json",
+      "new": "docs/examples/road-trip/s07-rest-stop/audio/s07_rest_stop.manifest.json",
+      "bytes": 1660,
+      "before_sha256": "70e9f53093cacdb1944e8187200f8f953fc8b611acf7b3a30b26422cecd5e41e",
+      "after_sha256": "70e9f53093cacdb1944e8187200f8f953fc8b611acf7b3a30b26422cecd5e41e"
+    },
+    {
+      "old": "renders/road_trip/s06_big_view.wav",
+      "new": "docs/examples/road-trip/s06-big-view/audio/s06_big_view.wav",
+      "bytes": 155520044,
+      "before_sha256": "576ce8d26055825927e32058d8c55a235faa84ac55fc17f8f53a40c16019de6f",
+      "after_sha256": "576ce8d26055825927e32058d8c55a235faa84ac55fc17f8f53a40c16019de6f"
+    },
+    {
+      "old": "renders/road_trip/_render.log",
+      "new": "docs/examples/road-trip/evidence/_render.log",
+      "bytes": 19965,
+      "before_sha256": "fdd61ffcb7865dd2002da4155768454e40043c25b9f04a832431761a045a8bfd",
+      "after_sha256": "fdd61ffcb7865dd2002da4155768454e40043c25b9f04a832431761a045a8bfd"
+    },
+    {
+      "old": "renders/road_trip/s09_arrival.wav",
+      "new": "docs/examples/road-trip/s09-arrival/audio/s09_arrival.wav",
+      "bytes": 120960044,
+      "before_sha256": "84cef9061d53e9bf573e7172762570a255b5b76ec89e0c080eab72be412975a2",
+      "after_sha256": "84cef9061d53e9bf573e7172762570a255b5b76ec89e0c080eab72be412975a2"
+    },
+    {
+      "old": "renders/road_trip/s08_golden_hour.plan.json",
+      "new": "docs/examples/road-trip/s08-golden-hour/audio/s08_golden_hour.plan.json",
+      "bytes": 76105,
+      "before_sha256": "2fcd12b7bae79a15fb16549675e869d9c3a41304c83c06ffd5db977225e3ca64",
+      "after_sha256": "2fcd12b7bae79a15fb16549675e869d9c3a41304c83c06ffd5db977225e3ca64"
+    },
+    {
+      "old": "renders/road_trip/s05a_road_game_pt1.plan.json",
+      "new": "docs/examples/road-trip/s05a-road-game-pt1/audio/s05a_road_game_pt1.plan.json",
+      "bytes": 72336,
+      "before_sha256": "9e7f190135a25382d63160bd84756ec59530aa8a88b8ad94687635d04cc0e140",
+      "after_sha256": "9e7f190135a25382d63160bd84756ec59530aa8a88b8ad94687635d04cc0e140"
+    },
+    {
+      "old": "renders/road_trip/s03_highway_opens.plan.json",
+      "new": "docs/examples/road-trip/s03-highway-opens/audio/s03_highway_opens.plan.json",
+      "bytes": 109416,
+      "before_sha256": "54c9aefd37bca6012006c8193aefd05b8591010e2fd4dff818ddc9c61d04519e",
+      "after_sha256": "54c9aefd37bca6012006c8193aefd05b8591010e2fd4dff818ddc9c61d04519e"
+    },
+    {
+      "old": "renders/road_trip/s02_leaving_town.plan.json",
+      "new": "docs/examples/road-trip/s02-leaving-town/audio/s02_leaving_town.plan.json",
+      "bytes": 71735,
+      "before_sha256": "d802efed8c425c9dfcd30e5d856e9eee7012c2d9601710f8ea8a23fc8d54f320",
+      "after_sha256": "d802efed8c425c9dfcd30e5d856e9eee7012c2d9601710f8ea8a23fc8d54f320"
+    },
+    {
+      "old": "renders/road_trip/s07_rest_stop.wav",
+      "new": "docs/examples/road-trip/s07-rest-stop/audio/s07_rest_stop.wav",
+      "bytes": 120960044,
+      "before_sha256": "9005cc17be4f9ad47ef813c2e27d35dfb220f61813974d1f10cba34222d85773",
+      "after_sha256": "9005cc17be4f9ad47ef813c2e27d35dfb220f61813974d1f10cba34222d85773"
+    },
+    {
+      "old": "renders/road_trip/s02_leaving_town.wav",
+      "new": "docs/examples/road-trip/s02-leaving-town/audio/s02_leaving_town.wav",
+      "bytes": 155520044,
+      "before_sha256": "0291fab354a62badbcdbfa21543a52d72dfe21c91123e23cad0d11faaa461a00",
+      "after_sha256": "0291fab354a62badbcdbfa21543a52d72dfe21c91123e23cad0d11faaa461a00"
+    },
+    {
+      "old": "renders/road_trip/s02_leaving_town.manifest.json",
+      "new": "docs/examples/road-trip/s02-leaving-town/audio/s02_leaving_town.manifest.json",
+      "bytes": 1680,
+      "before_sha256": "12642c0f309eb9784ff61724347ca72b309a7f395a0cd01341346dbb033452ce",
+      "after_sha256": "12642c0f309eb9784ff61724347ca72b309a7f395a0cd01341346dbb033452ce"
+    },
+    {
+      "old": "renders/road_trip/s03_highway_opens.wav",
+      "new": "docs/examples/road-trip/s03-highway-opens/audio/s03_highway_opens.wav",
+      "bytes": 172800044,
+      "before_sha256": "072ac2dedcc5d106913d66c1cb9615989becfb03780f68d61164ce204cf6dae2",
+      "after_sha256": "072ac2dedcc5d106913d66c1cb9615989becfb03780f68d61164ce204cf6dae2"
+    },
+    {
+      "old": "renders/road_trip/s04_daydream.manifest.json",
+      "new": "docs/examples/road-trip/s04-daydream/audio/s04_daydream.manifest.json",
+      "bytes": 1610,
+      "before_sha256": "11b19d463beea5d58aa7f6df08a8bac41de5bd724e6030d71f99bc05064f11e4",
+      "after_sha256": "11b19d463beea5d58aa7f6df08a8bac41de5bd724e6030d71f99bc05064f11e4"
+    },
+    {
+      "old": "renders/road_trip/s05b_road_game_pt2.manifest.json",
+      "new": "docs/examples/road-trip/s05b-road-game-pt2/audio/s05b_road_game_pt2.manifest.json",
+      "bytes": 1631,
+      "before_sha256": "53bdfe4e1ffa16a48b64d92069498c919fdbb07aa56d7a113f4386b920813f4b",
+      "after_sha256": "53bdfe4e1ffa16a48b64d92069498c919fdbb07aa56d7a113f4386b920813f4b"
+    },
+    {
+      "old": "renders/2030/2030.manifest.json",
+      "new": "docs/examples/orchestral/2030/audio/2030.manifest.json",
+      "bytes": 8907,
+      "before_sha256": "bf2e045c2d09427fc1f5448b25574c861007a80274356339c4a03e40479857c2",
+      "after_sha256": "bf2e045c2d09427fc1f5448b25574c861007a80274356339c4a03e40479857c2"
+    },
+    {
+      "old": "renders/2030/2030.wav",
+      "new": "docs/examples/orchestral/2030/audio/2030.wav",
+      "bytes": 34560044,
+      "before_sha256": "520e3b649bea629503bbb9fd2e6fb0cdf08f34ba80c220e87f9ac5e890a7a50f",
+      "after_sha256": "520e3b649bea629503bbb9fd2e6fb0cdf08f34ba80c220e87f9ac5e890a7a50f"
+    },
+    {
+      "old": "renders/2030/2030.plan.json",
+      "new": "docs/examples/orchestral/2030/audio/2030.plan.json",
+      "bytes": 423625,
+      "before_sha256": "6ac0d017fa845b0f529e98cbad284f29bad15a94077b052399bd037c905e95a6",
+      "after_sha256": "6ac0d017fa845b0f529e98cbad284f29bad15a94077b052399bd037c905e95a6"
+    },
+    {
+      "old": "renders/2030/2030.markers.json",
+      "new": "docs/examples/orchestral/2030/audio/2030.markers.json",
+      "bytes": 403,
+      "before_sha256": "e77e0bde13c5d232e320db0b58c4f5b57f5707bc65770618314ddee0f73491ec",
+      "after_sha256": "e77e0bde13c5d232e320db0b58c4f5b57f5707bc65770618314ddee0f73491ec"
+    },
+    {
+      "old": "renders/last_24h/last_24h.markers.json",
+      "new": "docs/examples/electronic/last-24h/audio/last_24h.markers.json",
+      "bytes": 578,
+      "before_sha256": "ce48bca80b08853239b7c212adc24b736b972f6146d6ad4ca6b696d6279c9795",
+      "after_sha256": "ce48bca80b08853239b7c212adc24b736b972f6146d6ad4ca6b696d6279c9795"
+    },
+    {
+      "old": "renders/last_24h/last_24h.plan.json",
+      "new": "docs/examples/electronic/last-24h/audio/last_24h.plan.json",
+      "bytes": 32820,
+      "before_sha256": "9548a0d3746fc2c3f9d2b410859fb2d8319cd185460eb4d69184c2552d51da9b",
+      "after_sha256": "9548a0d3746fc2c3f9d2b410859fb2d8319cd185460eb4d69184c2552d51da9b"
+    },
+    {
+      "old": "renders/last_24h/last_24h.wav",
+      "new": "docs/examples/electronic/last-24h/audio/last_24h.wav",
+      "bytes": 172800044,
+      "before_sha256": "65d3d2a8c5ed17c1818a231af5c5d64c051c5761d3f67f69b9c2e3e33c039a61",
+      "after_sha256": "65d3d2a8c5ed17c1818a231af5c5d64c051c5761d3f67f69b9c2e3e33c039a61"
+    },
+    {
+      "old": "renders/last_24h/last_24h.manifest.json",
+      "new": "docs/examples/electronic/last-24h/audio/last_24h.manifest.json",
+      "bytes": 1907,
+      "before_sha256": "20d3e3135b8cd321864853db5ac39f102aa5689d6c2759f68e13c74956c3337d",
+      "after_sha256": "20d3e3135b8cd321864853db5ac39f102aa5689d6c2759f68e13c74956c3337d"
+    },
+    {
+      "old": "renders/neon_voltage/neon_voltage_stems/acid.wav",
+      "new": "docs/examples/electronic/neon-voltage/audio/neon_voltage_stems/acid.wav",
+      "bytes": 69120044,
+      "before_sha256": "f4a683346da19b61bbc0929a04047ba75ac1613a93f207fc0d020ffa90f12709",
+      "after_sha256": "f4a683346da19b61bbc0929a04047ba75ac1613a93f207fc0d020ffa90f12709"
+    },
+    {
+      "old": "renders/neon_voltage/neon_voltage_stems/arp.wav",
+      "new": "docs/examples/electronic/neon-voltage/audio/neon_voltage_stems/arp.wav",
+      "bytes": 69120044,
+      "before_sha256": "26125050468e06f407cb47978224b5880a99203bd7166a54aa8ceae074ec049d",
+      "after_sha256": "26125050468e06f407cb47978224b5880a99203bd7166a54aa8ceae074ec049d"
+    },
+    {
+      "old": "renders/neon_voltage/neon_voltage_stems/snare.wav",
+      "new": "docs/examples/electronic/neon-voltage/audio/neon_voltage_stems/snare.wav",
+      "bytes": 69120044,
+      "before_sha256": "336b6d3af4624bcec8711b021e21467db50e3aafed6b1c8fdc6d3d2840a423b5",
+      "after_sha256": "336b6d3af4624bcec8711b021e21467db50e3aafed6b1c8fdc6d3d2840a423b5"
+    },
+    {
+      "old": "renders/neon_voltage/neon_voltage_stems/stabs_l.wav",
+      "new": "docs/examples/electronic/neon-voltage/audio/neon_voltage_stems/stabs_l.wav",
+      "bytes": 69120044,
+      "before_sha256": "38f97932109a66613fa3a855eb28f9dfdde1b53b2736846a2861fa3d556d9105",
+      "after_sha256": "38f97932109a66613fa3a855eb28f9dfdde1b53b2736846a2861fa3d556d9105"
+    },
+    {
+      "old": "renders/neon_voltage/neon_voltage_stems/hat16.wav",
+      "new": "docs/examples/electronic/neon-voltage/audio/neon_voltage_stems/hat16.wav",
+      "bytes": 69120044,
+      "before_sha256": "e5290b8877700c5eb7188734262350984fa8990ead3b20e2c8968d24f273e3a7",
+      "after_sha256": "e5290b8877700c5eb7188734262350984fa8990ead3b20e2c8968d24f273e3a7"
+    },
+    {
+      "old": "renders/neon_voltage/neon_voltage_stems/sub.wav",
+      "new": "docs/examples/electronic/neon-voltage/audio/neon_voltage_stems/sub.wav",
+      "bytes": 69120044,
+      "before_sha256": "60e5bc56c08c06c80d502cfc6df9091b9986277c9e24e1697cf54090830ebae4",
+      "after_sha256": "60e5bc56c08c06c80d502cfc6df9091b9986277c9e24e1697cf54090830ebae4"
+    },
+    {
+      "old": "renders/neon_voltage/neon_voltage_stems/lift_1.wav",
+      "new": "docs/examples/electronic/neon-voltage/audio/neon_voltage_stems/lift_1.wav",
+      "bytes": 69120044,
+      "before_sha256": "2fb4f3d47cbd1bab62559c69509b0d2d6a0071594100220d50fe26d39f4e85e5",
+      "after_sha256": "2fb4f3d47cbd1bab62559c69509b0d2d6a0071594100220d50fe26d39f4e85e5"
+    },
+    {
+      "old": "renders/neon_voltage/neon_voltage_stems/lead_r.wav",
+      "new": "docs/examples/electronic/neon-voltage/audio/neon_voltage_stems/lead_r.wav",
+      "bytes": 69120044,
+      "before_sha256": "5e7f48d20d2e060a68028ffd70128f2cd16f70398f15e808244790d196fd6d38",
+      "after_sha256": "5e7f48d20d2e060a68028ffd70128f2cd16f70398f15e808244790d196fd6d38"
+    },
+    {
+      "old": "renders/neon_voltage/neon_voltage_stems/riser_2.wav",
+      "new": "docs/examples/electronic/neon-voltage/audio/neon_voltage_stems/riser_2.wav",
+      "bytes": 69120044,
+      "before_sha256": "ab1174153974ed3c491dc01418a0438acaa37f0d373d8196a97a29eeda1b7ca2",
+      "after_sha256": "ab1174153974ed3c491dc01418a0438acaa37f0d373d8196a97a29eeda1b7ca2"
+    },
+    {
+      "old": "renders/neon_voltage/neon_voltage_stems/lead_low.wav",
+      "new": "docs/examples/electronic/neon-voltage/audio/neon_voltage_stems/lead_low.wav",
+      "bytes": 69120044,
+      "before_sha256": "1c18c13eb6e10cfacf7695337857553fa600aade19d70482b250b04cccf51c4e",
+      "after_sha256": "1c18c13eb6e10cfacf7695337857553fa600aade19d70482b250b04cccf51c4e"
+    },
+    {
+      "old": "renders/neon_voltage/neon_voltage_stems/chats.wav",
+      "new": "docs/examples/electronic/neon-voltage/audio/neon_voltage_stems/chats.wav",
+      "bytes": 69120044,
+      "before_sha256": "cb92361d45bd22cb255d42b972818cf401ca4f37b65956b825be6c8ad82e8869",
+      "after_sha256": "cb92361d45bd22cb255d42b972818cf401ca4f37b65956b825be6c8ad82e8869"
+    },
+    {
+      "old": "renders/neon_voltage/neon_voltage_stems/pluck.wav",
+      "new": "docs/examples/electronic/neon-voltage/audio/neon_voltage_stems/pluck.wav",
+      "bytes": 69120044,
+      "before_sha256": "a5f2cc409c658cb9ac998d14d9b75025354212eddf974cea9a002bcf4be45611",
+      "after_sha256": "a5f2cc409c658cb9ac998d14d9b75025354212eddf974cea9a002bcf4be45611"
+    },
+    {
+      "old": "renders/neon_voltage/neon_voltage_stems/fall.wav",
+      "new": "docs/examples/electronic/neon-voltage/audio/neon_voltage_stems/fall.wav",
+      "bytes": 69120044,
+      "before_sha256": "7e50f923b5c3add2339df4228d3703451d3699cc77dfcb746a2e1bdb7322379c",
+      "after_sha256": "7e50f923b5c3add2339df4228d3703451d3699cc77dfcb746a2e1bdb7322379c"
+    },
+    {
+      "old": "renders/neon_voltage/neon_voltage_stems/lift_2.wav",
+      "new": "docs/examples/electronic/neon-voltage/audio/neon_voltage_stems/lift_2.wav",
+      "bytes": 69120044,
+      "before_sha256": "3c92a5e51218ac4d695bdf39d84211ffebb253c3231ea40d5c1b50d6d4dbaaf7",
+      "after_sha256": "3c92a5e51218ac4d695bdf39d84211ffebb253c3231ea40d5c1b50d6d4dbaaf7"
+    },
+    {
+      "old": "renders/neon_voltage/neon_voltage_stems/pad_l.wav",
+      "new": "docs/examples/electronic/neon-voltage/audio/neon_voltage_stems/pad_l.wav",
+      "bytes": 69120044,
+      "before_sha256": "4736b83860455e6179326f84f4d8aba09e18c347b1520c60f14843b12fbae716",
+      "after_sha256": "4736b83860455e6179326f84f4d8aba09e18c347b1520c60f14843b12fbae716"
+    },
+    {
+      "old": "renders/neon_voltage/neon_voltage_stems/stabs_r.wav",
+      "new": "docs/examples/electronic/neon-voltage/audio/neon_voltage_stems/stabs_r.wav",
+      "bytes": 69120044,
+      "before_sha256": "bb42d30500a4d656a22bf214d6a5d61ad78b5cd6848cc0f784632d4c92f06d41",
+      "after_sha256": "bb42d30500a4d656a22bf214d6a5d61ad78b5cd6848cc0f784632d4c92f06d41"
+    },
+    {
+      "old": "renders/neon_voltage/neon_voltage_stems/pad_r.wav",
+      "new": "docs/examples/electronic/neon-voltage/audio/neon_voltage_stems/pad_r.wav",
+      "bytes": 69120044,
+      "before_sha256": "4503bf7a2bb30e77a526f3909ae625376b79975ba50d87991514e6b7392e180e",
+      "after_sha256": "4503bf7a2bb30e77a526f3909ae625376b79975ba50d87991514e6b7392e180e"
+    },
+    {
+      "old": "renders/neon_voltage/neon_voltage_stems/ohat.wav",
+      "new": "docs/examples/electronic/neon-voltage/audio/neon_voltage_stems/ohat.wav",
+      "bytes": 69120044,
+      "before_sha256": "d9ab4f2b827de7cb269cd904e158db21c047e9c208b50305bcd5125696a42942",
+      "after_sha256": "d9ab4f2b827de7cb269cd904e158db21c047e9c208b50305bcd5125696a42942"
+    },
+    {
+      "old": "renders/neon_voltage/neon_voltage_stems/roll_2.wav",
+      "new": "docs/examples/electronic/neon-voltage/audio/neon_voltage_stems/roll_2.wav",
+      "bytes": 69120044,
+      "before_sha256": "7351285ae8b0adf1aa641ffed22e25196dafb71f840d99d44cb9b95a817d467a",
+      "after_sha256": "7351285ae8b0adf1aa641ffed22e25196dafb71f840d99d44cb9b95a817d467a"
+    },
+    {
+      "old": "renders/neon_voltage/neon_voltage_stems/riser_1.wav",
+      "new": "docs/examples/electronic/neon-voltage/audio/neon_voltage_stems/riser_1.wav",
+      "bytes": 69120044,
+      "before_sha256": "af132f995a83d3f29a255ddaf8afc6e6337a4263dd5afc14f819b90b25ce19be",
+      "after_sha256": "af132f995a83d3f29a255ddaf8afc6e6337a4263dd5afc14f819b90b25ce19be"
+    },
+    {
+      "old": "renders/neon_voltage/neon_voltage_stems/kick.wav",
+      "new": "docs/examples/electronic/neon-voltage/audio/neon_voltage_stems/kick.wav",
+      "bytes": 69120044,
+      "before_sha256": "a59570c9a63371b3289b2f195c3df5b7eb51faef141f4eb68ccd2998f0fea6ea",
+      "after_sha256": "a59570c9a63371b3289b2f195c3df5b7eb51faef141f4eb68ccd2998f0fea6ea"
+    },
+    {
+      "old": "renders/neon_voltage/neon_voltage_stems/lead_l.wav",
+      "new": "docs/examples/electronic/neon-voltage/audio/neon_voltage_stems/lead_l.wav",
+      "bytes": 69120044,
+      "before_sha256": "5d717d7c5e839704516326075eaa3fa034e2786fe2609c62a278762d0c4563f1",
+      "after_sha256": "5d717d7c5e839704516326075eaa3fa034e2786fe2609c62a278762d0c4563f1"
+    },
+    {
+      "old": "renders/neon_voltage/neon_voltage_stems/crash_2.wav",
+      "new": "docs/examples/electronic/neon-voltage/audio/neon_voltage_stems/crash_2.wav",
+      "bytes": 69120044,
+      "before_sha256": "1b08fb5ff9fbf3a59139419414a2d1388bff1b389c2992b16278beef379bfbb3",
+      "after_sha256": "1b08fb5ff9fbf3a59139419414a2d1388bff1b389c2992b16278beef379bfbb3"
+    },
+    {
+      "old": "renders/neon_voltage/neon_voltage_stems/roll_1.wav",
+      "new": "docs/examples/electronic/neon-voltage/audio/neon_voltage_stems/roll_1.wav",
+      "bytes": 69120044,
+      "before_sha256": "50ce3f3b1c4ca1791292ee9d160571652da64c699efbc2552dbc0a857b9e6bf9",
+      "after_sha256": "50ce3f3b1c4ca1791292ee9d160571652da64c699efbc2552dbc0a857b9e6bf9"
+    },
+    {
+      "old": "renders/neon_voltage/neon_voltage_stems/bass.wav",
+      "new": "docs/examples/electronic/neon-voltage/audio/neon_voltage_stems/bass.wav",
+      "bytes": 69120044,
+      "before_sha256": "80277ae73d8752d60432866c1a98ad63f2851d04b827767a04e8e293439f174d",
+      "after_sha256": "80277ae73d8752d60432866c1a98ad63f2851d04b827767a04e8e293439f174d"
+    },
+    {
+      "old": "renders/neon_voltage/neon_voltage_stems/crash_1.wav",
+      "new": "docs/examples/electronic/neon-voltage/audio/neon_voltage_stems/crash_1.wav",
+      "bytes": 69120044,
+      "before_sha256": "d4f870f94b3d1db4afb632e8778ec0fe3e85c91862e294138a2d208e94adf568",
+      "after_sha256": "d4f870f94b3d1db4afb632e8778ec0fe3e85c91862e294138a2d208e94adf568"
+    },
+    {
+      "old": "renders/neon_voltage/neon_voltage_stems/reflection.wav",
+      "new": "docs/examples/electronic/neon-voltage/audio/neon_voltage_stems/reflection.wav",
+      "bytes": 69120044,
+      "before_sha256": "c830faa6ee80970673862973c3991378a5720f0182e0fe608e70e9ca05640b37",
+      "after_sha256": "c830faa6ee80970673862973c3991378a5720f0182e0fe608e70e9ca05640b37"
+    },
+    {
+      "old": "renders/neon_voltage/neon_voltage_stems/clap.wav",
+      "new": "docs/examples/electronic/neon-voltage/audio/neon_voltage_stems/clap.wav",
+      "bytes": 69120044,
+      "before_sha256": "95a60b6b2e3c54d633aca4c740bb9648430a82daa9165a2cc853624576bd5dba",
+      "after_sha256": "95a60b6b2e3c54d633aca4c740bb9648430a82daa9165a2cc853624576bd5dba"
+    },
+    {
+      "old": "renders/to_be_alive/to_be_alive_stems/harp.wav",
+      "new": "docs/examples/orchestral/to-be-alive/audio/to_be_alive_stems/harp.wav",
+      "bytes": 34560044,
+      "before_sha256": "906972051d6e02724dbe92a73667334d7601ea1cfc2a8755f75c3b64d90fde79",
+      "after_sha256": "906972051d6e02724dbe92a73667334d7601ea1cfc2a8755f75c3b64d90fde79"
+    },
+    {
+      "old": "renders/to_be_alive/to_be_alive_stems/melody.wav",
+      "new": "docs/examples/orchestral/to-be-alive/audio/to_be_alive_stems/melody.wav",
+      "bytes": 34560044,
+      "before_sha256": "eb29949d885148761e250e41e614384b345b3381f9004492d1a766a1d0b0b4e9",
+      "after_sha256": "eb29949d885148761e250e41e614384b345b3381f9004492d1a766a1d0b0b4e9"
+    },
+    {
+      "old": "renders/to_be_alive/to_be_alive_stems/glock.wav",
+      "new": "docs/examples/orchestral/to-be-alive/audio/to_be_alive_stems/glock.wav",
+      "bytes": 34560044,
+      "before_sha256": "a156b1c990e5001f19d8939e4723863a11d5c5a9de50d8794b403b15e9619f32",
+      "after_sha256": "a156b1c990e5001f19d8939e4723863a11d5c5a9de50d8794b403b15e9619f32"
+    },
+    {
+      "old": "renders/to_be_alive/to_be_alive_stems/horns.wav",
+      "new": "docs/examples/orchestral/to-be-alive/audio/to_be_alive_stems/horns.wav",
+      "bytes": 34560044,
+      "before_sha256": "efe5d51af7d2395ff9f4ab84613c9bf638e07d7d8fa4d6b42b067e6c78f098ff",
+      "after_sha256": "efe5d51af7d2395ff9f4ab84613c9bf638e07d7d8fa4d6b42b067e6c78f098ff"
+    },
+    {
+      "old": "renders/to_be_alive/to_be_alive_stems/flute.wav",
+      "new": "docs/examples/orchestral/to-be-alive/audio/to_be_alive_stems/flute.wav",
+      "bytes": 34560044,
+      "before_sha256": "093b260ac21c5fd9d95d8420181b3a03409747216cbabddb9780b86a0b1c6cf3",
+      "after_sha256": "093b260ac21c5fd9d95d8420181b3a03409747216cbabddb9780b86a0b1c6cf3"
+    },
+    {
+      "old": "renders/to_be_alive/to_be_alive_stems/pizzbass.wav",
+      "new": "docs/examples/orchestral/to-be-alive/audio/to_be_alive_stems/pizzbass.wav",
+      "bytes": 34560044,
+      "before_sha256": "3ae0a18193d0175b0dc2bf277f19232579d62981ce864f867cf1e43d6b86053b",
+      "after_sha256": "3ae0a18193d0175b0dc2bf277f19232579d62981ce864f867cf1e43d6b86053b"
+    },
+    {
+      "old": "renders/to_be_alive/to_be_alive_stems/dance.wav",
+      "new": "docs/examples/orchestral/to-be-alive/audio/to_be_alive_stems/dance.wav",
+      "bytes": 34560044,
+      "before_sha256": "d6c00b476784313d0f1de9f7f702fa04913400b8658f6e270e921240ea71dd5c",
+      "after_sha256": "d6c00b476784313d0f1de9f7f702fa04913400b8658f6e270e921240ea71dd5c"
+    },
+    {
+      "old": "renders/to_be_alive/to_be_alive_stems/timproll.wav",
+      "new": "docs/examples/orchestral/to-be-alive/audio/to_be_alive_stems/timproll.wav",
+      "bytes": 34560044,
+      "before_sha256": "b44875caaca2ec204bc21a4f76f67b1c193437d700face8e1128081e370ca8fa",
+      "after_sha256": "b44875caaca2ec204bc21a4f76f67b1c193437d700face8e1128081e370ca8fa"
+    },
+    {
+      "old": "renders/to_be_alive/to_be_alive_stems/trumpet.wav",
+      "new": "docs/examples/orchestral/to-be-alive/audio/to_be_alive_stems/trumpet.wav",
+      "bytes": 34560044,
+      "before_sha256": "13141a40eedfdab3c4bc464f79386ad496e204a54240ab23e02910b8330cd3de",
+      "after_sha256": "13141a40eedfdab3c4bc464f79386ad496e204a54240ab23e02910b8330cd3de"
+    },
+    {
+      "old": "renders/to_be_alive/to_be_alive_stems/timp.wav",
+      "new": "docs/examples/orchestral/to-be-alive/audio/to_be_alive_stems/timp.wav",
+      "bytes": 34560044,
+      "before_sha256": "f9936391ef9944f3aef07120fef9ecacdd77b92483b30dda10dd97b57ab6ac97",
+      "after_sha256": "f9936391ef9944f3aef07120fef9ecacdd77b92483b30dda10dd97b57ab6ac97"
+    },
+    {
+      "old": "renders/to_be_alive/to_be_alive_stems/bed.wav",
+      "new": "docs/examples/orchestral/to-be-alive/audio/to_be_alive_stems/bed.wav",
+      "bytes": 34560044,
+      "before_sha256": "4803ce6cc9ddb11d7967934ba4b4785d53f6a5b8fed8fe1308ea59a8af173934",
+      "after_sha256": "4803ce6cc9ddb11d7967934ba4b4785d53f6a5b8fed8fe1308ea59a8af173934"
+    },
+    {
+      "old": "renders/2030/2030_stems/strings.wav",
+      "new": "docs/examples/orchestral/2030/audio/2030_stems/strings.wav",
+      "bytes": 34560044,
+      "before_sha256": "db8a4d4b6024bcaebaa1a31d15a7403e536897db7f3ccf8a17057ad820f1aa62",
+      "after_sha256": "db8a4d4b6024bcaebaa1a31d15a7403e536897db7f3ccf8a17057ad820f1aa62"
+    },
+    {
+      "old": "renders/2030/2030_stems/basses.wav",
+      "new": "docs/examples/orchestral/2030/audio/2030_stems/basses.wav",
+      "bytes": 34560044,
+      "before_sha256": "3785680496ebd9cedbebd82a1ada818ae2a8be6cb96c5ec8cc5fee49833aae10",
+      "after_sha256": "3785680496ebd9cedbebd82a1ada818ae2a8be6cb96c5ec8cc5fee49833aae10"
+    },
+    {
+      "old": "renders/2030/2030_stems/detail.wav",
+      "new": "docs/examples/orchestral/2030/audio/2030_stems/detail.wav",
+      "bytes": 34560044,
+      "before_sha256": "4b8be50f3950b007c0ead329aec57323accaed41feb145a599af71f0e6ae7cfc",
+      "after_sha256": "4b8be50f3950b007c0ead329aec57323accaed41feb145a599af71f0e6ae7cfc"
+    },
+    {
+      "old": "renders/2030/2030_stems/reconstruct.wav",
+      "new": "docs/examples/orchestral/2030/audio/2030_stems/reconstruct.wav",
+      "bytes": 34560044,
+      "before_sha256": "06cf6c7c31725b6bfe86feb8a89f9abc91bdf5f291d1e57921f3847219d3998d",
+      "after_sha256": "06cf6c7c31725b6bfe86feb8a89f9abc91bdf5f291d1e57921f3847219d3998d"
+    },
+    {
+      "old": "renders/2030/2030_stems/clock.wav",
+      "new": "docs/examples/orchestral/2030/audio/2030_stems/clock.wav",
+      "bytes": 34560044,
+      "before_sha256": "902bdb81151d6eedd2a73fa00cb0c6dbe845de154290023a46fd07961e918df9",
+      "after_sha256": "902bdb81151d6eedd2a73fa00cb0c6dbe845de154290023a46fd07961e918df9"
+    },
+    {
+      "old": "renders/2030/2030_stems/heartbeat.wav",
+      "new": "docs/examples/orchestral/2030/audio/2030_stems/heartbeat.wav",
+      "bytes": 34560044,
+      "before_sha256": "11897140f4352428b967465c922c6267529228c35c7c7796910abfc0ec293412",
+      "after_sha256": "11897140f4352428b967465c922c6267529228c35c7c7796910abfc0ec293412"
+    },
+    {
+      "old": "renders/2030/2030_stems/bed.wav",
+      "new": "docs/examples/orchestral/2030/audio/2030_stems/bed.wav",
+      "bytes": 34560044,
+      "before_sha256": "461c6aa534c18d4417266c3fa84de6fdd2f403a698f1d12fb44e7cb1c0c55809",
+      "after_sha256": "461c6aa534c18d4417266c3fa84de6fdd2f403a698f1d12fb44e7cb1c0c55809"
+    },
+    {
+      "old": "renders/2030/2030_stems/singing.wav",
+      "new": "docs/examples/orchestral/2030/audio/2030_stems/singing.wav",
+      "bytes": 34560044,
+      "before_sha256": "90db3b5a1478fd36eaea73953e2fb3ce9e53f3e390a174cb5026f9bf9ad1a5dd",
+      "after_sha256": "90db3b5a1478fd36eaea73953e2fb3ce9e53f3e390a174cb5026f9bf9ad1a5dd"
+    },
+    {
+      "old": "compositions/2030.ir.json",
+      "new": "docs/examples/orchestral/2030/2030.ir.json",
+      "bytes": 67074,
+      "before_sha256": "4fe25f28f6f83dbc3552dc79c2f3045402d00b066becb1b31fd861b4485e3eb6",
+      "after_sha256": "4fe25f28f6f83dbc3552dc79c2f3045402d00b066becb1b31fd861b4485e3eb6"
+    },
+    {
+      "old": "compositions/ode_to_fable.pdf",
+      "new": "docs/examples/orchestral/ode-to-fable/ode_to_fable.pdf",
+      "bytes": 359268,
+      "before_sha256": "d064f06e32504fc756c38edb4c40f3a6b636e85727af203e9bc252bfc83862b9",
+      "after_sha256": "d064f06e32504fc756c38edb4c40f3a6b636e85727af203e9bc252bfc83862b9"
+    },
+    {
+      "old": "compositions/fable_symphony_orchestral_v2.pdf",
+      "new": "docs/examples/orchestral/fable-symphony-orchestral-v2/fable_symphony_orchestral_v2.pdf",
+      "bytes": 455561,
+      "before_sha256": "a361d275100746e1ee257dab8691061afdf35da648ba258712424c0ec4c1190f",
+      "after_sha256": "a361d275100746e1ee257dab8691061afdf35da648ba258712424c0ec4c1190f"
+    },
+    {
+      "old": "static/fixtures/sweet_child_o_mine.plan.json",
+      "new": "docs/examples/arrangements/sweet-child-o-mine/audio/sweet_child_o_mine.plan.json",
+      "bytes": 4096309,
+      "before_sha256": "7456b2b62817105d441ace04d15d8524e5c4e47d9b6dc2a3edb73ecf287a8371",
+      "after_sha256": "7456b2b62817105d441ace04d15d8524e5c4e47d9b6dc2a3edb73ecf287a8371"
+    },
+    {
+      "old": "static/fixtures/mysong-01.json",
+      "new": "docs/examples/arrangements/mysong/inputs/mysong-01.json",
+      "bytes": 131046,
+      "before_sha256": "83817e6815e82b4e0fe7d667a98b5ff6abc14ae7cd2f04cfd98d6a19269e813b",
+      "after_sha256": "83817e6815e82b4e0fe7d667a98b5ff6abc14ae7cd2f04cfd98d6a19269e813b"
+    },
+    {
+      "old": "static/fixtures/sweet_child_o_mine.manifest.json",
+      "new": "docs/examples/arrangements/sweet-child-o-mine/audio/sweet_child_o_mine.manifest.json",
+      "bytes": 813,
+      "before_sha256": "ee7f4123477c5cc3609c85b6c75542e74355394445c8285b349e9a0822ac6ea8",
+      "after_sha256": "ee7f4123477c5cc3609c85b6c75542e74355394445c8285b349e9a0822ac6ea8"
+    },
+    {
+      "old": "static/fixtures/mysong-02.json",
+      "new": "docs/examples/arrangements/mysong/inputs/mysong-02.json",
+      "bytes": 109352,
+      "before_sha256": "7517257b079fc3d1d78980c605b3506e1bf2361f8880b1b65a500d02e9178f14",
+      "after_sha256": "7517257b079fc3d1d78980c605b3506e1bf2361f8880b1b65a500d02e9178f14"
+    },
+    {
+      "old": "static/fixtures/riff.svg",
+      "new": "docs/examples/archive/unassigned-assets/riff.svg",
+      "bytes": 7218,
+      "before_sha256": "3a6dc68cfe52f64a8800bd1919af0b8e74ea218186614202d956cdbf175b8cfb",
+      "after_sha256": "3a6dc68cfe52f64a8800bd1919af0b8e74ea218186614202d956cdbf175b8cfb"
+    },
+    {
+      "old": "static/fixtures/sweet_child_o_mine.wav",
+      "new": "docs/examples/arrangements/sweet-child-o-mine/audio/sweet_child_o_mine.wav",
+      "bytes": 79010252,
+      "before_sha256": "edea98bc0fab0e29a15b67a5826882e96ac0ffd1c05e6f1125baba38934486b2",
+      "after_sha256": "edea98bc0fab0e29a15b67a5826882e96ac0ffd1c05e6f1125baba38934486b2"
+    },
+    {
+      "old": "static/fixtures/mysong.wav",
+      "new": "docs/examples/arrangements/mysong/audio/mysong.wav",
+      "bytes": 23054156,
+      "before_sha256": "63ff6712f06a96cb7e00f46f8fcf99aa03e2d22f22f5b2cfe03769d116310e28",
+      "after_sha256": "63ff6712f06a96cb7e00f46f8fcf99aa03e2d22f22f5b2cfe03769d116310e28"
+    },
+    {
+      "old": "static/fixtures/riff.png",
+      "new": "docs/examples/archive/unassigned-assets/riff.png",
+      "bytes": 11865,
+      "before_sha256": "a3c3bdffc80090c2f2ed2069e323d27ed4e470eb2aee2b85890154db66d0741e",
+      "after_sha256": "a3c3bdffc80090c2f2ed2069e323d27ed4e470eb2aee2b85890154db66d0741e"
+    },
+    {
+      "old": "static/fixtures/sweet_child_o_mine.library.wav",
+      "new": "docs/examples/arrangements/sweet-child-o-mine-library/audio/sweet_child_o_mine.library.wav",
+      "bytes": 79010252,
+      "before_sha256": "17a4377b2d6a74c1b6ac27233824dab5d3898a5189d27c8d860b473bbafddafe",
+      "after_sha256": "17a4377b2d6a74c1b6ac27233824dab5d3898a5189d27c8d860b473bbafddafe"
+    },
+    {
+      "old": "static/fixtures/mysong-03.json",
+      "new": "docs/examples/arrangements/mysong/inputs/mysong-03.json",
+      "bytes": 164697,
+      "before_sha256": "ba944df91e57d14a73bb93acd5009179e4fd53d1dfc74a796c7f022dd4070592",
+      "after_sha256": "ba944df91e57d14a73bb93acd5009179e4fd53d1dfc74a796c7f022dd4070592"
+    },
+    {
+      "old": "static/fixtures/sweetchildofmine.mid",
+      "new": "docs/examples/arrangements/sweet-child-o-mine/inputs/sweetchildofmine.mid",
+      "bytes": 69013,
+      "before_sha256": "cf7137a1f7be87c5a8929d5480477b4a68fb7d499c2d3eb5f0d36ee418c827e4",
+      "after_sha256": "cf7137a1f7be87c5a8929d5480477b4a68fb7d499c2d3eb5f0d36ee418c827e4"
+    },
+    {
+      "old": "static/fixtures/mysong-04.json",
+      "new": "docs/examples/arrangements/mysong/inputs/mysong-04.json",
+      "bytes": 154666,
+      "before_sha256": "20121b47d524a018ad3039114112d99e9b3717a5e5df44f237c11e0336f99977",
+      "after_sha256": "20121b47d524a018ad3039114112d99e9b3717a5e5df44f237c11e0336f99977"
+    },
+    {
+      "old": "static/fixtures/sweet_child_o_mine.tuned.wav",
+      "new": "docs/examples/arrangements/sweet-child-o-mine-tuned/audio/sweet_child_o_mine.tuned.wav",
+      "bytes": 79010252,
+      "before_sha256": "dc8e2adcce8f1084423c7daaa970303be6c5c3b0f677770216056a7d7531cd3d",
+      "after_sha256": "dc8e2adcce8f1084423c7daaa970303be6c5c3b0f677770216056a7d7531cd3d"
+    },
+    {
+      "old": "static/fixtures/mysong-syn.wav",
+      "new": "docs/examples/arrangements/mysong/audio/mysong-syn.wav",
+      "bytes": 23054156,
+      "before_sha256": "fe1c15a4e1c27cfaa57d8cba22c96e57329cc07df32ee2e2fb87424c8495700f",
+      "after_sha256": "fe1c15a4e1c27cfaa57d8cba22c96e57329cc07df32ee2e2fb87424c8495700f"
+    },
+    {
+      "old": "static/fixtures/mysong-syn-2.wav",
+      "new": "docs/examples/arrangements/mysong/audio/mysong-syn-2.wav",
+      "bytes": 23054156,
+      "before_sha256": "71a6600530656fa5bcdbbff113090534b95862054bb1681dacf0d399496a31ec",
+      "after_sha256": "71a6600530656fa5bcdbbff113090534b95862054bb1681dacf0d399496a31ec"
+    },
+    {
+      "old": "static/refs/GOLDEN_FIXTURE_slash_style_solo.md",
+      "new": "docs/examples/guitar/slash-style-solo/design.md",
+      "bytes": 12178,
+      "before_sha256": "fcf63394bef91af35f4a9b3f452be118c5fd5f7a522f54a6b817a41e31602b6f",
+      "after_sha256": "2d501c28f30b39b0f6a1b86e19c24e3df058a18e30c53bd44c77c04660fdec51"
+    }
+  ],
+  "historical_recordings_audit": [
+    {
+      "example": "2030",
+      "manifest": "docs/examples/orchestral/2030/audio/2030.manifest.json",
+      "audio": "docs/examples/orchestral/2030/audio/2030.wav",
+      "status": "hash_matches",
+      "manifest_sha256": "520e3b649bea629503bbb9fd2e6fb0cdf08f34ba80c220e87f9ac5e890a7a50f",
+      "actual_sha256": "520e3b649bea629503bbb9fd2e6fb0cdf08f34ba80c220e87f9ac5e890a7a50f"
+    },
+    {
+      "example": "fable-symphony",
+      "manifest": "docs/examples/orchestral/fable-symphony/audio/fable_symphony__cinematic_master.manifest.json",
+      "status": "historical_master_absent"
+    },
+    {
+      "example": "fable-symphony-orchestral",
+      "manifest": "docs/examples/orchestral/fable-symphony-orchestral/audio/fable_symphony_orchestral.manifest.json",
+      "status": "historical_master_absent"
+    },
+    {
+      "example": "fable-symphony-orchestral-v2",
+      "manifest": "docs/examples/orchestral/fable-symphony-orchestral-v2/audio/fable_symphony_orchestral_v2.manifest.json",
+      "status": "historical_master_absent"
+    },
+    {
+      "example": "last-24h",
+      "manifest": "docs/examples/electronic/last-24h/audio/last_24h.manifest.json",
+      "audio": "docs/examples/electronic/last-24h/audio/last_24h.wav",
+      "status": "hash_matches",
+      "manifest_sha256": "65d3d2a8c5ed17c1818a231af5c5d64c051c5761d3f67f69b9c2e3e33c039a61",
+      "actual_sha256": "65d3d2a8c5ed17c1818a231af5c5d64c051c5761d3f67f69b9c2e3e33c039a61"
+    },
+    {
+      "example": "neon-voltage",
+      "manifest": "docs/examples/electronic/neon-voltage/audio/neon_voltage.manifest.json",
+      "audio": "docs/examples/electronic/neon-voltage/audio/neon_voltage.wav",
+      "status": "hash_matches",
+      "manifest_sha256": "774b8ce1e45161a99bf810b623a0f9da4bbb29a6ed30d2861f7dac0791a0a8b3",
+      "actual_sha256": "774b8ce1e45161a99bf810b623a0f9da4bbb29a6ed30d2861f7dac0791a0a8b3"
+    },
+    {
+      "example": "ode-to-fable",
+      "manifest": "docs/examples/orchestral/ode-to-fable/audio/ode_to_fable.manifest.json",
+      "status": "historical_master_absent"
+    },
+    {
+      "example": "ode-to-fable-symphonic",
+      "manifest": "docs/examples/orchestral/ode-to-fable-symphonic/audio/ode_to_fable_symphonic.manifest.json",
+      "status": "historical_master_absent"
+    },
+    {
+      "example": "ode-to-fable-symphonic-v2",
+      "manifest": "docs/examples/orchestral/ode-to-fable-symphonic-v2/audio/ode_to_fable_symphonic_v2.manifest.json",
+      "status": "historical_master_absent"
+    },
+    {
+      "example": "sweet-child-o-mine",
+      "manifest": "docs/examples/arrangements/sweet-child-o-mine/audio/sweet_child_o_mine.manifest.json",
+      "audio": "docs/examples/arrangements/sweet-child-o-mine/audio/sweet_child_o_mine.wav",
+      "status": "hash_mismatch",
+      "manifest_sha256": "407a664170492f3d7fbeaeb45393a27e4369db0d22bfbc5531a3113f5dca516c",
+      "actual_sha256": "edea98bc0fab0e29a15b67a5826882e96ac0ffd1c05e6f1125baba38934486b2"
+    },
+    {
+      "example": "to-be-alive",
+      "manifest": "docs/examples/orchestral/to-be-alive/audio/to_be_alive.manifest.json",
+      "status": "historical_master_absent"
+    },
+    {
+      "example": "s01-departure",
+      "manifest": "docs/examples/road-trip/s01-departure/audio/s01_departure.manifest.json",
+      "audio": "docs/examples/road-trip/s01-departure/audio/s01_departure.wav",
+      "status": "hash_matches",
+      "manifest_sha256": "5662d6b566952b9b4b2336ac6317a03b4c724bf4cbfa1aea161ffb2ac51cd08c",
+      "actual_sha256": "5662d6b566952b9b4b2336ac6317a03b4c724bf4cbfa1aea161ffb2ac51cd08c"
+    },
+    {
+      "example": "s02-leaving-town",
+      "manifest": "docs/examples/road-trip/s02-leaving-town/audio/s02_leaving_town.manifest.json",
+      "audio": "docs/examples/road-trip/s02-leaving-town/audio/s02_leaving_town.wav",
+      "status": "hash_matches",
+      "manifest_sha256": "0291fab354a62badbcdbfa21543a52d72dfe21c91123e23cad0d11faaa461a00",
+      "actual_sha256": "0291fab354a62badbcdbfa21543a52d72dfe21c91123e23cad0d11faaa461a00"
+    },
+    {
+      "example": "s03-highway-opens",
+      "manifest": "docs/examples/road-trip/s03-highway-opens/audio/s03_highway_opens.manifest.json",
+      "audio": "docs/examples/road-trip/s03-highway-opens/audio/s03_highway_opens.wav",
+      "status": "hash_matches",
+      "manifest_sha256": "072ac2dedcc5d106913d66c1cb9615989becfb03780f68d61164ce204cf6dae2",
+      "actual_sha256": "072ac2dedcc5d106913d66c1cb9615989becfb03780f68d61164ce204cf6dae2"
+    },
+    {
+      "example": "s04-daydream",
+      "manifest": "docs/examples/road-trip/s04-daydream/audio/s04_daydream.manifest.json",
+      "audio": "docs/examples/road-trip/s04-daydream/audio/s04_daydream.wav",
+      "status": "hash_matches",
+      "manifest_sha256": "f503f4de3fa7e66069460934adcc0d28fe8c26770307a15afe94df11c27c6e1e",
+      "actual_sha256": "f503f4de3fa7e66069460934adcc0d28fe8c26770307a15afe94df11c27c6e1e"
+    },
+    {
+      "example": "s05a-road-game-pt1",
+      "manifest": "docs/examples/road-trip/s05a-road-game-pt1/audio/s05a_road_game_pt1.manifest.json",
+      "audio": "docs/examples/road-trip/s05a-road-game-pt1/audio/s05a_road_game_pt1.wav",
+      "status": "hash_matches",
+      "manifest_sha256": "0495d0bc415384080e94370f0763789ae4202e9b67a29ca59c9ecf41acf89915",
+      "actual_sha256": "0495d0bc415384080e94370f0763789ae4202e9b67a29ca59c9ecf41acf89915"
+    },
+    {
+      "example": "s05b-road-game-pt2",
+      "manifest": "docs/examples/road-trip/s05b-road-game-pt2/audio/s05b_road_game_pt2.manifest.json",
+      "audio": "docs/examples/road-trip/s05b-road-game-pt2/audio/s05b_road_game_pt2.wav",
+      "status": "hash_matches",
+      "manifest_sha256": "d322b1725156b0224851c947554bad6b428a6e2fbbc03e5cc3f9b67c96799e2d",
+      "actual_sha256": "d322b1725156b0224851c947554bad6b428a6e2fbbc03e5cc3f9b67c96799e2d"
+    },
+    {
+      "example": "s06-big-view",
+      "manifest": "docs/examples/road-trip/s06-big-view/audio/s06_big_view.manifest.json",
+      "audio": "docs/examples/road-trip/s06-big-view/audio/s06_big_view.wav",
+      "status": "hash_matches",
+      "manifest_sha256": "576ce8d26055825927e32058d8c55a235faa84ac55fc17f8f53a40c16019de6f",
+      "actual_sha256": "576ce8d26055825927e32058d8c55a235faa84ac55fc17f8f53a40c16019de6f"
+    },
+    {
+      "example": "s07-rest-stop",
+      "manifest": "docs/examples/road-trip/s07-rest-stop/audio/s07_rest_stop.manifest.json",
+      "audio": "docs/examples/road-trip/s07-rest-stop/audio/s07_rest_stop.wav",
+      "status": "hash_matches",
+      "manifest_sha256": "9005cc17be4f9ad47ef813c2e27d35dfb220f61813974d1f10cba34222d85773",
+      "actual_sha256": "9005cc17be4f9ad47ef813c2e27d35dfb220f61813974d1f10cba34222d85773"
+    },
+    {
+      "example": "s08-golden-hour",
+      "manifest": "docs/examples/road-trip/s08-golden-hour/audio/s08_golden_hour.manifest.json",
+      "audio": "docs/examples/road-trip/s08-golden-hour/audio/s08_golden_hour.wav",
+      "status": "hash_matches",
+      "manifest_sha256": "ff43eb64dd7eddffa7dd7f7099354f50c079afe8dae9f5532ca51f9cb02688bc",
+      "actual_sha256": "ff43eb64dd7eddffa7dd7f7099354f50c079afe8dae9f5532ca51f9cb02688bc"
+    },
+    {
+      "example": "s09-arrival",
+      "manifest": "docs/examples/road-trip/s09-arrival/audio/s09_arrival.manifest.json",
+      "audio": "docs/examples/road-trip/s09-arrival/audio/s09_arrival.wav",
+      "status": "hash_matches",
+      "manifest_sha256": "84cef9061d53e9bf573e7172762570a255b5b76ec89e0c080eab72be412975a2",
+      "actual_sha256": "84cef9061d53e9bf573e7172762570a255b5b76ec89e0c080eab72be412975a2"
+    },
+    {
+      "example": "the-first-light",
+      "manifest": "docs/examples/orchestral/the-first-light/audio/the_first_light.manifest.json",
+      "audio": "docs/examples/orchestral/the-first-light/audio/the_first_light.wav",
+      "status": "hash_matches",
+      "manifest_sha256": "6dd626027c907823fc05567ba03657d090c17086341f903aca1fb6889c148009",
+      "actual_sha256": "6dd626027c907823fc05567ba03657d090c17086341f903aca1fb6889c148009"
+    },
+    {
+      "example": "the-first-light-revised",
+      "manifest": "docs/examples/orchestral/the-first-light-revised/audio/the_first_light.manifest.json",
+      "audio": "docs/examples/orchestral/the-first-light-revised/audio/the_first_light.wav",
+      "status": "hash_matches",
+      "manifest_sha256": "5c4e87549433209a238c894c5e581ab01b423c48b3a3b5e010bb8da45f3ab627",
+      "actual_sha256": "5c4e87549433209a238c894c5e581ab01b423c48b3a3b5e010bb8da45f3ab627"
+    }
+  ]
+}

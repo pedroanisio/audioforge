@@ -1,0 +1,154 @@
+# 03 — Highway Opens. The city drops behind, the car finds its rhythm.
+# Steady 110 BPM melodic house — the first "everyone can nod along" section.
+asset s03_highway_opens {
+  kind: soundtrack
+  duration: 600s
+  tempo: 110bpm
+  key: A major
+  groove: swing16 0.08
+  emotion: wonder=0.6, triumph=0.3, cinematic_intensity=0.3
+
+  marker merge          @ 0s
+  marker open_road       @ 120s
+  marker everyone_nods    @ 360s
+  marker miles_ahead      @ 540s
+
+  motif road {
+    A4  @ 0b   for 1b   vel 0.7
+    C#5 @ 1b   for 1b   vel 0.75
+    E5  @ 2b   for 1b   vel 0.8
+    D5  @ 3b   for 1.5b vel 0.78
+    C#5 @ 4.5b for 0.5b vel 0.7
+    A4  @ 5b   for 3b   vel 0.65
+  }
+
+  bus pump {
+    duck: source=kick amount=5db attack=0.008s release=0.16s threshold=-40db
+    fx: saturate(amount=0.1, warmth=0.22)
+  }
+  bus air {
+    fx: delay(time=0.234, feedback=0.22, mix=0.14), hall(rt60=1.6, mix=0.12)
+  }
+
+  layer kick : drums {
+    voice: kick
+    pattern: X...X...X...X...
+    tune: -4st
+    decay: 0.5
+    snap: 0.45
+    bend: 0.3
+    gain: -8db
+    humanize: 0.04
+    auto gain: 0s=-24, 600s=-20.8
+  }
+
+  layer clap : drums {
+    voice: clap
+    pattern: ....X.......x...
+    gain: -15db
+    humanize: 0.06
+    fx: reverb(decay=1.0s, mix=0.16)
+    auto gain: 0s=-27.5, 600s=-25
+  }
+
+  layer hat : drums {
+    voice: hat
+    pattern: x.x.x.x.x.x.x.x.
+    tune: 2st
+    decay: 0.25
+    gain: -17db
+    humanize: 0.05
+    auto gain: 0s=-26.5, 600s=-24.6
+  }
+
+  layer ohat : drums {
+    voice: open_hat
+    pattern: ....x.......x...
+    decay: 0.5
+    gain: -21db
+    auto gain: 0s=-30.5, 600s=-28.6
+  }
+
+  layer road_hum : noise {
+    color: brown
+    start: 0s
+    duration: 600s
+    gain: -40db
+    env: a=4s d=0.1s s=0.9 r=4s
+    fx: bandpass(220hz), lowpass(700hz)
+    auto gain: 0s=-43, 600s=-41.6
+  }
+
+  layer bass : notes {
+    osc: saw
+    bus: pump
+    gain: -9db
+    env: a=0.006s d=0.12s s=0.4 r=0.08s
+    velbright: 0.4
+    notes: A1 @ 0.5b for 0.45b, A1 @ 1.5b for 0.45b, A1 @ 2.5b for 0.45b, F#1 @ 3.5b for 0.45b vel 0.85, F#1 @ 4.5b for 0.45b, D2 @ 5.5b for 0.45b, D2 @ 6.5b for 0.45b, E1 @ 7.5b for 0.45b vel 0.85
+    loop: 8b
+    fx: lowpass(600hz), drive(amount=0.15)
+    auto cutoff: 0s=550, 600s=596
+    auto gain: 0s=-22, 600s=-19.4
+  }
+
+  layer pad : notes {
+    osc: pad
+    bandwidth: 40c
+    bus: pump
+    gain: -16db
+    env: a=1.2s d=1s s=0.8 r=1.8s
+    notes: A2maj7 @ 0b for 8b, F#2min7 @ 8b for 8b, D3maj7 @ 16b for 8b, E3maj7 @ 24b for 8b
+    loop: 32b
+    fx: lowpass(1600hz), reverb(decay=2.8s, mix=0.26)
+    auto gain: 0s=-19, 600s=-18
+  }
+
+  layer lead : notes {
+    osc: saw
+    unison: 3
+    spread: 14c
+    bus: air
+    gain: -11db
+    env: a=0.01s d=0.2s s=0.6 r=0.3s
+    velbright: 0.4
+    play road @ 40b
+    play road @ 56b
+    play road @ 72b
+    play road @ 88b diatonic 1
+    play road @ 104b
+    play road @ 120b
+    play road @ 136b
+    play road @ 152b vel 0.85
+    play road @ 168b
+    play road @ 184b
+    play road @ 200b
+    play road @ 216b diatonic 1
+    play road @ 232b
+    play road @ 248b
+    play road @ 264b
+    play road @ 280b vel 0.85
+    play road @ 296b
+    play road @ 312b
+    play road @ 328b
+    play road @ 344b diatonic 1
+    play road @ 360b
+    play road @ 376b
+    play road @ 392b
+    play road @ 408b vel 0.85
+    loop: 0b
+    fx: lowpass(2200hz)
+    auto cutoff: 0s=1650, 600s=1800
+    auto gain: 0s=-25.5, 600s=-22.6
+    pan: -0.1
+  }
+
+  master {
+    width: 0.92
+    lufs: -13
+    peak: -1db
+    fadein: 1s
+    fadeout: 3s
+    fx: lowpass(15000hz), highpass(28hz), fdn(rt60=1.9, rt60_high=1.0, mix=0.14), comp(threshold=-15, ratio=2.0, attack=0.015, release=0.16, knee=5), saturate(amount=0.1, warmth=0.24)
+  }
+}

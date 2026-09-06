@@ -1,0 +1,94 @@
+# 09 — Arrival / One Last Look Back. Tired but happy; the trip becomes a
+# memory. Drums strip away, the road motif returns slower and warmer, then
+# a soft struck/synth hybrid carries it to silence. Not "the party ended" —
+# "we shared something."
+asset s09_arrival {
+  kind: soundtrack
+  duration: 420s
+  tempo: 90bpm
+  key: A major
+  emotion: calm=0.55, intimacy=0.5, wonder=0.4, triumph=0.2
+
+  marker last_stretch  @ 0s
+  marker one_more_look  @ 180s
+  marker home           @ 390s
+
+  motif road {
+    A4  @ 0b   for 1b   vel 0.7
+    C#5 @ 1b   for 1b   vel 0.75
+    E5  @ 2b   for 1b   vel 0.8
+    D5  @ 3b   for 1.5b vel 0.78
+    C#5 @ 4.5b for 0.5b vel 0.7
+    A4  @ 5b   for 3b   vel 0.65
+  }
+
+  layer kick : drums {
+    voice: kick
+    pattern: X.......X.......
+    tune: -4st
+    decay: 0.5
+    snap: 0.25
+    bend: 0.15
+    gain: -13db
+    humanize: 0.09
+    auto gain: 0s=-13, 84s=-13, 126s=-50, 420s=-50
+  }
+
+  layer pad : notes {
+    osc: pad
+    bandwidth: 50c
+    gain: -16db
+    env: a=2.5s d=1.5s s=0.85 r=6s
+    notes: A2maj7 @ 0b for 16b, F#2min7 @ 16b for 16b, D3maj7 @ 32b for 16b, A2maj7 @ 48b for 16b
+    loop: 64b
+    fx: lowpass(1200hz), reverb(decay=5s, mix=0.4)
+    auto cutoff: 0s=1200, 294s=1400, 420s=500
+    auto gain: 0s=-18, 231s=-14, 357s=-20, 420s=-60
+  }
+
+  layer motif_slow : notes {
+    osc: pluck
+    damping: 0.5
+    brightness: 0.5
+    gain: -12db
+    env: a=0.02s d=0.4s s=0.35 r=1.2s
+    play road @ 0b
+    play road @ 16b
+    play road @ 32b
+    play road @ 48b
+
+    play road @ 96b stretch 1.5
+    play road @ 112b stretch 1.5
+    play road @ 128b stretch 1.5
+
+    loop: 0b
+    fx: lowpass(2200hz), reverb(decay=3.5s, mix=0.32), delay(time=0.4, feedback=0.22, mix=0.2)
+    auto gain: 0s=-60, 30s=-14, 210s=-12, 336s=-18, 412s=-50
+    pan: 0.1
+  }
+
+  layer struck_farewell : notes {
+    osc: struck
+    tension: 0.15
+    strike: 0.4
+    damping: 0.5
+    brightness: 0.45
+    gain: -14db
+    env: a=0.01s d=0.6s s=0.2 r=2s
+    play road @ 152b stretch 2
+    play road @ 168b stretch 2 diatonic -1
+    loop: 0b
+    fx: lowpass(2000hz), reverb(decay=6s, mix=0.45)
+    auto gain: 0s=-60, 252s=-60, 273s=-16, 414s=-30, 420s=-55
+    pan: -0.1
+  }
+
+  master {
+    width: 0.9
+    lufs: -18
+    peak: -1.5db
+    fadein: 1.5s
+    fadeout: 10s
+    fx: lowpass(9000hz), highpass(32hz), fdn(rt60=3.5, rt60_high=1.4, mix=0.26), saturate(amount=0.06, warmth=0.3)
+  }
+}

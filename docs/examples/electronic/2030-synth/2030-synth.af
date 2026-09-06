@@ -1,0 +1,137 @@
+# 2030 — theme for "Painting with FrameGraph"
+# A reading of framegraph-reconstruction-evolution-4k60.mp4 in sound.
+# The verification clock never changes; the picture earns its detail act by act.
+# Foundation -> Composition bloom -> Grind -> Restart at v90 (A minor -> C major) -> Refinement.
+
+asset theme_2030 {
+  kind: cue
+  duration: 120s
+  tempo: 90bpm
+  key: A minor, 120b=C major
+  emotion: wonder=0.55, awe=0.4, tension=0.3, triumph=0.45, calm=0.35, intimacy=0.2
+  # element-count contour: coarse start, bloom, grind, dip at the restart, climb, plateau
+  intensity: 0s=0.15, 24s=0.32, 44s=0.55, 78s=0.6, 80s=0.34, 84s=0.42, 110s=0.9, 116s=0.86, 120s=0.7
+
+  marker foundation  @ 0s
+  marker composition @ 24s
+  marker grind       @ 44s
+  marker restart     @ 80s
+  marker refinement  @ 84s
+  marker final_frame @ 116s
+
+  # the seed: the single raster screenshot every trial reconstructs
+  motif seed {
+    A3 @ 0b   for 1b   vel 0.6
+    C4 @ 1b   for 1b   vel 0.66
+    E4 @ 2b   for 1.5b vel 0.72
+    D4 @ 3.5b for 1.5b vel 0.68
+  }
+
+  # Act I underpainting: the large, stable, closed regions. Slow, sparse.
+  layer foundation : notes {
+    osc: pad
+    bandwidth: 55c
+    gain: -12db
+    env: a=3s d=2s s=0.85 r=5s
+    notes: A2min7 @ 0b   for 30b voicing spread,
+           F2maj7 @ 30b  for 30b voicing spread,
+           D3min7 @ 60b  for 30b voicing spread,
+           E3min7 @ 90b  for 30b voicing spread,
+           C3maj7 @ 120b for 30b voicing spread,
+           F2maj7 @ 150b for 15b voicing spread,
+           C3maj7 @ 165b for 15b voicing spread
+    fx: lowpass(1400hz), reverb(decay=5s, mix=0.35)
+    auto cutoff: 0s=600, 44s=1500, 80s=850, 116s=2600
+  }
+
+  # the verification loop: a quiet, invariant tick, running the entire way down
+  layer clock : notes {
+    osc: pluck
+    damping: 0.6
+    brightness: 0.45
+    gain: -25db
+    env: a=0.004s d=0.14s s=0.0 r=0.14s
+    notes: A5 @ 0b for 0.5b vel 0.5
+    loop: 1b
+    pan: 0.26
+  }
+
+  # Act II bloom: detail arrives all at once (8 -> 1,171 elements) as a grain cloud
+  layer detail : grain {
+    source: triangle
+    note: A4
+    gain: -22db
+    srcdur: 0.4s
+    grainsize: 0.05s
+    density: 42
+    pitchspread: 30c
+    scatter: 0.6
+    env: a=2s d=1s s=0.9 r=3s
+    start: 22s
+    duration: 98s
+    fx: highpass(400hz), reverb(decay=4s, mix=0.35)
+    auto gain: 22s=-32db, 26s=-20db, 44s=-22db, 116s=-16db, 120s=-26db
+    pan: 0.34
+  }
+
+  # Act III grind: the reconstruction, trial by trial (each play is a version bump).
+  # After 120b the key map is C major -> the same figure resolves on stronger footing.
+  layer reconstruct : notes {
+    osc: pluck
+    damping: 0.45
+    brightness: 0.6
+    gain: -13db
+    env: a=0.01s d=0.3s s=0.55 r=0.5s
+    velbright: 0.6
+    play seed @ 36b
+    play seed @ 44b  invert vel 0.9
+    play seed @ 60b  diatonic 2
+    play seed @ 78b  retrograde diatonic -1
+    play seed @ 96b  stretch 1.5 vel 0.85
+    play seed @ 108b diatonic 1
+    play seed @ 120b vel 0.7
+    play seed @ 132b diatonic 2 vel 0.85
+    play seed @ 144b diatonic 4 vel 0.95
+    play seed @ 160b stretch 1.5 transpose +12st vel 0.9
+    fx: reverb(decay=3s, mix=0.25)
+    auto gain: 0s=-24db, 36s=-13db, 80s=-19db, 84s=-12db, 116s=-11db
+    pan: -0.3
+  }
+
+  # Act V: the same detail, drawn better. A singing bowed line in the C-major redo.
+  layer singing : notes {
+    osc: bowed
+    pressure: 0.42
+    bowpos: 0.12
+    brightness: 0.5
+    gain: -16db
+    env: a=0.4s d=0.3s s=0.85 r=0.8s
+    start: 82s
+    play seed @ 132b diatonic 2 vel 0.8
+    play seed @ 150b diatonic 4 vel 0.85
+    play seed @ 162b stretch 1.5 diatonic 2 vel 0.9
+    fx: reverb(decay=5s, mix=0.3)
+    pan: 0.22
+  }
+
+  # the deterministic backbone: a soft downbeat pulse, sparse, grounding the grid
+  layer heartbeat : drums {
+    voice: kick
+    pattern: X...............
+    tune: -3st
+    decay: 0.6
+    snap: 0.4
+    gain: -20db
+    humanize: 0.08
+    auto gain: 0s=-40db, 44s=-23db, 80s=-30db, 84s=-19db, 116s=-18db
+  }
+
+  master {
+    width: 1.0
+    lufs: -16
+    peak: -1db
+    fadein: 1.5s
+    fadeout: 3.5s
+    fx: peak(220hz, gain=-1.5, q=0.9), fdn(rt60=3.2, rt60_high=1.3, mix=0.3), saturate(amount=0.12, warmth=0.3)
+  }
+}

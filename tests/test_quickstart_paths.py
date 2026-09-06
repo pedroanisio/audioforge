@@ -3,7 +3,7 @@ paths must point at corpora that actually exist.
 
 History: the README advertised `presets/cosmic_awe_cue.af` and a dozen
 `presets/*_demo.af` files plus `tests/fixtures/`, none of which shipped, while
-the real corpus lives in `static/samples/` (+ diagnostic fixtures in
+the real corpus lives in `docs/examples/sound-design/transition-sweep/` (+ diagnostic fixtures in
 `static/fixtures/`). New users following the quick start hit file-not-found,
 and corpus-based tests silently skipped on an empty directory.
 
@@ -17,8 +17,8 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 README = ROOT / "README.md"
-SAMPLES = ROOT / "static" / "samples"
-FIXTURES = ROOT / "static" / "fixtures"
+SAMPLES = ROOT / "docs" / "examples" / "sound-design" / "transition-sweep"
+FIXTURES = ROOT / "docs" / "examples"
 
 _AF_TOKEN = re.compile(r"[A-Za-z0-9_./-]+\.af")
 
@@ -29,7 +29,7 @@ def _af_exists(ref: str) -> bool:
     if (ROOT / ref).exists():
         return True
     if "/" not in ref:
-        return (SAMPLES / ref).exists() or (FIXTURES / ref).exists()
+        return (SAMPLES / ref).exists() or any(FIXTURES.rglob(ref))
     return False
 
 
@@ -89,7 +89,7 @@ def test_corpus_has_at_least_one_render_ready_spec():
         ):
             ready += 1
     assert ready >= 1, (
-        "no render-ready spec in static/samples — corpus coverage is a "
+        "no render-ready spec in docs/examples/sound-design/transition-sweep — corpus coverage is a "
         "silent no-op (Finding #3)"
     )
 

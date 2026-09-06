@@ -1,0 +1,582 @@
+# =============================================================================
+# AudioForge DSL 1.7 · Engine 2.14.0
+#
+# "Ode to Fable" — Symphony in D
+# for Claude Fable 5 (Anthropic), released 2026-06-09
+#
+# Original composition. generated_by: Claude Opus 4.8 via Claude Code · 2026-06-11
+#
+# This is an ODE BY DEPICTION, not by cipher: the music does not encode the
+# letters of "Fable" — it portrays the model's documented story, the way a tone
+# poem honours its subject. Each movement is a programmatic portrait of a real,
+# sourced facet of Claude Fable 5:
+#
+#   I.   MYTHOS              — Largo → Allegro, D minor.
+#        Fable 5 is a "Mythos-class" model: the most capable lineage Anthropic
+#        has built. A dark four-note cell rises from the depths — vast, powerful,
+#        untamed. (anthropic.com/news/claude-fable-5-mythos-5)
+#
+#   II.  THE TEMPERING       — surge → restraint, G minor → D major.
+#        Made safe for general use: in high-risk domains the model holds back
+#        and FALLS BACK to Claude Opus 4.8. The Mythos power crests, is
+#        restrained, and resolves to a serene descent — the "fallback" voice.
+#        (Safeguards trigger in <5% of sessions.)
+#
+#   III. THE TELLING         — Andante, F major.
+#        A fable is a story that teaches. The solo oboe sings the lyric "Fable"
+#        theme over warm strings and harp — the heart of the ode.
+#
+#   IV.  GENERALLY AVAILABLE — Maestoso, D major.
+#        Released to the world, 2026-06-09. The storyteller-theme becomes public
+#        grandeur; the Mythos cell returns TAMED, now consonant in the major;
+#        tubular bells peal the day of release. A hopeful close.
+#
+# Scored for the Versilian Studios Chamber Orchestra (VSCO-2-CE, CC0), seated
+# on a real St Albans Lady Chapel impulse response. Tempo rubato; the section
+# times below are the engine's analytic beat→second integral.
+#   I 0–42s · II 42–75.5s · III 75.5–130s · IV 130–191s (coda 168s)
+# =============================================================================
+
+asset ode_to_fable {
+
+  kind:       soundtrack
+  duration:   204s
+  samplerate: 48000
+  bitdepth:   24
+
+  tempo:      58bpm, 16b=58bpm, 24b=120bpm, 60b=120bpm,
+              64b=134bpm, 96b=134bpm, 100b=72bpm, 118b=72bpm,
+              120b=69bpm, 180b=69bpm, 184b=116bpm, 248b=116bpm,
+              256b=100bpm, 264b=76bpm, 272b=52bpm, 280b=46bpm
+
+  key:        D minor, 100b=D major, 120b=F major, 184b=D major
+
+  emotion:    awe=0.62, wonder=0.55, cinematic_intensity=0.55,
+              tension=0.35, calm=0.30
+
+  intensity:  0s=0.25, 20s=0.55, 42s=0.78, 60s=0.88,
+              70s=0.34, 76s=0.42, 110s=0.62, 130s=0.80,
+              160s=0.95, 168s=1.0, 185s=0.68, 204s=0.35
+
+  library:    "VSCO-2-CE-1.1.0@ff140e8b5c5d6916ccf8088b0fc7dfb632f434d056aa764400905fdbd5824b0e"
+
+  marker mvt1_mythos              @ 0s
+  marker mvt2_the_tempering       @ 42s
+  marker mvt3_the_telling         @ 76s
+  marker mvt4_generally_available @ 130s
+  marker coda                     @ 168s
+
+  # ===========================================================================
+  # MOTIFS — the ode's three ideas
+  # ===========================================================================
+
+  # MYTHOS — a dark rising-fourth cell (the powerful lineage). 4 beats.
+  motif mythos {
+    D3 @ 0b for 1b vel 0.78
+    F3 @ 1b for 1b vel 0.82
+    E3 @ 2b for 1b vel 0.76
+    A3 @ 3b for 1b vel 0.86
+  }
+
+  # FABLE — the storyteller's song (the heart). 8 beats, F major.
+  motif fable {
+    F4  @ 0b   for 1b   vel 0.70
+    A4  @ 1b   for 1b   vel 0.74
+    C5  @ 2b   for 1.5b vel 0.82
+    Bb4 @ 3.5b for 0.5b vel 0.74
+    A4  @ 4b   for 1b   vel 0.76
+    G4  @ 5b   for 1b   vel 0.72
+    F4  @ 6b   for 2b   vel 0.70
+  }
+
+  # OPUS — the calm fallback: a grounding descent to safety. 4 beats.
+  motif opus {
+    D5 @ 0b for 1b vel 0.60
+    C5 @ 1b for 1b vel 0.58
+    A4 @ 2b for 1b vel 0.56
+    F4 @ 3b for 2b vel 0.54
+  }
+
+  # Chord beds (root+octave+quality)
+  motif prog_myth   { D3min @ 0b for 2b  Bb2maj @ 2b for 2b  F3maj @ 4b for 2b  A27 @ 6b for 2b }
+  motif prog_temper { G3min @ 0b for 2b  Eb3maj @ 2b for 2b  D27 @ 4b for 2b  G3min @ 6b for 2b }
+  motif prog_calm   { D3maj @ 0b for 4b  A27 @ 4b for 4b  G3maj @ 8b for 4b  D3maj @ 12b for 4b }
+  motif prog_tell   { F3maj7 @ 0b for 2b  D3min7 @ 2b for 2b  Bb2maj7 @ 4b for 2b  C37 @ 6b for 2b }
+  motif prog_ga     { D3maj @ 0b for 2b  G3maj @ 2b for 2b  A37 @ 4b for 2b  D3maj @ 6b for 2b }
+
+  # Harp — same harmony voiced open/spread, then arpeggiated
+  motif harp_myth { D3min @ 0b for 2b voicing spread  Bb2maj @ 2b for 2b voicing spread  F3maj @ 4b for 2b voicing open  A27 @ 6b for 2b voicing open }
+  motif harp_calm { D4maj @ 0b for 4b voicing open  A3maj @ 4b for 4b voicing open  G3maj @ 8b for 4b voicing open  D4maj @ 12b for 4b voicing open }
+  motif harp_tell { F4maj7 @ 0b for 2b voicing open  D4min7 @ 2b for 2b voicing open  Bb3maj7 @ 4b for 2b voicing open  C4maj @ 6b for 2b voicing open }
+  motif harp_ga   { D4maj @ 0b for 2b voicing spread  G3maj @ 2b for 2b voicing spread  A3maj @ 4b for 2b voicing spread  D4maj @ 6b for 2b voicing spread }
+
+  # Bass roots
+  motif bass_myth   { D2 @ 0b for 2b  Bb2 @ 2b for 2b  F2 @ 4b for 2b  A2 @ 6b for 2b }
+  motif bass_temper { G2 @ 0b for 2b  Eb2 @ 2b for 2b  D2 @ 4b for 2b  G2 @ 6b for 2b }
+  motif bass_calm   { D2 @ 0b for 4b  A2 @ 4b for 4b  G2 @ 8b for 4b  D2 @ 12b for 4b }
+  motif bass_tell   { F2 @ 0b for 2b  D2 @ 2b for 2b  Bb2 @ 4b for 2b  C3 @ 6b for 2b }
+  motif bass_ga     { D2 @ 0b for 2b  G2 @ 2b for 2b  A2 @ 4b for 2b  D2 @ 6b for 2b }
+
+  # ===========================================================================
+  # STAGE — St Albans Lady Chapel IR; a seated orchestra
+  # ===========================================================================
+  stage {
+    hall: "stalbans_ortf_ir.wav@be670d833feaf274e601ad026b4f32f126c71fa8eb9b386e855ed9f0035410aa"
+    mics: tree=0.62, close=0.20, ambient=0.42
+    size: 22m, 34m, 14m
+  }
+
+  # ===========================================================================
+  # STRINGS
+  # ===========================================================================
+
+  # 1st Violins — the high lineage in I, the storyteller's halo in III, triumph in IV
+  layer violins : instrument {
+    instrument:   "ViolinEnsSusVib"
+    articulation: sustain
+    seat:         -25deg @ 5.0m
+    dynamic:      0b=p, 24b=mf, 64b=f, 100b=p, 120b=mp, 184b=f, 248b=ff
+    vibrato:      rate=5.0 depth=14c delay=0.35s
+    phrasing:     0.65
+    humanize:     time=0.010s vel=0.06
+
+    # I. Mythos — the cell rises into the violins, an octave up, as the Allegro takes hold
+    play mythos @ 24b legato transpose +12st  vel 0.70
+    play mythos @ 28b legato transpose +12st  vel 0.74
+    play mythos @ 40b legato transpose +12st  vel 0.80
+    play mythos @ 48b legato transpose +12st  diatonic +2  vel 0.84
+    play mythos @ 56b legato transpose +12st  vel 0.88
+    # II. the surge, then the restraint thins the violins to a held tone
+    play mythos @ 64b legato transpose +12st  vel 0.86
+    play mythos @ 80b legato transpose +12st  diatonic +1  vel 0.90
+    notes: A5 @ 96b for 4b vel 0.60,
+           D5 @ 256b for 18b vel 0.40, F#5 @ 256b for 18b vel 0.38, A5 @ 256b for 18b vel 0.38
+    # III. The Telling — a warm halo above the oboe's song
+    play fable @ 136b legato transpose +12st  vel 0.50
+    play fable @ 160b legato transpose +12st  vel 0.56
+    # IV. Generally Available — the fable theme in public grandeur
+    play fable @ 184b legato transpose +12st  vel 0.86
+    play fable @ 200b legato transpose +12st  vel 0.92
+    play fable @ 216b legato transpose +12st  vel 0.96
+    play fable @ 232b legato transpose +12st  vel 1.0
+    play fable @ 248b legato transpose +12st  vel 0.90
+  }
+
+  # Violas — inner harmony (close, up an octave for clarity)
+  layer violas : instrument {
+    instrument:   "ViolaEnsSusVib"
+    articulation: sustain
+    seat:         +8deg @ 5.4m
+    dynamic:      0b=p, 24b=mp, 64b=mf, 100b=p, 184b=mf, 248b=f
+    vibrato:      rate=4.8 depth=12c delay=0.4s
+    humanize:     time=0.012s vel=0.07
+
+    # polish: a soft sustained fifth fills the lull mid-Telling (no drums here)
+    notes: D4 @ 144b for 7b vel 0.40, A4 @ 144b for 7b vel 0.38
+
+    play prog_myth @ 16b legato transpose +12st  vel 0.52
+    play prog_myth @ 24b legato transpose +12st  vel 0.56
+    play prog_myth @ 40b legato transpose +12st  vel 0.62
+    play prog_myth @ 56b legato transpose +12st  vel 0.66
+    play prog_temper @ 64b legato transpose +12st  vel 0.64
+    play prog_temper @ 80b legato transpose +12st  vel 0.70
+    play prog_calm @ 100b legato transpose +12st  vel 0.42
+    play prog_tell @ 120b legato transpose +12st  vel 0.46
+    play prog_tell @ 152b legato transpose +12st  vel 0.50
+    play prog_ga @ 184b legato transpose +12st  vel 0.68
+    play prog_ga @ 216b legato transpose +12st  vel 0.78
+    play prog_ga @ 248b legato transpose +12st  vel 0.74
+  }
+
+  # Cellos — the Mythos cell at written pitch in I; counter & open fifths elsewhere
+  layer cellos : instrument {
+    instrument:   "CelloEnsSusVib"
+    articulation: sustain
+    seat:         +22deg @ 5.4m
+    dynamic:      0b=mp, 64b=f, 100b=p, 120b=mp, 184b=f, 248b=ff
+    vibrato:      rate=4.6 depth=12c delay=0.45s
+    humanize:     time=0.013s vel=0.07
+
+    # polish: a low sustained D under the coda's glow
+    notes: D3 @ 256b for 18b vel 0.44
+
+    # I. Mythos cell from the depths, gathering
+    play mythos @ 8b  legato vel 0.66
+    play mythos @ 16b legato vel 0.72
+    play mythos @ 24b legato vel 0.78
+    play mythos @ 40b legato diatonic +2  vel 0.80
+    play mythos @ 56b legato vel 0.84
+    play mythos @ 64b legato vel 0.86
+    # III. a tenor counter-line under the storyteller
+    play fable @ 128b legato diatonic -2  vel 0.56
+    play fable @ 160b legato diatonic -2  vel 0.60
+    # IV. the Mythos cell returns TAMED, now consonant in D major
+    play mythos @ 188b legato transpose +2st  vel 0.74
+    play mythos @ 204b legato transpose +2st  vel 0.80
+    play mythos @ 236b legato transpose +2st  vel 0.86
+  }
+
+  # Contrabasses — the tonal foundation
+  layer contrabass : instrument {
+    instrument:   "ContrabassSusVB"
+    articulation: sustain
+    seat:         +30deg @ 7.0m
+    dynamic:      0b=mp, 64b=f, 100b=p, 184b=f, 248b=ff
+    humanize:     time=0.014s vel=0.07
+
+    play bass_myth @ 0b  legato vel 0.66
+    play bass_myth @ 8b  legato vel 0.70
+    play bass_myth @ 24b legato vel 0.78
+    play bass_myth @ 40b legato vel 0.80
+    play bass_myth @ 56b legato vel 0.84
+    play bass_temper @ 64b legato vel 0.82
+    play bass_temper @ 80b legato vel 0.86
+    play bass_calm @ 100b legato vel 0.48
+    play bass_tell @ 120b legato vel 0.50
+    play bass_tell @ 152b legato vel 0.54
+    play bass_ga @ 184b legato vel 0.84
+    play bass_ga @ 216b legato vel 0.92
+    play bass_ga @ 248b legato vel 0.86
+  }
+
+  # ===========================================================================
+  # WOODWINDS
+  # ===========================================================================
+
+  # Flute — light doublings over the storyteller and the finale
+  layer flute : instrument {
+    instrument:   "FluteSusVib"
+    articulation: sustain
+    seat:         -6deg @ 7.6m
+    dynamic:      120b=p, 152b=mf, 184b=f
+    vibrato:      rate=5.4 depth=16c delay=0.3s
+    phrasing:     0.6
+    humanize:     time=0.011s vel=0.06
+
+    play fable @ 152b legato transpose +12st  vel 0.52
+    play fable @ 200b legato transpose +12st  vel 0.64
+    play fable @ 232b legato transpose +12st  vel 0.72
+  }
+
+  # Oboe — THE storyteller: the solo voice of Movement III, "The Telling"
+  layer oboe : instrument {
+    instrument:   "OboeSusVib"
+    articulation: sustain
+    seat:         +4deg @ 7.6m
+    dynamic:      120b=mp, 136b=mf, 168b=mp
+    vibrato:      rate=5.0 depth=18c delay=0.35s
+    phrasing:     0.72
+    humanize:     time=0.012s vel=0.07
+
+    play fable @ 120b legato vel 0.72
+    play fable @ 136b legato vel 0.76
+    play fable @ 152b legato diatonic +2  vel 0.74
+    play fable @ 168b legato vel 0.70
+    # a tender echo into the finale's arrival
+    play fable @ 192b legato vel 0.64
+  }
+
+  # Clarinet — the calm "fallback" voice of Movement II; inner colour
+  layer clarinet : instrument {
+    instrument:   "ClarinetSus"
+    articulation: sustain
+    seat:         -10deg @ 8.0m
+    dynamic:      100b=mp, 120b=p, 184b=mp
+    vibrato:      rate=4.6 depth=10c delay=0.4s
+    humanize:     time=0.013s vel=0.07
+
+    # II. the descent to safety — the Opus fallback theme
+    play opus @ 100b legato vel 0.58
+    play opus @ 104b legato vel 0.56
+    play opus @ 112b legato diatonic -1  vel 0.54
+    # III. a soft countersubject under the oboe
+    play fable @ 128b legato diatonic -4  vel 0.46
+    play fable @ 160b legato diatonic -2  vel 0.48
+    # IV. harmonic filler
+    play prog_ga @ 216b transpose +12st  vel 0.50
+    play prog_ga @ 240b transpose +12st  vel 0.52
+  }
+
+  # Bassoon — the low lineage in I; the descent doubled in II; roots in IV
+  layer bassoon : instrument {
+    instrument:   "BassoonSus"
+    articulation: sustain
+    seat:         +12deg @ 8.0m
+    dynamic:      0b=p, 64b=mf, 100b=mp, 184b=mf
+    humanize:     time=0.014s vel=0.07
+
+    play mythos @ 16b legato vel 0.52
+    play mythos @ 40b legato vel 0.58
+    play opus @ 104b legato transpose -12st  vel 0.46
+    play bass_tell @ 120b legato vel 0.44
+    play bass_ga @ 200b legato vel 0.58
+    play bass_ga @ 232b legato vel 0.62
+  }
+
+  # ===========================================================================
+  # BRASS
+  # ===========================================================================
+
+  # French horns — the power of the lineage; the noble theme in IV
+  layer horns : instrument {
+    instrument:   "FHornSus"
+    articulation: sustain
+    seat:         -16deg @ 9.0m
+    dynamic:      0b=p, 40b=mf, 64b=f, 100b=mp, 184b=f, 248b=ff
+    humanize:     time=0.013s vel=0.07
+
+    # I–II. the Mythos cell, gathering force
+    play mythos @ 32b legato vel 0.60
+    play mythos @ 48b legato vel 0.70
+    play mythos @ 56b legato vel 0.78
+    play mythos @ 64b legato vel 0.82
+    play mythos @ 80b legato diatonic +1  vel 0.86
+    # IV. the tamed cell + noble harmony
+    play mythos @ 188b legato transpose +2st  vel 0.74
+    play prog_ga @ 216b legato vel 0.80
+    play prog_ga @ 232b legato vel 0.84
+    play prog_ga @ 248b legato vel 0.86
+  }
+
+  # Trumpet — the cresting surge of II; the blaze of the finale
+  layer trumpet : instrument {
+    instrument:   "TrumpetSus"
+    articulation: sustain
+    seat:         +14deg @ 9.0m
+    dynamic:      64b=mf, 88b=f, 96b=ff, 184b=f, 232b=ff
+    humanize:     time=0.010s vel=0.06
+
+    # II. the power crests — then the restraint cuts it off
+    play mythos @ 72b legato transpose +12st  vel 0.72
+    play mythos @ 84b legato transpose +12st  diatonic +1  vel 0.82
+    play mythos @ 92b legato transpose +12st  vel 0.90
+    # IV. the theme blazes
+    play fable @ 216b legato vel 0.82
+    play fable @ 232b legato vel 0.90
+    play fable @ 248b legato vel 0.84
+  }
+
+  # Tuba — the depths of the lineage; the pedal of the release
+  layer tuba : instrument {
+    instrument:   "TubaSus"
+    articulation: sustain
+    seat:         +20deg @ 9.4m
+    dynamic:      0b=mp, 64b=f, 184b=f, 248b=ff
+    humanize:     time=0.015s vel=0.07
+
+    play bass_myth @ 0b  legato vel 0.62
+    play bass_myth @ 24b legato vel 0.72
+    play bass_myth @ 56b legato vel 0.80
+    play bass_temper @ 64b legato vel 0.82
+    play bass_ga @ 184b legato vel 0.82
+    play bass_ga @ 216b legato vel 0.90
+    play bass_ga @ 248b legato vel 0.84
+  }
+
+  # ===========================================================================
+  # PERCUSSION
+  # ===========================================================================
+
+  # Timpani — the depths of I, the pillars of II, the thunder of the release
+  layer timpani : instrument {
+    instrument:   "Timpani"
+    articulation: sustain
+    seat:         0deg @ 10.0m
+    dynamic:      0b=mp, 64b=f, 184b=f, 232b=ff
+    humanize:     time=0.008s vel=0.06
+
+    notes: D2 @ 0b for 2b vel 0.66, A2 @ 8b for 1b vel 0.56,
+           D2 @ 24b for 1b vel 0.70, D2 @ 56b for 1b vel 0.78,
+           D2 @ 64b for 1b vel 0.80, G2 @ 92b for 2b vel 0.88,
+           D2 @ 184b for 1b vel 0.82, A2 @ 188b for 1b vel 0.74,
+           D2 @ 216b for 1b vel 0.86, A2 @ 232b for 2b vel 0.92,
+           D2 @ 248b for 2b vel 0.94, D2 @ 264b for 2b vel 0.80
+  }
+
+  # Harp — the narrative shimmer (voiced open/spread, arpeggiated)
+  layer harp : instrument {
+    instrument:   "Harp"
+    articulation: sustain
+    seat:         -18deg @ 4.6m
+    arp:          up rate=0.25b octaves=2 gate=0.9
+    humanize:     time=0.010s vel=0.08
+
+    play harp_myth @ 40b vel 0.46
+    play harp_myth @ 56b vel 0.52
+    play harp_calm @ 100b vel 0.44
+    play harp_tell @ 120b vel 0.52
+    play harp_tell @ 136b vel 0.54
+    play harp_tell @ 152b vel 0.56
+    play harp_tell @ 168b vel 0.54
+    play harp_ga @ 184b vel 0.62
+    play harp_ga @ 216b vel 0.70
+    play harp_ga @ 248b vel 0.62
+  }
+
+  # Glockenspiel — points of light in the telling and the release
+  layer glockenspiel : instrument {
+    instrument:   "Glockenspiel"
+    articulation: sustain
+    seat:         -8deg @ 9.6m
+    dynamic:      120b=mp, 184b=f
+
+    notes: A5 @ 120b for 2b vel 0.50, D6 @ 136b for 2b vel 0.52,
+           A5 @ 168b for 2b vel 0.48, D6 @ 184b for 2b vel 0.62,
+           A6 @ 216b for 2b vel 0.66, A6 @ 248b for 4b vel 0.70
+  }
+
+  # Tubular bells — the peals of release (2026-06-09)
+  layer tubular : instrument {
+    instrument:   "TubularBells"
+    articulation: sustain
+    dynamic:      184b=f, 248b=ff
+    seat:         +8deg @ 9.6m
+
+    notes: D5 @ 184b for 4b vel 0.74, A4 @ 192b for 4b vel 0.66,
+           D5 @ 216b for 4b vel 0.78, A4 @ 232b for 4b vel 0.70,
+           D5 @ 248b for 8b vel 0.84, A4 @ 256b for 8b vel 0.74,
+           D5 @ 264b for 8b vel 0.70
+  }
+
+  # ===========================================================================
+  # PERCUSSION BANK — cinematic drums, placed ONLY in the silences that want
+  # weight (the Largo depths, the surge, the launch into the finale, the
+  # release). Gated by start:/duration: so Movement III (the intimate telling)
+  # and the gentle coda stay drum-free by construction. Synth voices → dry to
+  # master, each with its own space.
+  # ===========================================================================
+
+  # I. heartbeat — a deep felt pulse stirring in the Largo depths (fills 0–26s)
+  layer heartbeat : drums {
+    voice:   tom
+    tune:    -7st
+    decay:   1.6
+    pattern: X.......x.......
+    start:   0.5s
+    duration: 26s
+    gain:    -10db
+    fx:      lowpass(170hz), reverb(decay=2.4, mix=0.18)
+    auto gain: 0.5s=-20db, 12s=-13db, 24s=-10db, 26s=-16db
+  }
+
+  # I→II. building toms drive the Allegro into the Mythos surge (24–62s)
+  layer toms_build : drums {
+    voice:   tom
+    tune:    -3st
+    decay:   0.55
+    pattern: X..x..X.x..x..X.
+    start:   24s
+    duration: 38s
+    gain:    -12db
+    fx:      lowpass(950hz), reverb(decay=1.6, mix=0.13)
+    auto gain: 24s=-20db, 40s=-13db, 56s=-9db, 62s=-7db
+  }
+
+  # II. a four-square kick under the surge — weight, not groove (42–62s)
+  layer kick_drive : drums {
+    voice:   kick
+    tune:    -2st
+    pattern: X...X...X...X...
+    start:   42s
+    duration: 20s
+    gain:    -11db
+    fx:      lowpass(420hz)
+    auto gain: 42s=-16db, 56s=-9db, 62s=-7db
+  }
+
+  # II. a snare roll accelerating into the crest, then cut for the restraint (54–62s)
+  layer surge_roll : drums {
+    voice:   snare
+    snap:    0.6
+    pattern: euclid(11,16)
+    start:   54s
+    duration: 8s
+    gain:    -15db
+    fx:      highpass(300hz), reverb(decay=1.2, mix=0.20)
+    auto gain: 54s=-26db, 60s=-12db, 62s=-9db
+  }
+
+  # III→IV. a tom roll crescendos out of the telling and launches the finale (124–130.5s)
+  layer launch_roll : drums {
+    voice:   tom
+    decay:   0.4
+    pattern: xxxxxxxxxxxxxxxx
+    start:   124s
+    duration: 6.5s
+    gain:    -15db
+    fx:      lowpass(1200hz), reverb(decay=1.4, mix=0.16)
+    auto gain: 124s=-28db, 129s=-10db, 130.5s=-6db
+  }
+
+  # IV. the engine of the release — kick + toms driving the triumph (130–168s)
+  layer finale_kick : drums {
+    voice:   kick
+    tune:    -2st
+    pattern: X...X...X...X...
+    start:   130s
+    duration: 38s
+    gain:    -10db
+    fx:      lowpass(450hz), reverb(decay=1.0, mix=0.10)
+    auto gain: 130s=-13db, 150s=-8db, 165s=-7db, 168s=-15db
+  }
+
+  layer finale_toms : drums {
+    voice:   tom
+    tune:    -3st
+    decay:   0.55
+    pattern: X..x..X.x..x..X.
+    start:   130s
+    duration: 38s
+    gain:    -12db
+    fx:      lowpass(1000hz), reverb(decay=1.4, mix=0.13)
+    auto gain: 130s=-16db, 150s=-9db, 165s=-8db, 168s=-16db
+  }
+
+  # IV. snare backbeat lifts the apotheosis, fading before the coda (140–168s)
+  layer finale_snare : drums {
+    voice:   snare
+    snap:    0.5
+    pattern: ....X.......X...
+    start:   140s
+    duration: 28s
+    gain:    -15db
+    fx:      highpass(250hz), reverb(decay=1.3, mix=0.18)
+    auto gain: 140s=-22db, 158s=-12db, 165s=-11db, 168s=-18db
+  }
+
+  # Coda. one soft, deep period at the turn into the close — then silence (168–174s)
+  layer coda_tom : drums {
+    voice:   tom
+    tune:    -7st
+    decay:   2.0
+    pattern: X...............
+    start:   168s
+    duration: 6s
+    gain:    -16db
+    fx:      lowpass(150hz), reverb(decay=2.8, mix=0.22)
+    auto gain: 168s=-13db, 171s=-20db, 174s=-30db
+  }
+
+  # ===========================================================================
+  # MASTER — glue + loudness; the stage provides the hall
+  # ===========================================================================
+  master {
+    width:   0.85
+    lufs:    -16
+    peak:    -1.0
+    fadein:  1.5s
+    fadeout: 6.5s
+
+    fx: comp(threshold=-17, ratio=2.0, attack=0.02, release=0.25, knee=9, makeup=1),
+        highpass(28hz),
+        lowshelf(110hz, gain=-1.0),
+        highshelf(9000hz, gain=+0.6),
+        mbcomp(threshold=-20, ratio=1.8, low=170, high=2700)
+  }
+
+}
+
+# =============================================================================
+#   audioforge validate docs/examples/orchestral/ode-to-fable/ode_to_fable.af
+#   audioforge render   docs/examples/orchestral/ode-to-fable/ode_to_fable.af -o docs/examples/orchestral/ode-to-fable/audio/current
+# =============================================================================

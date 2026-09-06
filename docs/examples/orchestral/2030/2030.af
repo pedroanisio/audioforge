@@ -1,0 +1,298 @@
+# 2030 — theme for "Painting with FrameGraph"  (orchestral, gap-safe)
+# A reading of framegraph-reconstruction-evolution-4k60.mp4 in sound.
+# Voiced with the VSCO-2 Community Edition orchestra (content-addressed, pinned).
+# Sustained bed = seamless synth pad; sampled strings/basses are re-bowed every
+# 6 beats (VSCO sustains are non-looping ~7 s one-shots). Verified: zero
+# render_plan_sustain_gap warnings.  Foundation -> Composition -> Grind ->
+# Restart at v90 (A minor -> C major) -> Refinement, over an invariant clock.
+
+asset theme_2030 {
+  kind: cue
+  duration: 120s
+  tempo: 90bpm
+  key: A minor, 120b=C major
+  library: "VSCO-2-CE-1.1.0@ff140e8b5c5d6916ccf8088b0fc7dfb632f434d056aa764400905fdbd5824b0e"
+  emotion: wonder=0.55, awe=0.4, tension=0.3, triumph=0.45, calm=0.35, intimacy=0.2
+  intensity: 0s=0.15, 24s=0.32, 44s=0.55, 78s=0.6, 80s=0.34, 84s=0.42, 110s=0.9, 116s=0.86, 120s=0.7
+
+  marker foundation  @ 0s
+  marker composition @ 24s
+  marker grind       @ 44s
+  marker restart     @ 80s
+  marker refinement  @ 84s
+  marker final_frame @ 116s
+
+  motif seed {
+    A3 @ 0b   for 1b   vel 0.6
+    C4 @ 1b   for 1b   vel 0.66
+    E4 @ 2b   for 1.5b vel 0.72
+    D4 @ 3.5b for 1.5b vel 0.68
+  }
+
+  # Act I underpainting: a seamless synth pad — the large, stable regions that never drop.
+  layer bed : notes {
+    osc: pad
+    bandwidth: 55c
+    gain: -14db
+    env: a=3s d=2s s=0.85 r=5s
+    notes: A2 @ 0b for 30b vel 0.7,
+           E3 @ 0b for 30b vel 0.7,
+           A3 @ 0b for 30b vel 0.7,
+           C4 @ 0b for 30b vel 0.7,
+           F2 @ 30b for 30b vel 0.7,
+           C3 @ 30b for 30b vel 0.7,
+           A3 @ 30b for 30b vel 0.7,
+           E4 @ 30b for 30b vel 0.7,
+           D2 @ 60b for 30b vel 0.7,
+           A2 @ 60b for 30b vel 0.7,
+           F3 @ 60b for 30b vel 0.7,
+           C4 @ 60b for 30b vel 0.7,
+           E2 @ 90b for 30b vel 0.7,
+           B2 @ 90b for 30b vel 0.7,
+           G3 @ 90b for 30b vel 0.7,
+           D4 @ 90b for 30b vel 0.7,
+           C3 @ 120b for 30b vel 0.7,
+           G3 @ 120b for 30b vel 0.7,
+           E4 @ 120b for 30b vel 0.7,
+           B4 @ 120b for 30b vel 0.7,
+           F2 @ 150b for 15b vel 0.7,
+           C3 @ 150b for 15b vel 0.7,
+           A3 @ 150b for 15b vel 0.7,
+           E4 @ 150b for 15b vel 0.7,
+           C3 @ 165b for 15b vel 0.7,
+           G3 @ 165b for 15b vel 0.7,
+           E4 @ 165b for 15b vel 0.7,
+           B4 @ 165b for 15b vel 0.7
+    fx: lowpass(1500hz), reverb(decay=5s, mix=0.3)
+    auto cutoff: 0s=600, 44s=1500, 80s=850, 116s=2600
+  }
+
+  # real string color on top, re-bowed so the non-looping samples never run out
+  layer strings : instrument {
+    instrument: CelloEnsSusVib
+    articulation: sustain
+    section: size=3 spread=0.7
+    gain: -15db
+    notes: A3 @ 0b for 6.5b vel 0.55,
+           C4 @ 0b for 6.5b vel 0.55,
+           E4 @ 0b for 6.5b vel 0.55,
+           A3 @ 6b for 6.5b vel 0.55,
+           C4 @ 6b for 6.5b vel 0.55,
+           E4 @ 6b for 6.5b vel 0.55,
+           A3 @ 12b for 6.5b vel 0.55,
+           C4 @ 12b for 6.5b vel 0.55,
+           E4 @ 12b for 6.5b vel 0.55,
+           A3 @ 18b for 6.5b vel 0.55,
+           C4 @ 18b for 6.5b vel 0.55,
+           E4 @ 18b for 6.5b vel 0.55,
+           A3 @ 24b for 6b vel 0.55,
+           C4 @ 24b for 6b vel 0.55,
+           E4 @ 24b for 6b vel 0.55,
+           A3 @ 30b for 6.5b vel 0.55,
+           C4 @ 30b for 6.5b vel 0.55,
+           E4 @ 30b for 6.5b vel 0.55,
+           A3 @ 36b for 6.5b vel 0.55,
+           C4 @ 36b for 6.5b vel 0.55,
+           E4 @ 36b for 6.5b vel 0.55,
+           A3 @ 42b for 6.5b vel 0.55,
+           C4 @ 42b for 6.5b vel 0.55,
+           E4 @ 42b for 6.5b vel 0.55,
+           A3 @ 48b for 6.5b vel 0.55,
+           C4 @ 48b for 6.5b vel 0.55,
+           E4 @ 48b for 6.5b vel 0.55,
+           A3 @ 54b for 6b vel 0.55,
+           C4 @ 54b for 6b vel 0.55,
+           E4 @ 54b for 6b vel 0.55,
+           A3 @ 60b for 6.5b vel 0.55,
+           C4 @ 60b for 6.5b vel 0.55,
+           F4 @ 60b for 6.5b vel 0.55,
+           A3 @ 66b for 6.5b vel 0.55,
+           C4 @ 66b for 6.5b vel 0.55,
+           F4 @ 66b for 6.5b vel 0.55,
+           A3 @ 72b for 6.5b vel 0.55,
+           C4 @ 72b for 6.5b vel 0.55,
+           F4 @ 72b for 6.5b vel 0.55,
+           A3 @ 78b for 6.5b vel 0.55,
+           C4 @ 78b for 6.5b vel 0.55,
+           F4 @ 78b for 6.5b vel 0.55,
+           A3 @ 84b for 6b vel 0.55,
+           C4 @ 84b for 6b vel 0.55,
+           F4 @ 84b for 6b vel 0.55,
+           B3 @ 90b for 6.5b vel 0.55,
+           D4 @ 90b for 6.5b vel 0.55,
+           G4 @ 90b for 6.5b vel 0.55,
+           B3 @ 96b for 6.5b vel 0.55,
+           D4 @ 96b for 6.5b vel 0.55,
+           G4 @ 96b for 6.5b vel 0.55,
+           B3 @ 102b for 6.5b vel 0.55,
+           D4 @ 102b for 6.5b vel 0.55,
+           G4 @ 102b for 6.5b vel 0.55,
+           B3 @ 108b for 6.5b vel 0.55,
+           D4 @ 108b for 6.5b vel 0.55,
+           G4 @ 108b for 6.5b vel 0.55,
+           B3 @ 114b for 6b vel 0.55,
+           D4 @ 114b for 6b vel 0.55,
+           G4 @ 114b for 6b vel 0.55,
+           C4 @ 120b for 6.5b vel 0.55,
+           E4 @ 120b for 6.5b vel 0.55,
+           G4 @ 120b for 6.5b vel 0.55,
+           C4 @ 126b for 6.5b vel 0.55,
+           E4 @ 126b for 6.5b vel 0.55,
+           G4 @ 126b for 6.5b vel 0.55,
+           C4 @ 132b for 6.5b vel 0.55,
+           E4 @ 132b for 6.5b vel 0.55,
+           G4 @ 132b for 6.5b vel 0.55,
+           C4 @ 138b for 6.5b vel 0.55,
+           E4 @ 138b for 6.5b vel 0.55,
+           G4 @ 138b for 6.5b vel 0.55,
+           C4 @ 144b for 6b vel 0.55,
+           E4 @ 144b for 6b vel 0.55,
+           G4 @ 144b for 6b vel 0.55,
+           A3 @ 150b for 6.5b vel 0.55,
+           C4 @ 150b for 6.5b vel 0.55,
+           E4 @ 150b for 6.5b vel 0.55,
+           A3 @ 156b for 6.5b vel 0.55,
+           C4 @ 156b for 6.5b vel 0.55,
+           E4 @ 156b for 6.5b vel 0.55,
+           A3 @ 162b for 3b vel 0.55,
+           C4 @ 162b for 3b vel 0.55,
+           E4 @ 162b for 3b vel 0.55,
+           C4 @ 165b for 6.5b vel 0.55,
+           E4 @ 165b for 6.5b vel 0.55,
+           G4 @ 165b for 6.5b vel 0.55,
+           C4 @ 171b for 6.5b vel 0.55,
+           E4 @ 171b for 6.5b vel 0.55,
+           G4 @ 171b for 6.5b vel 0.55,
+           C4 @ 177b for 3b vel 0.55,
+           E4 @ 177b for 3b vel 0.55,
+           G4 @ 177b for 3b vel 0.55
+  }
+
+  # low weight: contrabass roots, re-bowed
+  layer basses : instrument {
+    instrument: ContrabassSusVB
+    gain: -15db
+    notes: A2 @ 0b for 6.5b vel 0.6,
+           A2 @ 6b for 6.5b vel 0.6,
+           A2 @ 12b for 6.5b vel 0.6,
+           A2 @ 18b for 6.5b vel 0.6,
+           A2 @ 24b for 6b vel 0.6,
+           F2 @ 30b for 6.5b vel 0.6,
+           F2 @ 36b for 6.5b vel 0.6,
+           F2 @ 42b for 6.5b vel 0.6,
+           F2 @ 48b for 6.5b vel 0.6,
+           F2 @ 54b for 6b vel 0.6,
+           D2 @ 60b for 6.5b vel 0.6,
+           D2 @ 66b for 6.5b vel 0.6,
+           D2 @ 72b for 6.5b vel 0.6,
+           D2 @ 78b for 6.5b vel 0.6,
+           D2 @ 84b for 6b vel 0.6,
+           E2 @ 90b for 6.5b vel 0.6,
+           E2 @ 96b for 6.5b vel 0.6,
+           E2 @ 102b for 6.5b vel 0.6,
+           E2 @ 108b for 6.5b vel 0.6,
+           E2 @ 114b for 6b vel 0.6,
+           C3 @ 120b for 6.5b vel 0.6,
+           C3 @ 126b for 6.5b vel 0.6,
+           C3 @ 132b for 6.5b vel 0.6,
+           C3 @ 138b for 6.5b vel 0.6,
+           C3 @ 144b for 6b vel 0.6,
+           F2 @ 150b for 6.5b vel 0.6,
+           F2 @ 156b for 6.5b vel 0.6,
+           F2 @ 162b for 3b vel 0.6,
+           C3 @ 165b for 6.5b vel 0.6,
+           C3 @ 171b for 6.5b vel 0.6,
+           C3 @ 177b for 3b vel 0.6
+  }
+
+  # the verification loop: a quiet, invariant synth tick, running the entire way down
+  layer clock : notes {
+    osc: pluck
+    damping: 0.6
+    brightness: 0.45
+    gain: -25db
+    env: a=0.004s d=0.14s s=0.0 r=0.14s
+    notes: A5 @ 0b for 0.5b vel 0.5
+    loop: 1b
+    pan: 0.26
+  }
+
+  # Act II bloom: detail arrives all at once (8 -> 1,171) — tremolo strings, re-triggered
+  layer detail : instrument {
+    instrument: CelloEnsTrem
+    section: size=2 spread=0.6
+    gain: -18db
+    start: 22s
+    notes: A3 @ 36b for 8.5b vel 0.55,
+           A3 @ 44b for 8.5b vel 0.55,
+           A3 @ 52b for 8.5b vel 0.55,
+           A3 @ 60b for 8.5b vel 0.55,
+           E4 @ 68b for 8.5b vel 0.55,
+           E4 @ 76b for 8.5b vel 0.55,
+           E4 @ 84b for 8.5b vel 0.55,
+           E4 @ 92b for 8.5b vel 0.55,
+           E4 @ 100b for 8.5b vel 0.55,
+           E4 @ 108b for 8.5b vel 0.55,
+           E4 @ 116b for 8.5b vel 0.55,
+           C4 @ 124b for 8.5b vel 0.55,
+           C4 @ 132b for 8.5b vel 0.55,
+           C4 @ 140b for 8.5b vel 0.55,
+           C4 @ 148b for 8.5b vel 0.55,
+           C4 @ 156b for 8.5b vel 0.55,
+           G4 @ 164b for 8.5b vel 0.55,
+           G4 @ 172b for 8.5b vel 0.55
+    pan: 0.16
+  }
+
+  # Act III grind: the reconstruction, trial by trial (each play is a version bump), on oboe.
+  layer reconstruct : instrument {
+    instrument: OboeSusVib
+    gain: -13db
+    dynamic: 36b=mp, 96b=mf, 120b=mp, 160b=f
+    play seed @ 36b  transpose +12st
+    play seed @ 44b  invert transpose +12st vel 0.9
+    play seed @ 60b  diatonic 2 transpose +12st
+    play seed @ 78b  retrograde diatonic -1 transpose +12st
+    play seed @ 96b  stretch 1.5 transpose +12st vel 0.85
+    play seed @ 108b diatonic 1 transpose +12st
+    play seed @ 120b transpose +12st vel 0.7
+    play seed @ 132b diatonic 2 transpose +12st vel 0.85
+    pan: -0.22
+  }
+
+  # Act V: the same figure, drawn better — a noble French-horn statement in the C-major redo.
+  layer singing : instrument {
+    instrument: FHornSus
+    gain: -12db
+    start: 82s
+    dynamic: 120b=mp, 144b=mf, 175b=f
+    play seed @ 132b diatonic 2 legato
+    play seed @ 150b diatonic 4
+    play seed @ 162b diatonic 2
+    pan: 0.2
+  }
+
+  # the deterministic backbone: soft timpani at structural arrivals, grounding the grid
+  layer heartbeat : instrument {
+    instrument: Timpani
+    gain: -12db
+    humanize: 0.06
+    notes: A2 @ 60b  for 1b vel 0.4,
+           E2 @ 96b  for 1b vel 0.45,
+           C2 @ 120b for 1b vel 0.7,
+           C2 @ 136b for 1b vel 0.5,
+           G2 @ 152b for 1b vel 0.55,
+           C2 @ 160b for 1b vel 0.7,
+           C2 @ 168b for 1b vel 0.6
+    pan: -0.08
+  }
+
+  master {
+    width: 1.0
+    lufs: -16
+    peak: -1db
+    fadein: 1.5s
+    fadeout: 3.5s
+    fx: peak(220hz, gain=-1.5, q=0.9), fdn(rt60=3.2, rt60_high=1.3, mix=0.26), saturate(amount=0.1, warmth=0.3)
+  }
+}

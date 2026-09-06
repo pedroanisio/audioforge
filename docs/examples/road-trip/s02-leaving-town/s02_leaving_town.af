@@ -1,0 +1,121 @@
+# 02 — Leaving Town. Neighborhood roads, first jokes in the car, the road
+# motif is introduced plainly. Relaxed 98 BPM groove, bouncy warm bass.
+asset s02_leaving_town {
+  kind: soundtrack
+  duration: 540s
+  tempo: 98bpm
+  key: A major
+  groove: swing16 0.12
+  emotion: wonder=0.5, calm=0.3, triumph=0.2
+
+  marker neighborhood     @ 0s
+  marker first_laugh      @ 60s
+  marker road_motif_intro @ 180s
+  marker edge_of_town     @ 480s
+
+  motif road {
+    A4  @ 0b   for 1b   vel 0.7
+    C#5 @ 1b   for 1b   vel 0.75
+    E5  @ 2b   for 1b   vel 0.8
+    D5  @ 3b   for 1.5b vel 0.78
+    C#5 @ 4.5b for 0.5b vel 0.7
+    A4  @ 5b   for 3b   vel 0.65
+  }
+
+  bus pump {
+    duck: source=kick amount=4.5db attack=0.01s release=0.18s threshold=-40db
+    fx: saturate(amount=0.08, warmth=0.2)
+  }
+
+  layer kick : drums {
+    voice: kick
+    pattern: X.......X.......
+    tune: -4st
+    decay: 0.5
+    snap: 0.35
+    bend: 0.2
+    gain: -11db
+    humanize: 0.05
+    auto gain: 0s=-34.8, 540s=-28
+  }
+
+  layer clap : drums {
+    voice: clap
+    pattern: ....x.......x...
+    gain: -17db
+    humanize: 0.08
+    fx: reverb(decay=0.9s, mix=0.16)
+    auto gain: 0s=-36.6, 540s=-31
+  }
+
+  layer hat : drums {
+    voice: hat
+    pattern: ..x.x.x.x.x.x.x.
+    tune: 1st
+    decay: 0.28
+    gain: -19db
+    humanize: 0.07
+    auto gain: 0s=-33.7, 540s=-29.5
+  }
+
+  layer bass : notes {
+    osc: saw
+    bus: pump
+    gain: -12db
+    env: a=0.01s d=0.14s s=0.4 r=0.1s
+    velbright: 0.4
+    notes: A1 @ 0b for 0.9b vel 0.75, A1 @ 2b for 0.9b vel 0.6, F#1 @ 4b for 0.9b vel 0.75, F#1 @ 6b for 0.9b vel 0.6, D2 @ 8b for 0.9b vel 0.75, D2 @ 10b for 0.9b vel 0.6, E1 @ 12b for 0.9b vel 0.75, E1 @ 14b for 0.9b vel 0.65
+    loop: 16b
+    fx: lowpass(500hz), saturate(amount=0.1, warmth=0.3)
+    auto cutoff: 0s=368, 540s=440
+    auto gain: 0s=-31.6, 540s=-26
+  }
+
+  layer pad : notes {
+    osc: pad
+    bandwidth: 40c
+    bus: pump
+    gain: -18db
+    env: a=1s d=1s s=0.8 r=1.5s
+    notes: A2maj7 @ 0b for 8b, F#2min7 @ 8b for 8b, D3maj7 @ 16b for 8b, E3maj7 @ 24b for 8b
+    loop: 32b
+    fx: lowpass(1400hz), reverb(decay=2.5s, mix=0.25)
+    auto cutoff: 0s=740, 540s=900
+    auto gain: 0s=-22.7, 540s=-20.5
+  }
+
+  layer motif_lead : notes {
+    osc: pluck
+    damping: 0.4
+    brightness: 0.65
+    gain: -14db
+    env: a=0.005s d=0.25s s=0.3 r=0.3s
+    play road @ 32b
+    play road @ 64b
+    play road @ 96b
+    play road @ 128b vel 0.85
+    play road @ 160b
+    play road @ 192b
+    play road @ 224b
+    play road @ 256b diatonic 1
+    play road @ 288b
+    play road @ 320b
+    play road @ 352b
+    play road @ 384b vel 0.85
+    play road @ 416b
+    play road @ 448b
+    loop: 0b
+    fx: lowpass(2600hz), delay(time=0.28, feedback=0.2, mix=0.15)
+    auto gain: 0s=-32.2, 540s=-27
+    pan: 0.2
+  }
+
+  master {
+    width: 0.9
+    lufs: -14
+    peak: -1db
+    fadein: 1s
+    fadeout: 2s
+    fx: lowpass(13000hz), highpass(30hz), fdn(rt60=1.8, rt60_high=0.9, mix=0.12), comp(threshold=-16, ratio=1.8, attack=0.02, release=0.18, knee=6), saturate(amount=0.08, warmth=0.22)
+  }
+}

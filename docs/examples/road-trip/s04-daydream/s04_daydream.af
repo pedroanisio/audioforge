@@ -1,0 +1,115 @@
+# 04 — Window Seat Daydream. Clouds, fields, distant hills. Drums lighten;
+# bell synths and a childlike (not childish) melody carry the section.
+asset s04_daydream {
+  kind: soundtrack
+  duration: 540s
+  tempo: 100bpm
+  key: A major
+  groove: laidback 0.25
+  emotion: wonder=0.7, calm=0.4, intimacy=0.3
+
+  marker window_gaze    @ 0s
+  marker clouds_drift    @ 180s
+  marker distant_hills   @ 360s
+  marker second_thought  @ 480s
+
+  motif road {
+    A4  @ 0b   for 1b   vel 0.7
+    C#5 @ 1b   for 1b   vel 0.75
+    E5  @ 2b   for 1b   vel 0.8
+    D5  @ 3b   for 1.5b vel 0.78
+    C#5 @ 4.5b for 0.5b vel 0.7
+    A4  @ 5b   for 3b   vel 0.65
+  }
+
+  layer kick : drums {
+    voice: kick
+    pattern: X.......x.......
+    tune: -3st
+    decay: 0.55
+    snap: 0.2
+    bend: 0.1
+    gain: -24db
+    humanize: 0.07
+    auto gain: 0s=-34.4, 189s=-39.6, 351s=-39.6, 540s=-34.4
+  }
+
+  layer shaker : drums {
+    voice: hat
+    pattern: x.x.x.x.x.x.x.x.
+    tune: 3st
+    decay: 0.25
+    gain: -22db
+    humanize: 0.12
+    auto gain: 0s=-29.2, 189s=-32.8, 351s=-32.8, 540s=-29.2
+  }
+
+  layer ohat : drums {
+    voice: open_hat
+    pattern: ..x...x...x...x.
+    decay: 0.4
+    gain: -27db
+    humanize: 0.1
+    auto gain: 0s=-34.2, 189s=-37.8, 351s=-37.8, 540s=-34.2
+  }
+
+  layer bass : notes {
+    osc: triangle
+    gain: -20db
+    env: a=0.02s d=0.3s s=0.5 r=0.5s
+    notes: A2 @ 0b for 3.5b vel 0.6, F#2 @ 4b for 3.5b vel 0.55, D2 @ 8b for 3.5b vel 0.6, E2 @ 12b for 3.5b vel 0.55
+    loop: 16b
+    fx: lowpass(500hz)
+    auto gain: 0s=-28, 189s=-32, 351s=-32, 540s=-28
+  }
+
+  layer pad : notes {
+    osc: pad
+    bandwidth: 55c
+    gain: -18db
+    env: a=2s d=1.5s s=0.85 r=3s
+    notes: A2maj7 @ 0b for 16b, F#2min7 @ 16b for 16b, D3maj7 @ 32b for 16b, E3maj7 @ 48b for 16b
+    loop: 64b
+    fx: lowpass(1000hz), reverb(decay=4s, mix=0.38)
+    auto cutoff: 0s=1560, 189s=1240, 351s=1240, 540s=1560
+    auto gain: 0s=-19.4, 189s=-21.6, 351s=-21.6, 540s=-19.4
+  }
+
+  layer bell_arp : notes {
+    osc: pluck
+    damping: 0.35
+    brightness: 0.7
+    gain: -18db
+    env: a=0.004s d=0.5s s=0.0 r=0.5s
+    notes: A4maj7 @ 0b for 8b, F#4min7 @ 8b for 8b, D5maj7 @ 16b for 8b, E5maj7 @ 24b for 8b
+    arp: up rate=0.5b octaves=1 gate=0.7
+    loop: 32b
+    fx: bandpass(2400hz), reverb(decay=3.5s, mix=0.4), delay(time=0.375, feedback=0.3, mix=0.22)
+    auto gain: 0s=-26.8, 189s=-31.2, 351s=-31.2, 540s=-26.8
+    pan: 0.22
+  }
+
+  layer motif_far : notes {
+    osc: pluck
+    damping: 0.6
+    brightness: 0.45
+    gain: -20db
+    play road @ 64b transpose +12st
+    play road @ 128b diatonic 1 transpose +12st
+    play road @ 192b transpose +12st
+    play road @ 256b diatonic 1 transpose +12st
+    loop: 0b
+    fx: lowpass(2400hz), reverb(decay=3s, mix=0.3)
+    auto gain: 0s=-26.8, 189s=-31.2, 351s=-31.2, 540s=-26.8
+    pan: -0.18
+  }
+
+  master {
+    width: 0.9
+    lufs: -16
+    peak: -1.2db
+    fadein: 1.5s
+    fadeout: 2.5s
+    fx: lowpass(11000hz), highpass(30hz), fdn(rt60=2.6, rt60_high=1.1, mix=0.2), saturate(amount=0.06, warmth=0.25)
+  }
+}

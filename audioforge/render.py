@@ -367,6 +367,10 @@ def _premaster(spec: dict, root: str, sr: int, master: dict,
             stg = spec["stage"]
             mics = stg.get("mics", {})
             az, dist = seat["az_deg"], seat["dist_m"]
+            if sig.ndim == 2 and layer.get('type') == 'instrument' and not layer.get('section'):
+                from .sampler import pan_signal
+                from .stage import seat_pan_itd
+                sig = pan_signal(sig, seat_pan_itd(az)[0])
             mono = sig.mean(axis=1) if sig.ndim == 2 else sig
             st = np.zeros((total_n, 2))
             cw = float(mics.get("close", 0.2))
@@ -379,7 +383,11 @@ def _premaster(spec: dict, root: str, sr: int, master: dict,
                                      stg.get("dims", [18.0, 26.0, 10.0]))
             stage_tail_in += mono            # shared hall feed (unit gain:
         elif sig.ndim == 2:                  # tail level ~ distance-flat
-            st = sig                         # in a hall, documented)
+            if layer.get("type") == "instrument" and not layer.get("section"):
+                from .sampler import pan_signal
+                st = pan_signal(sig, float(layer.get("pan", 0)))
+            else:
+                st = sig                    # section players already seated
         else:
             pan = float(layer.get("pan", 0.0))  # -1 L..+1 R, const power
             theta = (pan + 1.0) * np.pi / 4.0

@@ -1,0 +1,534 @@
+# =============================================================================
+# AudioForge DSL 1.7 · Engine 2.14.0
+#
+# "Ode to Fable" — Symphony in D  (SYMPHONIC REWRITE, v2: voice-leading & conflict)
+# for Claude Fable 5 (Anthropic), released 2026-06-09
+#
+# Original composition. generated_by: Claude Opus 4.8 via Claude Code · 2026-06-11
+#
+# v2 answers a second craft critique of the generative rewrite. The architecture
+# was sound (one cell -> MYTHOS/FABLE/OPUS/FATE); this pass pursues musical
+# INEVITABILITY over architecture, on seven specific points:
+#   1. The development is longer and harsher — the cell is not let go.
+#   2. A real ORCHESTRAL dominant build precedes IV (tremolo + the FATE rhythm on
+#      A + a held A/E + bass A-pedal + woodwind fragments) -> silence -> D major.
+#      (No cinematic tom roll.)
+#   3. OPUS INTERRUPTS the D-major arrival once, pulling back to shadow, before
+#      the major proves itself.
+#   4. FABLE and MYTHOS combine into ONE explicit hybrid theme (`apotheosis`):
+#      the bright cell D-F#-E-A launches the lyric fall.
+#   5. Chromatic INNER LINES (violas/clarinet/bassoon) crawl through the mixture
+#      region — harmony made of lines, not blocks.
+#   6. D major arrives QUIETLY first (strings only); brass/bells are withheld until
+#      it has been tested.
+#   7. The coda CADENCE quotes the exact original rhythm (short-short-short-LONG)
+#      one last time.
+#
+# Section times (engine beat->second integral, with rubato):
+#   I 0–31s · DEV 31–56s · II 56–88s · III 88–136s · BUILD 136–145s
+#   IV(quiet arrival) 145s · IV(triumph) 159s · coda 180s
+# =============================================================================
+
+asset ode_to_fable_symphonic_v2 {
+
+  kind:       soundtrack
+  duration:   208s
+  samplerate: 48000
+  bitdepth:   24
+
+  tempo:      54bpm, 12b=54bpm, 20b=120bpm, 40b=120bpm,
+              44b=140bpm, 92b=140bpm, 100b=84bpm, 104b=88bpm,
+              120b=88bpm, 124b=64bpm, 138b=64bpm, 140b=60bpm,
+              188b=60bpm, 192b=72bpm, 200b=100bpm, 206b=96bpm,
+              212b=104bpm, 224b=116bpm, 256b=116bpm, 264b=96bpm,
+              272b=66bpm, 280b=50bpm, 288b=44bpm
+
+  key:        D minor, 140b=F major, 200b=D major
+
+  emotion:    awe=0.60, wonder=0.52, cinematic_intensity=0.50,
+              tension=0.48, calm=0.28
+
+  intensity:  0s=0.22, 14s=0.50, 31s=0.80, 50s=0.95,
+              56s=0.70, 70s=0.86, 80s=0.30, 88s=0.40,
+              125s=0.58, 136s=0.55, 143s=0.86, 145s=0.45,
+              150s=0.40, 159s=0.80, 172s=1.0, 180s=0.85,
+              195s=0.55, 208s=0.30
+
+  library:    "VSCO-2-CE-1.1.0@ff140e8b5c5d6916ccf8088b0fc7dfb632f434d056aa764400905fdbd5824b0e"
+
+  marker mvt1_mythos              @ 0s
+  marker dev_the_argument         @ 31s
+  marker mvt2_the_tempering       @ 56s
+  marker mvt3_the_telling         @ 88s
+  marker dominant_build           @ 136s
+  marker mvt4_arrival             @ 145s
+  marker mvt4_triumph             @ 159s
+  marker coda                     @ 180s
+
+  # ===========================================================================
+  # THE CELL AND ITS DERIVATIVES
+  # ===========================================================================
+  motif mythos       { D3 @ 0b for 0.5b vel 0.80  F3 @ 0.5b for 0.5b vel 0.82  E3 @ 1b for 0.5b vel 0.78  A3 @ 1.5b for 2.5b vel 0.88 }
+  motif mythos_head  { D3 @ 0b for 0.5b vel 0.80  F3 @ 0.5b for 0.5b vel 0.82  E3 @ 1b for 0.5b vel 0.84 }
+  motif mythos_bright{ D3 @ 0b for 0.5b vel 0.78  F#3 @ 0.5b for 0.5b vel 0.82  E3 @ 1b for 0.5b vel 0.78  A3 @ 1.5b for 2.5b vel 0.86 }
+  motif fable        { F4 @ 0b for 0.75b vel 0.70  A4 @ 0.75b for 0.75b vel 0.74  G4 @ 1.5b for 0.5b vel 0.78  C5 @ 2b for 2b vel 0.84  Bb4 @ 4b for 1b vel 0.74  A4 @ 5b for 1b vel 0.72  F4 @ 6b for 2b vel 0.70 }
+  motif opus         { D5 @ 0b for 1b vel 0.60  B4 @ 1b for 1b vel 0.58  C5 @ 2b for 1b vel 0.56  G4 @ 3b for 1.5b vel 0.54  D4 @ 4.5b for 1.5b vel 0.50 }
+
+  # #4 HYBRID THEME — the bright cell (D F# E A, rhythm s-s-s-LONG) fused to the
+  # fable-like lyric fall, all in D major. The two ideas become one melody.
+  motif apotheosis   { D4 @ 0b for 0.5b vel 0.80  F#4 @ 0.5b for 0.5b vel 0.82  E4 @ 1b for 0.5b vel 0.80  A4 @ 1.5b for 1.5b vel 0.90  G4 @ 3b for 1b vel 0.80  F#4 @ 4b for 1b vel 0.78  E4 @ 5b for 1b vel 0.74  D4 @ 6b for 2b vel 0.72 }
+
+  # #5 CHROMATIC INNER LINE — a crawling descent for the mixture region
+  motif inner_chrom  { Bb3 @ 0b for 1b vel 0.50  A3 @ 1b for 1b vel 0.50  Ab3 @ 2b for 1b vel 0.50  G3 @ 3b for 1b vel 0.52  Gb3 @ 4b for 1b vel 0.52  F3 @ 5b for 1b vel 0.52  E3 @ 6b for 2b vel 0.54 }
+
+  # The RHYTHM as a motif — timpani "destiny" tag
+  motif fate         { D2 @ 0b for 0.5b vel 0.72  D2 @ 0.5b for 0.5b vel 0.66  D2 @ 1b for 0.5b vel 0.74  A2 @ 1.5b for 1.5b vel 0.82 }
+  motif fate_bright  { D2 @ 0b for 0.5b vel 0.74  D2 @ 0.5b for 0.5b vel 0.72  D2 @ 1b for 0.5b vel 0.78  D2 @ 1.5b for 1.5b vel 0.86 }
+  motif fate_A       { A2 @ 0b for 0.5b vel 0.70  A2 @ 0.5b for 0.5b vel 0.68  A2 @ 1b for 0.5b vel 0.74  A2 @ 1.5b for 1.5b vel 0.82 }
+
+  # ===========================================================================
+  # HARMONY
+  # ===========================================================================
+  motif prog_I1   { D3min @ 0b for 2b  A27 @ 2b for 2b  D3min @ 4b for 2b  F#2dim @ 6b for 2b }
+  motif prog_I2   { G3min @ 0b for 2b  Eb3maj @ 2b for 2b  A27sus4 @ 4b for 2b  A27 @ 6b for 2b }
+  motif prog_II1  { G3min @ 0b for 2b  Eb3maj @ 2b for 2b  C#2dim7 @ 4b for 2b  D3min @ 6b for 2b }
+  motif prog_II2  { Bb2min @ 0b for 2b  Gb2maj @ 2b for 2b  E2dim @ 4b for 2b  A27sus4 @ 6b for 2b }
+  motif prog_III1 { F3maj7 @ 0b for 2b  A27 @ 2b for 2b  D3min7 @ 4b for 2b  Bb2maj7 @ 6b for 2b }
+  motif prog_III2 { G3min7 @ 0b for 2b  C37 @ 2b for 2b  F3maj7 @ 4b for 2b  A27 @ 6b for 2b }
+  motif prog_arr  { D3maj @ 0b for 6b }                                  # quiet arrival (held)
+  motif prog_feint{ D3min @ 0b for 2b  Bb2maj @ 2b for 2b  A27 @ 4b for 2b }   # OPUS pulls to shadow
+  motif prog_IV1  { D3maj @ 0b for 2b  G3maj @ 2b for 2b  A27 @ 4b for 2b  D3maj @ 6b for 2b }
+  motif prog_IV2  { D3maj @ 0b for 2b  Bb2maj @ 2b for 2b  G3maj @ 4b for 2b  A27 @ 6b for 2b }
+  motif prog_coda { D3maj @ 0b for 4b  G3maj @ 4b for 2b  D3maj @ 6b for 2b }
+
+  motif roots_I   { D2 @ 0b for 2b  A1 @ 2b for 2b  D2 @ 4b for 2b  Bb1 @ 6b for 2b }
+  motif roots_dev { D2 @ 0b for 1b  C#2 @ 1b for 1b  Bb1 @ 2b for 1b  A1 @ 3b for 1b }
+  motif roots_II  { G2 @ 0b for 2b  Eb2 @ 2b for 2b  A1 @ 4b for 2b  D2 @ 6b for 2b }
+  motif roots_III { F2 @ 0b for 2b  A1 @ 2b for 2b  D2 @ 4b for 2b  Bb1 @ 6b for 2b }
+  motif roots_IV  { D2 @ 0b for 2b  G2 @ 2b for 2b  A1 @ 4b for 2b  D2 @ 6b for 2b }
+
+  # ===========================================================================
+  # STAGE
+  # ===========================================================================
+  stage {
+    hall: "stalbans_ortf_ir.wav@be670d833feaf274e601ad026b4f32f126c71fa8eb9b386e855ed9f0035410aa"
+    mics: tree=0.62, close=0.20, ambient=0.42
+    size: 22m, 34m, 14m
+  }
+
+  # ===========================================================================
+  # STRINGS
+  # ===========================================================================
+
+  layer violins : instrument {
+    instrument:   "ViolinEnsSusVib"
+    articulation: sustain
+    seat:         -25deg @ 5.0m
+    dynamic:      0b=p, 20b=mf, 44b=f, 100b=mp, 140b=mp, 200b=p, 224b=ff
+    vibrato:      rate=5.0 depth=14c delay=0.35s
+    phrasing:     0.65
+    humanize:     time=0.010s vel=0.06
+
+    # coda glow — D MAJOR held as the cell brightens
+    notes: D5 @ 264b for 18b vel 0.42, F#5 @ 264b for 18b vel 0.40, A5 @ 264b for 18b vel 0.40
+
+    # I. the cell rises (octave up)
+    play mythos @ 20b legato transpose +12st  vel 0.66
+    play mythos @ 24b legato transpose +12st  vel 0.72
+    play mythos @ 36b legato transpose +12st  diatonic +2  vel 0.80
+    # DEV. compressed INVERSION, relentless, in conflict with the cellos' original
+    play mythos @ 60b transpose +12st  invert  stretch 0.5  vel 0.74
+    play mythos @ 64b transpose +12st  invert  stretch 0.5  diatonic +1  vel 0.78
+    play mythos @ 72b transpose +12st  invert  stretch 0.5  vel 0.82
+    play mythos @ 76b transpose +12st  invert  stretch 0.5  diatonic +2  vel 0.84
+    play mythos @ 84b transpose +12st  invert  stretch 0.5  diatonic +1  vel 0.88
+    play mythos @ 92b transpose +12st  invert  stretch 0.5  vel 0.90
+    # II. a thinned high tone as the dominant is withdrawn
+    play mythos @ 100b transpose +12st  vel 0.74
+    # III. warm halo above the telling
+    play fable @ 148b legato transpose +12st  vel 0.48
+    play fable @ 172b legato transpose +12st  vel 0.54
+    # IV. #6 the QUIET arrival — the hybrid theme stated softly, strings alone
+    play apotheosis @ 200b legato vel 0.46
+    # #3 OPUS interrupts — pulls the line back into shadow
+    play opus @ 206b legato transpose +12st  vel 0.50
+    play opus @ 212b legato transpose +12st  vel 0.56
+    # #4/#6 the hybrid theme proves itself — now in full
+    play apotheosis @ 224b legato transpose +12st  vel 0.90
+    play apotheosis @ 232b legato transpose +12st  vel 0.96
+    play apotheosis @ 240b legato transpose +12st  vel 1.0
+    play apotheosis @ 248b legato transpose +12st  vel 0.92
+  }
+
+  # Tremolo violins — #2 the dominant build (held tremolo on A/E), + dev shimmer
+  layer vln_trem : instrument {
+    instrument:   "ViolinEnsTrem"
+    articulation: sustain
+    seat:         -20deg @ 5.2m
+    dynamic:      188b=pp, 196b=mf, 200b=p
+
+    # #2 the dominant pedal, tremolo, crescendo into the silence before D major
+    notes: A4 @ 188b for 11b vel 0.34, E5 @ 188b for 11b vel 0.32
+    auto gain: 135.9s=-26db, 143s=-9db, 145s=-30db
+  }
+
+  # Violas — inner motion: head fragments (dev) + CHROMATIC inner lines (II)
+  layer violas : instrument {
+    instrument:   "ViolaEnsSusVib"
+    articulation: sustain
+    seat:         +8deg @ 5.4m
+    dynamic:      0b=p, 20b=mp, 44b=mf, 100b=mp, 224b=f
+    vibrato:      rate=4.8 depth=12c delay=0.4s
+    humanize:     time=0.012s vel=0.07
+
+    notes: D4 @ 168b for 7b vel 0.38, A4 @ 168b for 7b vel 0.36
+
+    play prog_I1 @ 4b legato transpose +12st  vel 0.50
+    play prog_I1 @ 12b legato transpose +12st  vel 0.54
+    play prog_I2 @ 28b legato transpose +12st  vel 0.60
+    # DEV. obsessive head fragments, sequenced chromatically
+    play mythos_head @ 44b transpose +12st  vel 0.60
+    play mythos_head @ 48b transpose +12st  diatonic +1  vel 0.62
+    play mythos_head @ 52b transpose +12st  diatonic +2  vel 0.64
+    play mythos_head @ 56b transpose +12st  diatonic +3  vel 0.66
+    play mythos_head @ 60b transpose +12st  diatonic +1  vel 0.68
+    play mythos_head @ 64b transpose +12st  diatonic +4  vel 0.70
+    play mythos_head @ 72b transpose +12st  vel 0.74
+    play mythos_head @ 80b transpose +12st  diatonic +2  vel 0.76
+    # II. #5 the chromatic inner line voices the mixture region
+    play inner_chrom @ 100b legato transpose +12st  vel 0.52
+    play inner_chrom @ 116b legato transpose +12st  vel 0.56
+    play inner_chrom @ 128b legato transpose +12st  vel 0.54
+    # III. soft harmony
+    play prog_III1 @ 140b legato transpose +12st  vel 0.42
+    play prog_III1 @ 172b legato transpose +12st  vel 0.46
+    # IV.
+    play prog_IV1 @ 224b legato transpose +12st  vel 0.74
+    play prog_IV2 @ 240b legato transpose +12st  vel 0.78
+  }
+
+  # Cellos — the CELL; the development's relentless original; the BRIGHT cell
+  layer cellos : instrument {
+    instrument:   "CelloEnsSusVib"
+    articulation: sustain
+    seat:         +22deg @ 5.4m
+    dynamic:      0b=mp, 44b=f, 100b=mp, 200b=p, 224b=ff
+    vibrato:      rate=4.6 depth=12c delay=0.45s
+    humanize:     time=0.013s vel=0.07
+
+    notes: D3 @ 264b for 18b vel 0.44
+
+    play mythos @ 4b  legato vel 0.66
+    play mythos @ 12b legato vel 0.72
+    play mythos @ 28b legato vel 0.80
+    # DEV. the ORIGINAL cell, sequenced down — the listener cannot escape it
+    play mythos @ 44b legato vel 0.74
+    play mythos @ 52b legato diatonic -1  vel 0.78
+    play mythos @ 60b legato diatonic -2  vel 0.82
+    play mythos @ 68b legato diatonic -1  vel 0.84
+    play mythos @ 76b legato diatonic -3  vel 0.86
+    play mythos @ 84b legato diatonic -2  vel 0.90
+    play mythos @ 92b legato vel 0.92
+    # III. tenor counter
+    play fable @ 144b legato diatonic -2  vel 0.52
+    play fable @ 172b legato diatonic -2  vel 0.56
+    # IV. the BRIGHT cell under the hybrid theme
+    play mythos_bright @ 224b legato vel 0.78
+    play mythos_bright @ 240b legato vel 0.84
+    # CODA. the opening cell, brightened, resolving from within
+    play mythos_bright @ 264b legato vel 0.60
+    play mythos_bright @ 276b legato stretch 2.0  vel 0.54
+  }
+
+  # Tremolo cellos — #2 low dominant tremolo in the build
+  layer cello_trem : instrument {
+    instrument:   "CelloEnsTrem"
+    articulation: sustain
+    seat:         +24deg @ 5.6m
+    dynamic:      188b=pp, 196b=mf
+
+    notes: A2 @ 188b for 11b vel 0.36, E3 @ 188b for 11b vel 0.34
+    auto gain: 135.9s=-26db, 143s=-8db, 145s=-30db
+  }
+
+  # Contrabasses — roots + dominant PEDAL (incl. the build's A-pedal)
+  layer contrabass : instrument {
+    instrument:   "ContrabassSusVB"
+    articulation: sustain
+    seat:         +30deg @ 7.0m
+    dynamic:      0b=mp, 44b=f, 100b=mp, 200b=mp, 224b=ff
+    humanize:     time=0.014s vel=0.07
+
+    # III A pedal; #2 the build's deep A pedal into the silence
+    notes: A2 @ 140b for 8b vel 0.40, A2 @ 188b for 11b vel 0.46
+
+    play roots_I @ 4b  legato vel 0.66
+    play roots_I @ 12b legato vel 0.72
+    play roots_I @ 28b legato vel 0.78
+    play roots_dev @ 44b legato vel 0.72
+    play roots_dev @ 60b legato vel 0.78
+    play roots_dev @ 76b legato vel 0.82
+    play roots_dev @ 92b legato vel 0.84
+    play roots_II @ 100b legato vel 0.78
+    play roots_II @ 116b legato vel 0.80
+    play roots_III @ 156b legato vel 0.48
+    play roots_IV @ 200b legato vel 0.46
+    play roots_IV @ 224b legato vel 0.90
+    play roots_IV @ 248b legato vel 0.84
+  }
+
+  # ===========================================================================
+  # WOODWINDS
+  # ===========================================================================
+
+  layer flute : instrument {
+    instrument:   "FluteSusVib"
+    articulation: sustain
+    seat:         -6deg @ 7.6m
+    dynamic:      140b=p, 188b=mf, 224b=f
+    vibrato:      rate=5.4 depth=16c delay=0.3s
+    phrasing:     0.6
+    humanize:     time=0.011s vel=0.06
+
+    # III light doublings
+    play fable @ 160b legato transpose +12st  vel 0.48
+    # #2 build — head fragments tossed high
+    play mythos_head @ 192b transpose +12st  vel 0.54
+    play mythos_head @ 196b transpose +12st  diatonic +2  vel 0.58
+    # IV brilliance
+    play apotheosis @ 232b legato transpose +12st  vel 0.64
+    play apotheosis @ 248b legato transpose +12st  vel 0.70
+  }
+
+  layer oboe : instrument {
+    instrument:   "OboeSusVib"
+    articulation: sustain
+    seat:         +4deg @ 7.6m
+    dynamic:      72b=mf, 140b=mp, 148b=mf, 180b=mp
+    vibrato:      rate=5.0 depth=18c delay=0.35s
+    phrasing:     0.72
+    humanize:     time=0.012s vel=0.07
+
+    # DEV. FABLE's lyric voice forced into the argument
+    play fable @ 72b legato stretch 0.5  vel 0.66
+    play fable @ 84b legato stretch 0.5  diatonic +1  vel 0.70
+    # III. the full telling
+    play fable @ 140b legato vel 0.72
+    play fable @ 148b legato vel 0.76
+    play fable @ 164b legato diatonic +2  vel 0.74
+    play fable @ 180b legato vel 0.70
+    # #2 build fragment
+    play mythos_head @ 194b legato transpose +12st  vel 0.62
+    # IV. the hybrid theme sung
+    play apotheosis @ 224b legato vel 0.78
+    play apotheosis @ 240b legato vel 0.82
+  }
+
+  layer clarinet : instrument {
+    instrument:   "ClarinetSus"
+    articulation: sustain
+    seat:         -10deg @ 8.0m
+    dynamic:      72b=mp, 100b=mp, 140b=p, 206b=mp
+    vibrato:      rate=4.6 depth=10c delay=0.4s
+    humanize:     time=0.013s vel=0.07
+
+    # DEV. OPUS argues back against the cell
+    play opus @ 76b legato vel 0.58
+    play opus @ 88b legato diatonic -1  vel 0.60
+    # II. #5 the chromatic inner line (a third below the violas), voicing the lines
+    play inner_chrom @ 100b legato diatonic -1  vel 0.46
+    play inner_chrom @ 124b legato diatonic -1  vel 0.48
+    # III. soft counter
+    play fable @ 144b legato diatonic -4  vel 0.44
+    # IV. #3 OPUS is the interrupter of the arrival
+    play opus @ 206b legato vel 0.56
+    play opus @ 212b legato diatonic +1  vel 0.54
+    play prog_IV1 @ 240b transpose +12st  vel 0.48
+  }
+
+  layer bassoon : instrument {
+    instrument:   "BassoonSus"
+    articulation: sustain
+    seat:         +12deg @ 8.0m
+    dynamic:      0b=p, 44b=mf, 100b=mp, 224b=mf
+    humanize:     time=0.014s vel=0.07
+
+    play mythos @ 12b legato vel 0.52
+    play mythos @ 52b legato vel 0.56
+    # II. #5 chromatic inner line low — the mixture's bass-side voice
+    play inner_chrom @ 100b legato transpose -12st  vel 0.44
+    play inner_chrom @ 124b legato transpose -12st  vel 0.46
+    # III roots
+    play roots_III @ 140b legato transpose +12st  vel 0.42
+    # IV roots
+    play roots_IV @ 224b legato transpose +12st  vel 0.56
+    play roots_IV @ 248b legato transpose +12st  vel 0.58
+  }
+
+  # ===========================================================================
+  # BRASS
+  # ===========================================================================
+
+  layer horns : instrument {
+    instrument:   "FHornSus"
+    articulation: sustain
+    seat:         -16deg @ 9.0m
+    dynamic:      0b=p, 28b=mf, 44b=f, 100b=mp, 188b=mf, 224b=ff
+    humanize:     time=0.013s vel=0.07
+
+    # #2 the build — horns hold the dominant A/E into the silence
+    notes: A3 @ 188b for 11b vel 0.50, E4 @ 188b for 11b vel 0.46
+
+    play mythos @ 28b legato vel 0.60
+    play mythos @ 40b legato vel 0.72
+    # DEV. the cell AUGMENTED (x2) against the compressed strings
+    play mythos @ 60b legato stretch 2.0  vel 0.78
+    play mythos @ 84b legato stretch 2.0  vel 0.82
+    # IV. nobility (held back until the major proves itself)
+    play prog_IV1 @ 224b legato vel 0.82
+    play prog_IV2 @ 240b legato vel 0.86
+    play prog_IV1 @ 248b legato vel 0.88
+  }
+
+  layer trumpet : instrument {
+    instrument:   "TrumpetSus"
+    articulation: sustain
+    seat:         +14deg @ 9.0m
+    dynamic:      44b=mf, 80b=f, 92b=ff, 224b=f, 240b=ff
+    humanize:     time=0.010s vel=0.06
+
+    # DEV. head interruptions
+    play mythos_head @ 80b legato transpose +12st  vel 0.78
+    play mythos_head @ 88b legato transpose +12st  diatonic +2  vel 0.84
+    play mythos @ 92b legato transpose +12st  vel 0.88
+    # IV. the hybrid theme blazes — ONLY after the major is earned
+    play apotheosis @ 224b legato vel 0.82
+    play apotheosis @ 240b legato vel 0.90
+    play apotheosis @ 248b legato vel 0.84
+  }
+
+  layer tuba : instrument {
+    instrument:   "TubaSus"
+    articulation: sustain
+    seat:         +20deg @ 9.4m
+    dynamic:      0b=mp, 44b=f, 224b=ff
+    humanize:     time=0.015s vel=0.07
+
+    play roots_I @ 4b  legato vel 0.62
+    play roots_dev @ 76b legato vel 0.78
+    play roots_II @ 100b legato vel 0.82
+    play roots_IV @ 224b legato vel 0.88
+    play roots_IV @ 248b legato vel 0.84
+  }
+
+  # ===========================================================================
+  # PERCUSSION — motivic only. Timpani = the rhythm cell.
+  # ===========================================================================
+  layer timpani : instrument {
+    instrument:   "Timpani"
+    articulation: sustain
+    seat:         0deg @ 10.0m
+    dynamic:      0b=mp, 44b=f, 92b=ff, 188b=mf, 224b=ff
+    humanize:     time=0.008s vel=0.06
+
+    play fate @ 4b   vel 0.60
+    play fate @ 12b  vel 0.66
+    play fate @ 28b  vel 0.74
+    # DEV. the rhythm hammers — pressure that won't release
+    play fate @ 44b  vel 0.74
+    play fate @ 52b  vel 0.78
+    play fate @ 60b  vel 0.80
+    play fate @ 68b  vel 0.82
+    play fate @ 76b  vel 0.86
+    play fate @ 84b  vel 0.88
+    play fate @ 92b  vel 0.90
+    # #2 build — the rhythm on the DOMINANT A, accelerating to the silence
+    play fate_A @ 188b vel 0.66
+    play fate_A @ 192b vel 0.74
+    play fate_A @ 196b vel 0.84
+    # IV. the rhythm turns BRIGHT — resolves onto D
+    play fate_bright @ 224b vel 0.86
+    play fate_bright @ 240b vel 0.92
+    play fate_bright @ 248b vel 0.94
+    # #7 CODA — the original rhythm quoted one final time
+    play fate_bright @ 272b vel 0.70
+  }
+
+  layer harp : instrument {
+    instrument:   "Harp"
+    articulation: sustain
+    seat:         -18deg @ 4.6m
+    arp:          up rate=0.25b octaves=2 gate=0.9
+    humanize:     time=0.010s vel=0.08
+
+    play prog_I1 @ 28b vel 0.46
+    play prog_III1 @ 140b vel 0.50
+    play prog_III2 @ 156b vel 0.52
+    play prog_III1 @ 180b vel 0.52
+    play prog_IV1 @ 224b vel 0.66
+    play prog_IV2 @ 240b vel 0.70
+    play prog_IV1 @ 256b vel 0.60
+  }
+
+  layer glockenspiel : instrument {
+    instrument:   "Glockenspiel"
+    articulation: sustain
+    seat:         -8deg @ 9.6m
+    dynamic:      140b=mp, 224b=f
+
+    # held back from the quiet arrival; only crowns the EARNED triumph
+    notes: A5 @ 140b for 2b vel 0.46, D6 @ 156b for 2b vel 0.48,
+           D6 @ 224b for 2b vel 0.62, A6 @ 240b for 2b vel 0.66,
+           A6 @ 248b for 4b vel 0.70
+  }
+
+  layer tubular : instrument {
+    instrument:   "TubularBells"
+    articulation: sustain
+    dynamic:      224b=f, 248b=ff
+    seat:         +8deg @ 9.6m
+
+    # bells withheld until the triumph is earned (not at the quiet arrival)
+    notes: D5 @ 224b for 4b vel 0.78, A4 @ 232b for 4b vel 0.70,
+           D5 @ 240b for 8b vel 0.84, A4 @ 248b for 8b vel 0.74,
+           D5 @ 264b for 8b vel 0.70
+  }
+
+  # ===========================================================================
+  # PERCUSSION (synth) — only a depths heartbeat; the build is now orchestral.
+  # ===========================================================================
+  layer heartbeat : drums {
+    voice:   tom
+    tune:    -7st
+    decay:   1.6
+    pattern: X.......x.......
+    start:   1s
+    duration: 16s
+    gain:    -13db
+    fx:      lowpass(170hz), reverb(decay=2.4, mix=0.18)
+    auto gain: 1s=-22db, 9s=-15db, 16s=-22db
+  }
+
+  # ===========================================================================
+  # MASTER
+  # ===========================================================================
+  master {
+    width:   0.85
+    lufs:    -16
+    peak:    -1.0
+    fadein:  1.5s
+    fadeout: 6.5s
+
+    fx: comp(threshold=-17, ratio=2.0, attack=0.02, release=0.25, knee=9, makeup=1),
+        highpass(28hz),
+        lowshelf(110hz, gain=-1.0),
+        highshelf(9000hz, gain=+0.6),
+        mbcomp(threshold=-20, ratio=1.8, low=170, high=2700)
+  }
+
+}
+
+# =============================================================================
+#   audioforge validate docs/examples/orchestral/ode-to-fable-symphonic-v2/ode_to_fable_symphonic_v2.af
+#   audioforge render   docs/examples/orchestral/ode-to-fable-symphonic-v2/ode_to_fable_symphonic_v2.af -o docs/examples/orchestral/ode-to-fable-symphonic-v2/audio/current
+# =============================================================================

@@ -1,0 +1,530 @@
+{
+  "schema": "audioforge.examples/1",
+  "examples": [
+    {
+      "id": "2030-synth",
+      "category": "electronic",
+      "source": "docs/examples/electronic/2030-synth/2030-synth.af",
+      "legacy_source": "compositions/2030-synth.af",
+      "title": "2030 — synthesis study",
+      "description": "A synthesis realization of the Painting with FrameGraph theme, following the same reconstruction story.",
+      "libraries": [],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "theme_2030"
+      ]
+    },
+    {
+      "id": "2030",
+      "category": "orchestral",
+      "source": "docs/examples/orchestral/2030/2030.af",
+      "legacy_source": "compositions/2030.af",
+      "title": "2030 — orchestral theme",
+      "description": "A two-minute orchestral theme for Painting with FrameGraph, following foundation, composition, restart and refinement.",
+      "libraries": [
+        "VSCO-2-CE-1.1.0@ff140e8b5c5d6916ccf8088b0fc7dfb632f434d056aa764400905fdbd5824b0e"
+      ],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "theme_2030"
+      ]
+    },
+    {
+      "id": "fable-symphony",
+      "category": "orchestral",
+      "source": "docs/examples/orchestral/fable-symphony/fable_symphony.af",
+      "legacy_source": "compositions/fable_symphony.af",
+      "title": "Fable Symphony — synthesis",
+      "description": "The original four-movement Fable Symphony in C, using synthesis. Its historical DSL is retained for study.",
+      "libraries": [],
+      "compiles": false,
+      "diagnostics": [
+        "fable_symphony: spec.layers[1].notes[95].curves[0].points[0]: pitch_cents value 2400.000062 outside +/-2400"
+      ],
+      "asset_ids": []
+    },
+    {
+      "id": "fable-symphony-orchestral",
+      "category": "orchestral",
+      "source": "docs/examples/orchestral/fable-symphony-orchestral/fable_symphony_orchestral.af",
+      "legacy_source": "compositions/fable_symphony_orchestral.af",
+      "title": "Fable Symphony — orchestra",
+      "description": "An orchestral realization of the four-movement Fable Symphony in C using the pinned VSCO Community Edition library.",
+      "libraries": [
+        "VSCO-2-CE-1.1.0@ff140e8b5c5d6916ccf8088b0fc7dfb632f434d056aa764400905fdbd5824b0e"
+      ],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "fable_symphony_orchestral"
+      ]
+    },
+    {
+      "id": "fable-symphony-orchestral-v2",
+      "category": "orchestral",
+      "source": "docs/examples/orchestral/fable-symphony-orchestral-v2/fable_symphony_orchestral_v2.af",
+      "legacy_source": "compositions/fable_symphony_orchestral_v2.af",
+      "title": "Fable Symphony — orchestra, revision 2",
+      "description": "The second orchestral realization of Fable Symphony, retained alongside its earlier versions.",
+      "libraries": [
+        "VSCO-2-CE-1.1.0@ff140e8b5c5d6916ccf8088b0fc7dfb632f434d056aa764400905fdbd5824b0e"
+      ],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "fable_symphony_orchestral_v2"
+      ]
+    },
+    {
+      "id": "last-24h",
+      "category": "electronic",
+      "source": "docs/examples/electronic/last-24h/last_24h.af",
+      "legacy_source": "compositions/last_24h.af",
+      "title": "The Last 24 Hours",
+      "description": "A ten-minute techno arc at 128 BPM in A minor: groove, breakdown, drop, uplift and return.",
+      "libraries": [],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "last_24h"
+      ]
+    },
+    {
+      "id": "neon-voltage",
+      "category": "electronic",
+      "source": "docs/examples/electronic/neon-voltage/neon_voltage.af",
+      "legacy_source": "compositions/neon_voltage.af",
+      "title": "Neon Voltage",
+      "description": "A four-minute electronic festival cue at 128 BPM in F minor, with builds, drops, automation and layered synthesis.",
+      "libraries": [],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "neon_voltage"
+      ]
+    },
+    {
+      "id": "ode-to-fable",
+      "category": "orchestral",
+      "source": "docs/examples/orchestral/ode-to-fable/ode_to_fable.af",
+      "legacy_source": "compositions/ode_to_fable.af",
+      "title": "Ode to Fable — original",
+      "description": "The original Ode to Fable, a symphony in D with a sampled orchestra and authored program notes.",
+      "libraries": [
+        "VSCO-2-CE-1.1.0@ff140e8b5c5d6916ccf8088b0fc7dfb632f434d056aa764400905fdbd5824b0e"
+      ],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "ode_to_fable"
+      ]
+    },
+    {
+      "id": "ode-to-fable-symphonic",
+      "category": "orchestral",
+      "source": "docs/examples/orchestral/ode-to-fable-symphonic/ode_to_fable_symphonic.af",
+      "legacy_source": "compositions/ode_to_fable_symphonic.af",
+      "title": "Ode to Fable — symphonic rewrite",
+      "description": "The symphonic rewrite of Ode to Fable, preserved as a separate score and render identity.",
+      "libraries": [
+        "VSCO-2-CE-1.1.0@ff140e8b5c5d6916ccf8088b0fc7dfb632f434d056aa764400905fdbd5824b0e"
+      ],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "ode_to_fable_symphonic"
+      ]
+    },
+    {
+      "id": "ode-to-fable-symphonic-v2",
+      "category": "orchestral",
+      "source": "docs/examples/orchestral/ode-to-fable-symphonic-v2/ode_to_fable_symphonic_v2.af",
+      "legacy_source": "compositions/ode_to_fable_symphonic_v2.af",
+      "title": "Ode to Fable — symphonic rewrite, revision 2",
+      "description": "A second symphonic rewrite of Ode to Fable, focused on voice leading and musical conflict.",
+      "libraries": [
+        "VSCO-2-CE-1.1.0@ff140e8b5c5d6916ccf8088b0fc7dfb632f434d056aa764400905fdbd5824b0e"
+      ],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "ode_to_fable_symphonic_v2"
+      ]
+    },
+    {
+      "id": "sweet-child-o-mine",
+      "category": "arrangements",
+      "source": "docs/examples/arrangements/sweet-child-o-mine/sweet_child_o_mine.af",
+      "legacy_source": "compositions/sweet_child_o_mine.af",
+      "title": "Sweet Child o’ Mine — MIDI transcription",
+      "description": "The MIDI-derived synthesis transcription, retained with its original MIDI input and rendered output.",
+      "libraries": [],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "sweet_child_o_mine"
+      ],
+      "recording_note": "The retained historical manifest does not match this historical WAV. Both are preserved; use a fresh render for a matching verification record."
+    },
+    {
+      "id": "sweet-child-o-mine-library",
+      "category": "arrangements",
+      "source": "docs/examples/arrangements/sweet-child-o-mine-library/sweet_child_o_mine.library.af",
+      "legacy_source": "compositions/sweet_child_o_mine.library.af",
+      "title": "Sweet Child o’ Mine — sampled arrangement",
+      "description": "A sampled-instrument realization of the MIDI arrangement, using the pinned freepats-band library.",
+      "libraries": [
+        "freepats-band@d461fc30624ed0247a8449cd0d6edd39fced8976fbedf79d9a79b9020470f2be"
+      ],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "sweet_child_o_mine"
+      ]
+    },
+    {
+      "id": "sweet-child-o-mine-tuned",
+      "category": "arrangements",
+      "source": "docs/examples/arrangements/sweet-child-o-mine-tuned/sweet_child_o_mine.tuned.af",
+      "legacy_source": "compositions/sweet_child_o_mine.tuned.af",
+      "title": "Sweet Child o’ Mine — tuned synthesis",
+      "description": "A tuned synthesis realization of the MIDI arrangement, retained separately from its sampled version.",
+      "libraries": [],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "sweet_child_o_mine"
+      ]
+    },
+    {
+      "id": "to-be-alive",
+      "category": "orchestral",
+      "source": "docs/examples/orchestral/to-be-alive/to_be_alive.af",
+      "legacy_source": "compositions/to_be_alive.af",
+      "title": "To Be Alive",
+      "description": "A two-minute orchestral cue moving from D major toward E major, with plucked textures, a synth bed and a melodic climax.",
+      "libraries": [
+        "VSCO-2-CE-1.1.0@ff140e8b5c5d6916ccf8088b0fc7dfb632f434d056aa764400905fdbd5824b0e"
+      ],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "to_be_alive"
+      ]
+    },
+    {
+      "id": "s01-departure",
+      "category": "road-trip",
+      "source": "docs/examples/road-trip/s01-departure/s01_departure.af",
+      "legacy_source": "compositions/road_trip/s01_departure.af",
+      "title": "S01 Departure",
+      "description": "01 — Departure / Everyone Gets In. Bags in the trunk, seatbelts, morning anticipation. No real beat yet — a warm sub heartbeat and dashboard clicks.",
+      "libraries": [],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "s01_departure"
+      ]
+    },
+    {
+      "id": "s02-leaving-town",
+      "category": "road-trip",
+      "source": "docs/examples/road-trip/s02-leaving-town/s02_leaving_town.af",
+      "legacy_source": "compositions/road_trip/s02_leaving_town.af",
+      "title": "S02 Leaving Town",
+      "description": "02 — Leaving Town. Neighborhood roads, first jokes in the car, the road motif is introduced plainly. Relaxed 98 BPM groove, bouncy warm bass.",
+      "libraries": [],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "s02_leaving_town"
+      ]
+    },
+    {
+      "id": "s03-highway-opens",
+      "category": "road-trip",
+      "source": "docs/examples/road-trip/s03-highway-opens/s03_highway_opens.af",
+      "legacy_source": "compositions/road_trip/s03_highway_opens.af",
+      "title": "S03 Highway Opens",
+      "description": "03 — Highway Opens. The city drops behind, the car finds its rhythm. Steady 110 BPM melodic house — the first \"everyone can nod along\" section.",
+      "libraries": [],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "s03_highway_opens"
+      ]
+    },
+    {
+      "id": "s04-daydream",
+      "category": "road-trip",
+      "source": "docs/examples/road-trip/s04-daydream/s04_daydream.af",
+      "legacy_source": "compositions/road_trip/s04_daydream.af",
+      "title": "S04 Daydream",
+      "description": "04 — Window Seat Daydream. Clouds, fields, distant hills. Drums lighten; bell synths and a childlike (not childish) melody carry the section.",
+      "libraries": [],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "s04_daydream"
+      ]
+    },
+    {
+      "id": "s05a-road-game-pt1",
+      "category": "road-trip",
+      "source": "docs/examples/road-trip/s05a-road-game-pt1/s05a_road_game_pt1.af",
+      "legacy_source": "compositions/road_trip/s05a_road_game_pt1.af",
+      "title": "S05A Road Game Pt1",
+      "description": "05a — Road Game / Momentum, part I. Playful, syncopated, family energy — the \"fun\" section, not the \"rave\" section. 120 BPM nu-disco bounce.",
+      "libraries": [],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "s05a_road_game_pt1"
+      ]
+    },
+    {
+      "id": "s05b-road-game-pt2",
+      "category": "road-trip",
+      "source": "docs/examples/road-trip/s05b-road-game-pt2/s05b_road_game_pt2.af",
+      "legacy_source": "compositions/road_trip/s05b_road_game_pt2.af",
+      "title": "S05B Road Game Pt2",
+      "description": "05b — Road Game / Momentum, part II. The trip becomes active again; same game continues, denser and brighter, still tasteful — not a rave.",
+      "libraries": [],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "s05b_road_game_pt2"
+      ]
+    },
+    {
+      "id": "s06-big-view",
+      "category": "road-trip",
+      "source": "docs/examples/road-trip/s06-big-view/s06_big_view.af",
+      "legacy_source": "compositions/road_trip/s06_big_view.af",
+      "title": "S06 Big View",
+      "description": "06 — Big View / Mountain or Ocean Reveal. Everyone sees something beautiful outside. D major (the album's emotional lift). The road motif returns as the main theme, wide and bright but never harsh. 124 BPM.",
+      "libraries": [],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "s06_big_view"
+      ]
+    },
+    {
+      "id": "s07-rest-stop",
+      "category": "road-trip",
+      "source": "docs/examples/road-trip/s07-rest-stop/s07_rest_stop.af",
+      "legacy_source": "compositions/road_trip/s07_rest_stop.af",
+      "title": "S07 Rest Stop",
+      "description": "07 — Rest Stop / Night Air. Gas station lights, snacks, a quiet reset. No kick. Ambient, reflective — a rest, not a mystery. D major, sparse.",
+      "libraries": [],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "s07_rest_stop"
+      ]
+    },
+    {
+      "id": "s08-golden-hour",
+      "category": "road-trip",
+      "source": "docs/examples/road-trip/s08-golden-hour/s08_golden_hour.af",
+      "legacy_source": "compositions/road_trip/s08_golden_hour.af",
+      "title": "S08 Golden Hour",
+      "description": "08 — Golden Hour Drive. Warm light, second wind, less machine more human. Home key returns (A major). Organic-feeling percussion, warm bass, 112 BPM.",
+      "libraries": [],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "s08_golden_hour"
+      ]
+    },
+    {
+      "id": "s09-arrival",
+      "category": "road-trip",
+      "source": "docs/examples/road-trip/s09-arrival/s09_arrival.af",
+      "legacy_source": "compositions/road_trip/s09_arrival.af",
+      "title": "S09 Arrival",
+      "description": "09 — Arrival / One Last Look Back. Tired but happy; the trip becomes a memory. Drums strip away, the road motif returns slower and warmer, then a soft struck/synth hybrid carries it to silence. Not \"the party ended\" — \"we shared something.\"",
+      "libraries": [],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "s09_arrival"
+      ]
+    },
+    {
+      "id": "the-first-light",
+      "category": "orchestral",
+      "source": "docs/examples/orchestral/the-first-light/the_first_light.af",
+      "legacy_source": "compositions/the_first_light/the_first_light.af",
+      "title": "The First Light — original",
+      "description": "The original five-minute orchestral overture in D minor and D major. Its original delivery and evidence remain alongside the score.",
+      "libraries": [
+        "VSCO-2-CE-1.1.0@ff140e8b5c5d6916ccf8088b0fc7dfb632f434d056aa764400905fdbd5824b0e"
+      ],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "the_first_light"
+      ]
+    },
+    {
+      "id": "the-first-light-revised",
+      "category": "orchestral",
+      "source": "docs/examples/orchestral/the-first-light-revised/the_first_light.af",
+      "legacy_source": "compositions/the_first_light_revised/the_first_light.af",
+      "title": "The First Light — revised",
+      "description": "The revised overture uses native stereo recordings, recorded viola transitions and varied accompaniment. The original realization is retained separately.",
+      "libraries": [
+        "FirstLight-Orchestra@25c759fd4020e93501deb723a3763c3cb99a32fef43e2b65728cac5ddc36e697"
+      ],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "the_first_light"
+      ]
+    },
+    {
+      "id": "bwv949",
+      "category": "archive",
+      "source": "docs/examples/archive/bwv949/bwv949.af",
+      "legacy_source": "static/fixtures/bwv949.af",
+      "title": "BWV 949 — Fugue in A major",
+      "description": "Fugue in A major, BWV 949. A historical transcription retained with its original DSL limitations and placeholder library identity.",
+      "libraries": [
+        "vstobaroque@0000000000000000000000000000000000000000000000000000000000000000"
+      ],
+      "compiles": false,
+      "diagnostics": [
+        "line 176: notes: needs its first event on the same line (continue across lines with trailing commas); play statements are layer-body lines, not notes: entries"
+      ],
+      "asset_ids": []
+    },
+    {
+      "id": "cancoes-sertao",
+      "category": "archive",
+      "source": "docs/examples/archive/cancoes-sertao/cancoes_sertao.af",
+      "legacy_source": "static/fixtures/cancoes_sertao.af",
+      "title": "Canções do Sertão",
+      "description": "Three historical movements for an eight-cello ensemble. The source retains placeholder instrument-library pins.",
+      "libraries": [
+        "vstocello@0000000000000000000000000000000000000000000000000000000000000000"
+      ],
+      "compiles": false,
+      "diagnostics": [
+        "line 169: notes: needs its first event on the same line (continue across lines with trailing commas); play statements are layer-body lines, not notes: entries"
+      ],
+      "asset_ids": []
+    },
+    {
+      "id": "mysong",
+      "category": "arrangements",
+      "source": "docs/examples/arrangements/mysong/mysong.af",
+      "legacy_source": "static/fixtures/mysong.af",
+      "title": "Untitled band arrangement",
+      "description": "An untitled band arrangement for drums, electric bass and two distorted guitars, using a pinned sample library.",
+      "libraries": [
+        "freepats-band@d461fc30624ed0247a8449cd0d6edd39fced8976fbedf79d9a79b9020470f2be"
+      ],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "mysong"
+      ]
+    },
+    {
+      "id": "slash-inspired-v3",
+      "category": "guitar",
+      "source": "docs/examples/guitar/slash-inspired-v3/slash_inspired_v3.af",
+      "legacy_source": "static/fixtures/slash_inspired_v3.af",
+      "title": "Expressive hard-rock solo",
+      "description": "A one-minute sampled hard-rock guitar study with explicit note-scoped pitch and dynamic curves.",
+      "libraries": [
+        "sfz-guitar-experiment@52d4a8638474a50fc675de788babe5950fccbbefa6b82b5730dfd96ca0a56c9b"
+      ],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "slash_inspired_v3"
+      ]
+    },
+    {
+      "id": "slash-sfz-guitar-experiment",
+      "category": "guitar",
+      "source": "docs/examples/guitar/slash-sfz-guitar-experiment/slash_sfz_guitar_experiment.af",
+      "legacy_source": "static/fixtures/slash_sfz_guitar_experiment.af",
+      "title": "Sampled guitar experiment",
+      "description": "A 24-second SFZ guitar experiment with a rock-ballad backing, using the Karoryfer Emilyguitar recordings.",
+      "libraries": [
+        "sfz-guitar-experiment@52d4a8638474a50fc675de788babe5950fccbbefa6b82b5730dfd96ca0a56c9b"
+      ],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "slash_sfz_guitar_experiment"
+      ]
+    },
+    {
+      "id": "slash-style-solo",
+      "category": "guitar",
+      "source": "docs/examples/guitar/slash-style-solo/slash_style_solo.af",
+      "legacy_source": "static/fixtures/slash_style_solo.af",
+      "title": "Rock-ballad solo — historical target",
+      "description": "An original rock-ballad solo target retained with its historical DSL and placeholder guitar-library pin.",
+      "libraries": [
+        "singlecut-bridge-v1@0000000000000000000000000000000000000000000000000000000000000000"
+      ],
+      "compiles": false,
+      "diagnostics": [
+        "line 134: notes: malformed note entry or unknown note modifier near 'A4'; expected NOTE @ STARTb for DURb with supported modifiers"
+      ],
+      "asset_ids": []
+    },
+    {
+      "id": "unser-leben",
+      "category": "archive",
+      "source": "docs/examples/archive/unser-leben/unser_leben.af",
+      "legacy_source": "static/fixtures/unser_leben.af",
+      "title": "Unser Leben ist ein Schatten",
+      "description": "A historical double-choir motet score retained as a notation and diagnostic example, with an unresolved library pin.",
+      "libraries": [
+        "vstochoral@0000000000000000000000000000000000000000000000000000000000000000"
+      ],
+      "compiles": false,
+      "diagnostics": [
+        "line 140: notes: needs its first event on the same line (continue across lines with trailing commas); play statements are layer-body lines, not notes: entries"
+      ],
+      "asset_ids": []
+    },
+    {
+      "id": "transition-sweep",
+      "category": "sound-design",
+      "source": "docs/examples/sound-design/transition-sweep/transition_sweep.af",
+      "legacy_source": "static/samples/transition_sweep.af",
+      "title": "Transition sweep",
+      "description": "A two-second rising transition with a cut marker; the self-contained quick-start example.",
+      "libraries": [],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "transition_sweep"
+      ]
+    },
+    {
+      "id": "blue-in-five",
+      "category": "jazz",
+      "source": "docs/examples/jazz/blue-in-five/blue_in_five.af",
+      "legacy_source": "tracks/blue_in_five.af",
+      "title": "Blue in Five",
+      "description": "A medium-swing jazz quartet with authored solos, generated by scripts/gen_jazz.py.",
+      "libraries": [],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "blue_in_five"
+      ]
+    }
+  ]
+}
