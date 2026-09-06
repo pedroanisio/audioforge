@@ -1,0 +1,1 @@
+golden-check: all 5 golden specs reproduce byte-for-byte (env match: True)

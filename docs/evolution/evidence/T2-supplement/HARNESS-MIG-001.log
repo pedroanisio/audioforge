@@ -1,0 +1,15 @@
+{
+  "id": "synth_voice",
+  "kind": "cue",
+  "engine_version": "2.16.0",
+  "spec_hash": "3c93dc662cdaf45b86e3d9a22308f48c1d669cc044b52f7770ca76809fcc5d20",
+  "sample_rate": 48000,
+  "bit_depth": 24,
+  "duration_s": 2.0,
+  "channels": 2,
+  "markers": [],
+  "emotion": {},
+  "output_sha256": "7444cba2ba0bba84c484e1900a6074b312c18cf1c138924d6c9883eafb7f580f",
+  "file": "synth_voice.wav"
+}
+MISMATCH — output drifted
