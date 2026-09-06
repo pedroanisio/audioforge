@@ -10,6 +10,7 @@ import numpy as np
 from . import synth
 from .curves import evaluate_curve
 from .determinism import rng_for
+from .performance import groove_slot, timing_deviation
 from .fx import filter_auto_fx, filter_fx
 
 
@@ -261,12 +262,14 @@ def render_drum_track(track: dict, total_n: int, sr: int, tm: "TempoMap",
         ch = pattern[i % len(pattern)]
         if ch == ".":
             continue
-        beat = i * 0.25
+        grid_beat = i * 0.25
+        beat = grid_beat
         if swing and i % 2 == 1:
             beat += swing * 0.25
         amp = gain * (1.25 if ch == "X" else 1.0)
-        from .performance import groove_slot
-        slot = groove_slot(beat, track.get("name", ""), track.get("_score", {}), len(g_t or g_a or [0] * 16))
+        # The groove slot is a property of the notated step, not of the swung onset:
+        # round(1.5) is 2 under banker's rounding, so swing 0.5 would shift every odd step.
+        slot = groove_slot(grid_beat, track.get("name", ""), track.get("_score", {}), len(g_t or g_a or [0] * 16))
         if g_t:
             beat += g_t[slot] * 0.25
         if g_a:
@@ -275,7 +278,6 @@ def render_drum_track(track: dict, total_n: int, sr: int, tm: "TempoMap",
         if rng_factory is not None:
             event_rng = rng_factory(f"hit:{float(i * .25):.12g}")
             if hum:
-                from .performance import timing_deviation
                 t += timing_deviation(track, beat, rng_factory) * hum.get("timing_s", 0)
                 amp *= 1 + (event_rng.random() * 2 - 1) * hum.get("vel", 0)
             if hit_override is None:

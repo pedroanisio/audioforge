@@ -60,3 +60,56 @@ def test_distinct_layers_draw_independent_randomness():
     one = render({**copy.deepcopy(spec), "layers": [copy.deepcopy(spec["layers"][0])]})[0]
     both = render(copy.deepcopy(spec))[0]
     assert not np.allclose(both, 2 * one)
+
+
+def test_repeat_expansion_survives_inexact_beat_round_trips():
+    """At 44 bpm, beat 4 -> seconds -> beat yields 3.9999999999999996; the boundary note must
+    not leave a 4e-16-beat sliver in the next window (rejected by the minimum gate)."""
+    spec = {"id": "r", "kind": "cue", "duration_s": 8 * 60 / 44, "sample_rate": 48000, "bpm": 44,
+            "score": {"sections": [{"name": "v", "start_beat": 0, "dur_beats": 4}],
+                      "repeats": [{"section": "v", "count": 2}]},
+            "layers": [{"name": "m", "type": "notes", "osc": "sine",
+                        "notes": [{"note": "C4", "start_beat": 0, "dur_beats": 4},
+                                  {"note": "D4", "start_beat": 4, "dur_beats": 2}]}],
+            "master": {"target_peak_dbfs": -1}}
+    out = validate_spec(spec)
+    notes = sorted((n["note"], n["start_beat"], n["dur_beats"]) for n in out["layers"][0]["notes"])
+    assert notes == [("C4", 0.0, 4.0), ("C4", 4.0, 4.0), ("D4", 8.0, 2.0)]
+
+
+def test_groove_slot_follows_the_notated_step_under_swing():
+    """Groove accent for step i must not depend on the swing offset (round(1.5) == 2)."""
+    from audioforge.determinism import rng_for
+    from audioforge.sequencer import TempoMap, render_drum_track
+    sr = 48000
+    accent = [1.0] * 16
+    accent[1] = 0.0
+    groove = {"timing": [0.0] * 16, "accent": accent}
+    track = {"name": "kit", "type": "drums", "voice": "hat", "pattern": "xxxx", "gain_db": 0}
+    for swing in (0.0, 0.4, 0.5):
+        signal = render_drum_track(track, sr, sr, TempoMap([[0, 120]]), swing, rng_for("t", "voice"),
+                                   groove=groove, rng_factory=lambda path: rng_for("t", path))
+        step1_on = int((0.25 + swing * 0.25) * 0.5 * sr)   # beat -> seconds at 120 bpm
+        step2_on = int(0.5 * 0.5 * sr)
+        assert np.max(np.abs(signal[step1_on:step2_on])) < 1e-6, f"step 1 sounded at swing={swing}"
+        assert np.max(np.abs(signal[step2_on:step2_on + sr // 40])) > 1e-3
+
+
+def test_analysis_treats_repeated_clip_layers_by_their_source_windows():
+    """A pre-roll of authored silence before a repeated continuous layer is not dead air."""
+    from audioforge.analysis import analyze_audio
+    base = {"id": "tone", "kind": "cue", "duration_s": 8.0, "sample_rate": 8000, "bpm": 120,
+            "layers": [{"name": "t", "type": "tone", "osc": "sine", "note": "A3", "start_s": 6.0,
+                        "duration_s": 2.0, "gain_db": -12,
+                        "env": {"attack": 0.01, "decay": 0.01, "sustain": 1.0, "release": 0.05}}],
+            "master": {"target_peak_dbfs": -1, "fade_out_s": 0}}
+    plain = validate_spec(copy.deepcopy(base))
+    repeated = copy.deepcopy(base)
+    repeated["score"] = {"sections": [{"name": "all", "start_beat": 0, "dur_beats": 16}],
+                         "repeats": [{"section": "all", "count": 1}]}
+    repeated = validate_spec(repeated)
+    assert repeated["layers"][0].get("clip_map"), "count 1 must still take the clip path for this test"
+    audio, sr, _ = render(plain)
+    reports = [analyze_audio(audio, sr, context=ctx) for ctx in (plain, repeated)]
+    assert reports[0]["unexpected_silence_share"] == reports[1]["unexpected_silence_share"] == 0.0
+    assert all("dead_air" not in {r["code"] for r in rep["recommendations"]} for rep in reports)

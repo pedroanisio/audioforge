@@ -211,10 +211,13 @@ def compile_repeats(spec: dict) -> dict:
                 for event in events:
                     # Layer offsets are seconds; resolve them before slicing.
                     offset = original.get("start_s", 0)
-                    start = timeline.beat_at(timeline.sec(event["start_beat"]) + offset)
-                    end = timeline.beat_at(timeline.sec(event["start_beat"] + event["dur_beats"]) + offset)
+                    # beat -> seconds -> beat is not exact in floating point (4 -> 3.9999999999999996
+                    # at 44 bpm); snap to a nanobeat so a boundary note is not left as a sliver
+                    # inside the neighbouring window and rejected by the minimum-gate rule.
+                    start = round(timeline.beat_at(timeline.sec(event["start_beat"]) + offset), 9)
+                    end = round(timeline.beat_at(timeline.sec(event["start_beat"] + event["dur_beats"]) + offset), 9)
                     a, b = max(start, window["a"]), min(end, window["b"])
-                    if b <= a:
+                    if b - a <= 1e-9:
                         continue
                     note = copy.deepcopy(event)
                     note["start_beat"] = float(a - window["a"] + window["beat"])

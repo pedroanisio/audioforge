@@ -153,6 +153,18 @@ def _expected_activity(context: dict, duration_s: float) -> np.ndarray | None:
     mask = np.zeros(centers.size, dtype=bool)
     for layer in context["layers"]:
         offset = layer.get("start_s", 0)
+        if layer.get("clip_map"):
+            # A repeated continuous layer sounds where its source windows carried sound,
+            # mapped to their destinations; compile_repeats pops start_s/duration_s.
+            source = layer.get("clip_source", {})
+            src_start = float(source.get("start_s", 0))
+            src_end = src_start + float(source.get("layer_duration_s", source.get("duration_s", duration_s)))
+            for window in layer["clip_map"]:
+                ta, tb, dest = (float(v) for v in window[:3])
+                lo, hi = max(ta, src_start), min(tb, src_end)
+                if hi > lo:
+                    mask |= (centers >= dest + (lo - ta)) & (centers < dest + (hi - ta))
+            continue
         if layer.get("notes"):
             for event in note_events(layer, timeline.beat_at(duration_s)):
                 start = timeline.sec(event["start_beat"]) + offset
