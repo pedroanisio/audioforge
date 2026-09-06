@@ -7,7 +7,8 @@ set -u
 CP=${1:?checkpoint label}; EVROOT=${2:-docs/evolution/evidence}; mkdir -p "$EVROOT"; EV="$(cd "$EVROOT" && pwd)/$CP"; W="$EV/work"; mkdir -p "$W"   # absolute: rows cd elsewhere; work/ holds WAVs, exports: gitignored
 SITE="$(mktemp -d)"   # mkdocs refuses a site_dir inside docs_dir
 CLEAN='git status --porcelain --untracked-files=all -- . ":(exclude)docs/evolution/evidence"'   # the evidence bundle being written is not dirt
-PY=${PYTHON:-./.venv/bin/python}; SHA=${RELEASE_SHA:-$(git rev-parse HEAD)}
+PY=${PYTHON:-./.venv/bin/python}; PY="$(cd "$(dirname "$PY")" && pwd)/$(basename "$PY")"   # absolute, not symlink-resolved: rows cd into exports
+SHA=${RELEASE_SHA:-$(git rev-parse HEAD)}
 SUM="$EV/summary.tsv"; printf 'id\tresult\tdescription\tseconds\tlog\n' > "$SUM"
 { echo "checkpoint=$CP"; echo "sha=$SHA"; echo "date=$(date -u +%FT%TZ)"; git status --porcelain | wc -l | sed 's/^/dirty_paths=/'; } > "$EV/context.txt"
 
@@ -124,7 +125,9 @@ for s,lim in ((12,.130),(24,.250)):
 print(out); sys.exit(0 if all(b<=l for b,l in out.values()) else 1)
 PYEOF"
 mig001() { local b="$W/baseline-2.16.0"; [ -d "$b" ] || { mkdir -p "$b" && git archive engine-2.16.0 | tar -x -C "$b"; }
-  (cd "$b" && PYTHONPATH="$b" "$PY" -m audioforge.cli render tests/golden/audio/synth_voice.af -o "$W/mig" >/dev/null && PYTHONPATH="$b" "$PY" -m audioforge.cli compile tests/golden/audio/synth_voice.af > "$W/mig/legacy.ir.json")
+  local spec="$PWD/tests/golden/audio/synth_voice.af"   # the 2.16.0 tag predates the golden corpus: take the spec from this tree (DSL 1.9-compatible)
+  mkdir -p "$W/mig"
+  (cd "$b" && PYTHONPATH="$b" "$PY" -m audioforge.cli render "$spec" -o "$W/mig" && PYTHONPATH="$b" "$PY" -m audioforge.cli compile "$spec" > "$W/mig/legacy.ir.json") || { echo "mig001: baseline render/compile failed"; return 1; }
   "$PY" -m audioforge.cli verify "$W/mig/legacy.ir.json" "$W/mig/synth_voice.manifest.json"; [ $? -eq 2 ]; }
 heavy HARNESS-MIG-001 "legacy manifest -> MISMATCH exit 2" mig001
 run   HARNESS-MIG-002 "repo .af specs compile+render" py <<'PYEOF'

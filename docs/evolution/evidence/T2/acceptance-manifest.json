@@ -1,0 +1,172 @@
+{
+  "cases": [
+    {
+      "criterion": "Pitch classes exactly C, E, G, B",
+      "id": "seventh",
+      "listen_for": "Chord quality: an extra minor seventh changes the harmony.",
+      "passed": true,
+      "revisions": {
+        "current": {
+          "criterion": "Pitch classes exactly C, E, G, B",
+          "engine_version": "3.0.0",
+          "file": "seventh-current.wav",
+          "metrics": {
+            "duration_s": 2.0,
+            "peak": 0.3548219386069045,
+            "pitch_classes": [
+              0,
+              4,
+              7,
+              11
+            ],
+            "rms": 0.0902337977464753
+          },
+          "output_sha256": "d27991a033f54391be0debd036f76f5f248189fdd15346749314eaf52dc070bb",
+          "passed": true,
+          "spec_hash": "652260490b6dd2e8e1e636dd0ebf6ee5d56576f11032d3d047faccec9e7b4384"
+        }
+      },
+      "title": "Preserve an authored major seventh"
+    },
+    {
+      "criterion": "All authored gates and un-slurred chord voices preserved",
+      "id": "phrase",
+      "listen_for": "Phrase balance and voice endings; no automatic slurs between chord tones.",
+      "passed": true,
+      "revisions": {
+        "current": {
+          "criterion": "All authored gates and un-slurred chord voices preserved",
+          "engine_version": "3.0.0",
+          "file": "phrase-current.wav",
+          "metrics": {
+            "duration_s": 2.0,
+            "gates_preserved": true,
+            "peak": 0.24026728560244365,
+            "rms": 0.056727210715610495
+          },
+          "output_sha256": "c809d70653b26f4f290973deb96307f65fe2d9ec1e841c0f1b949d1ecb8b53c6",
+          "passed": true,
+          "spec_hash": "7923c041c252fe7d362bcce1ae3313a7f5069dbc87af5ef432c7b4782cfb1f57"
+        }
+      },
+      "title": "Preserve gates in a chordal phrase"
+    },
+    {
+      "criterion": "Three seconds after verse x2, with continuation",
+      "id": "repeat",
+      "listen_for": "The C note plays twice before the D ending.",
+      "passed": true,
+      "revisions": {
+        "current": {
+          "criterion": "Three seconds after verse x2, with continuation",
+          "engine_version": "3.0.0",
+          "file": "repeat-current.wav",
+          "metrics": {
+            "duration_s": 3.0,
+            "peak": 0.09096556950177818,
+            "rms": 0.033210371150425334
+          },
+          "output_sha256": "5373b0955ef2a487dbac71ea31e27bd68d5d34ea23d345cce8ceb64dcc30e11a",
+          "passed": true,
+          "spec_hash": "eda229362199ea7094b14e5448a34f44fe44a47508d2278e8e920e240e11c587"
+        }
+      },
+      "title": "Repeat a verse, then continue"
+    },
+    {
+      "criterion": "0.5 s gate followed by 0.2 s release",
+      "id": "release",
+      "listen_for": "The held note releases after its half-second gate.",
+      "passed": true,
+      "revisions": {
+        "current": {
+          "criterion": "0.5 s gate followed by 0.2 s release",
+          "engine_version": "3.0.0",
+          "file": "release-current.wav",
+          "metrics": {
+            "duration_s": 2.0,
+            "last_active_s": 0.6972708333333333,
+            "peak": 0.09096556950177818,
+            "rms": 0.03235415079167574
+          },
+          "output_sha256": "e865eea5e3ee9cb07389a7f7bd3357419cf843eefa1ebcad59d933ccf27e796a",
+          "passed": true,
+          "spec_hash": "393d49a818074333af7dbf65cd0ea1a39a276e7245c25acceb90983bd4fbed98"
+        }
+      },
+      "title": "Release follows note-off"
+    },
+    {
+      "criterion": "20 dB layer edit remains 20 dB at output",
+      "id": "quiet",
+      "listen_for": "Absolute level matters in this case; avoid turning up only one revision.",
+      "passed": true,
+      "revisions": {
+        "current": {
+          "criterion": "20 dB layer edit remains 20 dB at output",
+          "engine_version": "3.0.0",
+          "file": "quiet-current.wav",
+          "metrics": {
+            "duration_s": 2.0,
+            "gain_delta_db": 20.0,
+            "peak": 0.022849517976605855,
+            "rms": 0.011338201417302175
+          },
+          "output_sha256": "35edf4d4e0d84407e434b9e02946d955a06333e1288167b14db2a61c0e081ed4",
+          "passed": true,
+          "spec_hash": "080c29f06e5cb5d8e05bf1786e369f2e5d335e0412c6bc1cd089762968db503d"
+        }
+      },
+      "title": "Respect deliberate quiet levels"
+    },
+    {
+      "criterion": "Out-of-band transposition residue below RMS 0.001",
+      "id": "alias",
+      "listen_for": "An 18 kHz source transposed up an octave should be filtered, not turn into a loud 12 kHz tone.",
+      "passed": true,
+      "revisions": {
+        "current": {
+          "criterion": "Out-of-band transposition residue below RMS 0.001",
+          "engine_version": "3.0.0",
+          "file": "alias-current.wav",
+          "metrics": {
+            "duration_s": 1.0,
+            "interior_rms": 2.2918446088084616e-07,
+            "peak": 0.00016019350861557055,
+            "rms": 1.8068183172087227e-06
+          },
+          "output_sha256": "d658c505b40196a4ee7b5bbc6b121b63848b7923c8898b5f88a3772199e24512",
+          "passed": true,
+          "spec_hash": "d677273292aa5127d1c917fc82fcf6d290b9e9923f01e02bc35d77f2123dfebf"
+        }
+      },
+      "title": "Suppress transposition aliasing"
+    },
+    {
+      "criterion": "-6 dB edit changes the sample stem by -6 dB",
+      "id": "sample_gain",
+      "listen_for": "The numerical probe compares a stem before and after a -6 dB edit.",
+      "passed": true,
+      "revisions": {
+        "current": {
+          "criterion": "-6 dB edit changes the sample stem by -6 dB",
+          "engine_version": "3.0.0",
+          "file": "sample_gain-current.wav",
+          "metrics": {
+            "duration_s": 1.0,
+            "gain_delta_db": -6.000000000000001,
+            "peak": 0.18063194370761904,
+            "rms": 0.06594178413753156
+          },
+          "output_sha256": "2098f3c17d56d22eec029c1b1d3bc4cb430af830869c0dfdb5fd5f3b05b4686e",
+          "passed": true,
+          "spec_hash": "bb8ce0ce2c1d97826687a2ca3ed3f81f459a50db010bae6077a2bb9faa448ce7"
+        }
+      },
+      "title": "Apply sampled-instrument gain once"
+    }
+  ],
+  "listening_status": "not_reviewed",
+  "passed": true,
+  "schema": "audioforge.musical-acceptance/1"
+}

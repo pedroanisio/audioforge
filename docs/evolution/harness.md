@@ -481,7 +481,8 @@ set -u
 CP=${1:?checkpoint label}; EVROOT=${2:-docs/evolution/evidence}; mkdir -p "$EVROOT"; EV="$(cd "$EVROOT" && pwd)/$CP"; W="$EV/work"; mkdir -p "$W"   # absolute: rows cd elsewhere; work/ holds WAVs, exports: gitignored
 SITE="$(mktemp -d)"   # mkdocs refuses a site_dir inside docs_dir
 CLEAN='git status --porcelain --untracked-files=all -- . ":(exclude)docs/evolution/evidence"'   # the evidence bundle being written is not dirt
-PY=${PYTHON:-./.venv/bin/python}; SHA=${RELEASE_SHA:-$(git rev-parse HEAD)}
+PY=${PYTHON:-./.venv/bin/python}; PY="$(cd "$(dirname "$PY")" && pwd)/$(basename "$PY")"   # absolute, not symlink-resolved: rows cd into exports
+SHA=${RELEASE_SHA:-$(git rev-parse HEAD)}
 SUM="$EV/summary.tsv"; printf 'id\tresult\tdescription\tseconds\tlog\n' > "$SUM"
 { echo "checkpoint=$CP"; echo "sha=$SHA"; echo "date=$(date -u +%FT%TZ)"; git status --porcelain | wc -l | sed 's/^/dirty_paths=/'; } > "$EV/context.txt"
 
@@ -598,7 +599,9 @@ for s,lim in ((12,.130),(24,.250)):
 print(out); sys.exit(0 if all(b<=l for b,l in out.values()) else 1)
 PYEOF"
 mig001() { local b="$W/baseline-2.16.0"; [ -d "$b" ] || { mkdir -p "$b" && git archive engine-2.16.0 | tar -x -C "$b"; }
-  (cd "$b" && PYTHONPATH="$b" "$PY" -m audioforge.cli render tests/golden/audio/synth_voice.af -o "$W/mig" >/dev/null && PYTHONPATH="$b" "$PY" -m audioforge.cli compile tests/golden/audio/synth_voice.af > "$W/mig/legacy.ir.json")
+  local spec="$PWD/tests/golden/audio/synth_voice.af"   # the 2.16.0 tag predates the golden corpus: take the spec from this tree (DSL 1.9-compatible)
+  mkdir -p "$W/mig"
+  (cd "$b" && PYTHONPATH="$b" "$PY" -m audioforge.cli render "$spec" -o "$W/mig" && PYTHONPATH="$b" "$PY" -m audioforge.cli compile "$spec" > "$W/mig/legacy.ir.json") || { echo "mig001: baseline render/compile failed"; return 1; }
   "$PY" -m audioforge.cli verify "$W/mig/legacy.ir.json" "$W/mig/synth_voice.manifest.json"; [ $? -eq 2 ]; }
 heavy HARNESS-MIG-001 "legacy manifest -> MISMATCH exit 2" mig001
 run   HARNESS-MIG-002 "repo .af specs compile+render" py <<'PYEOF'
@@ -636,3 +639,18 @@ and the row must be re-run before a gate decision; `MANUAL` rows are completed b
 who appends a `PASS`/`FAIL` line with the evidence path; `BLOCKED` names the missing
 precondition. The T0 values in §3 and §4 were obtained by running these same commands by
 hand in the reference environment before the script existed.
+
+## 9. Checkpoint log
+
+Each row is a committed evidence bundle under `docs/evolution/evidence/`; the gate decision
+follows §5 and §6. Counts exclude rows the runner filtered out.
+
+| Checkpoint | Commit | Run | PASS | FAIL | PARTIAL / MANUAL | Gate decision |
+|---|---|---|---|---|---|---|
+| T0 | `60c0fd5` + uncommitted repair | manual commands (2026-09-05) | 30 | 24 | 4 / — | baseline recorded |
+| T1 | `4157c74` (`release/engine-3.0.0`) | `HARNESS_ONLY` = the T1 gate rows + CI-001 | 7 | 1 (CI-001) | — | **open**: VCS-001, VCS-002, REL-004, PORT-001, OBS-002, GATE-006, SEC-002 all PASS; CI-001 diagnosed in `evidence/T1/ci-root-cause.md`, owner = repository admin |
+| T2 | `4157c74` | full run; `T2-attempt1` on `cacee01` exposed five runner defects and two real gaps, fixed before this run; MIG-001 re-measured in `T2-supplement` after two more runner fixes (relative interpreter path; the 2.16.0 tag predates the golden corpus, so the spec is taken from this tree) | 49 + 1 | 7 (CI-001…004, VCS-003, VCS-004, REL-003) | 2 MANUAL (ACC-003, GOV-008) | **open**: every T2 gate row PASS on the branch head; PORT-002/003 green (3.11: 253 s, 3.12: 194 s); RB-002 PASS with the documented fixture failure tolerated; SEC-001 PASS under `unshare -rn` |
+| T3 | — | pending | — | — | — | **closed**: CI-001/002/004 need the Actions fix (operator); VCS-003 needs an approving review (operator); GOV-001…003, GOV-008, CON-002 already PASS on the branch |
+
+`HARNESS-GOV-008` (ledger citations labelled) was completed by hand in commit `baecfaa` and
+is recorded here as PASS; `HARNESS-ACC-003` awaits a listener.
