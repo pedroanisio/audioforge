@@ -1,6 +1,7 @@
 # house_01_filter — "Filter house". The French-house core move: a four-on-the-floor
-# machine, a bus that pumps under the kick (sidechain duck), and a resonant
-# low-pass sweep that opens and closes across the form. 124 bpm, F minor.
+# machine, a bus that pumps under the kick (sidechain duck), a resonant low-pass
+# on the music bus and a whole-mix low-pass on the master, both swept open and
+# closed across the form. 124 bpm, F minor.
 asset house_01_filter { kind: soundtrack
   duration: 62s
   tempo: 124bpm
@@ -12,11 +13,15 @@ asset house_01_filter { kind: soundtrack
     gain: -1db
     fx: comp(threshold=-14, ratio=3, attack=0.005, release=0.08), saturate(amount=0.12)
   }
+  bus perc {
+    gain: -1db
+    fx: plate(decay=0.45, mix=0.25), chorus(rate=0.6, depth=3, delay=12, voices=2, mix=0.3, stereo=1)
+  }
   bus music {
     gain: -2db
     duck: source=kick amount=7db attack=0.008s release=0.22s threshold=-42db
-    fx: lowpass(400hz, q=2.2), saturate(amount=0.18, warmth=0.4), plate(decay=0.5, mix=0.12)
-    auto cutoff: 0s=350, 15s=900, 31s=4500, 47s=9000, 55s=1200, 62s=300
+    fx: lowpass(600hz, q=3.0), saturate(amount=0.18, warmth=0.4), chorus(rate=0.5, depth=4, delay=14, voices=3, mix=0.3, stereo=1), plate(decay=0.5, mix=0.28)
+    auto cutoff: 0s=500, 15s=1400, 31s=6000, 47s=12000, 55s=1600, 62s=400
   }
   layer kick : drums { voice: kick
     bus: drums
@@ -26,17 +31,20 @@ asset house_01_filter { kind: soundtrack
     snap: 0.6
     pattern: x...x...x...x... }
   layer clap : drums { voice: clap
-    bus: drums
+    bus: perc
     gain: -12db
+    pan: -0.35
     pattern: ....x.......x... }
   layer hat : drums { voice: hat
-    bus: drums
+    bus: perc
     gain: -17db
+    pan: 0.45
     decay: 0.35
     pattern: ..x...x...x...x. }
   layer ohat : drums { voice: open_hat
-    bus: drums
+    bus: perc
     gain: -22db
+    pan: -0.5
     decay: 0.6
     pattern: ......x.......x. }
   layer bass : notes { osc: saw
@@ -46,21 +54,24 @@ asset house_01_filter { kind: soundtrack
     arp: up rate=0.5b octaves=2 gate=0.7
     env: a=0.004s d=0.16s s=0.35 r=0.06s
     fx: lowpass(700hz, q=1.4), drive(amount=0.25) }
-  layer stabs : notes { osc: organ
+  layer stabs : notes { osc: saw
     bus: music
-    gain: -13db
+    gain: -11db
+    pan: -0.3
     notes: F3min7 @ 0.5b for 0.5b voicing drop2, F3min7 @ 2.5b for 0.75b voicing drop2, Bb3min7 @ 4.5b for 0.5b voicing drop2, Bb3min7 @ 6.5b for 0.75b voicing drop2,
            Db3maj7 @ 8.5b for 0.5b voicing drop2, Db3maj7 @ 10.5b for 0.75b voicing drop2, Eb3maj7 @ 12.5b for 0.5b voicing drop2, C3min7 @ 14.5b for 1.25b voicing drop2
     loop: 16b
     env: a=0.004s d=0.14s s=0.45 r=0.08s
-    fx: highpass(160hz), chorus(rate=0.5, depth=4, delay=14, voices=3, mix=0.3) }
+    fx: highpass(160hz) }
   layer pad : notes { osc: pad
     bus: music
-    gain: -20db
+    gain: -16db
+    pan: 0.3
     notes: F3min7 @ 0b for 32b voicing spread, Db3maj7 @ 32b for 32b voicing spread, Bb2min7 @ 64b for 32b voicing spread, F3min7 @ 96b for 32b voicing spread
     env: a=1.2s d=0.5s s=0.9 r=1.5s
     dynamic: 0b=pp, 32b=mf, 64b=f, 96b=p }
   master { peak: -1db
-    lufs: -9
-    fx: mbcomp(threshold=-16, ratio=2.5, low=160, high=3000), saturate(amount=0.08) }
+    lufs: -10
+    fx: lowpass(18000hz, q=1.8), mbcomp(threshold=-16, ratio=2.5, low=160, high=3000), saturate(amount=0.08)
+    auto cutoff: 0s=280, 8s=700, 15s=2200, 23s=9000, 31s=18000, 46s=18000, 51s=3000, 56s=900, 62s=250 }
 }

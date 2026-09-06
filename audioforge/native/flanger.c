@@ -7,6 +7,7 @@
  *   r[n]  = w[n − d(n)]   (linear interpolation between the two neighbours)
  *   out   = r                                                 (wet; caller mixes)
  *
+ * `phase` offsets the LFO (radians) for the right channel of a stereo chain.
  * Pure IEEE-754 doubles, fixed constants, no randomness.
  * Compile: cc -O2 -fPIC -shared flanger.c -o flanger.so -lm
  */
@@ -14,7 +15,7 @@
 #include <stdlib.h>
 
 int flanger(const double *x, long n, int sr, double rate, double depth_ms,
-            double delay_ms, double feedback, double *out) {
+            double delay_ms, double feedback, double phase, double *out) {
     if (!x || !out || n <= 0 || sr <= 0)
         return 1;
     if (rate < 0.0) rate = 0.0;
@@ -33,7 +34,7 @@ int flanger(const double *x, long n, int sr, double rate, double depth_ms,
     long widx = 0;
     const double twopi = 6.283185307179586;
     for (long i = 0; i < n; i++) {
-        double lfo = 0.5 * (1.0 + sin(twopi * rate * (double)i / (double)sr));
+        double lfo = 0.5 * (1.0 + sin(twopi * rate * (double)i / (double)sr + phase));
         double d = (delay_ms + depth_ms * lfo) * 0.001 * (double)sr;
         if (d < 1.0) d = 1.0;
         if (d > (double)(maxd - 2)) d = (double)(maxd - 2);

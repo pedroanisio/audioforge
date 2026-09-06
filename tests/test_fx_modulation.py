@@ -96,6 +96,10 @@ def test_bitcrush_quantizes_levels_and_holds_samples():
     x = np.linspace(-1, 1, 4001)
     y = fx.bitcrush_fx(x, bits=4, downsample=1, mix=1.0)
     assert len(np.unique(np.round(y, 9))) <= 2 ** 4 + 1
+    quiet = 0.03 * np.sin(np.linspace(0, 40, 6000))          # a -30 dBFS bus crushes just as hard
+    assert len(np.unique(np.round(fx.bitcrush_fx(quiet, bits=4), 9))) <= 2 ** 4 + 1
+    assert not np.allclose(fx.bitcrush_fx(quiet, bits=4), quiet)
+    assert np.array_equal(fx.bitcrush_fx(np.zeros(100), bits=4), np.zeros(100))
     held = fx.bitcrush_fx(np.sin(np.linspace(0, 50, 5000)), bits=24, downsample=5, mix=1.0)
     blocks = held[:5000 - 5000 % 5].reshape(-1, 5)
     assert np.all(blocks == blocks[:, :1])                 # every 5-sample block is flat
@@ -129,3 +133,31 @@ def test_new_effects_are_registered_everywhere():
     assert res.ok, res.diagnostics
     audio, _, _ = res.assets[0].render()
     assert np.isfinite(audio).all() and np.max(np.abs(audio)) > 0.01
+
+
+def test_stereo_parameter_decorrelates_channels_only_on_bus_and_master_chains():
+    t = np.arange(SR) / SR
+    x = 0.3 * np.sin(2 * np.pi * 220 * t) + 0.2 * np.sin(2 * np.pi * 1320 * t)
+    for kind in ("chorus", "phaser", "flanger"):
+        mono = {"type": kind, "mix": 0.6, "stereo": 0.0}
+        wide = {"type": kind, "mix": 0.6, "stereo": 1.0}
+        l0, r0 = fx.apply_master_chain(x.copy(), x.copy(), SR, [mono], lambda *a: None)
+        assert np.array_equal(l0, r0), kind                       # stereo=0: both channels identical
+        l1, r1 = fx.apply_master_chain(x.copy(), x.copy(), SR, [wide], lambda *a: None)
+        assert np.array_equal(l1, l0), kind                       # the left channel is untouched by `stereo`
+        corr = float(np.corrcoef(l1, r1)[0, 1])
+        assert corr < 0.995 and not np.array_equal(l1, r1), (kind, corr)
+        # a layer chain is mono: `stereo` is inert there, and the default keeps goldens byte-identical
+        assert np.array_equal(fx.apply_fx_chain(x, SR, [wide], lambda n: None), fx.apply_fx_chain(x, SR, [mono], lambda n: None))
+    from audioforge.dsl import compile_dsl
+    from audioforge.decompile import spec_to_dsl
+    spec = compile_dsl("""asset s { kind: cue
+  duration: 1s
+  tempo: 120bpm
+  bus w { fx: chorus(rate=0.5, mix=0.4, stereo=1), phaser(stereo=0.5), flanger(stereo=0.25) }
+  layer m : notes { osc: saw
+    bus: w
+    notes: A3 @ 0b for 2b }
+}""")[0][0]
+    assert [f["stereo"] for f in spec["buses"][0]["fx"]] == [1.0, 0.5, 0.25]
+    assert compile_dsl(spec_to_dsl(spec))[0][0]["buses"] == spec["buses"]

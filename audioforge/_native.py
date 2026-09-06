@@ -263,40 +263,40 @@ def blown_native(freq: float, n: int, sr: int, pressure: float,
 
 
 def phaser_native(x: np.ndarray, sr: int, rate_hz: float, depth: float, stages: int,
-                  feedback: float, center_hz: float, spread: float) -> np.ndarray:
+                  feedback: float, center_hz: float, spread: float, phase: float = 0.0) -> np.ndarray:
     lib = _lib("phaser", "the swept allpass phaser (fx: phaser)")
     if not getattr(lib, "_phaser_sig", False):
         lib.phaser.restype = ctypes.c_int
         lib.phaser.argtypes = [
             ctypes.POINTER(ctypes.c_double), ctypes.c_long, ctypes.c_int,
             ctypes.c_double, ctypes.c_double, ctypes.c_int, ctypes.c_double,
-            ctypes.c_double, ctypes.c_double, ctypes.POINTER(ctypes.c_double)]
+            ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.POINTER(ctypes.c_double)]
         lib._phaser_sig = True
     xin = np.ascontiguousarray(x, dtype=np.float64)
     out = np.zeros(xin.size)
     p = lambda a: a.ctypes.data_as(ctypes.POINTER(ctypes.c_double))  # noqa
     rc = lib.phaser(p(xin), xin.size, sr, float(rate_hz), float(depth), int(stages),
-                    float(feedback), float(center_hz), float(spread), p(out))
+                    float(feedback), float(center_hz), float(spread), float(phase), p(out))
     if rc != 0:
         raise RuntimeError("native phaser kernel failed")
     return out
 
 
 def flanger_native(x: np.ndarray, sr: int, rate_hz: float, depth_ms: float,
-                   delay_ms: float, feedback: float) -> np.ndarray:
+                   delay_ms: float, feedback: float, phase: float = 0.0) -> np.ndarray:
     lib = _lib("flanger", "the swept fractional-delay flanger (fx: flanger)")
     if not getattr(lib, "_flanger_sig", False):
         lib.flanger.restype = ctypes.c_int
         lib.flanger.argtypes = [
             ctypes.POINTER(ctypes.c_double), ctypes.c_long, ctypes.c_int,
             ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double,
-            ctypes.POINTER(ctypes.c_double)]
+            ctypes.c_double, ctypes.POINTER(ctypes.c_double)]
         lib._flanger_sig = True
     xin = np.ascontiguousarray(x, dtype=np.float64)
     out = np.zeros(xin.size)
     p = lambda a: a.ctypes.data_as(ctypes.POINTER(ctypes.c_double))  # noqa
     rc = lib.flanger(p(xin), xin.size, sr, float(rate_hz), float(depth_ms),
-                     float(delay_ms), float(feedback), p(out))
+                     float(delay_ms), float(feedback), float(phase), p(out))
     if rc != 0:
         raise RuntimeError("native flanger kernel failed")
     return out

@@ -310,18 +310,21 @@ def _validate_fx(chain, path):
             _num(fx, "center_hz", p, 20.0, 12000.0, required=False)
             _num(fx, "spread", p, 0.0, 4.0, required=False)
             _num(fx, "mix", p, 0.0, 1.0, required=False)
+            _num(fx, "stereo", p, 0.0, 1.0, required=False)
         if t == "flanger":
             _num(fx, "rate_hz", p, 0.0, 10.0, required=False)
             _num(fx, "depth_ms", p, 0.0, 20.0, required=False)
             _num(fx, "delay_ms", p, 0.0, 30.0, required=False)
             _num(fx, "feedback", p, -0.95, 0.95, required=False)
             _num(fx, "mix", p, 0.0, 1.0, required=False)
+            _num(fx, "stereo", p, 0.0, 1.0, required=False)
         if t == "chorus":
             _num(fx, "rate_hz", p, 0.0, 10.0, required=False)
             _num(fx, "depth_ms", p, 0.0, 30.0, required=False)
             _num(fx, "delay_ms", p, 1.0, 60.0, required=False)
             _num(fx, "voices", p, 1, 8, required=False)
             _num(fx, "mix", p, 0.0, 1.0, required=False)
+            _num(fx, "stereo", p, 0.0, 1.0, required=False)
         if t == "bitcrush":
             _num(fx, "bits", p, 1, 24, required=False)
             _num(fx, "downsample", p, 1, 64, required=False)

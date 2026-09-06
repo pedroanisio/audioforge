@@ -39,7 +39,8 @@ _Notation and interchange line (ADR-0009; `docs/evolution/roadmap-notation.xlsx`
 - `tests/test_notation_perf.py`: export, import, proof-sheet and LilyPond budgets.
 - CI `oracles` job (Python 3.12, `.[oracles]`, `make oracle-check`); runs once Actions execute.
 - Electronic-production toolkit (ADR-0011): `phaser` and `flanger` native kernels,
-  `chorus` and `bitcrush` effects; bus `vocoder:` cross-synthesis (source layer or bus
+  `chorus` and `bitcrush` (peak-relative) effects, all three modulators with a `stereo`
+  LFO offset on bus and master chains; bus `vocoder:` cross-synthesis (source layer or bus
   shapes the bus carrier; no voice generation, ADR-0002); sample layers gain `offset`,
   `length`, `reverse`, `stretch` (phase-vocoder time stretch) and `slices` with pattern
   digits picking slices. The decompiler now round-trips sample layers (`file`, `sha256`,

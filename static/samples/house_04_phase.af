@@ -14,13 +14,22 @@ asset house_04_phase { kind: soundtrack
   bus arps {
     gain: -2db
     duck: source=kick amount=6db attack=0.008s release=0.2s threshold=-40db
-    fx: lowpass(5000hz, q=1.0), saturate(amount=0.1)
+    fx: lowpass(5000hz, q=1.0), saturate(amount=0.1), chorus(rate=0.7, depth=6, delay=20, voices=4, mix=0.35, stereo=1)
     auto cutoff: 0s=1200, 16s=5000, 62s=6000
+  }
+  bus hats {
+    gain: 2db
+    fx: flanger(rate=0.18, depth=2.5, delay=1.5, feedback=0.55, mix=0.5, stereo=0.5), plate(decay=0.45, mix=0.22)
+  }
+  bus pads {
+    gain: 2db
+    duck: source=kick amount=5db attack=0.01s release=0.22s threshold=-40db
+    fx: phaser(rate=0.22, depth=0.85, stages=6, feedback=0.45, center=700hz, spread=2.2, mix=0.55, stereo=0.5), plate(decay=0.7, mix=0.3)
   }
   bus crush {
     gain: -4db
     duck: source=kick amount=5db attack=0.01s release=0.2s threshold=-40db
-    fx: bitcrush(bits=5, downsample=4, mix=0.85), lowpass(3000hz, q=1.4), plate(decay=0.5, mix=0.15)
+    fx: bitcrush(bits=5, downsample=4, mix=0.85), lowpass(3000hz, q=1.4), plate(decay=0.5, mix=0.25)
   }
   layer kick : drums { voice: kick
     bus: drums
@@ -29,15 +38,16 @@ asset house_04_phase { kind: soundtrack
     snap: 0.65
     pattern: x...x...x...x... }
   layer clap : drums { voice: clap
-    bus: drums
+    bus: hats
     gain: -13db
+    pan: -0.35
     pattern: ....x.......x... }
   layer hats : drums { voice: hat
-    bus: drums
+    bus: hats
     gain: -17db
+    pan: 0.45
     decay: 0.3
-    pattern: x.x.x.x.x.x.x.x.
-    fx: flanger(rate=0.18, depth=2.5, delay=1.5, feedback=0.55, mix=0.5) }
+    pattern: x.x.x.x.x.x.x.x. }
   layer bass : notes { osc: saw
     bus: arps
     gain: -8db
@@ -47,21 +57,23 @@ asset house_04_phase { kind: soundtrack
     fx: lowpass(900hz, q=1.6), drive(amount=0.2) }
   layer arp_keys : notes { osc: square
     bus: arps
-    gain: -14db
+    gain: -9db
+    pan: -0.35
     notes: D3min7 @ 0b for 16b voicing drop2, Bb2maj7 @ 16b for 16b voicing drop2, G2min7 @ 32b for 16b voicing drop2, A2min7 @ 48b for 16b voicing drop2,
            F3maj7 @ 64b for 16b voicing drop2, D3min7 @ 80b for 16b voicing drop2, Bb2maj7 @ 96b for 16b voicing drop2, C3maj7 @ 112b for 16b voicing drop2
     arp: up rate=0.25b octaves=1 gate=0.5
     env: a=0.002s d=0.1s s=0.2 r=0.05s
-    fx: chorus(rate=0.7, depth=6, delay=20, voices=4, mix=0.45), highpass(200hz) }
+    fx: highpass(200hz) }
   layer pad : notes { osc: pad
-    bus: arps
-    gain: -19db
+    bus: pads
+    gain: -15db
+    pan: 0.3
     notes: D3min7 @ 0b for 32b voicing spread, G2min7 @ 32b for 32b voicing spread, F3maj7 @ 64b for 32b voicing spread, Bb2maj7 @ 96b for 32b voicing spread
-    env: a=1s d=0.5s s=0.9 r=1.5s
-    fx: phaser(rate=0.22, depth=0.85, stages=6, feedback=0.45, center=700hz, spread=2.2, mix=0.55) }
+    env: a=1s d=0.5s s=0.9 r=1.5s }
   layer lead : notes { osc: saw
     bus: arps
     gain: -13db
+    pan: 0.15
     notes: A4 @ 64b for 1.5b, F4 @ 65.5b for 0.5b, G4 @ 66b for 1b, C5 @ 67b for 1b, A4 @ 68b for 2b, F4 @ 70b for 1b, E4 @ 71b for 1b,
            A4 @ 72b for 1.5b, F4 @ 73.5b for 0.5b, G4 @ 74b for 1b, C5 @ 75b for 1b, D5 @ 76b for 2b, C5 @ 78b for 1b, A4 @ 79b for 1b,
            A4 @ 80b for 1.5b, F4 @ 81.5b for 0.5b, G4 @ 82b for 1b, C5 @ 83b for 1b, A4 @ 84b for 2b, F4 @ 86b for 1b, E4 @ 87b for 1b,
@@ -73,10 +85,11 @@ asset house_04_phase { kind: soundtrack
   layer crushed : notes { osc: pluck
     bus: crush
     gain: -12db
+    pan: -0.4
     notes: F3maj7 @ 64b for 8b voicing drop2, C3maj7 @ 72b for 8b voicing drop2, D3min7 @ 80b for 8b voicing drop2, Bb2maj7 @ 88b for 8b voicing drop2
     arp: downup rate=0.125b octaves=2 gate=0.7
     env: a=0.002s d=0.15s s=0.2 r=0.05s }
   master { peak: -1db
-    lufs: -9
+    lufs: -10
     fx: mbcomp(threshold=-16, ratio=2.5, low=160, high=3000), saturate(amount=0.06) }
 }

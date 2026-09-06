@@ -11,6 +11,10 @@ asset house_02_robot { kind: soundtrack
   bus drums {
     fx: comp(threshold=-12, ratio=2.5, attack=0.004, release=0.09)
   }
+  bus perc {
+    gain: 2db
+    fx: plate(decay=0.45, mix=0.25), chorus(rate=0.6, depth=3, delay=12, voices=2, mix=0.3, stereo=1)
+  }
   bus mouth {
     gain: -60db
     fx: bandpass(900hz, q=1.6)
@@ -18,14 +22,14 @@ asset house_02_robot { kind: soundtrack
   }
   bus robot {
     gain: -1db
-    vocoder: source=bus:mouth bands=20 low=90hz high=7500hz smooth=0.006s depth=1.1 mix=0.92
+    vocoder: source=bus:mouth bands=20 low=90hz high=7500hz smooth=0.005s depth=1.2 mix=0.95
     duck: source=kick amount=4db attack=0.01s release=0.18s threshold=-40db
-    fx: highpass(120hz), saturate(amount=0.15), plate(decay=0.6, mix=0.1)
+    fx: highpass(120hz), saturate(amount=0.15), chorus(rate=0.35, depth=4, delay=16, voices=3, mix=0.3, stereo=1), plate(decay=0.6, mix=0.25)
   }
   bus keys {
-    gain: -3db
+    gain: 0db
     duck: source=kick amount=6db attack=0.008s release=0.2s threshold=-40db
-    fx: lowpass(2400hz, q=0.9), chorus(rate=0.4, depth=5, delay=18, voices=3, mix=0.3)
+    fx: lowpass(2400hz, q=0.9), chorus(rate=0.4, depth=5, delay=18, voices=3, mix=0.45, stereo=1), plate(decay=0.5, mix=0.2)
   }
   layer kick : drums { voice: kick
     bus: drums
@@ -34,18 +38,25 @@ asset house_02_robot { kind: soundtrack
     snap: 0.7
     pattern: x...x...x...x... }
   layer snare : drums { voice: snare
-    bus: drums
+    bus: perc
     gain: -14db
+    pan: -0.3
     pattern: ....x.......x..x }
   layer hat : drums { voice: hat
-    bus: drums
+    bus: perc
     gain: -18db
+    pan: 0.45
     decay: 0.3
     pattern: x.x.x.x.x.x.x.x. }
-  layer breath : noise { color: pink
+  layer talk : notes { osc: square
     bus: mouth
     gain: 0db
-    env: a=0.02s d=0.1s s=1 r=0.1s }
+    notes: C4 @ 0b for 0.25b, C4 @ 0.5b for 0.25b, E4 @ 1b for 0.5b, C4 @ 2b for 0.25b, G4 @ 2.5b for 0.25b, E4 @ 3b for 0.75b,
+           C4 @ 4b for 0.25b, C4 @ 4.5b for 0.25b, A4 @ 5.5b for 0.5b, C4 @ 6b for 0.25b, E4 @ 6.5b for 0.25b, G4 @ 7b for 0.5b,
+           C4 @ 8b for 0.25b, E4 @ 8.5b for 0.25b, C4 @ 9b for 0.25b, E4 @ 9.5b for 0.75b, G4 @ 10.5b for 0.25b, C4 @ 11b for 0.25b, A4 @ 11.5b for 0.5b,
+           C4 @ 12b for 0.25b, C4 @ 12.5b for 0.25b, E4 @ 13b for 0.5b, G4 @ 14b for 0.25b, E4 @ 14.5b for 0.25b, C4 @ 15b for 1b
+    loop: 16b
+    env: a=0.004s d=0.06s s=0.35 r=0.04s }
   layer syllables : drums { voice: snare
     bus: mouth
     gain: -4db
@@ -60,7 +71,8 @@ asset house_02_robot { kind: soundtrack
     env: a=0.01s d=0.2s s=0.9 r=0.2s }
   layer keys : notes { osc: organ
     bus: keys
-    gain: -15db
+    gain: -11db
+    pan: -0.35
     notes: A3min7 @ 0.5b for 0.5b voicing drop2, A3min7 @ 2.5b for 0.5b voicing drop2, A3min7 @ 3.5b for 0.5b voicing drop2,
            F3maj7 @ 4.5b for 0.5b voicing drop2, F3maj7 @ 6.5b for 0.5b voicing drop2, F3maj7 @ 7.5b for 0.5b voicing drop2,
            C4maj7 @ 8.5b for 0.5b voicing drop2, C4maj7 @ 10.5b for 0.5b voicing drop2, C4maj7 @ 11.5b for 0.5b voicing drop2,
@@ -74,6 +86,6 @@ asset house_02_robot { kind: soundtrack
     loop: 16b
     fx: lowpass(800hz, q=1.2), saturate(amount=0.2) }
   master { peak: -1db
-    lufs: -9
+    lufs: -10
     fx: mbcomp(threshold=-16, ratio=2.5, low=160, high=3000), saturate(amount=0.06) }
 }
