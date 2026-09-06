@@ -1,0 +1,1 @@
+t: tuning_not_rendered: tuning edo divisions=19 is stored as notation metadata and not applied by the renderer, which stays 12-TET until the tuning resolver lands (docs/DSL_GAP_SPEC.md G6)

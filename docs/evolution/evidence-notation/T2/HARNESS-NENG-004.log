@@ -1,0 +1,336 @@
+.FF...........F                                                          [100%]
+=================================== FAILURES ===================================
+__________________ test_score_pdf_renders_rich_extended_score __________________
+
+tmp_path = PosixPath('/tmp/pytest-of-admin/pytest-194/test_score_pdf_renders_rich_ex0')
+
+    def test_score_pdf_renders_rich_extended_score(tmp_path):
+        out = tmp_path / "score.pdf"
+    
+>       result = score.score_pdf(
+            _rich_score_spec(),
+            out,
+            title="Contra o Silencio",
+            program="CONTRA O SILENCIO - banner\nA staged proportional score.",
+            bars_per_system=2,
+        )
+
+tests/test_score.py:87: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+audioforge/score.py:718: in score_pdf
+    if _render_asset(pdf, sp, title if len(specs) == 1 else None,
+audioforge/score.py:705: in _render_asset
+    pdf.savefig(fig)
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/backends/backend_pdf.py:2745: in savefig
+    figure.savefig(self, format="pdf", backend="pdf", **kwargs)
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/figure.py:3497: in savefig
+    self.canvas.print_figure(fname, **kwargs)
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/backend_bases.py:2186: in print_figure
+    result = print_method(
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/backend_bases.py:2042: in <lambda>
+    print_method = functools.wraps(meth)(lambda *args, **kwargs: meth(
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/backends/backend_pdf.py:2786: in print_pdf
+    self.figure.draw(renderer)
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/artist.py:94: in draw_wrapper
+    result = draw(artist, renderer, *args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/artist.py:71: in draw_wrapper
+    return draw(artist, renderer)
+           ^^^^^^^^^^^^^^^^^^^^^^
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/figure.py:3264: in draw
+    mimage._draw_list_compositing_images(
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/image.py:134: in _draw_list_compositing_images
+    a.draw(renderer)
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/artist.py:71: in draw_wrapper
+    return draw(artist, renderer)
+           ^^^^^^^^^^^^^^^^^^^^^^
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/axes/_base.py:3226: in draw
+    mimage._draw_list_compositing_images(
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/image.py:134: in _draw_list_compositing_images
+    a.draw(renderer)
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/artist.py:71: in draw_wrapper
+    return draw(artist, renderer)
+           ^^^^^^^^^^^^^^^^^^^^^^
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/text.py:752: in draw
+    bbox, info, descent = self._get_layout(renderer)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/text.py:373: in _get_layout
+    _, lp_h, lp_d = _get_text_metrics_with_cache(
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/text.py:69: in _get_text_metrics_with_cache
+    return _get_text_metrics_with_cache_impl(
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/text.py:77: in _get_text_metrics_with_cache_impl
+    return renderer_ref().get_text_width_height_descent(text, fontprop, ismath)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/backends/_backend_pdf_ps.py:164: in get_text_width_height_descent
+    font.set_text(s, 0.0, flags=ft2font.LoadFlags.NO_HINTING)
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/_text_helpers.py:23: in warn_on_missing_glyph
+    _api.warn_external(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+message = 'Glyph 108 (l) missing from font(s) Noto Music.', category = None
+
+    def warn_external(message, category=None):
+        """
+        `warnings.warn` wrapper that sets *stacklevel* to "outside Matplotlib".
+    
+        The original emitter of the warning can be obtained by patching this
+        function back to `warnings.warn`, i.e. ``_api.warn_external =
+        warnings.warn`` (or ``functools.partial(warnings.warn, stacklevel=2)``,
+        etc.).
+        """
+        kwargs = {}
+        if sys.version_info[:2] >= (3, 12):
+            # Go to Python's `site-packages` or `lib` from an editable install.
+            basedir = pathlib.Path(__file__).parents[2]
+            kwargs['skip_file_prefixes'] = (str(basedir / 'matplotlib'),
+                                            str(basedir / 'mpl_toolkits'))
+        else:
+            frame = sys._getframe()
+            for stacklevel in itertools.count(1):
+                if frame is None:
+                    # when called in embedded context may hit frame is None
+                    kwargs['stacklevel'] = stacklevel
+                    break
+                if not re.match(r"\A(matplotlib|mpl_toolkits)(\Z|\.(?!tests\.))",
+                                # Work around sphinx-gallery not setting __name__.
+                                frame.f_globals.get("__name__", "")):
+                    kwargs['stacklevel'] = stacklevel
+                    break
+                frame = frame.f_back
+            # preemptively break reference cycle between locals and the frame
+            del frame
+>       warnings.warn(message, category, **kwargs)
+E       UserWarning: Glyph 108 (l) missing from font(s) Noto Music.
+
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/_api/__init__.py:405: UserWarning
+___________ test_score_pdf_handles_multi_asset_and_no_pitched_cases ____________
+
+tmp_path = PosixPath('/tmp/pytest-of-admin/pytest-194/test_score_pdf_handles_multi_a0')
+
+    def test_score_pdf_handles_multi_asset_and_no_pitched_cases(tmp_path):
+        spec = _rich_score_spec()
+        no_stage = {**spec, "id": "plain_asset", "stage": {}, "layers": [spec["layers"][0]]}
+        out = tmp_path / "multi.pdf"
+    
+>       score.score_pdf([spec, no_stage], out, subtitle="custom", bars_per_system=4)
+
+tests/test_score.py:105: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+audioforge/score.py:718: in score_pdf
+    if _render_asset(pdf, sp, title if len(specs) == 1 else None,
+audioforge/score.py:705: in _render_asset
+    pdf.savefig(fig)
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/backends/backend_pdf.py:2745: in savefig
+    figure.savefig(self, format="pdf", backend="pdf", **kwargs)
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/figure.py:3497: in savefig
+    self.canvas.print_figure(fname, **kwargs)
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/backend_bases.py:2186: in print_figure
+    result = print_method(
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/backend_bases.py:2042: in <lambda>
+    print_method = functools.wraps(meth)(lambda *args, **kwargs: meth(
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/backends/backend_pdf.py:2786: in print_pdf
+    self.figure.draw(renderer)
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/artist.py:94: in draw_wrapper
+    result = draw(artist, renderer, *args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/artist.py:71: in draw_wrapper
+    return draw(artist, renderer)
+           ^^^^^^^^^^^^^^^^^^^^^^
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/figure.py:3264: in draw
+    mimage._draw_list_compositing_images(
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/image.py:134: in _draw_list_compositing_images
+    a.draw(renderer)
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/artist.py:71: in draw_wrapper
+    return draw(artist, renderer)
+           ^^^^^^^^^^^^^^^^^^^^^^
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/axes/_base.py:3226: in draw
+    mimage._draw_list_compositing_images(
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/image.py:134: in _draw_list_compositing_images
+    a.draw(renderer)
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/artist.py:71: in draw_wrapper
+    return draw(artist, renderer)
+           ^^^^^^^^^^^^^^^^^^^^^^
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/text.py:752: in draw
+    bbox, info, descent = self._get_layout(renderer)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/text.py:373: in _get_layout
+    _, lp_h, lp_d = _get_text_metrics_with_cache(
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/text.py:69: in _get_text_metrics_with_cache
+    return _get_text_metrics_with_cache_impl(
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/text.py:77: in _get_text_metrics_with_cache_impl
+    return renderer_ref().get_text_width_height_descent(text, fontprop, ismath)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/backends/_backend_pdf_ps.py:164: in get_text_width_height_descent
+    font.set_text(s, 0.0, flags=ft2font.LoadFlags.NO_HINTING)
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/_text_helpers.py:23: in warn_on_missing_glyph
+    _api.warn_external(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+message = 'Glyph 108 (l) missing from font(s) Noto Music.', category = None
+
+    def warn_external(message, category=None):
+        """
+        `warnings.warn` wrapper that sets *stacklevel* to "outside Matplotlib".
+    
+        The original emitter of the warning can be obtained by patching this
+        function back to `warnings.warn`, i.e. ``_api.warn_external =
+        warnings.warn`` (or ``functools.partial(warnings.warn, stacklevel=2)``,
+        etc.).
+        """
+        kwargs = {}
+        if sys.version_info[:2] >= (3, 12):
+            # Go to Python's `site-packages` or `lib` from an editable install.
+            basedir = pathlib.Path(__file__).parents[2]
+            kwargs['skip_file_prefixes'] = (str(basedir / 'matplotlib'),
+                                            str(basedir / 'mpl_toolkits'))
+        else:
+            frame = sys._getframe()
+            for stacklevel in itertools.count(1):
+                if frame is None:
+                    # when called in embedded context may hit frame is None
+                    kwargs['stacklevel'] = stacklevel
+                    break
+                if not re.match(r"\A(matplotlib|mpl_toolkits)(\Z|\.(?!tests\.))",
+                                # Work around sphinx-gallery not setting __name__.
+                                frame.f_globals.get("__name__", "")):
+                    kwargs['stacklevel'] = stacklevel
+                    break
+                frame = frame.f_back
+            # preemptively break reference cycle between locals and the frame
+            del frame
+>       warnings.warn(message, category, **kwargs)
+E       UserWarning: Glyph 108 (l) missing from font(s) Noto Music.
+
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/_api/__init__.py:405: UserWarning
+_____________________ test_long_header_dense_seating_draws _____________________
+
+tmp_path = PosixPath('/tmp/pytest-of-admin/pytest-194/test_long_header_dense_seating0')
+
+    def test_long_header_dense_seating_draws(tmp_path):
+        """Reproduce the pollution conditions: a very long program blurb plus many
+        sources at an identical seat. Must produce a valid PDF without raising."""
+        spec = {
+            "id": "stress_layout",
+            "kind": "soundtrack",
+            "duration_s": 8.0,
+            "bpm": 120.0,
+            "key": "C major",
+            "library": {"name": "m", "manifest_sha256": "a" * 64},
+            "stage": {
+                "dims": [20.0, 30.0, 12.0],
+                "mics": {"tree": 0.6, "close": 0.2},
+                "hall_file": "h.wav",
+                "hall_sha256": "b" * 64,
+            },
+            "emotion": {"awe": 0.6, "calm": 0.3},
+            "layers": [
+                {
+                    "name": f"section_{i}",
+                    "type": "instrument",
+                    "instrument": "violin",
+                    "seat": {"az_deg": 30.0, "dist_m": 7.0},   # all identical
+                    "notes": [
+                        {"note": "C4", "start_beat": 0.0, "dur_beats": 1.0,
+                         "vel": 0.6},
+                    ],
+                }
+                for i in range(6)
+            ],
+        }
+        program = "Very long header sentence that repeats. " * 120
+        out = tmp_path / "stress.pdf"
+>       score.score_pdf(spec, str(out), title="Stress", program=program)
+
+tests/test_score_layout.py:143: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+audioforge/score.py:718: in score_pdf
+    if _render_asset(pdf, sp, title if len(specs) == 1 else None,
+audioforge/score.py:705: in _render_asset
+    pdf.savefig(fig)
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/backends/backend_pdf.py:2745: in savefig
+    figure.savefig(self, format="pdf", backend="pdf", **kwargs)
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/figure.py:3497: in savefig
+    self.canvas.print_figure(fname, **kwargs)
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/backend_bases.py:2186: in print_figure
+    result = print_method(
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/backend_bases.py:2042: in <lambda>
+    print_method = functools.wraps(meth)(lambda *args, **kwargs: meth(
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/backends/backend_pdf.py:2786: in print_pdf
+    self.figure.draw(renderer)
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/artist.py:94: in draw_wrapper
+    result = draw(artist, renderer, *args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/artist.py:71: in draw_wrapper
+    return draw(artist, renderer)
+           ^^^^^^^^^^^^^^^^^^^^^^
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/figure.py:3264: in draw
+    mimage._draw_list_compositing_images(
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/image.py:134: in _draw_list_compositing_images
+    a.draw(renderer)
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/artist.py:71: in draw_wrapper
+    return draw(artist, renderer)
+           ^^^^^^^^^^^^^^^^^^^^^^
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/axes/_base.py:3226: in draw
+    mimage._draw_list_compositing_images(
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/image.py:134: in _draw_list_compositing_images
+    a.draw(renderer)
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/artist.py:71: in draw_wrapper
+    return draw(artist, renderer)
+           ^^^^^^^^^^^^^^^^^^^^^^
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/text.py:752: in draw
+    bbox, info, descent = self._get_layout(renderer)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/text.py:373: in _get_layout
+    _, lp_h, lp_d = _get_text_metrics_with_cache(
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/text.py:69: in _get_text_metrics_with_cache
+    return _get_text_metrics_with_cache_impl(
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/text.py:77: in _get_text_metrics_with_cache_impl
+    return renderer_ref().get_text_width_height_descent(text, fontprop, ismath)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/backends/_backend_pdf_ps.py:164: in get_text_width_height_descent
+    font.set_text(s, 0.0, flags=ft2font.LoadFlags.NO_HINTING)
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/_text_helpers.py:23: in warn_on_missing_glyph
+    _api.warn_external(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+message = 'Glyph 108 (l) missing from font(s) Noto Music.', category = None
+
+    def warn_external(message, category=None):
+        """
+        `warnings.warn` wrapper that sets *stacklevel* to "outside Matplotlib".
+    
+        The original emitter of the warning can be obtained by patching this
+        function back to `warnings.warn`, i.e. ``_api.warn_external =
+        warnings.warn`` (or ``functools.partial(warnings.warn, stacklevel=2)``,
+        etc.).
+        """
+        kwargs = {}
+        if sys.version_info[:2] >= (3, 12):
+            # Go to Python's `site-packages` or `lib` from an editable install.
+            basedir = pathlib.Path(__file__).parents[2]
+            kwargs['skip_file_prefixes'] = (str(basedir / 'matplotlib'),
+                                            str(basedir / 'mpl_toolkits'))
+        else:
+            frame = sys._getframe()
+            for stacklevel in itertools.count(1):
+                if frame is None:
+                    # when called in embedded context may hit frame is None
+                    kwargs['stacklevel'] = stacklevel
+                    break
+                if not re.match(r"\A(matplotlib|mpl_toolkits)(\Z|\.(?!tests\.))",
+                                # Work around sphinx-gallery not setting __name__.
+                                frame.f_globals.get("__name__", "")):
+                    kwargs['stacklevel'] = stacklevel
+                    break
+                frame = frame.f_back
+            # preemptively break reference cycle between locals and the frame
+            del frame
+>       warnings.warn(message, category, **kwargs)
+E       UserWarning: Glyph 108 (l) missing from font(s) Noto Music.
+
+/home/admin/github-mirror/_framework/audioforge/.venv/lib/python3.13/site-packages/matplotlib/_api/__init__.py:405: UserWarning
+=========================== short test summary info ============================
+FAILED tests/test_score.py::test_score_pdf_renders_rich_extended_score - User...
+FAILED tests/test_score.py::test_score_pdf_handles_multi_asset_and_no_pitched_cases
+FAILED tests/test_score_layout.py::test_long_header_dense_seating_draws - Use...
+3 failed, 12 passed in 1.92s
