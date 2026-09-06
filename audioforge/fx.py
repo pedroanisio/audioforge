@@ -99,18 +99,20 @@ def gain_fx(x: np.ndarray, db: float) -> np.ndarray:
 
 
 def chorus_fx(x: np.ndarray, sr: int, rate_hz: float = 0.8, depth_ms: float = 6.0,
-              delay_ms: float = 20.0, voices: int = 3, mix: float = 0.5) -> np.ndarray:
+              delay_ms: float = 20.0, voices: int = 3, mix: float = 0.5,
+              phase: float = 0.0) -> np.ndarray:
     """Chorus: `voices` fractional delay lines (linear interpolation) swept by
     LFOs `2π/voices` apart around `delay_ms` ± `depth_ms`/2, summed and mixed
     with the dry signal. No feedback, so it is a pure read-position map and
-    vectorizes; the derivative of the sweep is the audible detune."""
+    vectorizes; the derivative of the sweep is the audible detune. `phase`
+    offsets every LFO (the stereo chain gives the right channel `stereo·π`)."""
     n = x.size
     voices = max(1, int(voices))
     t = np.arange(n, dtype=np.float64)
     wet = np.zeros(n)
     for v in range(voices):
-        phase = 2.0 * np.pi * v / voices
-        d = (delay_ms + depth_ms * 0.5 * (1.0 + np.sin(2.0 * np.pi * rate_hz * t / sr + phase))) * sr / 1000.0
+        ph = 2.0 * np.pi * v / voices + phase
+        d = (delay_ms + depth_ms * 0.5 * (1.0 + np.sin(2.0 * np.pi * rate_hz * t / sr + ph))) * sr / 1000.0
         wet += np.interp(t - d, t, x, left=0.0, right=0.0)
     wet /= voices
     return x * (1.0 - mix) + wet * mix
@@ -118,10 +120,15 @@ def chorus_fx(x: np.ndarray, sr: int, rate_hz: float = 0.8, depth_ms: float = 6.
 
 def bitcrush_fx(x: np.ndarray, bits: int = 8, downsample: int = 1, mix: float = 1.0) -> np.ndarray:
     """Bit-depth and sample-rate reduction: mid-tread quantization to
-    2^bits levels, then sample-and-hold every `downsample` samples."""
+    2^bits levels spanning the signal's own peak (so the depth does not
+    depend on gain staging — a -30 dBFS bus crushes as hard as a full-scale
+    one), then sample-and-hold every `downsample` samples."""
     bits = int(min(24, max(1, int(bits))))
-    q = 2.0 ** (bits - 1)
-    y = np.round(np.clip(x, -1.0, 1.0) * q) / q
+    peak = float(np.max(np.abs(x))) if x.size else 0.0
+    if peak <= 0.0:
+        return x
+    q = 2.0 ** (bits - 1) / peak
+    y = np.round(x * q) / q
     k = max(1, int(downsample))
     if k > 1:
         y = y[(np.arange(x.size) // k) * k]
@@ -249,18 +256,21 @@ def apply_fx_chain(x: np.ndarray, sr: int, chain: list[dict],
             from ._native import phaser_native
             wet = phaser_native(x, sr, fx.get("rate_hz", 0.4), fx.get("depth", 0.7),
                                 int(fx.get("stages", 4)), fx.get("feedback", 0.4),
-                                fx.get("center_hz", 900.0), fx.get("spread", 2.0))
+                                fx.get("center_hz", 900.0), fx.get("spread", 2.0),
+                                float(fx.get("_lfo_phase", 0.0)))
             mix = float(fx.get("mix", 0.5))
             x = (1.0 - mix) * x + mix * wet
         elif kind == "flanger":
             from ._native import flanger_native
             wet = flanger_native(x, sr, fx.get("rate_hz", 0.25), fx.get("depth_ms", 3.0),
-                                 fx.get("delay_ms", 2.0), fx.get("feedback", 0.5))
+                                 fx.get("delay_ms", 2.0), fx.get("feedback", 0.5),
+                                 float(fx.get("_lfo_phase", 0.0)))
             mix = float(fx.get("mix", 0.5))
             x = (1.0 - mix) * x + mix * wet
         elif kind == "chorus":
             x = chorus_fx(x, sr, fx.get("rate_hz", 0.8), fx.get("depth_ms", 6.0),
-                          fx.get("delay_ms", 20.0), int(fx.get("voices", 3)), fx.get("mix", 0.5))
+                          fx.get("delay_ms", 20.0), int(fx.get("voices", 3)), fx.get("mix", 0.5),
+                          float(fx.get("_lfo_phase", 0.0)))
         elif kind == "bitcrush":
             x = bitcrush_fx(x, int(fx.get("bits", 8)), int(fx.get("downsample", 1)), fx.get("mix", 1.0))
         else:
@@ -270,6 +280,9 @@ def apply_fx_chain(x: np.ndarray, sr: int, chain: list[dict],
             else:
                 raise ValueError(f"unknown fx type: {kind!r}")
     return x
+
+
+STEREO_LFO_FX = frozenset({"phaser", "flanger", "chorus"})   # honour `stereo` on buses/master
 
 
 def apply_master_chain(left: np.ndarray, right: np.ndarray, sr: int,
@@ -300,10 +313,15 @@ def apply_master_chain(left: np.ndarray, right: np.ndarray, sr: int,
             left, right = iir_multi([left, right], [ba])
         else:
             env = {0: automation_envs[i]} if i in automation_envs else None
+            # stereo modulation: the right channel's LFO runs `stereo · π` behind
+            # the left (quadrature at stereo=0.5, opposite at 1); 0 keeps both equal
+            right_fx = fx
+            if kind in STEREO_LFO_FX and float(fx.get("stereo", 0.0)) != 0.0:
+                right_fx = {**fx, "_lfo_phase": float(fx["stereo"]) * np.pi}
             left = apply_fx_chain(left, sr, [fx],
                                   lambda s: rng_factory("L", f"{i}:{s}"),
                                   automation_envs=env)
-            right = apply_fx_chain(right, sr, [fx],
+            right = apply_fx_chain(right, sr, [right_fx],
                                    lambda s: rng_factory("R", f"{i}:{s}"),
                                    automation_envs=env)
     return left, right

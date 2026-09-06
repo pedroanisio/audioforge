@@ -274,10 +274,10 @@ layer vln1 : instrument { ... seat: -16deg @ 4.5m ... }
 | `drive(amount=0.3)` | | harder oversampled tanh |
 | `ladder(cutoff, resonance=0.5, drive=0, mix=1)` (alias `res=`) | resonance 0..1.1; cutoff automation validates but is not applied at render | nonlinear Moog-style transistor-ladder lowpass: 2×-oversampled tanh saturation inside the resonance feedback, so it self-oscillates and squelches as a flat biquad cannot (**native kernel**) |
 | `tape(drive=0.4, flutter=0.3, tone=0.5, mix=1)` | | analog tape: LFO-swept fractional delay (wow/flutter) feeding a saturation with light magnetic hysteresis, plus HF loss (`tone`) — time-varying *and* nonlinear (**native kernel**) |
-| `phaser(rate=0.4, depth=0.7, stages=4, feedback=0.4, center=900hz, spread=2, mix=0.5)` | stages 1..12 | native: `stages` first-order allpasses swept `center·2^(±spread·depth)` by the LFO, feedback into the chain — `stages/2` moving notches |
-| `flanger(rate=0.25, depth=3, delay=2, feedback=0.5, mix=0.5)` | ms | native: LFO-swept fractional delay with feedback (comb notches at odd multiples of 1/(2·delay)) |
-| `chorus(rate=0.8, depth=6, delay=20, voices=3, mix=0.5)` | ms | `voices` modulated delay lines 2π/voices apart, no feedback |
-| `bitcrush(bits=8, downsample=1, mix=1)` | | mid-tread quantization to 2^bits levels, then sample-and-hold every `downsample` samples |
+| `phaser(rate=0.4, depth=0.7, stages=4, feedback=0.4, center=900hz, spread=2, mix=0.5, stereo=0)` | stages 1..12; `stereo` 0..1 offsets the right channel's LFO by `stereo·π` on buses/master | native: `stages` first-order allpasses swept `center·2^(±spread·depth)` by the LFO, feedback into the chain — `stages/2` moving notches |
+| `flanger(rate=0.25, depth=3, delay=2, feedback=0.5, mix=0.5, stereo=0)` | ms; `stereo` as phaser | native: LFO-swept fractional delay with feedback (comb notches at odd multiples of 1/(2·delay)) |
+| `chorus(rate=0.8, depth=6, delay=20, voices=3, mix=0.5, stereo=0)` | ms; `stereo` as phaser | `voices` modulated delay lines 2π/voices apart, no feedback |
+| `bitcrush(bits=8, downsample=1, mix=1)` | | mid-tread quantization to 2^bits levels spanning the signal's own peak (gain-staging independent), then sample-and-hold every `downsample` samples |
 | `tremolo(rate=5, depth=0.5)` `gain(db)` | | |
 | *any plugin name* | named args pass through | |
 

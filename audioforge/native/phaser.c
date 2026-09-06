@@ -8,14 +8,16 @@
  * (fc = center · 2^(spread · depth · sin(2π rate t))), so the chain is an LTV
  * recursion — per-sample + recursive -> native. Mixed with the dry signal by the
  * caller, the chain's phase turns produce `stages/2` moving notches.
- * Pure IEEE-754 doubles, fixed constants, no randomness. Returns the wet path.
+ * `phase` offsets the LFO (radians): the right channel of a stereo chain runs at
+ * `stereo · π` for the classic wide phaser. Pure IEEE-754 doubles, fixed constants,
+ * no randomness. Returns the wet path.
  * Compile: cc -O2 -fPIC -shared phaser.c -o phaser.so -lm
  */
 #include <math.h>
 
 int phaser(const double *x, long n, int sr, double rate, double depth,
            int stages, double feedback, double center, double spread,
-           double *out) {
+           double phase, double *out) {
     if (!x || !out || n <= 0 || sr <= 0)
         return 1;
     if (stages < 1) stages = 1;
@@ -35,7 +37,7 @@ int phaser(const double *x, long n, int sr, double rate, double depth,
     const double twopi = 6.283185307179586;
     const double pi = 3.141592653589793;
     for (long i = 0; i < n; i++) {
-        double lfo = sin(twopi * rate * (double)i / (double)sr);
+        double lfo = sin(twopi * rate * (double)i / (double)sr + phase);
         double fc = center * pow(2.0, spread * depth * lfo);
         if (fc > nyq) fc = nyq;
         if (fc < 20.0) fc = 20.0;

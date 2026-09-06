@@ -32,6 +32,10 @@ sampling workflow, plus the modulation family (phaser, flanger, chorus) and lo-f
    `schema.FX_TYPES`, the DSL builder table, the decompiler table and the manifest;
    the drift gate checks the set. References: first-order allpass phaser and delay-line
    flanger/chorus per Zölzer, *DAFX* (2nd ed., 2011), §2.3 and §2.6.
+   On bus and master chains a `stereo` parameter (0..1) runs the right channel's LFO
+   `stereo·π` behind the left; layer chains are mono, so it is inert there and the default
+   0 keeps existing renders byte-identical. `bitcrush` quantizes relative to the signal's own
+   peak (2^bits levels span it), so bit depth means the same on a −30 dBFS bus as at full scale.
 2. **Vocoder as a bus sidechain, not a voice.** `vocoder: source=<layer|bus:name> …`
    on a bus mirrors `duck:`: the bus mix is the carrier, the named signal the
    modulator. It is a channel vocoder (Dudley 1939 lineage): log-spaced second-order
