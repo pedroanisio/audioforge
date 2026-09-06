@@ -419,7 +419,8 @@ def main(argv=None) -> int:
     p.add_argument("-o", "--out", required=True)
     p.add_argument("--notated", action="store_true",
                    help="formal quantized score (figures+rests) for MuseScore")
-    p.add_argument("--bars", type=int, default=4, help="beats per measure")
+    p.add_argument("--bars", type=int, default=None,
+                   help="override beats per measure (default: the spec meter, per-part polymeter)")
 
     p = sub.add_parser("score", help="Proportional proof-sheet PDF of the compiled spec (not a typeset score; ADR-0009)"); p.add_argument("spec")
     p.add_argument("-o", "--out", default=None)

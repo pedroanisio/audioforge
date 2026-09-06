@@ -19,11 +19,31 @@ structured, per-version summary. Version consistency across sites is gated by
 
 ## [Unreleased]
 
+_Notation and interchange line (ADR-0009; `docs/evolution/roadmap-notation.xlsx`)._
+
 ### Added
-- Nothing yet.
+- `oracles` and `engrave` extras (music21, xmlschema, LilyPond) and `make oracle-check`, which
+  runs `tests/test_notation_oracles.py` against the MusicXML 3.1 XSD and music21 and skips
+  loudly when the extra is absent.
+- `tests/fixtures/notation`: a ten-piece notation corpus with expected structure; the MusicXML
+  3.1 schema is vendored under `tests/fixtures/musicxml/xsd`.
+- `tuning_not_rendered` diagnostic: a non-12-EDO `tuning:` directive compiles with a loud
+  warning instead of rendering 12-TET silently.
+- `audioforge.musicxml`: the MusicXML exporters and importer, re-exported by `audioforge.interop`.
 
 ### Changed
-- Nothing yet.
+- The notated MusicXML export takes meter beats and unit, bar length, per-part polymeter,
+  `key_map`, `tempo_map` (thinned to the quantization grid, stepped at its points) and
+  `pickup` (an implicit first measure) from the spec; `export-musicxml --bars` is now an
+  override that defaults to the spec meter.
+- The exact-tick MusicXML export writes one part per pitched layer with `<chord/>` groups and
+  `<backup>` cursor moves; the MIDI export is a format-1 file with a conductor track (time
+  and key signature, every tempo point) and one track per layer on its own channel.
+- `import_musicxml` reads one layer per `<part>` (named from `part-name`), follows the
+  MusicXML cursor (`<chord/>`, `<backup>`, `<forward>`, voices), honours per-measure
+  divisions, key, time and tempo, merges ties, and lists unrepresentable constructs under
+  `_meta.import.dropped`.
+- `audioforge score` is labelled a proof sheet, not engraving.
 
 ### Fixed
 - Nothing yet.

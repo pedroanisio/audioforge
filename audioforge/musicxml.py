@@ -1,0 +1,632 @@
+"""MusicXML 3.1 interchange for the note-event IR (ADR-0009).
+
+* ``export_musicxml`` — exact-tick interchange. One part per pitched layer, one
+  measure per part, ``<chord/>`` for simultaneous onsets, ``<backup>`` and
+  ``<forward>`` for exact cursor moves. Nothing is quantized.
+* ``export_notated_musicxml`` — the formal score. Durations snap to a grid and
+  become standard figures; measures come from the spec meter (per-part
+  polymeter); an anacrusis is an implicit first measure; ``key_map`` changes
+  land on the first barline at or after the change beat; ``tempo_map`` points
+  thin to the grid (see ``tempo_marks``) and become metronome directions; notes
+  tie across barlines.
+* ``import_musicxml`` — part-aware, cursor-exact reader: chords, backup and
+  forward, voices, per-measure divisions/time/key/tempo, merged ties.
+
+XSD validity of the exports, structural parity with music21, and the import's
+onset fidelity are asserted by tests/test_notation_oracles.py.
+
+⚠ ARCHITECTURAL CONTRACT (PALS's LAW): ``import_musicxml`` returns the parser's
+*claim* about a foreign document; callers validate it (``ir_schema`` /
+``AudioForge.load_spec``) before trusting it.
+"""
+from __future__ import annotations
+
+import re
+import xml.etree.ElementTree as ET
+
+from . import theory
+
+TPQ = 480             # divisions per quarter note in every export
+NOTATED_GRID = 0.25   # default quantization grid of the notated view (quarter beats)
+TEMPO_MARK_MIN_DELTA_BPM = 0.1   # consecutive marks closer than this are one mark
+
+_MAJ_FIFTHS = {"C": 0, "G": 1, "D": 2, "A": 3, "E": 4, "B": 5, "F#": 6, "C#": 7,
+               "F": -1, "Bb": -2, "Eb": -3, "Ab": -4, "Db": -5, "Gb": -6, "Cb": -7}
+_MIN_FIFTHS = {"A": 0, "E": 1, "B": 2, "F#": 3, "C#": 4, "G#": 5, "D#": 6,
+               "D": -1, "G": -2, "C": -3, "F": -4, "Bb": -5, "Eb": -6, "Ab": -7}
+# (quarter-fraction, MusicXML type, dots) — largest first, for greedy split
+_FIG = [(4.0, "whole", 0), (3.0, "half", 1), (2.0, "half", 0),
+        (1.5, "quarter", 1), (1.0, "quarter", 0), (0.75, "eighth", 1),
+        (0.5, "eighth", 0), (0.375, "16th", 1), (0.25, "16th", 0),
+        (0.125, "32nd", 0)]
+
+
+def _midi_note(note: str) -> int:
+    return theory.note_to_semis(note) + 12
+
+
+def _note_name(midi: int) -> str:
+    return theory.semis_to_note(midi - 12)
+
+
+def layer_ident(text: str, fallback: str, used: set[str]) -> str:
+    """Coerce a foreign part/track name into a unique DSL IDENT.
+
+    The grammar's IDENT is ``letter , { letter | digit | "_" | "#" }`` — no
+    hyphens, spaces, or leading digits — and layer names must be unique so the
+    decompiled ``.af`` round-trips. Invalid runs collapse to ``_``; a numeric
+    suffix disambiguates collisions.
+    """
+    cleaned = re.sub(r"[^A-Za-z0-9_#]+", "_", (text or "").strip()).strip("_")
+    if not cleaned or not cleaned[0].isalpha():
+        cleaned = fallback if (fallback and fallback[0].isalpha()) else f"L_{cleaned}"
+    candidate = cleaned
+    n = 2
+    while candidate in used:
+        candidate = f"{cleaned}_{n}"
+        n += 1
+    return candidate
+
+
+# ------------------------------------------------------------------ keys ----
+def _split_key(key: str | None) -> tuple[str, str]:
+    p = (key or "C major").split()
+    return p[0], (p[1].lower() if len(p) > 1 else "major")
+
+
+def _tonic_fifths(tonic: str, mode: str) -> int:
+    return (_MIN_FIFTHS if mode == "minor" else _MAJ_FIFTHS).get(tonic, 0)
+
+
+def _key_fifths(key: str) -> int:
+    return _tonic_fifths(*_split_key(key))
+
+
+def _fifths_key(fifths: int, mode: str) -> str:
+    mode = "minor" if mode == "minor" else "major"
+    table = _MIN_FIFTHS if mode == "minor" else _MAJ_FIFTHS
+    inverse = {v: k for k, v in table.items()}
+    return f"{inverse.get(fifths, 'A' if mode == 'minor' else 'C')} {mode}"
+
+
+def _key_points(spec: dict) -> list[tuple[int, int, str]]:
+    """``(tick, fifths, mode)`` for the initial key and every ``key_map`` change,
+    sorted, starting at tick 0, consecutive duplicates removed."""
+    tonic, mode = _split_key(spec.get("key"))
+    pts = [(0, _tonic_fifths(tonic, mode), mode)]
+    for beat, tonic, mode in spec.get("key_map") or []:
+        mode = str(mode).lower()
+        pts.append((int(round(float(beat) * TPQ)), _tonic_fifths(tonic, mode), mode))
+    pts.sort(key=lambda p: p[0])
+    out: list[tuple[int, int, str]] = []
+    for p in pts:
+        if out and out[-1][0] == p[0]:
+            out[-1] = p                      # a key_map entry at 0 overrides `key`
+        elif not out or (p[1], p[2]) != (out[-1][1], out[-1][2]):
+            out.append(p)
+    return out
+
+
+def _key_at(points: list[tuple[int, int, str]], tick: int) -> tuple[int, int, str]:
+    cur = points[0]
+    for p in points:
+        if p[0] <= tick:
+            cur = p
+        else:
+            break
+    return cur
+
+
+# ----------------------------------------------------------------- tempo ----
+def tempo_points(spec: dict) -> list[tuple[float, float]]:
+    """Raw ``(beat, bpm)`` points: ``tempo_map`` or the single ``bpm``, sorted,
+    with the first tempo extended back to beat 0 (as the renderer's TempoMap does)."""
+    pts = sorted((float(b), float(v)) for b, v in (spec.get("tempo_map") or []))
+    if not pts:
+        pts = [(0.0, float(spec.get("bpm", 120.0)))]
+    if pts[0][0] != 0.0:
+        pts.insert(0, (0.0, pts[0][1]))
+    return pts
+
+
+def tempo_marks(spec: dict, grid: float = NOTATED_GRID) -> list[tuple[float, float]]:
+    """The tempo marks the notated export writes: ``tempo_points`` snapped to
+    ``grid`` (one mark per slot, last point wins) with consecutive marks that
+    differ by less than ``TEMPO_MARK_MIN_DELTA_BPM`` collapsed. A dense rubato
+    map therefore thins to its audible steps; the resolution is the grid.
+
+    A MusicXML metronome mark holds until the next one, so the IR's linear
+    ramps between points are stepped at their points on export."""
+    slots: dict[float, float] = {}
+    for beat, bpm in tempo_points(spec):
+        slots[round(round(beat / grid) * grid, 6)] = bpm
+    out: list[tuple[float, float]] = []
+    for beat in sorted(slots):
+        if not out or abs(slots[beat] - out[-1][1]) >= TEMPO_MARK_MIN_DELTA_BPM:
+            out.append((beat, slots[beat]))
+    return out
+
+
+def stepped_tempo_map(marks: list[tuple[float, float]]) -> list[list[float]]:
+    """IR ``tempo_map`` with the *step* semantics of notation tempo marks: the
+    IR interpolates linearly between points, so each change is written as
+    ``[beat, previous_bpm], [beat, new_bpm]`` (equal beats are allowed by the
+    validator and integrate to a step)."""
+    out: list[list[float]] = []
+    for beat, bpm in marks:
+        if out and out[-1][1] != bpm:
+            out.append([beat, out[-1][1]])
+        out.append([beat, bpm])
+    return out
+
+
+# -------------------------------------------------------------- measures ----
+def _bar_ticks(spec: dict, layer_name: str | None = None,
+               beats_override: int | None = None) -> tuple[int, int, int]:
+    """``(beats, unit, bar_ticks)`` for a part: the layer's polymeter entry, else
+    the score meter, else 4/4. ``beats_override`` keeps the legacy CLI flag."""
+    score = spec.get("score") or {}
+    meter = ((score.get("polymeter") or {}).get(layer_name) if layer_name else None) \
+        or score.get("meter") or {}
+    beats = int(beats_override or meter.get("beats", 4))
+    unit = int(meter.get("unit", 4))
+    return beats, unit, int(round(beats * 4 * TPQ / unit))
+
+
+def _pickup_ticks(spec: dict) -> int:
+    return int(round(float((spec.get("score") or {}).get("pickup_beats", 0.0)) * TPQ))
+
+
+def _spans(total: int, bar: int, pickup: int) -> list[tuple[int, int]]:
+    """Measure ``[start, end)`` tick spans covering ``total`` ticks: an implicit
+    anacrusis of ``pickup`` ticks first, then full bars (at least one)."""
+    spans = [(0, pickup)] if pickup > 0 else []
+    t = pickup
+    while t < total or not spans:
+        spans.append((t, t + bar))
+        t += bar
+    return spans
+
+
+def _span_of(tick: int, bar: int, pickup: int) -> int:
+    if pickup > 0 and tick < pickup:
+        return 0
+    return (1 if pickup > 0 else 0) + (tick - pickup) // bar
+
+
+# ------------------------------------------------------------ XML pieces ----
+def _num(x: float) -> str:
+    return f"{float(x):.3f}".rstrip("0").rstrip(".")
+
+
+def _score_root(spec: dict, parts: list[dict]) -> ET.Element:
+    root = ET.Element("score-partwise", version="3.1")
+    ET.SubElement(ET.SubElement(root, "work"), "work-title").text = \
+        str(spec.get("id", "AudioForge"))
+    plist = ET.SubElement(root, "part-list")
+    for p in parts:
+        ET.SubElement(ET.SubElement(plist, "score-part", id=p["id"]),
+                      "part-name").text = p["name"]
+    return root
+
+
+def _attributes(measure, *, divisions=None, key=None, time=None, clef=None):
+    at = ET.SubElement(measure, "attributes")
+    if divisions is not None:
+        ET.SubElement(at, "divisions").text = str(divisions)
+    if key is not None:
+        k = ET.SubElement(at, "key")
+        ET.SubElement(k, "fifths").text = str(key[1])
+        ET.SubElement(k, "mode").text = key[2]
+    if time is not None:
+        tm = ET.SubElement(at, "time")
+        ET.SubElement(tm, "beats").text = str(time[0])
+        ET.SubElement(tm, "beat-type").text = str(time[1])
+    if clef is not None:
+        cl = ET.SubElement(at, "clef")
+        ET.SubElement(cl, "sign").text = clef
+        ET.SubElement(cl, "line").text = "2" if clef == "G" else "4"
+
+
+def _direction(measure, offset_ticks: int, bpm: float):
+    """A metronome mark (and its playback tempo) ``offset_ticks`` into the measure."""
+    d = ET.SubElement(measure, "direction", placement="above")
+    m = ET.SubElement(ET.SubElement(d, "direction-type"), "metronome")
+    ET.SubElement(m, "beat-unit").text = "quarter"
+    ET.SubElement(m, "per-minute").text = _num(bpm)
+    if offset_ticks:
+        ET.SubElement(d, "offset", sound="yes").text = str(offset_ticks)
+    ET.SubElement(d, "sound", tempo=_num(bpm))
+
+
+def _move(measure, kind: str, ticks: int):
+    if ticks > 0:
+        ET.SubElement(ET.SubElement(measure, kind), "duration").text = str(ticks)
+
+
+def _xml_pitch(parent, name: str):
+    pit = ET.SubElement(parent, "pitch")
+    ET.SubElement(pit, "step").text = name[0].upper()
+    i = 1
+    if i < len(name) and name[i] in "#b":
+        ET.SubElement(pit, "alter").text = "1" if name[i] == "#" else "-1"
+        i += 1
+    ET.SubElement(pit, "octave").text = name[i:]
+
+
+def _decompose(ticks: int, tpq: int = TPQ):
+    figs = [(int(round(q * tpq)), t, d) for q, t, d in _FIG]
+    out, rem, guard = [], ticks, 0
+    while rem > 0 and guard < 128:
+        for ft, t, d in figs:
+            if ft <= rem:
+                out.append((ft, t, d))
+                rem -= ft
+                break
+        else:
+            break
+        guard += 1
+    return out or [(ticks, "quarter", 0)]
+
+
+def _emit_rest(measure, ticks: int, tpq: int = TPQ):
+    for ft, typ, dots in _decompose(ticks, tpq):
+        n = ET.SubElement(measure, "note")
+        ET.SubElement(n, "rest")
+        ET.SubElement(n, "duration").text = str(ft)
+        ET.SubElement(n, "type").text = typ
+        for _ in range(dots):
+            ET.SubElement(n, "dot")
+
+
+def _emit_seg(measure, seg, tpq: int = TPQ):
+    figs = _decompose(seg["dur"], tpq)
+    for fi, (ft, typ, dots) in enumerate(figs):
+        tie_back = (fi > 0) or seg["tie_stop"]
+        tie_fwd = (fi < len(figs) - 1) or seg["tie_start"]
+        for pi, name in enumerate(seg["pitches"]):
+            n = ET.SubElement(measure, "note")
+            if pi > 0:
+                ET.SubElement(n, "chord")
+            _xml_pitch(n, name)
+            ET.SubElement(n, "duration").text = str(ft)
+            if tie_back:
+                ET.SubElement(n, "tie", type="stop")
+            if tie_fwd:
+                ET.SubElement(n, "tie", type="start")
+            ET.SubElement(n, "type").text = typ
+            for _ in range(dots):
+                ET.SubElement(n, "dot")
+            if tie_back or tie_fwd:
+                nots = ET.SubElement(n, "notations")
+                if tie_back:
+                    ET.SubElement(nots, "tied", type="stop")
+                if tie_fwd:
+                    ET.SubElement(nots, "tied", type="start")
+
+
+def _pitched_layers(spec: dict) -> list[dict]:
+    return [layer for layer in spec.get("layers", [])
+            if any("note" in e for e in (layer.get("notes") or []))]
+
+
+def _tick(beats: float) -> int:
+    return int(round(float(beats) * TPQ))
+
+
+# ------------------------------------------------------ exact-tick export ----
+def export_musicxml(spec: dict) -> str:
+    """Exact-tick MusicXML: one part per pitched layer, one measure each, no
+    quantization. Simultaneous onsets become ``<chord/>`` groups (one group per
+    distinct duration, joined with ``<backup>``); overlaps and gaps move the
+    cursor with ``<backup>`` / rests. Tempo points become directions in part 1."""
+    layers = _pitched_layers(spec)
+    parts = [{"id": f"P{i + 1}",
+              "name": layer.get("name") or str(spec.get("id", "AudioForge")),
+              "notes": sorted((e for e in layer["notes"] if "note" in e),
+                              key=lambda e: (_tick(e["start_beat"]), _midi_note(e["note"])))}
+             for i, layer in enumerate(layers)] or \
+            [{"id": "P1", "name": str(spec.get("id", "AudioForge")), "notes": []}]
+    root = _score_root(spec, parts)
+    meter = (spec.get("score") or {}).get("meter")
+    key = _key_points(spec)[0]
+    for pi, p in enumerate(parts):
+        measure = ET.SubElement(ET.SubElement(root, "part", id=p["id"]), "measure", number="1")
+        _attributes(measure, divisions=TPQ, key=key,
+                    time=(meter["beats"], meter["unit"]) if meter else None)
+        if pi == 0:
+            for beat, bpm in tempo_points(spec):
+                _direction(measure, _tick(beat), bpm)
+        cursor, i, notes = 0, 0, p["notes"]
+        while i < len(notes):
+            start = _tick(notes[i]["start_beat"])
+            group = []
+            while i < len(notes) and _tick(notes[i]["start_beat"]) == start:
+                group.append(notes[i])
+                i += 1
+            if start > cursor:
+                n = ET.SubElement(measure, "note")
+                ET.SubElement(n, "rest")
+                ET.SubElement(n, "duration").text = str(start - cursor)
+            elif start < cursor:
+                _move(measure, "backup", cursor - start)
+            by_dur: dict[int, list[dict]] = {}
+            for ev in group:
+                by_dur.setdefault(max(1, _tick(ev["dur_beats"])), []).append(ev)
+            prev = None
+            for dur, evs in by_dur.items():
+                if prev is not None:
+                    _move(measure, "backup", prev)
+                for j, ev in enumerate(evs):
+                    n = ET.SubElement(measure, "note")
+                    if j > 0:
+                        ET.SubElement(n, "chord")
+                    _xml_pitch(n, ev["note"])
+                    ET.SubElement(n, "duration").text = str(dur)
+                prev = dur
+            cursor = start + (prev or 0)
+    return ET.tostring(root, encoding="unicode")
+
+
+# --------------------------------------------------------- notated export ----
+def _notated_parts(spec: dict, grid: float) -> list[dict]:
+    parts = []
+    for layer in _pitched_layers(spec):
+        groups: dict[float, dict] = {}
+        for e in layer["notes"]:
+            if "note" not in e:
+                continue
+            on = round(round(e["start_beat"] / grid) * grid, 4)
+            du = max(grid, round(e["dur_beats"] / grid) * grid)
+            g = groups.setdefault(on, {"p": set(), "dur": 0.0})
+            g["p"].add(e["note"])
+            g["dur"] = max(g["dur"], du)
+        onsets = sorted(groups)
+        events = []
+        for i, on in enumerate(onsets):
+            nxt = onsets[i + 1] if i + 1 < len(onsets) else on + groups[on]["dur"]
+            dur = min(groups[on]["dur"], round(nxt - on, 4))
+            if dur > 0:
+                events.append((_tick(on), _tick(dur), sorted(groups[on]["p"], key=_midi_note)))
+        if events:
+            mids = sorted(_midi_note(p) for _, _, ps in events for p in ps)
+            parts.append({"id": f"P{len(parts) + 1}", "name": layer.get("name", "part"),
+                          "clef": "G" if mids[len(mids) // 2] >= 60 else "F",
+                          "events": events})
+    return parts
+
+
+def export_notated_musicxml(spec: dict, *, beats_per_bar: int | None = None,
+                            grid: float = NOTATED_GRID) -> str:
+    """Formal MusicXML (quantized to ``grid``; measures, keys, tempi and the
+    anacrusis from the spec). ``beats_per_bar`` overrides the meter's beat
+    count for the legacy ``--bars`` flag; leave it ``None`` to trust the spec."""
+    parts = _notated_parts(spec, grid)
+    if not parts:
+        raise ValueError("no pitched layers to notate")
+    pickup = _pickup_ticks(spec)
+    keys = _key_points(spec)
+    marks = [(_tick(beat), bpm) for beat, bpm in tempo_marks(spec, grid)]
+    root = _score_root(spec, parts)
+    for pi, p in enumerate(parts):
+        beats, unit, bar = _bar_ticks(spec, p["name"], beats_per_bar)
+        total = max(on + dur for on, dur, _ in p["events"])
+        spans = _spans(total, bar, pickup)
+        by_m: dict[int, list[dict]] = {}
+        for on, dur, pitches in p["events"]:           # split at barlines, tie
+            t, end = on, on + dur
+            while t < end:
+                mi = _span_of(t, bar, pickup)
+                s0, s1 = spans[mi]
+                seg_end = min(end, s1)
+                by_m.setdefault(mi, []).append(
+                    {"start": t - s0, "dur": seg_end - t, "pitches": pitches,
+                     "tie_stop": t > on, "tie_start": seg_end < end})
+                t = seg_end
+        part = ET.SubElement(root, "part", id=p["id"])
+        key_prev = None
+        for mi, (s0, s1) in enumerate(spans):
+            measure = ET.SubElement(part, "measure",
+                                    number=str(mi if pickup > 0 else mi + 1))
+            if pickup > 0 and mi == 0:
+                measure.set("implicit", "yes")
+            key = _key_at(keys, s0)
+            if mi == 0:
+                _attributes(measure, divisions=TPQ, key=key, time=(beats, unit),
+                            clef=p["clef"])
+            elif key != key_prev:
+                _attributes(measure, key=key)
+            key_prev = key
+            if pi == 0:
+                for tick, bpm in marks:
+                    if s0 <= tick < s1:
+                        _direction(measure, tick - s0, bpm)
+            pos = 0
+            for s in sorted(by_m.get(mi, []), key=lambda s: s["start"]):
+                if s["start"] > pos:
+                    _emit_rest(measure, s["start"] - pos)
+                _emit_seg(measure, s)
+                pos = s["start"] + s["dur"]
+            if pos < s1 - s0:
+                _emit_rest(measure, s1 - s0 - pos)
+    return '<?xml version="1.0" encoding="UTF-8"?>\n' + ET.tostring(root, encoding="unicode")
+
+
+# ---------------------------------------------------------------- import ----
+def _pitch_name(pitch, dropped: list[dict], where: dict) -> str:
+    step = pitch.findtext("step", default="C").upper()
+    alter = float(pitch.findtext("alter", default="0"))
+    octave = pitch.findtext("octave", default="4")
+    if alter != int(alter):
+        dropped.append({"construct": "microtonal_alter", "alter": alter, **where})
+        alter = round(alter)
+    alter = int(alter)
+    if alter in (-1, 0, 1):
+        return f"{step}{'#' if alter > 0 else 'b' if alter < 0 else ''}{octave}"
+    return _note_name(_midi_note(f"{step}{octave}") + alter)
+
+
+def _dur_beats(el, divisions: int) -> float:
+    return int(float(el.findtext("duration", default="0"))) / divisions
+
+
+def import_musicxml(text: str, asset_id: str = "imported_musicxml") -> dict:
+    """Read a ``score-partwise`` document into an IR spec: one ``notes`` layer per
+    ``<part>`` (named from ``part-name``), exact onsets from the MusicXML cursor
+    (``<chord/>``, ``<backup>``, ``<forward>``, voices), per-measure
+    ``divisions`` / ``<time>`` / ``<key>`` / tempo, and tied notes merged into one
+    event. Constructs the IR cannot hold (unpitched notes, mid-piece time
+    signature changes, microtonal alters, empty parts) are listed under
+    ``_meta.import.dropped`` instead of vanishing.
+    """
+    root = ET.fromstring(text)
+    if root.tag != "score-partwise":
+        raise ValueError(f"unsupported MusicXML root <{root.tag}>; "
+                         "only score-partwise documents are supported")
+    part_names = {sp.get("id"): (sp.findtext("part-name") or "").strip()
+                  for sp in root.iter("score-part")}
+    tempo: dict[float, float] = {}
+    keysig: dict[float, tuple[int, str]] = {}
+    meters: list[tuple[float, int, int]] = []
+    dropped: list[dict] = []
+    pickup: float | None = None
+    layers: list[dict] = []
+    used: set[str] = set()
+    for pi, part in enumerate(root.findall("part")):
+        pid = part.get("id") or f"P{pi + 1}"
+        divisions = TPQ
+        measure_start = 0.0
+        cur_meter: tuple[int, int] | None = None
+        notes: list[dict] = []
+        pending: dict[tuple[str, str], dict] = {}
+        for mi, measure in enumerate(part.findall("measure")):
+            cursor = extent = last_start = 0.0
+            for el in measure:
+                tag = el.tag
+                here = {"part": pid, "measure": measure.get("number")}
+                if tag == "attributes":
+                    d = el.findtext("divisions")
+                    if d:
+                        divisions = max(1, int(float(d)))
+                    for tm in el.findall("time"):
+                        b, u = tm.findtext("beats"), tm.findtext("beat-type")
+                        if b and u:
+                            ts = (sum(int(x) for x in b.split("+")), int(u))
+                            if ts != cur_meter:
+                                meters.append((round(measure_start + cursor, 6), *ts))
+                                cur_meter = ts
+                    for k in el.findall("key"):
+                        f = k.findtext("fifths")
+                        if f is not None:
+                            keysig.setdefault(round(measure_start + cursor, 6),
+                                              (int(f), (k.findtext("mode") or "major").lower()))
+                elif tag == "direction":
+                    off = el.findtext("offset")
+                    beat = measure_start + cursor + (float(off) / divisions if off else 0.0)
+                    snd = el.find("sound")
+                    val = (snd.get("tempo") if snd is not None else None) \
+                        or el.findtext(".//metronome/per-minute")
+                    if val:
+                        try:
+                            tempo.setdefault(round(beat, 6), float(val))
+                        except ValueError:
+                            dropped.append({"construct": "tempo_text", "value": val, **here})
+                elif tag == "sound" and el.get("tempo"):
+                    tempo.setdefault(round(measure_start + cursor, 6), float(el.get("tempo")))
+                elif tag == "backup":
+                    cursor -= _dur_beats(el, divisions)
+                elif tag == "forward":
+                    cursor += _dur_beats(el, divisions)
+                    extent = max(extent, cursor)
+                elif tag == "note":
+                    if el.find("grace") is not None or el.find("duration") is None:
+                        if el.find("rest") is None:
+                            dropped.append({"construct": "grace_note", **here})
+                        continue
+                    dur = _dur_beats(el, divisions)
+                    if el.find("chord") is not None:
+                        start = last_start
+                    else:
+                        start = cursor
+                        cursor = start + dur
+                        last_start = start
+                    extent = max(extent, start + dur)
+                    if el.find("rest") is not None or dur <= 0:
+                        continue
+                    pitch = el.find("pitch")
+                    if pitch is None:
+                        dropped.append({"construct": "unpitched", **here})
+                        continue
+                    name = _pitch_name(pitch, dropped, here)
+                    tie_key = (el.findtext("voice") or "1", name)
+                    ties = {t.get("type") for t in el.findall("tie")} \
+                        or {t.get("type") for t in el.findall("notations/tied")}
+                    if "stop" in ties and tie_key in pending:
+                        ev = pending.pop(tie_key)
+                        ev["dur_beats"] = round(measure_start + start + dur - ev["start_beat"], 6)
+                        if "start" in ties:
+                            pending[tie_key] = ev
+                        continue
+                    ev = {"note": name, "start_beat": round(measure_start + start, 6),
+                          "dur_beats": round(dur, 6)}
+                    bend_alter = el.findtext(".//bend/bend-alter")
+                    if bend_alter is not None:
+                        ev["curves"] = [{
+                            "target": "pitch_cents", "time_basis": "note_beats",
+                            "points": [[0.0, 0.0],
+                                       [ev["dur_beats"], round(float(bend_alter) * 100.0, 6)]],
+                        }]
+                    notes.append(ev)
+                    if "start" in ties:
+                        pending[tie_key] = ev
+            nominal = cur_meter[0] * 4.0 / cur_meter[1] if cur_meter else None
+            if (pi == 0 and mi == 0 and nominal and extent > 0
+                    and (measure.get("implicit") == "yes" or extent < nominal - 1e-6)):
+                pickup = round(extent, 6)
+            measure_start += extent if extent > 0 else (nominal or 0.0)
+        if notes:
+            name = layer_ident(part_names.get(pid, ""), f"part{pi + 1}", used)
+            used.add(name)
+            layers.append({"name": name, "type": "notes", "osc": "sine",
+                           "env": {"attack": 0.01, "decay": 0.1, "sustain": 0.8, "release": 0.1},
+                           "notes": sorted(notes, key=lambda n: (n["start_beat"], _midi_note(n["note"])))})
+        else:
+            dropped.append({"construct": "empty_part", "part": pid})
+
+    marks = sorted(tempo.items()) or [(0.0, 120.0)]
+    if marks[0][0] != 0.0:
+        marks.insert(0, (0.0, marks[0][1]))
+    marks = [p for i, p in enumerate(marks) if i == 0 or p[1] != marks[i - 1][1]]
+    tempo_pts = stepped_tempo_map(marks)
+    bpm = tempo_pts[0][1]
+    key_pts = sorted(keysig.items())
+    key_names = [(beat, *_fifths_key(f, m).split()) for beat, (f, m) in key_pts]
+    key_names = [k for i, k in enumerate(key_names) if i == 0 or k[1:] != key_names[i - 1][1:]]
+    total_beats = max((n["start_beat"] + n["dur_beats"] for layer in layers for n in layer["notes"]),
+                      default=1.0)
+    from .sequencer import TempoMap   # sequencer is heavy; only the importer needs it
+    spec: dict = {
+        "id": asset_id, "kind": "cue",
+        "duration_s": round(TempoMap(tempo_pts).sec(total_beats), 3),
+        "bpm": round(bpm, 6),
+        "layers": layers or [{"name": "musicxml", "type": "notes", "osc": "sine",
+                              "env": {"attack": 0.01, "decay": 0.1, "sustain": 0.8, "release": 0.1},
+                              "notes": []}],
+        "master": {"target_peak_dbfs": -1.0},
+    }
+    if len(tempo_pts) > 1:
+        spec["tempo_map"] = [[b, v] for b, v in tempo_pts]
+    if key_names:
+        spec["key"] = f"{key_names[0][1]} {key_names[0][2]}"
+        if len(key_names) > 1:
+            spec["key_map"] = [[b, t, m] for b, t, m in key_names]
+    if meters:
+        score: dict = {"meter": {"beats": meters[0][1], "unit": meters[0][2]}}
+        if pickup:
+            score["pickup_beats"] = pickup
+        spec["score"] = score
+        for beat, b, u in meters[1:]:
+            dropped.append({"construct": "time_signature_change", "beat": beat, "meter": [b, u]})
+    if dropped:
+        spec["_meta"] = {"import": {"format": "musicxml", "dropped": dropped}}
+    return spec

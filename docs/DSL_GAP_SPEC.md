@@ -480,12 +480,19 @@ subset, `interop_diagnostics()` emits structured lossy warnings, and
 `export_session_bundle()` writes a deterministic manifest-backed bundle.
 
 **Measured limit (2026-09-06, `docs/evolution/harness-notation.md`).** Against external
-oracles the contract is narrower than the prose: the notated exporter hard-codes the beat
-unit and drops key/tempo changes, pickup, dynamics, slurs and holds (`HARNESS-NXML-002…008`);
-the exact-tick and MIDI exports flatten layers and chords (`HARNESS-NXML-009`,
-`HARNESS-NMIDI-002/003`); the MusicXML importer flattens parts and chords
-(`HARNESS-NIMP-001…005`). The roadmap `docs/evolution/roadmap-notation.xlsx` closes these
-before the interop contract may again be called complete.
+oracles the original contract was narrower than the prose. Checkpoint T2 of
+`docs/evolution/roadmap-notation.xlsx` closed the structural part: the notated exporter
+takes meter beats and unit, bar length, per-part polymeter, `key_map`, `tempo_map` (thinned
+to the quantization grid) and `pickup` from the spec (`HARNESS-NXML-002…005`); the
+exact-tick MusicXML and MIDI exports write one part or track per layer with `<chord/>`
+groups and every tempo point (`HARNESS-NXML-009`, `HARNESS-NMIDI-002/003`); the importer
+reads one layer per `<part>`, honours `<chord/>`, `<backup>`, `<forward>`, voices,
+per-measure divisions, key, time and tempo, and merges ties (`HARNESS-NIMP-001…003`).
+Still open until T3: dynamics, articulations and slurs, fermatas and rehearsal marks in
+MusicXML (`HARNESS-NXML-006…008`), the generated lossy-construct matrix
+(`HARNESS-NXML-011`) and the corpus round trip (`HARNESS-NIMP-004`). Unrepresentable
+imported constructs (unpitched notes, mid-piece time-signature changes, microtonal
+alters, empty parts) are listed under `_meta.import.dropped`, never dropped silently.
 
 **Definition of Ready**
 
