@@ -54,6 +54,12 @@ a difficult target need not be reached exactly.
 
 ## Stable performances during editing
 
+Layer names must be unique within an asset: since 3.0 they identify performance
+random streams and stems, so two layers sharing a name would draw identical
+randomness and sum coherently (+6 dB instead of +3 dB for two noise beds).
+Validation rejects duplicates (`spec.layers[i].name: duplicate layer name`).
+
+
 `performance_seed: 42` selects a take. Its default is zero. The seed and `variant`
 derive a performance hash; named layer/component/event paths derive local random
 streams. The complete spec hash, including the engine version, still identifies
@@ -92,7 +98,10 @@ downbeat. They do not prove perceived closure. Emotion tags remain inspectable
 production presets; `sadness` and `urgency` remain metadata-only.
 
 Sampled legato connects only contiguous monophonic events in the same voice and
-slur. The selected region's loop or attack metadata chooses the source offset;
+slur: the next note must start no later than 0.02 beats after, and no earlier than
+0.25 beats before, the previous note's end, and each onset must carry one note.
+Detached slurs (a rest inside the slur) and slurred dyads re-attack; the render plan
+carries a `transition` decision only for joined notes. The selected region's loop or attack metadata chooses the source offset;
 there is no fixed 60 ms skip. A crossfade/read-rate glide approximates a transition
 between stationary samples. Multiplying a solo sample into a section also remains
 an approximation. Neither supplies a recorded physical transition or independently
@@ -103,6 +112,13 @@ and fidelity. The plan reports approximate techniques, sampled joins and section
 multiplication. Use `routing: fallbacks=forbid` when approximations are unacceptable;
 `warn` emits warnings and `allow` retains informational evidence. A physical
 technique name alone is not evidence that the source library contains that gesture.
+
+## Quoted strings
+
+Quoted values are JSON strings: `\\` is a backslash, `\t` a tab, `\"` a quote. A
+Windows path must be written `"C:\\samples\\kick.wav"`; a bare backslash sequence
+that is not a JSON escape, or a literal control character inside quotes, is a compile
+error (`invalid quoted JSON string escape`). Engine 2.16 accepted the raw text.
 
 ## Repeats, meter and loop safety
 
@@ -156,7 +172,10 @@ three):
 | +12 semitones | 42 ms | 110 ms | 2.7× |
 | +24 semitones | 41 ms | 204 ms | 5.0× |
 
-Playback at or below the source rate costs about the same as before. Large upward
+Playback at or below the source rate costs about the same as before. Separately,
+automation declared in layer beats (`time_basis: layer_beats`) is mapped to seconds per
+sample through the tempo/hold map; on a 30 s tone that path measured 1.9 s against 0.5 s
+for seconds-based automation, a cost to keep in mind for long beat-based curves. Large upward
 transpositions of long sampled parts (orchestral libraries pitched far from their
 key centres) render noticeably slower; `--jobs` parallelises across layers, not
 inside one note. `tests/test_perf_budget.py` pins the shape of the curve (ratio

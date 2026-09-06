@@ -642,6 +642,17 @@ def validate_spec(spec: dict) -> dict:
     layers = _req(spec, "layers", "spec")
     if not isinstance(layers, list) or not layers:
         raise SpecError("spec.layers: must be a non-empty list")
+    # Layer names identify performance RNG streams and stems (ADR-0007); two layers
+    # sharing a name would draw identical randomness and sum coherently.
+    seen_names: dict[str, int] = {}
+    for i, layer in enumerate(layers):
+        if isinstance(layer, dict):
+            lname = layer.get("name", f"layer{i}")
+            if lname in seen_names:
+                raise SpecError(
+                    f"spec.layers[{i}].name: duplicate layer name '{lname}' (also layers[{seen_names[lname]}]); "
+                    "layer names identify performance streams and stems and must be unique")
+            seen_names[lname] = i
 
     # Compute grid usage once, up front — `instrument` layers are validated in a
     # second pass below, so deferring this let an instrument-only spec skip the
