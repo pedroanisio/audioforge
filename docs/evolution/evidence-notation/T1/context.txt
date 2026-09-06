@@ -1,0 +1,4 @@
+checkpoint=T1
+sha=8e550c539bc19b87b0e658e221ebfd6c70b295d0
+date=2026-09-06T03:03:17Z
+oracle_py=/tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/oracle/bin/python

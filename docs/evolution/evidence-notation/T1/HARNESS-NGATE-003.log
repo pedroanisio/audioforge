@@ -1,0 +1,34 @@
+native-check: C compiler present
+schema-check: /tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/wt-notation/docs/ir.schema.json is in sync with ir_json_schema()
+manifest-check: docs/capability-manifest.json + DIAGNOSTIC_CODES.md are in sync
+golden-check: all 5 golden specs reproduce byte-for-byte (env match: True)
+====================================================================
+ AudioForge drift inspection
+====================================================================
+
+registries cross-checked: oscillators(15) fx(19) native(8) chords(25)
+
+✓ no registry drift — every source of truth matches its consumers
+version-check: all version sites agree: engine 3.0.0, dsl 2.0
+docs-gen-check: docs pages in sync; all 22 nav pages resolve
+Using CPython 3.13.12
+  × No solution found when resolving dependencies for split (markers:
+  │ python_full_version == '3.10.*'):
+  ╰─▶ Because the requested Python version (>=3.10) does not satisfy
+      Python>=3.11 and music21==10.5.0 depends on Python>=3.11, we can
+      conclude that music21==10.5.0 cannot be used.
+      And because only music21<=10.5.0 is available, we can conclude that
+      music21>=10.5.0 cannot be used.
+      And because audioforge[oracles] depends on music21>=10.5 and your
+      project requires audioforge[oracles], we can conclude that your
+      project's requirements are unsatisfiable.
+
+      hint: While the active Python version is 3.13, the resolution failed for
+      other Python versions supported by your project. Consider limiting your
+      project's supported Python versions using `requires-python`.
+
+      hint: The `requires-python` value (>=3.10) includes Python versions
+      that are not supported by your dependencies (e.g., music21==10.5.0 only
+      supports >=3.11). Consider using a more restrictive `requires-python`
+      value (like >=3.11).
+make: *** [Makefile:60: lock-check] Error 1
