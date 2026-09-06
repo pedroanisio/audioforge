@@ -158,3 +158,33 @@ def test_layer_gain_is_applied_exactly_once_for_every_generated_layer_type(layer
     after = render(spec(-6), return_stems=True)[3]["l"]
     rms = lambda x: float(np.sqrt(np.mean(np.asarray(x) ** 2)))
     assert 20 * np.log10(rms(after) / rms(before)) == pytest.approx(-6, abs=0.03)
+
+
+def test_frequency_pitched_tone_layer_round_trips_through_dsl():
+    spec = validate_spec({"id": "t", "kind": "cue", "duration_s": 1.0, "sample_rate": 48000,
+                          "layers": [{"name": "a", "type": "tone", "osc": "sine", "freq_hz": 440.0,
+                                      "gain_db": -12, "env": ENV}],
+                          "master": {"target_peak_dbfs": -1, "fade_out_s": 0}})
+    result = AudioForge().compile(spec_to_dsl(spec))
+    assert result.ok, [d.message for d in result.diagnostics]
+    again = result.assets[0].spec
+    assert again["layers"][0]["freq_hz"] == 440.0
+    assert np.array_equal(render(spec)[0], render(again)[0])
+
+
+def test_cutdowns_export_from_loop_safe_assets():
+    """The loop seam gate belongs to the full loop render, not to spliced cutdowns."""
+    from audioforge.render import render_cutdowns
+    spec = {"id": "lp", "kind": "loop", "duration_s": 4.0, "sample_rate": 48000, "bpm": 120,
+            "loop_safe": True,
+            "layers": [{"name": "p", "type": "notes", "osc": "sine", "gain_db": -12,
+                        "env": {"attack": 0.005, "decay": 0.01, "sustain": 0.8, "release": 0.05},
+                        "notes": [{"note": n, "start_beat": b, "dur_beats": 1}
+                                  for n, b in (("C4", 0), ("E4", 2), ("G4", 4), ("C5", 6))]}],
+            "cutdowns": [{"length_s": 2, "segments": [[0.2, 1.2], [3.2, 4.0]]}],
+            "master": {"target_peak_dbfs": -1, "fade_out_s": 0}}
+    _, _, meta = render(copy.deepcopy(spec))
+    assert meta["loop_boundary"]["passed"] is True
+    cuts = list(render_cutdowns(copy.deepcopy(spec)))
+    assert len(cuts) == 1 and cuts[0][0] == 2
+    assert cuts[0][1].shape[0] == pytest.approx(1.8 * 48000, abs=48000 // 2)

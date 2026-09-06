@@ -2280,6 +2280,8 @@ def _compile_layer(lay: Layer, motifs: dict, scale, diags: list[str],
                              f"this is advisory)")
     if "note" in p:
         out["note"] = _one(p.pop("note"), line)
+    if "freq" in p:   # tone layers pitched in hertz; the decompiler emits `freq: 440hz`
+        out["freq_hz"] = float(_one(p.pop("freq"), line, want_unit="hz", name="freq"))
     for tgt, pts in p.pop("auto", []):
         out.setdefault("automation", []).append(_auto_block(tgt, pts))
     for field in ("automation", "notes"):

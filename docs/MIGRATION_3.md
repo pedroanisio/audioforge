@@ -152,9 +152,13 @@ activity, avoiding independent contradictory part clocks.
 
 `loopsafe: on` checks whole beats under the actual tempo/hold map and measures
 unfaded and delivered boundary jumps and tail energy. It rejects detected
-truncated releases or unsafe seams. Default loop fade-out is zero. These finite
-signal checks do not certify that a loop feels rhythmically or harmonically
-complete; they do not replace listening.
+truncated releases or unsafe seams. Default loop fade-out is zero. A loop whose last
+gate ends exactly at the boundary now fails when its release runs past the end (the
+2.16 renderer faded it silently); shorten that gate by the release time, or end it
+earlier, so the tail completes inside the loop. Cutdowns are deliveries, not loops:
+`loopsafe` applies to the full asset render only. These finite signal checks do not
+certify that a loop feels rhythmically or harmonically complete; they do not replace
+listening.
 
 Default SDK/CLI/agent validation computes the loop buffer to check these measured conditions before declaring it render-ready. Use SDK `resolve=False`, agent request `resolve: false`, or CLI `--no-resolve` for structural validation only.
 

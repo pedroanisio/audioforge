@@ -625,6 +625,7 @@ def render_cutdowns(spec: dict):
             out_r = np.concatenate([out_r, nr[f:]])
         sub = dict(spec)
         sub["duration_s"] = round(out_l.size / sr, 3)
+        sub.pop("loop_safe", None)   # a cutdown is a delivery, not a loop: no seam/tail gate
         st, _, meta = _finish(out_l, out_r, sr, master, sub, root, {}, False)
         meta["cutdown"] = {"length_s": cd["length_s"],
                            "segments": cd["segments"],
