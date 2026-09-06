@@ -23,7 +23,7 @@ metadata:
   generated_by: "recipe-forge add-backlog-governance; ported from docs/ROADMAP.md via Claude Opus 4.8"
   generated_on: "2026-07-04"
   system_of_record: "docs/backlog.yml"
-  total_items: 35
+  total_items: 44
   id_prefix: "BL"
   decision_prefix: "D"
   categories: ["feature","docs","ops","security","testing","tooling"]
@@ -976,3 +976,206 @@ items:
       - "engine-3.0"
       - "release"
       - "ci"
+  - id: BL-036
+    title: "Single owner for layer gain"
+    summary: "Track renderers (notes, drums, instrument, patterned sample) return unity-gain signals and _layer_signal applies gain_db once for every layer type, removing the exclusion tuple and the clip-layer gain override."
+    category: "feature"
+    type: "tech-debt"
+    status: "ready"
+    complexity: "M"
+    priority: "medium"
+    rationale: "The doubled-instrument-gain defect came from split gain ownership; the 3.0 fix adds the instrument type to an exclusion list, so the next internally-gaining type can double again. tests/test_release_review_regressions.py pins the contract per type meanwhile."
+    dependencies:
+      - "BL-032"
+    acceptance_criteria:
+      - "_layer_signal is the only place layer gain_db is applied."
+      - "Goldens unchanged (gain applied at the same stage, equal bytes) or regenerated with the classification recorded."
+    references:
+      - "docs/evolution/report.md"
+      - "audioforge/render.py"
+    owner: "unassigned"
+    source: "PR #1 code review (2026-09-05), accepted finding deferred past engine 3.0.0 with the reviewer's consent"
+    tags:
+      - "engine-3.0"
+      - "render"
+      - "review"
+  - id: BL-037
+    title: "Automation target attributes on the AUTO_TARGETS registry"
+    summary: "Declare domain (linear|log) and stage (source|post) per automation target so compile_repeats, _automation_envs and the clip path consult the registry instead of hard-coded target names."
+    category: "tooling"
+    type: "tech-debt"
+    status: "ready"
+    complexity: "S"
+    priority: "medium"
+    rationale: "cutoff_hz is special-cased by name in three places; a new target would be sliced linearly, evaluated linearly and dropped on repeated clips."
+    dependencies:
+      - "BL-032"
+    acceptance_criteria:
+      - "Adding a target to AUTO_TARGETS with domain/stage is sufficient for repeats, evaluation and clip replay."
+      - "drift_inspect covers the registry."
+    references:
+      - "audioforge/arrangement.py"
+      - "audioforge/render.py"
+    owner: "unassigned"
+    source: "PR #1 code review (2026-09-05), accepted finding deferred past engine 3.0.0 with the reviewer's consent"
+    tags:
+      - "engine-3.0"
+      - "review"
+  - id: BL-038
+    title: "Explicit scheduling context for performance identity"
+    summary: "Make rng_factory required for note and drum renderers, delete the legacy rng_humanize branch and the default_take fallback, and pass the take root and score as an explicit context instead of _performance_root/_score keys in layer dicts."
+    category: "feature"
+    type: "tech-debt"
+    status: "ready"
+    complexity: "M"
+    priority: "medium"
+    rationale: "Three silent alternate derivations of performance randomness remain; a caller that misses one gets a valid-looking but different take with no error."
+    dependencies:
+      - "BL-032"
+    acceptance_criteria:
+      - "No implicit RNG fallback path remains; a missing context is a TypeError."
+      - "Plan/render parity tests pass unchanged."
+    references:
+      - "audioforge/sequencer.py"
+      - "audioforge/performance.py"
+    owner: "unassigned"
+    source: "PR #1 code review (2026-09-05), accepted finding deferred past engine 3.0.0 with the reviewer's consent"
+    tags:
+      - "engine-3.0"
+      - "determinism"
+      - "review"
+  - id: BL-039
+    title: "Expanded parts may be silent without a fabricated note"
+    summary: "Let validate_spec accept an empty notes list for expanded repeat output (or drop the layer) instead of compile_repeats fabricating a zero-velocity 0.001-beat note."
+    category: "feature"
+    type: "tech-debt"
+    status: "ready"
+    complexity: "S"
+    priority: "medium"
+    rationale: "The fabricated note is real IR: it reaches decompile, MIDI/MusicXML export, plan segments, spec_hash and note_seed_paths."
+    dependencies:
+      - "BL-032"
+    acceptance_criteria:
+      - "compile_repeats emits no synthetic events."
+      - "Exporters and the plan handle empty parts."
+    references:
+      - "audioforge/arrangement.py"
+      - "audioforge/schema.py"
+    owner: "unassigned"
+    source: "PR #1 code review (2026-09-05), accepted finding deferred past engine 3.0.0 with the reviewer's consent"
+    tags:
+      - "engine-3.0"
+      - "review"
+  - id: BL-040
+    title: "Producers carry diagnostic codes; retire message inference"
+    summary: "Emit (code, message) pairs or SpecError with a code attribute from every producer and delete Diagnostic.__post_init__ inference (ADR-0008 marks it transitional)."
+    category: "feature"
+    type: "tech-debt"
+    status: "ready"
+    complexity: "M"
+    priority: "medium"
+    rationale: "Codes recovered by regex from prose flip to None when a message prefix or asset id changes."
+    dependencies:
+      - "BL-032"
+    acceptance_criteria:
+      - "infer_diagnostic_code is unused in production paths."
+      - "tests assert emitters pass explicit codes."
+    references:
+      - "docs/adr/0008-structured-diagnostic-codes.md"
+    owner: "unassigned"
+    source: "PR #1 code review (2026-09-05), accepted finding deferred past engine 3.0.0 with the reviewer's consent"
+    tags:
+      - "engine-3.0"
+      - "agents"
+      - "review"
+  - id: BL-041
+    title: "Render path cleanups from the 3.0 review"
+    summary: "Deduplicate the true-peak limiter blocks in render._finish; drop the dead root parameter of _premaster and the unread parameters of plan._instrument_segment; delete plan._midi_for_event; fold the clip_map/type dispatch in _layer_signal."
+    category: "tooling"
+    type: "tech-debt"
+    status: "ready"
+    complexity: "S"
+    priority: "medium"
+    rationale: "Copy-pasted limiter calls and dead parameters mislead readers about what threads into the render."
+    dependencies:
+      - "BL-032"
+    acceptance_criteria:
+      - "Goldens unchanged."
+      - "No dead parameters in render/plan signatures."
+    references:
+      - "audioforge/render.py"
+      - "audioforge/plan.py"
+    owner: "unassigned"
+    source: "PR #1 code review (2026-09-05), accepted finding deferred past engine 3.0.0 with the reviewer's consent"
+    tags:
+      - "engine-3.0"
+      - "review"
+  - id: BL-042
+    title: "Render-plan size and validate cost for sections and loop-safe assets"
+    summary: "Group plan segments by player once in render_section (O(N) not O(P*N)) and store per-player deltas instead of P full copies; cache the loop-safety render in AudioAsset.validate or pass the verified plan into render so validate->render does not render twice."
+    category: "feature"
+    type: "tech-debt"
+    status: "ready"
+    complexity: "M"
+    priority: "medium"
+    rationale: "A 24-player section with 1000 notes emits 24000 segments hashed and returned in the envelope; validate(resolve=True) on a loop_safe asset renders the whole piece and render() repeats it."
+    dependencies:
+      - "BL-032"
+    acceptance_criteria:
+      - "Plan size grows with notes, not notes x players."
+      - "validate then render performs one render."
+    references:
+      - "audioforge/plan.py"
+      - "audioforge/sdk.py"
+    owner: "unassigned"
+    source: "PR #1 code review (2026-09-05), accepted finding deferred past engine 3.0.0 with the reviewer's consent"
+    tags:
+      - "engine-3.0"
+      - "performance"
+      - "review"
+  - id: BL-043
+    title: "Vectorize beat-based automation and share one timeline factory"
+    summary: "Evaluate layer_beats automation with a vectorized beat grid (interp on tempo/hold breakpoints) instead of per-sample TimelineMap.beat_at, build the seconds grid lazily, and replace the eight inline TimelineMap(TempoMap(...)) constructions with one timeline_for(spec)."
+    category: "feature"
+    type: "tech-debt"
+    status: "ready"
+    complexity: "M"
+    priority: "medium"
+    rationale: "Measured: beat-based automation on a 30 s tone renders in 1.9 s against 0.5 s for seconds-based automation; the timeline construction is duplicated with differing defaults."
+    dependencies:
+      - "BL-032"
+    acceptance_criteria:
+      - "Beat-based automation renders within 1.2x of seconds-based automation."
+      - "One timeline factory; golden hashes unchanged or regenerated with classification."
+    references:
+      - "audioforge/render.py"
+      - "docs/MIGRATION_3.md"
+    owner: "unassigned"
+    source: "PR #1 code review (2026-09-05), accepted finding deferred past engine 3.0.0 with the reviewer's consent"
+    tags:
+      - "engine-3.0"
+      - "performance"
+      - "review"
+  - id: BL-044
+    title: "Decide the IR schema version format"
+    summary: "CLAUDE.md asks for major.minor.patch on schema files while IR_SCHEMA_VERSION has always been two-part (0.9, 1.0, 1.1, 1.2, 2.0) and propagates into $id, _meta and the migration table; record the decision in an ADR and, if changed, migrate generators, docs and tests together."
+    category: "docs"
+    type: "research"
+    status: "ready"
+    complexity: "S"
+    priority: "medium"
+    rationale: "Raised by the conventions review pass; a format change ripples through generated artifacts and the migration record, so it needs a recorded decision, not a drive-by edit."
+    dependencies:
+      - "BL-032"
+    acceptance_criteria:
+      - "An ADR records the format decision."
+      - "gen_ir_schema, docs and tests agree with it."
+    references:
+      - "audioforge/ir_schema.py"
+      - "CLAUDE.md"
+    owner: "unassigned"
+    source: "PR #1 code review (2026-09-05), accepted finding deferred past engine 3.0.0 with the reviewer's consent"
+    tags:
+      - "engine-3.0"
+      - "adr"
+      - "review"

@@ -64,5 +64,14 @@ node scripts/check-backlog-governance.mjs
 | BL-033 | ADR-0007 | Audio semantics A1-A4: gain once, note-off release, anti-alias resampling, explicit mastering | feature | bug | in-progress | L | critical | mine | BL-032 |
 | BL-034 | ADR-0007 | Musical semantics M1-M6: harmony, phrases, technique fidelity, repeats, performance identity, analysis | feature | bug | in-progress | XL | critical | mine | BL-032 |
 | BL-035 | — | Release delivery for engine 3.0.0: CI executes, review, merge, consolidated changelog, tags | ops | infra | blocked | M | critical | mine | BL-002, BL-032 |
+| BL-036 | ADR-0007 | Single owner for layer gain | feature | tech-debt | ready | M | medium | unassigned | BL-032 |
+| BL-037 | ADR-0007 | Automation target attributes on the AUTO_TARGETS registry | tooling | tech-debt | ready | S | medium | unassigned | BL-032 |
+| BL-038 | ADR-0007 | Explicit scheduling context for performance identity | feature | tech-debt | ready | M | medium | unassigned | BL-032 |
+| BL-039 | ADR-0007 | Expanded parts may be silent without a fabricated note | feature | tech-debt | ready | S | medium | unassigned | BL-032 |
+| BL-040 | ADR-0007 | Producers carry diagnostic codes; retire message inference | feature | tech-debt | ready | M | medium | unassigned | BL-032 |
+| BL-041 | ADR-0007 | Render path cleanups from the 3.0 review | tooling | tech-debt | ready | S | medium | unassigned | BL-032 |
+| BL-042 | ADR-0007 | Render-plan size and validate cost for sections and loop-safe assets | feature | tech-debt | ready | M | medium | unassigned | BL-032 |
+| BL-043 | ADR-0007 | Vectorize beat-based automation and share one timeline factory | feature | tech-debt | ready | M | medium | unassigned | BL-032 |
+| BL-044 | ADR-0007 | Decide the IR schema version format | docs | research | ready | S | medium | unassigned | BL-032 |
 
 See `backlog.yml` for each item's full summary, rationale, acceptance criteria, dependencies, references, and live evidence checks.
