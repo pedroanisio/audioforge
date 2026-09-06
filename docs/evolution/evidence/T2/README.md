@@ -1,4 +1,21 @@
+---
+disclaimer:
+  notice: >-
+    No information within this document should be taken for granted.
+    Any statement or premise not backed by a real logical definition
+    or verifiable reference may be invalid, erroneous, or a hallucination.
+  generated_by: "Claude Fable 5.1 via Claude Code"
+  date: "2026-09-05"
+---
+
 # T2 — Core capabilities on a commit (commit 4157c74, release/engine-3.0.0)
+
+## Disclaimer
+
+This work is subject to the methodological caveats and commitments described in [@DISCLAIMER.md](../../../../DISCLAIMER.md).
+> No statement or premise not backed by a real logical definition or verifiable reference should be taken for granted.
+
+Back to the [root README](../../../../README.md) · harness: [docs/evolution/harness.md](../../harness.md)
 
 Full run: 49 PASS, 8 FAIL, 2 MANUAL. Seven failures are operator-gated rows that cannot
 pass yet (CI-001…004: Actions fail at startup; VCS-003: no approving review; VCS-004: not

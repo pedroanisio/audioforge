@@ -1,3 +1,13 @@
+---
+disclaimer:
+  notice: >-
+    No information within this document should be taken for granted.
+    Any statement or premise not backed by a real logical definition
+    or verifiable reference may be invalid, erroneous, or a hallucination.
+  generated_by: "rendered view of docs/backlog.yml; statuses reconciled by Claude Fable 5.1 via Claude Code"
+  date: "2026-09-05"
+---
+
 # Backlog
 
 ## Disclaimer
