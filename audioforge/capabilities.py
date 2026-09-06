@@ -327,7 +327,7 @@ def capability_manifest() -> dict:
                 "params": entry["params"],
                 "support": entry["support"],
                 "doc": entry["doc"],
-                "fidelity": entry.get("fidelity", "control_transform"),
+                "fidelity": entry["fidelity"],
             }
             for name, entry in sorted(TECHNIQUES.items())
         },

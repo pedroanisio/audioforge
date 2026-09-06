@@ -434,7 +434,7 @@ def build_render_plan(spec: dict) -> RenderPlanResult:
     from .performance import legato_links, note_events, schedule_notes, section_player
     from .sequencer import TempoMap, TimelineMap
 
-    resolved = validate_spec(copy.deepcopy(spec))
+    resolved = validate_spec(spec)   # validate_spec copies on entry (RM-E-004); no outer deepcopy
     root = spec_hash(resolved)
     take_root = performance_hash(resolved)
     policy = normalize_routing_policy(resolved)

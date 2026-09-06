@@ -4,7 +4,7 @@ from __future__ import annotations
 import numpy as np
 
 from .determinism import note_seed_paths, rng_for
-from .synth import note_to_freq
+from .synth import freq_to_midi, note_to_freq
 
 
 def conductor_spans(spec: dict, spans: list[dict]) -> list[dict]:
@@ -176,7 +176,7 @@ def schedule_notes(track: dict, total_n: int, sr: int, timeline, rng_factory,
         if start >= total_n or gate_n <= 0:
             continue
         scheduled.append({
-            "midi": 69 + 12 * np.log2(frequency / 440.0) + midi_offset,
+            "midi": freq_to_midi(frequency) + midi_offset,
             "vel": velocity, "start": start, "dur_n": gate_n, "rng": rng,
             "art": event.get("art", track.get("articulation", "sustain")),
             "slur": event.get("slur"), "event": event,

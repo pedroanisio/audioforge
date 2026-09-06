@@ -1200,7 +1200,7 @@ def lower_technique(name: str, params: dict | None = None, *,
     else:
         raise DSLError(f"{TECHNIQUE_UNKNOWN_CODE}: unknown technique '{name}'")
 
-    approximate = TECHNIQUES[name].get("fidelity") == "approximate"
+    approximate = TECHNIQUES[name]["fidelity"] == "approximate"
     ev["technique_render"] = {
         "name": name, "params": params,
         "fidelity": "approximate" if approximate else "control_transform",
@@ -1942,11 +1942,7 @@ def _compile_layer(lay: Layer, motifs: dict, scale, diags: list[str],
 
     for field in ("clip_source", "clip_map"):
         if field in p:
-            import json
-            try:
-                out[field] = json.loads(_one(p.pop(field), line))
-            except (TypeError, ValueError) as error:
-                raise DSLError(f"{field}: expected a JSON string", line) from error
+            out[field] = _json_ir(p.pop(field), line, field)
 
     simple = {"osc": ("osc", None), "voice": ("voice", None),
               "color": ("color", None), "shape": ("shape", None),

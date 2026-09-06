@@ -24,6 +24,11 @@ def note_to_freq(note: str) -> float:
     return 440.0 * 2.0 ** ((midi - 69) / 12.0)
 
 
+def freq_to_midi(freq: float) -> float:
+    """Inverse of the 12-TET A4=440 mapping used by note_to_freq (one definition)."""
+    return 69.0 + 12.0 * np.log2(freq / 440.0)
+
+
 def _phase(freq: float, n: int, sr: int, phase0: float = 0.0) -> np.ndarray:
     t = np.arange(n, dtype=np.float64) / sr
     return TWO_PI * freq * t + phase0

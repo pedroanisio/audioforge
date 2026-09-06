@@ -25,6 +25,7 @@ Layer shapes (discriminated by "type"):
 from __future__ import annotations
 
 import copy
+import math
 import re
 
 from .curves import (
@@ -143,6 +144,7 @@ EXPRESSIVE_DIAGNOSTIC_CODES = {
 
 TECHNIQUES = {
     "accent": {
+        "fidelity": "control_transform",
         "lowers_to": ["dynamic"],
         "params": {
             "strength": {"type": "number", "range": [0.0, 1.0], "default": 0.5},
@@ -167,6 +169,7 @@ TECHNIQUES = {
         "doc": "Transpose to an allowed partial and add bell-like emphasis.",
     },
     "let_ring": {
+        "fidelity": "control_transform",
         "lowers_to": ["gain_db"],
         "params": {},
         "support": {"synth": True, "sampled": True, "physical": False},
@@ -180,6 +183,7 @@ TECHNIQUES = {
         "doc": "Clamp duration, reduce gain, and darken synth voices with cutoff.",
     },
     "staccatissimo": {
+        "fidelity": "control_transform",
         "lowers_to": ["gain_db"],
         "params": {},
         "support": {"synth": True, "sampled": True, "physical": False},
@@ -200,6 +204,7 @@ TECHNIQUES = {
         "doc": "Darken synth notes with a low cutoff curve.",
     },
     "tenuto": {
+        "fidelity": "control_transform",
         "lowers_to": ["gain_db"],
         "params": {},
         "support": {"synth": True, "sampled": True, "physical": False},
@@ -457,7 +462,7 @@ def _validate_note_events(layer: dict, p: str):
         if "technique_render" in ev:
             evidence = ev["technique_render"]
             if (not isinstance(evidence, dict) or evidence.get("name") not in TECHNIQUES
-                    or evidence.get("fidelity") != TECHNIQUES[evidence["name"]].get("fidelity", "control_transform")):
+                    or evidence.get("fidelity") != TECHNIQUES[evidence["name"]]["fidelity"]):
                 raise SpecError(f"{ep}.technique_render: known technique and declared fidelity")
         art = ev.get("art")
         if art is not None and art not in IR_ARTICULATIONS:
@@ -594,6 +599,47 @@ def _validate_voice(layer: dict, p: str):
     if "material" in layer and layer["material"] not in MODAL_MATERIALS:
         raise SpecError(f"{p}.material: unknown "
                         f"(allowed: {sorted(MODAL_MATERIALS)})")
+
+
+
+def _validate_tempo_map(tmap, path: str) -> None:
+    """One rule set for tempo maps at spec level and inside repeated-clip sources."""
+    if tmap is None:
+        return
+    if (not isinstance(tmap, list) or len(tmap) < 1
+            or not all(isinstance(x, list) and len(x) == 2
+                       and all(isinstance(v, (int, float)) and not isinstance(v, bool)
+                               and math.isfinite(v) for v in x) for x in tmap)):
+        raise SpecError(f"{path}: list of [beat, bpm] pairs")
+    last = -1.0
+    for b, v in tmap:
+        if b < last:
+            raise SpecError(f"{path}: beats must ascend")
+        if not (TEMPO_MAP_BPM_MIN <= v <= TEMPO_MAP_BPM_MAX):
+            raise SpecError(f"{path}: bpm {v} outside "
+                            f"{TEMPO_MAP_BPM_MIN:g}..{TEMPO_MAP_BPM_MAX:g}")
+        last = b
+    if tmap[0][0] != 0.0:
+        raise SpecError(f"{path}: first point must be at beat 0")
+
+
+def _validate_holds(holds, path: str) -> None:
+    """One rule set for holds at spec level and inside repeated-clip sources."""
+    if holds is None:
+        return
+    if (not isinstance(holds, list)
+            or not all(isinstance(x, dict) for x in holds)):
+        raise SpecError(f"{path}: list of {{beat, duration_s}} events")
+    last = -1.0
+    for idx, hold in enumerate(holds):
+        p = f"{path}[{idx}]"
+        _num(hold, "beat", p, 0.0, required=True)
+        _num(hold, "duration_s", p, 0.0, required=True)
+        if hold["duration_s"] <= 0.0:
+            raise SpecError(f"{p}.duration_s: must be > 0")
+        if hold["beat"] < last:
+            raise SpecError(f"{path}: beats must ascend")
+        last = hold["beat"]
 
 
 def validate_spec(spec: dict) -> dict:
@@ -892,37 +938,8 @@ def validate_spec(spec: dict) -> dict:
                     f"cutdown is declared {cd['length_s']}s — adjust windows "
                     f"or the declared length (tolerance 1s)")
 
-    tmap = spec.get("tempo_map")
-    if tmap is not None:
-        if (not isinstance(tmap, list) or len(tmap) < 1
-                or not all(isinstance(x, list) and len(x) == 2 for x in tmap)):
-            raise SpecError("spec.tempo_map: list of [beat, bpm] pairs")
-        last = -1.0
-        for b, v in tmap:
-            if b < last:
-                raise SpecError("spec.tempo_map: beats must ascend")
-            if not (TEMPO_MAP_BPM_MIN <= v <= TEMPO_MAP_BPM_MAX):
-                raise SpecError(f"spec.tempo_map: bpm {v} outside "
-                                f"{TEMPO_MAP_BPM_MIN:g}..{TEMPO_MAP_BPM_MAX:g}")
-            last = b
-        if tmap[0][0] != 0.0:
-            raise SpecError("spec.tempo_map: first point must be at beat 0")
-
-    holds = spec.get("holds")
-    if holds is not None:
-        if (not isinstance(holds, list)
-                or not all(isinstance(x, dict) for x in holds)):
-            raise SpecError("spec.holds: list of {beat, duration_s} events")
-        last = -1.0
-        for idx, hold in enumerate(holds):
-            p = f"spec.holds[{idx}]"
-            _num(hold, "beat", p, 0.0, required=True)
-            _num(hold, "duration_s", p, 0.0, required=True)
-            if hold["duration_s"] <= 0.0:
-                raise SpecError(f"{p}.duration_s: must be > 0")
-            if hold["beat"] < last:
-                raise SpecError("spec.holds: beats must ascend")
-            last = hold["beat"]
+    _validate_tempo_map(spec.get("tempo_map"), "spec.tempo_map")
+    _validate_holds(spec.get("holds"), "spec.holds")
 
     groove = spec.get("groove")
     if groove is not None:

@@ -330,8 +330,7 @@ def render_region(region: Region, src: np.ndarray, src_sr: int,
     return out
 
 
-def freq_to_midi(freq: float) -> float:
-    return 69.0 + 12.0 * np.log2(freq / 440.0)
+freq_to_midi = synth.freq_to_midi   # single definition lives in synth
 
 
 # --- articulation engine (P2) ----------------------------------------------

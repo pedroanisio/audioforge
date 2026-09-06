@@ -502,8 +502,7 @@ def spec_to_dsl(spec: dict) -> str:
             lines.append(f"    pan: {_fmt_num(layer['pan'])}")
         for field in ("clip_source", "clip_map"):
             if field in layer:
-                import json
-                lines.append(f"    {field}: {json.dumps(json.dumps(layer[field], separators=(',', ':')))}")
+                lines.append(f"    {_json_property(field, layer[field])}")
         if "bus" in layer and not (
                 smart_preserved and "bus" not in authored_props
                 and str(layer["bus"]).startswith("af_")):

@@ -240,17 +240,17 @@ def render_drum_track(track: dict, total_n: int, sr: int, tm: "TempoMap",
     """track = {voice, pattern, gain_db?, humanize?} ; pattern repeats.
     groove = {"timing": [16 x 16th-fractions], "accent": [16 x mult]}
     humanize = {"timing_s": ..., "vel": ...} with per-hit seeded jitter."""
+    from .plugins import DRUM_VOICES as PLUGIN_VOICES
+    voice = DRUM_VOICES.get(track["voice"])
+    dp = {k: track[k] for k in ("tune_st", "decay", "snap", "bend") if k in track}
     if hit_override is not None:
         hit = hit_override                 # content-addressed sample as the hit
+    elif rng_factory is not None:
+        hit = None                         # synthesized per hit below from its own seeded stream
+    elif voice is not None:
+        hit = voice(sr, rng, dp if dp else None)
     else:
-        from .plugins import DRUM_VOICES as PLUGIN_VOICES
-        voice = DRUM_VOICES.get(track["voice"])
-        if voice is not None:
-            dp = {k: track[k] for k in ("tune_st", "decay", "snap", "bend")
-                  if k in track}
-            hit = voice(sr, rng, dp if dp else None)
-        else:
-            hit = PLUGIN_VOICES[track["voice"]](sr, rng)
+        hit = PLUGIN_VOICES[track["voice"]](sr, rng)
     pattern = track["pattern"].replace(" ", "")
     gain = 10.0 ** (track.get("gain_db", 0.0) / 20.0)
     hum = track.get("humanize")

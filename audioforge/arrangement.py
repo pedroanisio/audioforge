@@ -206,6 +206,7 @@ def compile_repeats(spec: dict) -> dict:
     for layer, original in zip(out["layers"], source["layers"]):
         if original.get("notes"):
             events = note_events(original, timeline.beat_at(source["duration_s"]))
+            slur_stride = 1 + max((e.get("slur", 0) or 0 for e in events), default=0)
             notes = []
             for wi, window in enumerate(windows):
                 for event in events:
@@ -223,7 +224,7 @@ def compile_repeats(spec: dict) -> dict:
                     note["start_beat"] = float(a - window["a"] + window["beat"])
                     note["dur_beats"] = float(b - a)
                     if note.get("slur"):
-                        note["slur"] = int(note["slur"]) + wi * (1 + max(e.get("slur", 0) or 0 for e in events))
+                        note["slur"] = int(note["slur"]) + wi * slur_stride
                     if "id" in note:
                         note["id"] = f"{note['id']}__pass{wi+1}"
                     if a > start:
@@ -290,7 +291,7 @@ def compile_repeats(spec: dict) -> dict:
 
 def validate_clip(layer: dict, path: str, duration_s: float) -> None:
     from .schema import (SpecError, _num, _validate_automation,
-                         TEMPO_MAP_BPM_MIN, TEMPO_MAP_BPM_MAX)
+                         _validate_holds, _validate_tempo_map)
     if "clip_map" not in layer and "clip_source" not in layer:
         return
     if layer["type"] in {"notes", "instrument"}:
@@ -312,21 +313,13 @@ def validate_clip(layer: dict, path: str, duration_s: float) -> None:
                 and dest + b - a <= duration_s + 1e-8):
             raise SpecError(f"{path}.clip_map: bounded source windows and ordered nonoverlapping destinations")
         previous_end = dest + b - a
-    tempo = source.get("tempo_map")
-    if (not isinstance(tempo, list) or not tempo or
-            not all(isinstance(p, list) and len(p) == 2 and all(isinstance(v, (int, float)) and math.isfinite(v) for v in p)
-                    and p[0] >= 0 and TEMPO_MAP_BPM_MIN <= p[1] <= TEMPO_MAP_BPM_MAX for p in tempo) or
-            tempo[0][0] != 0 or
-            any(a[0] > b[0] for a, b in zip(tempo, tempo[1:]))):
+    # The clip source carries the same tempo/hold contract as a spec; validate it
+    # with the same rules (the previous inline copy accepted zero-length and
+    # descending holds that validate_spec rejects).
+    if source.get("tempo_map") is None:
         raise SpecError(f"{path}.clip_source.tempo_map: ascending positive tempo map")
-    holds = source.get("holds", [])
-    if not isinstance(holds, list):
-        raise SpecError(f"{path}.clip_source.holds: list required")
-    for hold in holds:
-        if not isinstance(hold, dict):
-            raise SpecError(f"{path}.clip_source.holds: hold objects")
-        _num(hold, "beat", path + ".clip_source.holds", 0, 100000)
-        _num(hold, "duration_s", path + ".clip_source.holds", 0, 600)
+    _validate_tempo_map(source.get("tempo_map"), f"{path}.clip_source.tempo_map")
+    _validate_holds(source.get("holds", []), f"{path}.clip_source.holds")
     score = source.get("score", {})
     if not isinstance(score, dict) or not isinstance(score.get("polymeter", {}), dict):
         raise SpecError(f"{path}.clip_source.score: score object required")

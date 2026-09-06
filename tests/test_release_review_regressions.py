@@ -113,3 +113,48 @@ def test_analysis_treats_repeated_clip_layers_by_their_source_windows():
     reports = [analyze_audio(audio, sr, context=ctx) for ctx in (plain, repeated)]
     assert reports[0]["unexpected_silence_share"] == reports[1]["unexpected_silence_share"] == 0.0
     assert all("dead_air" not in {r["code"] for r in rep["recommendations"]} for rep in reports)
+
+
+def test_clip_source_holds_follow_the_spec_rules():
+    """validate_clip once accepted zero-length holds that validate_spec rejects."""
+    spec = {"id": "r", "kind": "cue", "duration_s": 2.0, "sample_rate": 48000, "bpm": 120,
+            "score": {"sections": [{"name": "v", "start_beat": 0, "dur_beats": 4}],
+                      "repeats": [{"section": "v", "count": 2}]},
+            "layers": [{"name": "bed", "type": "noise", "color": "white", "gain_db": -12, "env": ENV}],
+            "master": {"target_peak_dbfs": -1, "fade_out_s": 0}}
+    expanded = validate_spec(spec)
+    clip = expanded["layers"][0]
+    clip["clip_source"]["holds"] = [{"beat": 1.0, "duration_s": 0.0}]
+    with pytest.raises(SpecError, match=r"clip_source\.holds\[0\]\.duration_s"):
+        validate_spec(expanded)
+
+
+def test_every_technique_declares_fidelity():
+    from audioforge.schema import TECHNIQUES
+    assert all(entry.get("fidelity") in {"approximate", "control_transform"} for entry in TECHNIQUES.values())
+
+
+def test_freq_to_midi_has_one_definition():
+    from audioforge import performance, sampler, synth
+    assert sampler.freq_to_midi is synth.freq_to_midi
+    assert performance.freq_to_midi is synth.freq_to_midi
+    assert synth.freq_to_midi(440.0) == 69.0
+
+
+@pytest.mark.parametrize("layer", [
+    {"type": "tone", "osc": "sine", "note": "A3"},
+    {"type": "noise", "color": "white"},
+    {"type": "notes", "osc": "sine", "notes": [{"note": "C4", "start_beat": 0, "dur_beats": 1}]},
+    {"type": "drums", "voice": "hat", "pattern": "x.x.x.x."},
+])
+def test_layer_gain_is_applied_exactly_once_for_every_generated_layer_type(layer):
+    """Gain ownership is split between _layer_signal and the track renderers; this pins
+    the 'once' contract per type so the next type cannot double silently (review, altitude)."""
+    def spec(gain):
+        return {"id": "g", "kind": "cue", "duration_s": 1.0, "sample_rate": 48000, "bpm": 120,
+                "layers": [{"name": "l", "gain_db": gain, "env": ENV, **copy.deepcopy(layer)}],
+                "master": {"target_peak_dbfs": -1, "fade_out_s": 0}}
+    before = render(spec(0), return_stems=True)[3]["l"]
+    after = render(spec(-6), return_stems=True)[3]["l"]
+    rms = lambda x: float(np.sqrt(np.mean(np.asarray(x) ** 2)))
+    assert 20 * np.log10(rms(after) / rms(before)) == pytest.approx(-6, abs=0.03)
