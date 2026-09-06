@@ -34,3 +34,23 @@ jobs:
 
       - name: Run the gate
         run: make check
+
+  # ADR-0009 / roadmap-notation RN-O-004: the notation surface is judged by external
+  # oracles (MusicXML 3.1 XSD, music21, LilyPond). `make oracle-check` skips loudly when
+  # the extra is absent; here it must run, so the job installs the extra explicitly.
+  oracles:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install package + dev and oracle extras
+        run: python -m pip install -e ".[dev,oracles]"
+
+      - name: Run the oracle gate
+        run: make oracle-check

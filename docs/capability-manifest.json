@@ -215,9 +215,6 @@
     "technique_unsupported_voice": {
       "repair_hint": "technique_unsupported_voice"
     },
-    "tuning_not_rendered": {
-      "repair_hint": "The tuning directive is stored but the renderer stays 12-TET; remove it, or wait for the n-EDO resolver (engine 3.1 line) that applies it and proves the frequencies by FFT."
-    },
     "tuning_required_for_string_fret": {
       "repair_hint": "tuning_required_for_string_fret"
     },
@@ -817,18 +814,18 @@
         "description": "`notation.tuning` other than 12-EDO",
         "midi": {
           "code": "lossy_tuning",
-          "note": "12-TET pitches until the tuning resolver lands (RN-T-002/003)",
-          "status": "lossy"
+          "note": "per-note pitch bend unless a layer needs two bends at once",
+          "status": "conditional"
         },
         "musicxml": {
-          "code": "lossy_tuning",
-          "note": "12-TET pitches until the tuning resolver lands (RN-T-002/003)",
-          "status": "lossy"
+          "code": null,
+          "note": "decimal `<alter>` relative to the 12-TET natural",
+          "status": "preserved"
         },
         "musicxml_notated": {
-          "code": "lossy_tuning",
-          "note": "12-TET pitches until the tuning resolver lands (RN-T-002/003)",
-          "status": "lossy"
+          "code": null,
+          "note": "decimal `<alter>` relative to the 12-TET natural",
+          "status": "preserved"
         }
       },
       {
@@ -1783,10 +1780,11 @@
         "rendering": "metadata_only"
       },
       "tuning": {
-        "diagnostic": "tuning_not_rendered",
+        "adr": "ADR-0010",
+        "interop": "decimal <alter> in MusicXML; per-note pitch bend in MIDI",
         "ir": "notation.tuning",
-        "rendering": "metadata_only",
-        "roadmap": "RN-T-002 (n-EDO resolver), RN-T-003 (microtonal interop)"
+        "rendering": "n_edo_resolver",
+        "spelling": "chain of fifths"
       },
       "tuplet": {
         "ir": "notation.tuplets",

@@ -163,7 +163,8 @@ AudioForge is a render contract, not a notation program (ADR-0009). What it offe
 
 * **Semantic score fields** — `meter`, `pickup`, `form`, `repeat`, `polymeter` compile to
   `spec.score` and, since 3.0, drive rendering (repeats expand, meter sets groove phase).
-  `tuning:`, `tuplet:` and `lyrics:` compile to typed `spec.notation` metadata.
+  `tuning: edo divisions=N` drives the render (n-EDO, chain-of-fifths spelling; ADR-0010);
+  `tuplet:` and `lyrics:` compile to typed `spec.notation` metadata that the notated export writes.
 * **Interchange** — `audioforge export-musicxml` (exact-tick, and `--notated` quantized to
   measures), `export-midi`, `import-musicxml`, `import-midi`. The notated export is judged by
   the MusicXML 3.1 schema, by music21 and by LilyPond (`make oracle-check`, needs

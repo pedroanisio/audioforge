@@ -1213,7 +1213,7 @@ items:
     summary: "music21, the lilypond wheel and xmlschema as a dev extra; MusicXML 3.1 XSD vendored with licence; ten notation fixtures with expected features; tests/test_notation_oracles.py; make oracle-check skipping loudly."
     category: "testing"
     type: "infra"
-    status: "in-progress"
+    status: "done"
     complexity: "M"
     priority: "high"
     rationale: "Interchange claims were verified only by our own reader reading our own writer."
@@ -1222,6 +1222,7 @@ items:
     acceptance_criteria:
       - "HARNESS-NORA-001..003 and HARNESS-NGATE-001 PASS."
     references:
+      - "docs/evolution/evidence-notation/T3 (HARNESS-NORA-001..003 PASS)"
       - "docs/evolution/harness-notation.md"
     evidence_checks:
       - kind: grep
@@ -1243,7 +1244,7 @@ items:
     summary: "Meter unit and bar length from the spec, key and tempo changes, pickup, chords and one part per layer in both exporters, dynamics, articulations, slurs, fermatas, rehearsal marks, tuplets and lyrics, and a generated coverage matrix."
     category: "feature"
     type: "bug"
-    status: "ready"
+    status: "done"
     complexity: "L"
     priority: "high"
     rationale: "A 7/8 spec exports as 7/4; chord tones are serialized; expressive notation is dropped without a code."
@@ -1252,6 +1253,7 @@ items:
     acceptance_criteria:
       - "HARNESS-NXML-001..011 and HARNESS-NSEM-001/002 PASS."
     references:
+      - "docs/evolution/evidence-notation/T2 and T3 (HARNESS-NXML-001..011, NSEM-001/002 PASS)"
       - "docs/INTEROP.md"
     evidence_checks:
       - kind: file-exists
@@ -1267,7 +1269,7 @@ items:
     summary: "One layer per part, chord/backup/forward/voice handling, per-measure divisions/time/key/tempo, merged ties; vendored public-domain chorales round-trip within 1 percent."
     category: "feature"
     type: "bug"
-    status: "ready"
+    status: "done"
     complexity: "M"
     priority: "high"
     rationale: "A four-voice chorale imports as one 92-second monody."
@@ -1276,6 +1278,7 @@ items:
     acceptance_criteria:
       - "HARNESS-NIMP-001..005 PASS."
     references:
+      - "docs/evolution/evidence-notation/T3 (HARNESS-NIMP-001..005 PASS)"
       - "docs/INTEROP.md"
     evidence_checks:
       - kind: file-exists
@@ -1291,7 +1294,7 @@ items:
     summary: "The MIDI exporter flattens layers into one channel (same-pitch notes cut each other) and writes a single tempo."
     category: "feature"
     type: "bug"
-    status: "ready"
+    status: "done"
     complexity: "S"
     priority: "high"
     rationale: "music21 reads 1 315 of 2 580 notes and one tempo from the orchestral piece."
@@ -1300,6 +1303,7 @@ items:
     acceptance_criteria:
       - "HARNESS-NMIDI-002/003 PASS."
     references:
+      - "docs/evolution/evidence-notation/T2 (HARNESS-NMIDI-001..003 PASS)"
       - "docs/INTEROP.md"
     evidence_checks:
       - kind: file-exists
@@ -1315,7 +1319,7 @@ items:
     summary: "Interim tuning_not_rendered diagnostic; audioforge/tuning.py threaded through note_to_freq, sampler and plan with the default path byte-identical; microtonal interop."
     category: "feature"
     type: "bug"
-    status: "ready"
+    status: "done"
     complexity: "M"
     priority: "high"
     rationale: "AF-M05 slice: the directive is accepted and silently renders 12-TET."
@@ -1325,6 +1329,7 @@ items:
     acceptance_criteria:
       - "HARNESS-NTUN-001..004 PASS; goldens unchanged."
     references:
+      - "tests/test_tuning.py (HARNESS-NTUN-001/002/004; ADR-0010)"
       - "docs/ROADMAP.md"
     evidence_checks:
       - kind: file-exists

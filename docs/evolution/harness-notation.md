@@ -352,6 +352,8 @@ run() { local id=$1 desc=$2; shift 2; local log="$EV/$id.log" t0=$SECONDS r
   sel "$id" || { printf '%s\tSKIPPED\t%s (filtered)\t0\t-\n' "$id" "$desc" | tee -a "$SUM"; return; }
   if "$@" >"$log" 2>&1; then r=PASS; else r=FAIL; fi
   printf '%s\t%s\t%s\t%s\t%s\n' "$id" "$r" "$desc" "$((SECONDS-t0))" "$log" | tee -a "$SUM"; }
+na() { local id=$1 desc=$2 why=$3; sel "$id" || { printf '%s\tSKIPPED\t%s (filtered)\t0\t-\n' "$id" "$desc" | tee -a "$SUM"; return; }
+  printf '%s\tN/A\t%s (%s)\t0\t-\n' "$id" "$desc" "$why" | tee -a "$SUM"; }
 oracle() { local id=$1 desc=$2; shift 2; sel "$id" || { printf '%s\tSKIPPED\t%s (filtered)\t0\t-\n' "$id" "$desc" | tee -a "$SUM"; return; }
   if [ -z "$OPY" ] || ! "$OPY" -c "import music21, xmlschema, lilypond" >/dev/null 2>&1; then printf '%s\tBLOCKED\t%s (ORACLE_PY lacks music21/xmlschema/lilypond)\t0\t-\n' "$id" "$desc" | tee -a "$SUM"; return; fi
   run "$id" "$desc" "$@"; }
@@ -386,11 +388,7 @@ run    HARNESS-NMIDI-003 "MIDI export tempo map"         PT $T -k "midi_tempo_ma
 # --- NTUN
 run    HARNESS-NTUN-001 "tuning drives render (FFT)"     PT tests/test_tuning.py -k "edo_fft"
 run    HARNESS-NTUN-002 "12-TET default byte-identical"  "$PY" -m audioforge.tools.render_golden --check
-run    HARNESS-NTUN-003 "tuning_not_rendered diagnostic" "$PY" - <<'PYEOF'
-import sys; from audioforge import AudioForge
-r = AudioForge().compile("asset t { kind: cue\n duration: 1s\n tempo: 120bpm\n tuning: edo divisions=19 base=A4 hz=440\n layer m : notes { osc: sine\n notes: A4 @ 0b for 1b }\n}")
-msgs = " ".join(d.message for d in r.diagnostics); print(msgs); sys.exit(0 if "tuning_not_rendered" in msgs or "renders 19" in msgs else 1)
-PYEOF
+na     HARNESS-NTUN-003 "tuning_not_rendered retired"    "N/A since T4: NTUN-001 passes and ADR-0010 retired the interim diagnostic"
 run    HARNESS-NTUN-004 "microtonal interop"             PT tests/test_tuning.py -k "interop"
 # --- NANA
 oracle HARNESS-NANA-001 "chord roots agree with music21" PT $T -k "chord_parity"
@@ -436,3 +434,4 @@ bundle is the source, this table is the index. Counts are PASS / FAIL / BLOCKED 
 |---|---|---|---|---|---|
 | T1 | `8e550c5` | 2026-09-06 | 16 / 37 / 0 | 13 of 13 PASS (NGATE-005 passes once the bundle is committed) | Oracles via `ORACLE_PY`; the first run used the wrong interpreter (worktree has no `.venv`) and was discarded. |
 | T2 | `73728b7` | 2026-09-06 | 31 / 22 / 0 | NXML-002…005/009, NIMP-001…003, NMIDI-002/003 | Run on a clean detached worktree at the commit; a first run on a tree with T3 edits in progress was discarded. |
+| T3 | `8d3b989` | 2026-09-06 | 43 / 10 / 0 | NXML-001/006…008/010/011, NIMP-004/005, NANA-001/002, NENG-001, NDOC-001/002, NSEM-001/002, NORA-003 (all PASS) | Clean detached worktree at the commit; the ten FAILs are the T4/T5 rows and NORA-004 (Actions). Polymeter through musicxml2ly keeps a bar-check warning (recorded limitation). |

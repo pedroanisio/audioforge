@@ -120,7 +120,6 @@ TECHNIQUE_PARAM_OUT_OF_RANGE_CODE = "technique_param_out_of_range"
 TECHNIQUE_LAYER_OVERRIDE_CODE = "technique_layer_override"
 TECHNIQUE_FALLBACK_CODE = "technique_fallback"
 TUNING_REQUIRED_FOR_STRING_FRET_CODE = "tuning_required_for_string_fret"
-TUNING_NOT_RENDERED_CODE = "tuning_not_rendered"  # ADR-0009: n-EDO metadata not yet applied
 STRING_OUT_OF_TUNING_CODE = "string_out_of_tuning"
 FRET_OUT_OF_RANGE_CODE = "fret_out_of_range"
 STRING_FRET_PITCH_CONFLICT_CODE = "string_fret_pitch_conflict"

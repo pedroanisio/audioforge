@@ -53,3 +53,4 @@ nav:
       - ADR-0007 Musical rendering semantics: adr/0007-musical-render-semantics.md
       - ADR-0008 Structured diagnostic codes: adr/0008-structured-diagnostic-codes.md
       - ADR-0009 Notation positioning: adr/0009-notation-positioning.md
+      - ADR-0010 n-EDO tuning resolution: adr/0010-n-edo-tuning-resolution.md

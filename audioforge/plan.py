@@ -14,6 +14,7 @@ from typing import Any
 
 import numpy as np
 
+from .tuning import with_tuning
 from .determinism import canonical_json, performance_hash, rng_for, spec_hash
 from .schema import ROUTING_FALLBACK_MODES, SpecError, validate_spec
 from .version import ENGINE_VERSION
@@ -450,7 +451,7 @@ def build_render_plan(spec: dict) -> RenderPlanResult:
     library_cache: dict[tuple[str, str], Any] = {}
     sample_len_cache: dict[str, tuple[int, int]] = {}
     for layer_index, layer0 in enumerate(resolved.get("layers", [])):
-        layer = {**layer0, "_performance_root": take_root, "_score": resolved.get("score", {})}
+        layer = with_tuning({**layer0, "_performance_root": take_root, "_score": resolved.get("score", {})}, resolved)
         if layer.get("type") == "instrument":
             ref = resolved["library"]
             layer = {**layer, "_library": ref}

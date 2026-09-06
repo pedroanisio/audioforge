@@ -25,6 +25,7 @@ import re
 import xml.etree.ElementTree as ET
 
 from . import theory
+from .tuning import Tuning
 
 TPQ = 480             # divisions per quarter note in every export
 NOTATED_GRID = 0.25   # default quantization grid of the notated view (quarter beats)
@@ -363,13 +364,22 @@ def _move(measure, kind: str, ticks: int):
         ET.SubElement(ET.SubElement(measure, kind), "duration").text = str(ticks)
 
 
-def _xml_pitch(parent, name: str):
+def _xml_pitch(parent, name: str, tuning: Tuning | None = None):
+    """<pitch>; under a non-12-EDO tuning the alter is the decimal semitone offset from
+    the 12-TET natural (RN-T-003), which music21 reads as a microtonal accidental."""
     pit = ET.SubElement(parent, "pitch")
     ET.SubElement(pit, "step").text = name[0].upper()
     i = 1
-    if i < len(name) and name[i] in "#b":
-        ET.SubElement(pit, "alter").text = "1" if name[i] == "#" else "-1"
+    while i < len(name) and name[i] in "#b":
         i += 1
+    if tuning is not None and not tuning.is_default:
+        alter = tuning.xml_alter(name)
+        if alter:
+            ET.SubElement(pit, "alter").text = _num(alter) if abs(alter - round(alter)) > 1e-9 else str(int(round(alter)))
+    else:
+        acc = name[1:i].count("#") - name[1:i].count("b")
+        if acc:
+            ET.SubElement(pit, "alter").text = str(acc)
     ET.SubElement(pit, "octave").text = name[i:]
 
 
@@ -400,7 +410,7 @@ def _emit_rest(measure, ticks: int, fermata: bool = False):
             ET.SubElement(ET.SubElement(n, "notations"), "fermata")
 
 
-def _emit_seg(measure, seg: dict, fermata: bool = False):
+def _emit_seg(measure, seg: dict, fermata: bool = False, tuning: Tuning | None = None):
     """Write one segment (a note or chord between two boundaries) as standard figures.
     `written` ticks drive the figure types, `dur` the sounding <duration> (they differ
     inside tuplets); marks sit on the first figure of the first pitch."""
@@ -419,7 +429,7 @@ def _emit_seg(measure, seg: dict, fermata: bool = False):
                 n.set("dynamics", _vel_attr(seg["vel"]))
             if pi > 0:
                 ET.SubElement(n, "chord")
-            _xml_pitch(n, name)
+            _xml_pitch(n, name, tuning)
             ET.SubElement(n, "duration").text = str(max(1, act))
             if tie_back:
                 ET.SubElement(n, "tie", type="stop")
@@ -487,6 +497,7 @@ def export_musicxml(spec: dict) -> str:
              for i, layer in enumerate(layers)] or \
             [{"id": "P1", "name": str(spec.get("id", "AudioForge")), "notes": []}]
     root = _score_root(spec, parts)
+    tuning = Tuning.from_spec(spec)
     meter = (spec.get("score") or {}).get("meter")
     key = _key_points(spec)[0]
     for pi, p in enumerate(parts):
@@ -524,7 +535,7 @@ def export_musicxml(spec: dict) -> str:
                         n.set("dynamics", _vel_attr(ev["vel"]))
                     if j > 0:
                         ET.SubElement(n, "chord")
-                    _xml_pitch(n, ev["note"])
+                    _xml_pitch(n, ev["note"], tuning)
                     ET.SubElement(n, "duration").text = str(dur)
                 prev = dur
             cursor = start + (prev or 0)
@@ -679,6 +690,7 @@ def export_notated_musicxml(spec: dict, *, beats_per_bar: int | None = None,
         [(_tick(sec["start_beat"]), "rehearsal", sec["name"]) for sec in _sections(spec)]
     hold_ticks = [_tick(h["beat"]) for h in spec.get("holds") or [] if "beat" in h]
     repeats = _repeat_spans(spec) if repeats_align_with_barlines(spec, beats_per_bar) else []
+    tuning = Tuning.from_spec(spec)
     root = _score_root(spec, parts)
     for pi, p in enumerate(parts):
         beats, unit, bar = _bar_ticks(spec, p["name"], beats_per_bar)
@@ -724,7 +736,8 @@ def export_notated_musicxml(spec: dict, *, beats_per_bar: int | None = None,
                     elif pizz and seg.get("art") != "pizzicato":
                         _direction(measure, 0, "words", ("arco", False))
                         pizz = False
-                _emit_seg(measure, seg, fermata=_holds_in(hold_ticks, s0 + seg["start"], s0 + seg["start"] + seg["dur"]))
+                _emit_seg(measure, seg, fermata=_holds_in(hold_ticks, s0 + seg["start"], s0 + seg["start"] + seg["dur"]),
+                          tuning=tuning)
                 pos = seg["start"] + seg["dur"]
             if pos < s1 - s0:
                 flush(pos)

@@ -16,7 +16,7 @@ Every diagnostic code the engine can emit, with its repair hint. Generated from
 `capability_manifest()["diagnostic_codes"]` and gated by `gen_capability.py --check`
 (`make manifest-check`), so a new code cannot land undocumented.
 
-There are **55** diagnostic codes.
+There are **54** diagnostic codes.
 
 | Code | Repair hint |
 |------|-------------|
@@ -68,7 +68,6 @@ There are **55** diagnostic codes.
 | `technique_param_out_of_range` | Adjust technique parameters to the manifest ranges/enums. |
 | `technique_unknown` | Use a technique listed in capability_manifest()['techniques']. |
 | `technique_unsupported_voice` | Choose a supported voice for the technique or use an explicit lower-level curve/articulation form. |
-| `tuning_not_rendered` | _(see repair_hints in the manifest)_ |
 | `tuning_required_for_string_fret` | Add layer.tuning before using note string/fret fields. |
 | `unknown_property` | Remove the property or replace it with one listed for the asset/layer/master scope in this manifest. |
 | `unrecognized_harmony` | _(see repair_hints in the manifest)_ |

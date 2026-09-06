@@ -22,7 +22,6 @@ from .ir_schema import INTENT_RENDER_ENUMS
 from .lark_parser import parse_assets
 from .curves import PHYSICAL_MODEL_OSCILLATORS
 from .schema import (
-    TUNING_NOT_RENDERED_CODE,
     IR_ARTICULATIONS,
     BPM_MIN,
     POSITION_TIMBRE_UNSUPPORTED_CODE,
@@ -1461,15 +1460,6 @@ def compile_asset(a: Asset, variant=None) -> tuple[dict, list[str]]:
     notation = _read_notation_props(p, a.line)
     if notation:
         spec["notation"] = notation
-        tuning = notation.get("tuning") or {}
-        divisions = tuning.get("divisions")
-        if divisions is not None and int(divisions) != 12:
-            # ADR-0009 / HARNESS-NTUN-003: the directive is stored, but no render path reads
-            # it yet. Say so instead of rendering 12-TET silently.
-            diags.append(
-                f"{TUNING_NOT_RENDERED_CODE}: tuning edo divisions={divisions} is stored as "
-                "notation metadata and not applied by the renderer, which stays 12-TET until "
-                "the tuning resolver lands (docs/DSL_GAP_SPEC.md G6)")
     if "samplerate" in p:
         spec["sample_rate"] = int(_one(take("samplerate"), a.line))
     if "bitdepth" in p:

@@ -8,6 +8,8 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from .determinism import spec_hash
+from .tuning import Tuning
+from . import synth
 from .musicxml import (TPQ, _key_fifths, _key_points, _midi_note, _note_name,  # noqa: F401
                        _pitched_layers, _sections, export_musicxml,
                        export_notated_musicxml, import_musicxml, layer_ident,
@@ -129,6 +131,31 @@ def _exact_key(spec):
         if len(spec.get("key_map") or []) > 1 else _P("key signature")
 
 
+BEND_RANGE_CENTS = 200.0   # RPN 0 pitch-bend sensitivity written by the export: ±2 semitones
+
+
+def _bend_cents(tuning: Tuning, note: str) -> tuple[int, float]:
+    """(nearest 12-TET note number, cents to bend it by) for a note in `tuning`."""
+    midi_f = float(synth.freq_to_midi(tuning.note_to_freq(note)))
+    n = int(round(midi_f))
+    return max(0, min(127, n)), (midi_f - n) * 100.0
+
+
+def _midi_tuning(spec):
+    tuning = Tuning.from_spec(spec)
+    if tuning.is_default:
+        return _P("12-TET note numbers")
+    for layer in _pitched_layers(spec):
+        by_start: dict[float, set[int]] = {}
+        for ev in layer["notes"]:
+            if "note" in ev:
+                by_start.setdefault(round(ev["start_beat"], 6), set()).add(round(_bend_cents(tuning, ev["note"])[1]))
+        if any(len(v) > 1 for v in by_start.values()):
+            return _L("lossy_tuning", "simultaneous notes in one layer need different pitch bends; "
+                                      "one channel carries one bend")
+    return _P(f"nearest note number plus a per-note pitch bend (RPN range ±{BEND_RANGE_CENTS:g} cents)")
+
+
 def _has_dynamic_marks(spec: dict) -> bool:
     return any(layer.get("dynamic") for layer in spec.get("layers", [])) or \
         any(".automation[" in p for p in _curve_paths(spec, "dynamic"))
@@ -246,9 +273,9 @@ COVERAGE: list[dict] = [
          musicxml_notated=_P("`<lyric>` per syllable")),
     dict(construct="tuning", description="`notation.tuning` other than 12-EDO",
          present=lambda s: int((_notation(s).get("tuning") or {}).get("divisions", 12)) != 12,
-         midi=_L("lossy_tuning", "12-TET pitches until the tuning resolver lands (RN-T-002/003)"),
-         musicxml=_L("lossy_tuning", "12-TET pitches until the tuning resolver lands (RN-T-002/003)"),
-         musicxml_notated=_L("lossy_tuning", "12-TET pitches until the tuning resolver lands (RN-T-002/003)")),
+         midi=_cond(_midi_tuning, "lossy_tuning", "per-note pitch bend unless a layer needs two bends at once"),
+         musicxml=_P("decimal `<alter>` relative to the 12-TET natural"),
+         musicxml_notated=_P("decimal `<alter>` relative to the 12-TET natural")),
     dict(construct="string_fret", description="note `string` / `fret` fields",
          present=lambda s: any("string" in ev or "fret" in ev for *_, ev in _note_events(s)),
          midi=_L("lossy_string_fret", "not written"), musicxml=_L("lossy_string_fret", "not written"),
@@ -451,14 +478,24 @@ def export_midi_bytes(spec: dict) -> bytes:
                           _meta(0x06, str(sec["name"]).encode("latin-1", "replace"))))
     chunks = [_track_chunk(conductor)]
     lyrics = (spec.get("notation") or {}).get("lyrics") or []
+    tuning = Tuning.from_spec(spec)
     for i, layer in enumerate(_pitched_layers(spec)):
         ch = _midi_channel(i)
         events = [(0, _meta(0x03, str(layer.get("name", f"layer{i + 1}")).encode("latin-1", "replace")))]
+        if not tuning.is_default:      # RPN 0: pitch-bend sensitivity = 2 semitones, then per-note bends
+            for cc, val in ((101, 0), (100, 0), (6, int(BEND_RANGE_CENTS // 100)), (38, 0), (101, 127), (100, 127)):
+                events.append((0, bytes([0xB0 | ch, cc, val])))
         notes = sorted((e for e in layer["notes"] if "note" in e), key=lambda e: (e["start_beat"], e["note"]))
         for ev in notes:
             start = int(round(ev["start_beat"] * TPQ))
             end = int(round((ev["start_beat"] + ev["dur_beats"]) * TPQ))
-            note = max(0, min(127, _midi_note(ev["note"])))
+            if tuning.is_default:
+                note = max(0, min(127, _midi_note(ev["note"])))
+            else:
+                note, cents = _bend_cents(tuning, ev["note"])
+                bend = int(round(8192 + cents / BEND_RANGE_CENTS * 8192))
+                bend = max(0, min(16383, bend))
+                events.append((start, bytes([0xE0 | ch, bend & 0x7F, bend >> 7])))
             vel = max(1, min(127, int(round(96 * float(ev.get("vel", 0.8))))))
             events.append((start, bytes([0x90 | ch, note, vel])))
             events.append((end, bytes([0x80 | ch, note, 0])))

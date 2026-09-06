@@ -27,8 +27,17 @@ _Notation and interchange line (ADR-0009; `docs/evolution/roadmap-notation.xlsx`
   loudly when the extra is absent.
 - `tests/fixtures/notation`: a ten-piece notation corpus with expected structure; the MusicXML
   3.1 schema is vendored under `tests/fixtures/musicxml/xsd`.
-- `tuning_not_rendered` diagnostic: a non-12-EDO `tuning:` directive compiles with a loud
-  warning instead of rendering 12-TET silently.
+- `audioforge.tuning` (ADR-0010): `tuning: edo divisions=N base=A4 hz=440` drives the render.
+  Note names are spelled along the chain of fifths; the default path is byte-identical;
+  microtonal pitches export as decimal MusicXML `<alter>` and per-note MIDI pitch bend
+  (RPN ±2 semitones), with `lossy_tuning` when one channel would need two bends at once.
+  The interim `tuning_not_rendered` diagnostic is retired.
+- `audioforge score --engrave`: the notated MusicXML through `musicxml2ly` + `lilypond`
+  (`engrave` extra), attributed to LilyPond; exit code 3 with an install hint without it.
+- `analyze` agent tool accepts `pitch_classes` or `notes` and returns normal form, prime
+  form, interval-class vector, set class and symmetry (theory_pcset) with its scope stated.
+- `tests/test_notation_perf.py`: export, import, proof-sheet and LilyPond budgets.
+- CI `oracles` job (Python 3.12, `.[oracles]`, `make oracle-check`); runs once Actions execute.
 - `audioforge.musicxml`: the MusicXML exporters and importer, re-exported by `audioforge.interop`.
 - `audioforge.interop.COVERAGE` / `coverage()`: the construct × format registry that drives
   `interop_diagnostics()`, the capability manifest (`interop.coverage`, `notation.directives`)

@@ -49,7 +49,7 @@ against `cli.py`, so a verb cannot be added or removed without this file failing
 | `repair` | Apply structured repairs to a spec. |
 | `capabilities` | Emit the machine-readable capability manifest (see §6). |
 | `grammar` | Emit the DSL grammar (EBNF/GBNF), derived from the single Lark grammar. |
-| `score` | Proportional proof-sheet PDF: pitch, meter, dynamics, stage plot, intensity, provenance. Not a typeset score (ADR-0009); `--engrave` (engine 3.1 line) delegates to LilyPond via the `engrave` extra. |
+| `score` | Proportional proof-sheet PDF: pitch, meter, dynamics, stage plot, intensity, provenance. Not a typeset score (ADR-0009). `--engrave` hands the notated MusicXML to LilyPond (`musicxml2ly` + `lilypond` from the `engrave` extra) and attributes the PDF to it; without the extra it prints the install hint and exits 3. |
 | `verify` | Re-render a spec (compiled JSON IR or a single-asset `.af`) and SHA-256 compare against a manifest. Exit **0** = `REPRODUCIBLE`, **2** = `MISMATCH`, **1** = structured input error. |
 <!-- END cli-verbs -->
 
