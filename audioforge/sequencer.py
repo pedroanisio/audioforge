@@ -241,7 +241,7 @@ def render_drum_track(track: dict, total_n: int, sr: int, tm: "TempoMap",
     groove = {"timing": [16 x 16th-fractions], "accent": [16 x mult]}
     humanize = {"timing_s": ..., "vel": ...} with per-hit seeded jitter."""
     from .plugins import DRUM_VOICES as PLUGIN_VOICES
-    voice = DRUM_VOICES.get(track["voice"])
+    voice = DRUM_VOICES.get(track.get("voice"))   # patterned sample layers carry no voice
     dp = {k: track[k] for k in ("tune_st", "decay", "snap", "bend") if k in track}
     if hit_override is not None:
         hit = hit_override                 # content-addressed sample as the hit
