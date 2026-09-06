@@ -9,7 +9,7 @@ disclaimer:
 
 # ADR-0007: Faithful musical instructions and stable performance identity
 
-- **Status:** Accepted; merge pending (branch `release/engine-3.0.0`; status becomes "implemented" when `HARNESS-VCS-004` and `HARNESS-CI-003` pass, see `docs/evolution/harness.md`)
+- **Status:** Accepted; merge pending on branch `release/engine-3.0.0` (this line may only claim delivery once `HARNESS-VCS-004` and `HARNESS-CI-003` pass, see `docs/evolution/harness.md`)
 - **Date:** 2026-09-05
 
 ## Context

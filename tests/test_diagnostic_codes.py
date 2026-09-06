@@ -14,6 +14,8 @@ REGISTERED = set(capability_manifest()["diagnostic_codes"])
 
 
 def test_code_families_are_registered():
+    from audioforge.plan import PLAN_DIAGNOSTIC_CODES
+    assert set(PLAN_DIAGNOSTIC_CODES) <= REGISTERED
     assert HARMONY_DIAGNOSTIC_CODES <= REGISTERED
     assert ANALYSIS_DIAGNOSTIC_CODES <= REGISTERED
     assert LOOP_BOUNDARY_CODE in REGISTERED

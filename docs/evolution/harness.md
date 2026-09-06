@@ -464,25 +464,34 @@ is done, the release is not.
 
 `RM-A-001` materialises this as `scripts/harness.sh`. It is deliberately plain shell: each
 assertion is one command whose exit code is the verdict; heavy checks are skipped under
-`HARNESS_QUICK=1`; interpreter venvs and the release SHA come from the environment.
+`HARNESS_QUICK=1`; `HARNESS_ONLY="HARNESS-VCS-001 …"` runs a subset (other rows report
+`SKIPPED (filtered)`); interpreter venvs and the release SHA come from the environment.
+The first full run (T2, attempt 1) exposed five defects in this script (relative paths after
+`cd`, a site directory inside `docs/`, the evidence directory counting as a dirty tree, a
+symlink-resolved venv path, no subset filter); they are fixed in the version below and the
+attempt is kept under `evidence/T2-attempt1/` as the record.
 
 ```bash
 #!/usr/bin/env bash
 # scripts/harness.sh — run the automated assertions of docs/evolution/harness.md
 # usage: scripts/harness.sh <checkpoint e.g. T1> [evidence-root]
 # env:   PYTHON (default ./.venv/bin/python)  PY310 PY311 PY312 (matrix interpreters)
-#        RELEASE_SHA (default HEAD)  HARNESS_QUICK=1 (skip long checks)
+#        RELEASE_SHA (default HEAD)  HARNESS_QUICK=1 (skip long checks)  HARNESS_ONLY="ID ID" (run a subset)
 set -u
-CP=${1:?checkpoint label}; EV=${2:-docs/evolution/evidence}/$CP; W="$EV/work"; mkdir -p "$W"   # work/ holds WAVs, exports, sites: gitignored
+CP=${1:?checkpoint label}; EVROOT=${2:-docs/evolution/evidence}; mkdir -p "$EVROOT"; EV="$(cd "$EVROOT" && pwd)/$CP"; W="$EV/work"; mkdir -p "$W"   # absolute: rows cd elsewhere; work/ holds WAVs, exports: gitignored
+SITE="$(mktemp -d)"   # mkdocs refuses a site_dir inside docs_dir
+CLEAN='git status --porcelain --untracked-files=all -- . ":(exclude)docs/evolution/evidence"'   # the evidence bundle being written is not dirt
 PY=${PYTHON:-./.venv/bin/python}; SHA=${RELEASE_SHA:-$(git rev-parse HEAD)}
 SUM="$EV/summary.tsv"; printf 'id\tresult\tdescription\tseconds\tlog\n' > "$SUM"
 { echo "checkpoint=$CP"; echo "sha=$SHA"; echo "date=$(date -u +%FT%TZ)"; git status --porcelain | wc -l | sed 's/^/dirty_paths=/'; } > "$EV/context.txt"
 
+sel() { [ -z "${HARNESS_ONLY:-}" ] && return 0; case " $HARNESS_ONLY " in *" $1 "*) return 0;; *) return 1;; esac; }   # HARNESS_ONLY="ID ID" runs a subset
 run() { local id=$1 desc=$2; shift 2; local log="$EV/$id.log" t0=$SECONDS r
+  sel "$id" || { printf '%s\tSKIPPED\t%s (filtered)\t0\t-\n' "$id" "$desc" | tee -a "$SUM"; return; }
   if "$@" >"$log" 2>&1; then r=PASS; else r=FAIL; fi
   printf '%s\t%s\t%s\t%s\t%s\n' "$id" "$r" "$desc" "$((SECONDS-t0))" "$log" | tee -a "$SUM"; }
-heavy() { if [ "${HARNESS_QUICK:-0}" = 1 ]; then printf '%s\tSKIPPED\t%s\t0\t-\n' "$1" "$2" | tee -a "$SUM"; else run "$@"; fi; }
-manual() { printf '%s\tMANUAL\t%s\t0\t-\n' "$1" "$2" | tee -a "$SUM"; }
+heavy() { sel "$1" || { printf '%s\tSKIPPED\t%s (filtered)\t0\t-\n' "$1" "$2" | tee -a "$SUM"; return; }; if [ "${HARNESS_QUICK:-0}" = 1 ]; then printf '%s\tSKIPPED\t%s\t0\t-\n' "$1" "$2" | tee -a "$SUM"; else run "$@"; fi; }
+manual() { sel "$1" || return 0; printf '%s\tMANUAL\t%s\t0\t-\n' "$1" "$2" | tee -a "$SUM"; }
 py() { "$PY" - "$@"; }   # read a python program from stdin
 
 # --- AUD / MUS ------------------------------------------------------------
@@ -521,12 +530,12 @@ heavy HARNESS-ACC-004 "acceptance bundle reproducible" acc004
 heavy HARNESS-GATE-001 "make check"            timeout 300 make check PYTHON="$PY"
 heavy HARNESS-GATE-002 "coverage >= 90.1"      bash -c "$PY -m coverage run -m pytest -q -p no:cacheprovider && $PY -m coverage report"
 run   HARNESS-GATE-003 "golden strict same-env" "$PY" -m audioforge.tools.render_golden --check
-heavy HARNESS-GATE-004 "mkdocs strict"          uv run --with mkdocs-material mkdocs build --strict --site-dir "$W/site"
+heavy HARNESS-GATE-004 "mkdocs strict"          uv run --with mkdocs-material mkdocs build --strict --site-dir "$SITE"
 run   HARNESS-GATE-005 "backlog governance"     node scripts/check-backlog-governance.mjs
 run   HARNESS-GATE-006 "git diff --check"       git diff --check
 
 # --- PORT -----------------------------------------------------------------
-for v in 310 311 312; do var=PY$v; if [ -n "${!var:-}" ]; then heavy HARNESS-PORT-00$(( v==310?1:(v==311?2:3) )) "make check py3.${v#3}" make check PYTHON="${!var}"; else printf 'HARNESS-PORT-00%s\tBLOCKED\tno %s interpreter\t0\t-\n' "$(( v==310?1:(v==311?2:3) ))" "$var" | tee -a "$SUM"; fi; done
+for v in 310 311 312; do var=PY$v; sel HARNESS-PORT-00$(( v==310?1:(v==311?2:3) )) || continue; if [ -n "${!var:-}" ]; then heavy HARNESS-PORT-00$(( v==310?1:(v==311?2:3) )) "make check py3.${v#3}" make check PYTHON="${!var}"; else printf 'HARNESS-PORT-00%s\tBLOCKED\tno %s interpreter\t0\t-\n' "$(( v==310?1:(v==311?2:3) ))" "$var" | tee -a "$SUM"; fi; done
 if ls "$EV"/HARNESS-PORT-00*.log >/dev/null 2>&1; then run HARNESS-PORT-004 "cross-env golden advisory" bash -c "grep -h 'golden-check' $EV/HARNESS-PORT-00*.log | grep -q 'reproduce byte-for-byte'"; else printf 'HARNESS-PORT-004\tSKIPPED\tcross-env golden advisory (no PORT logs)\t0\t-\n' | tee -a "$SUM"; fi
 
 # --- CI -------------------------------------------------------------------
@@ -537,10 +546,10 @@ run HARNESS-CI-003 "ci green on main"        bash -c "gh run list --workflow ci 
 run HARNESS-CI-004 "backlog-governance green" bash -c "gh run list --workflow backlog-governance -L 1 --json conclusion --jq '.[0].conclusion' | grep -qx success"
 
 # --- VCS / REL ------------------------------------------------------------
-run HARNESS-VCS-001 "tree clean"             bash -c 'test -z "$(git status --porcelain)"'
-run HARNESS-VCS-002 "branch pushed == local" bash -c 'test -z "$(git status --porcelain)" && git fetch -q origin && test "$(git rev-parse HEAD)" = "$(git rev-parse origin/$(git branch --show-current))"'
+run HARNESS-VCS-001 "tree clean"             bash -c "test -z \"\$($CLEAN)\""
+run HARNESS-VCS-002 "branch pushed == local" bash -c "test -z \"\$($CLEAN)\" && git fetch -q origin && test \"\$(git rev-parse HEAD)\" = \"\$(git rev-parse origin/\$(git branch --show-current))\""
 run HARNESS-VCS-003 "PR approved"            bash -c 'gh pr view --json reviews --jq ".reviews[].state" | grep -q APPROVED'
-run HARNESS-VCS-004 "merged into origin/main" bash -c "test -z \"\$(git status --porcelain)\" && git merge-base --is-ancestor $SHA origin/main"
+run HARNESS-VCS-004 "merged into origin/main" bash -c "test -z \"\$($CLEAN)\" && git merge-base --is-ancestor $SHA origin/main"
 run HARNESS-REL-001 "version literals"       "$PY" -m audioforge.tools.bump_version --check
 run HARNESS-REL-002 "changelog consolidated" bash -c "! awk '/^## \[Unreleased\]/,/^## \[3.0.0\]/' CHANGELOG.md | grep -q 'Track E' && grep -Eq '^## \[3.0.0\] - 20[0-9]{2}-' CHANGELOG.md"
 run HARNESS-REL-003 "release tags on origin" bash -c "test \"\$(git ls-remote --tags origin | grep -cE 'refs/tags/(engine-3\.0\.0|dsl-2\.0)$')\" = 2 && git merge-base --is-ancestor engine-3.0.0 origin/main"
@@ -558,7 +567,7 @@ PYEOF
 run HARNESS-GOV-003 "ledger vocabulary + harness ids" bash -c "! grep -q '| Verified |' docs/MUSICAL_CORRECTNESS.md && test \"\$(grep -c 'HARNESS-' docs/MUSICAL_CORRECTNESS.md)\" -ge 12"
 run HARNESS-GOV-004 "ADR-0001 points to ADR-0007"  grep -q 'ADR-0007' docs/adr/0001-determinism-oracle.md
 run HARNESS-GOV-005 "index.md claim corrected"     bash -c "! grep -q 'every render, forever' docs/index.md"
-run HARNESS-GOV-006 "ADR-0007 status honest"       bash -c "(test -z \"\$(git status --porcelain)\" && git merge-base --is-ancestor $SHA origin/main 2>/dev/null) || ! grep -Eiq 'Status:\*\* .*implemented' docs/adr/0007-musical-render-semantics.md"
+run HARNESS-GOV-006 "ADR-0007 status honest"       bash -c "(test -z \"\$($CLEAN)\" && git merge-base --is-ancestor $SHA origin/main 2>/dev/null) || ! grep -Eiq 'Status:\*\* .*implemented' docs/adr/0007-musical-render-semantics.md"
 run HARNESS-GOV-007 "agent-task pointer valid"     bash -c '[ ! -f .agent-tasks/.current_task ] || jq -e --arg t "$(cat .agent-tasks/.current_task)" "any(.task_id==\$t)" .agent-tasks/registry.json >/dev/null'
 manual HARNESS-GOV-008 "ledger citations accurate (see harness.md 3.9)"
 
@@ -601,7 +610,7 @@ run   HARNESS-MIG-003 "migration flags audio review" py <<'PYEOF'
 import sys; from audioforge.ir_schema import migrate_ir_spec; m=migrate_ir_spec({"id":"x"},"1.2")["_meta"]["migration"]; print(m); sys.exit(0 if m.get("audio_review_required") is True and m.get("to")=="2.0" else 1)
 PYEOF
 run   HARNESS-RB-001 "rollback anchor resolves"  git rev-parse --verify engine-2.16.0
-rb002() { local d="$W/rollback-2.16.0" p shim="$W/shim" out; p="$(readlink -f "$PY")"; mkdir -p "$d" "$shim"
+rb002() { local d="$W/rollback-2.16.0" p shim="$W/shim" out; p="$(cd "$(dirname "$PY")" && pwd)/$(basename "$PY")"; mkdir -p "$d" "$shim"   # absolute but NOT symlink-resolved: readlink -f escapes the venv
   printf '#!/bin/sh\nexec %s "$@"\n' "$p" > "$shim/python3"; cp "$shim/python3" "$shim/python"; chmod +x "$shim/python3" "$shim/python"  # wrapper, not symlink: a venv python reached via an outside symlink loses its site-packages
   git archive engine-2.16.0 | tar -x -C "$d" && ln -sfn "$PWD/libraries" "$d/libraries" || return 1
   out="$d/.gate.out"

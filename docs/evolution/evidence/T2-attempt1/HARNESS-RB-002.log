@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "/home/admin/github-mirror/_framework/audioforge/docs/evolution/evidence/T2/work/rollback-2.16.0/tests/test_determinism.py", line 10, in <module>
+    from audioforge import render_to_wav, spec_hash, validate_spec, SpecError  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/admin/github-mirror/_framework/audioforge/docs/evolution/evidence/T2/work/rollback-2.16.0/audioforge/__init__.py", line 9, in <module>
+    from .capabilities import capability_manifest, capability_manifest_schema
+  File "/home/admin/github-mirror/_framework/audioforge/docs/evolution/evidence/T2/work/rollback-2.16.0/audioforge/capabilities.py", line 4, in <module>
+    from .dsl import (ARTICULATIONS, DSL_VERSION, DYNAMIC_MARKS, EMOTIONS,
+  File "/home/admin/github-mirror/_framework/audioforge/docs/evolution/evidence/T2/work/rollback-2.16.0/audioforge/dsl.py", line 21, in <module>
+    from .lark_parser import parse_assets
+  File "/home/admin/github-mirror/_framework/audioforge/docs/evolution/evidence/T2/work/rollback-2.16.0/audioforge/lark_parser.py", line 19, in <module>
+    from lark import Lark, Token, Tree
+ModuleNotFoundError: No module named 'lark'

@@ -122,6 +122,9 @@
     "position_timbre_unsupported": {
       "repair_hint": "position_timbre_unsupported"
     },
+    "render_plan_approximation": {
+      "repair_hint": "The plan declares an approximate technique, sampled legato join or section multiplication; accept it, or set routing: fallbacks=forbid and use recorded material for the gesture."
+    },
     "render_plan_inpaint_unavailable": {
       "repair_hint": "Inpainting is reserved and cannot be routed until F3 lands."
     },
@@ -142,6 +145,9 @@
     },
     "render_plan_stretch_warn": {
       "repair_hint": "render_plan_policy"
+    },
+    "render_plan_sustain_gap": {
+      "repair_hint": "A held sampled note outlasts its recording without a usable loop; shorten the note, pick a region with a sustain loop, or accept the gap."
     },
     "resource_pin": {
       "repair_hint": "resource_pin"

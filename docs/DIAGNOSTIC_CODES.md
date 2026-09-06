@@ -16,7 +16,7 @@ Every diagnostic code the engine can emit, with its repair hint. Generated from
 `capability_manifest()["diagnostic_codes"]` and gated by `gen_capability.py --check`
 (`make manifest-check`), so a new code cannot land undocumented.
 
-There are **38** diagnostic codes.
+There are **40** diagnostic codes.
 
 | Code | Repair hint |
 |------|-------------|
@@ -37,6 +37,7 @@ There are **38** diagnostic codes.
 | `note_curve_unsupported_voice` | Move the note curve to a voice that supports the target, or use an equivalent layer/master automation where available. |
 | `notes_first_event` | Put the first notes: event on the same line, or write play as a separate layer-body statement. |
 | `position_timbre_unsupported` | Position timbre is synth-only until sampled/physical voices grow a documented per-voice timbre primitive. |
+| `render_plan_approximation` | _(see repair_hints in the manifest)_ |
 | `render_plan_inpaint_unavailable` | _(see repair_hints in the manifest)_ |
 | `render_plan_missing_evidence` | Regenerate the plan from the current spec, engine version, library pin, catalog facts, and routing policy before rendering. |
 | `render_plan_policy_fallback_forbid` | Adjust spec.routing or choose sampled articulations that satisfy the active render-plan policy. |
@@ -44,6 +45,7 @@ There are **38** diagnostic codes.
 | `render_plan_schema` | Regenerate the plan from the current spec, engine version, library pin, catalog facts, and routing policy before rendering. |
 | `render_plan_stale` | Regenerate the plan from the current spec, engine version, library pin, catalog facts, and routing policy before rendering. |
 | `render_plan_stretch_warn` | Adjust spec.routing or choose sampled articulations that satisfy the active render-plan policy. |
+| `render_plan_sustain_gap` | _(see repair_hints in the manifest)_ |
 | `resource_pin` | Replace placeholder hashes with content-addressed sample, IR, or library manifest SHA-256 values. |
 | `scan_requires_morph_osc` | Use osc=morph for note-scope scan curves, or remove the scan curve from this note. |
 | `string_fret_pitch_conflict` | Remove the explicit pitch or make it match the pitch derived from tuning, string, and fret. |

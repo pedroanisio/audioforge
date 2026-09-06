@@ -617,6 +617,16 @@ def capability_manifest() -> dict:
             "intent_conflict": {
                 "repair_hint": "Review typed intent fields against explicit render settings."
             },
+            # Render-plan codes not listed individually above (RM-E-001 follow-up):
+            "render_plan_approximation": {
+                "repair_hint": "The plan declares an approximate technique, sampled legato join or "
+                               "section multiplication; accept it, or set routing: fallbacks=forbid "
+                               "and use recorded material for the gesture."
+            },
+            "render_plan_sustain_gap": {
+                "repair_hint": "A held sampled note outlasts its recording without a usable loop; "
+                               "shorten the note, pick a region with a sustain loop, or accept the gap."
+            },
             # Harmony (RM-E-001): unresolved pitch collections are preserved and reported.
             "ambiguous_harmony": {
                 "repair_hint": "Author an explicit chord symbol (for example C3maj7) so root and "
