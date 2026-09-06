@@ -1,0 +1,189 @@
+START 2026-09-06T00:59:10Z HEAD=f4f4eaf
+native-check: C compiler present
+schema-check: /tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/wt/docs/ir.schema.json is in sync with ir_json_schema()
+manifest-check: docs/capability-manifest.json + DIAGNOSTIC_CODES.md are in sync
+golden-check: all 5 golden specs reproduce byte-for-byte (env match: True)
+====================================================================
+ AudioForge drift inspection
+====================================================================
+
+registries cross-checked: oscillators(15) fx(19) native(8) chords(25)
+
+✓ no registry drift — every source of truth matches its consumers
+version-check: all version sites agree: engine 3.0.0, dsl 2.0
+docs-gen-check: docs pages in sync; all 21 nav pages resolve
+Using CPython 3.13.12
+Resolved 29 packages in 0.56ms
+lock-check: uv.lock in sync with pyproject.toml
+floor-check: no 3.11-only stdlib constructs in audioforge/ tests/ scripts/
+PASS  byte-identical re-render (all presets)
+PASS  spec change propagates to output hash
+PASS  canonical hash ignores key order
+PASS  schema rejects malformed specs with clear errors
+
+All tests passed.
+PASS  DSL compilation is deterministic
+PASS  DSL errors carry line numbers for agent feedback
+PASS  out-of-scale notes produce advisory diagnostics
+PASS  SDK mutation re-validates and re-hashes
+PASS  plugin fx renders; plugin validators run
+PASS  gain automation shapes the rendered audio
+PASS  LUFS targeting (measured -20.00 for -20 target)
+PASS  stems + marker files exported
+PASS  export presets are themselves reproducible
+PASS  all DSL presets re-render byte-identically
+  SKIP cosmic_awe_cue.af: optional cinematic static example is absent
+
+All v2 tests passed.
+PASS  pad/pluck/modal are seed-deterministic
+PASS  pluck fundamental within tuning tolerance (220.0 Hz)
+PASS  modal partials sit at the material's mode ratios
+PASS  padsynth tables loop perfectly
+PASS  unison spreads spectral energy as expected
+PASS  limiter: LUFS target reached, true peak held at ceiling
+PASS  hall tail length tracks rt60; deterministic
+PASS  high-pass TPDF 16-bit dither stays byte-reproducible
+
+All v2.1 tests passed.
+PASS  plate: stable exponential decay, decorrelated L/R, deterministic
+PASS  plate: decay parameter controls tail length
+PASS  fdn: per-band decay (low ratio 0.073 vs high 0.0097)
+PASS  fdn: rt60 scales the tail
+PASS  stereo master chain: deterministic, decorrelated width from a centered source
+
+All T2 tests passed.
+PASS  glue comp: crest 3.8 -> 3.0, deterministic, stereo-linked
+PASS  multiband: low band gain 0.59, high band 1.00
+PASS  DC blocker removes offset, preserves the tone
+PASS  modulated plate: deterministic, audibly distinct (rms diff 0.0120)
+PASS  full T3 master chain renders deterministically at -13.12 LUFS
+
+All T3 tests passed.
+PASS  humanize: onsets deviate up to 7.1 ms, byte-deterministic
+PASS  groove swing16: offbeats late by 40 ms, downbeats on the grid
+PASS  vel->brightness: centroid 400 Hz at vel 0.3 vs 1922 Hz at vel 1.0
+PASS  glide: pitch 262 Hz just after onset -> 440 Hz settled
+PASS  vibrato: pitch swings 433.6..446.6 Hz around 440 (static note: 0.00 Hz spread)
+PASS  groove templates expand to explicit, inspectable IR arrays
+
+All performance-realism tests passed.
+PASS  custom modes: partials at declared ratios only
+PASS  morph: harmonic content x21843 from scan 0 -> 0.75
+PASS  morph automation: centroid rides 230 -> 3853 Hz across the scan
+PASS  granular: deterministic; pitch spread widens line 10 -> 16 Hz
+PASS  sample layer: byte-deterministic, pattern-triggered, wrong hash refused
+PASS  bowed: sustained self-oscillation at 111.0 Hz (A2 = 110)
+
+All instrument-class tests passed.
+PASS  EQ: peak +6 dB measures +5.9 dB at 1 kHz (distant band +0.12); lowshelf -6 measures -5.3
+PASS  bus: shared hall leaves a 186 dB louder tail than unbused layers
+PASS  sidechain: pad ducks 16.3 dB at the kick (self-referenced), gap-to-gap stable within 0.00 dB
+PASS  transient: crest 8.0 -> 9.4 (attack+) / 5.8 (sustain+)
+PASS  saturate: H2 -23 dBc, H3 -14 dBc; mix=0 is bit-exact bypass
+PASS  bus + duck chain renders byte-identically
+
+All mix & production tests passed.
+PASS  chords: A2maj7 expands correctly; drop2 voices E down an octave
+PASS  arp: down order ['G4', 'E4', 'C4']; random order compile-stable
+PASS  euclid: E(3,8), E(5,8), E(5,16) match known patterns; rotation works
+PASS  transforms: retrograde/invert/diatonic/stretch all verified in the IR
+PASS  tempo ramp: onsets at [0.0, 4.892, 6.288] s match the analytic map [0.0, np.float64(4.893), np.float64(6.289)]
+PASS  key map: diatonic transform resolves the key in force at the play position
+PASS  chords + arp + tempo map render byte-identically
+
+All composition-ergonomics tests passed.
+PASS  variants: same tag byte-identical, tags distinct, composition IR preserved
+PASS  vary(): 5 distinct choice combos over 6 tags, all compile-stable; no-variant = canonical
+PASS  intensity: dramatic swing 7.2 dB at 1.0 vs 2.2 dB at 0.3, hash-tracked
+PASS  cutdowns: lengths/loudness/lineage correct; 6s cut envelope correlates 1.000 with the source window
+PASS  pack: 4 variants, 4 distinct output hashes, manifest + files on disk
+
+All variation-at-scale tests passed.
+PASS  blown: 224 Hz sustained, H3/H2 = 104x (odd-harmonic bore), deterministic
+PASS  brass: 221 Hz (+8c) sustained, full series (H2=-18dB), brightens, deterministic
+PASS  struck: tension glide +37c -> nominal, tension=0 flat (+0c), deterministic
+PASS  sympathetic: halo tail/onset 0.17->0.97 with coupling, bounded at extremes, deterministic
+PASS  drums: tune moves body 60 -> 120 Hz; decay scales 4x; snap shifts shell power share 0.95 -> 0.005
+PASS  foley: rain centroid 4770 vs wind 759 Hz; fire local crest 15 vs wind 5; surf period ~4.8 s; all deterministic
+PASS  ingest: catalog hashes + one-shot/loop guesses correct; emitted snippet compiles and renders
+PASS  convolve: hash-verified IR adds a real tail; wrong hash refused with both hashes named
+
+All palette-depth tests passed.
+PASS  sfz: inheritance, default_path, key shorthand, loop opcodes, unknown opcodes reported
+PASS  manifest: pin loads; tampered sample and edited manifest both refuse loudly
+PASS  pitch: C4 sample played at D4 through 44.1k->48k resampling lands +0.3 cents from nominal
+PASS  velocity layers: H3/H1 0.000 soft (pure-sine layer) vs 0.50 loud (harmonic layer)
+PASS  round-robin: seeded picks 12111122, re-render identical, variant tag re-realizes
+PASS  random RR (lorand/hirand): 12212111, seeded, re-render identical, variant re-realizes
+PASS  loop: 1 s source sustains a 4 s note (late/early RMS 1.02), pitch held through the loop
+PASS  hashing: library pin folds into spec hash; instrument layer without a library is a compile error
+
+All Tier S (P1) tests passed.
+PASS  marks: ppp/mf and raw values compile to the documented 0..1 points, explicit in IR
+PASS  crossfade (static): H3/H1 0.000 at pp, 0.22 blended at mid, 0.52 at ff
+PASS  crossfade (time-varying): one held note under a hairpin moves H3/H1 0.000 -> 0.54; byte-stable
+PASS  gain term: pp vs fff level difference 6.5 dB — present but timbre carries the dynamics
+PASS  synth dynamics: same saw note at pp vs ff centroid 284 -> 562 Hz (curve-driven brightness)
+PASS  articulations: sampled spiccato selects silently; staccato falls back with manifest record and a real clamp
+PASS  tremolo fallback: 33 seeded re-triggers over 2 s, byte-stable
+PASS  trill: compile-time expansion picks key-aware neighbors (B4~C5, E4~F4 in A minor)
+
+All dynamics & articulation (P2) tests passed.
+PASS  slur DSL: groups get distinct ids, lone notes none, play+legato makes the motif one group
+PASS  legato join: continuous (RMS ratio 1.00); outgoing C4 held 2.6x stronger through the join; attack scrape suppressed 8.2x; byte-stable
+PASS  pitch ramp: f0 through the join passes intermediate values (275..283 Hz between 262 and 294)
+PASS  section: stereo, deterministic; envelope beating 0.097 -> 0.367 with 6 detuned players (the shimmer)
+PASS  phrasing: peak/first RMS 0.80 -> 1.15 with the arch; last note eases (1.20 -> 0.84)
+
+All performance-model (P3) tests passed.
+PASS  azimuth: L/R energy follows the seat; ITD 0.33 ms with correct sign at ±30°
+PASS  distance: 17.6 dB level drop 2->12 m; HF share 0.744 -> 0.623 (air shelf)
+PASS  early reflections: 21 image arrivals in 8-120 ms, direct excluded, cached and deterministic
+PASS  hall tail: stereo decorrelated, decays 39 dB/s (RT60 1.5 s IR), wrong pin refused
+PASS  DSL: stage/seat compile to explicit IR, render is stereo, seat+bus refused
+
+All stage & room (P4) tests passed.
+  SKIP preset corpus has only 1 compilable assets
+PASS  property: render-time SpecErrors are pre-reported by validate; no raw exceptions escape
+PASS  placeholder pins get the distinct 'unbound placeholder' diagnostic, not a generic not-found
+PASS  resolve: IR hash mismatch reported with both hashes; correct pin passes
+PASS  auto: comma-newline continuation parses (4 breakpoints)
+PASS  fixtures: the notes:/play trap now explains itself with the fix, on both fixtures that hit it
+PASS  slur(play …): motif expansions share one slur group; notes outside stay unslurred
+PASS  validate: note events beyond asset duration produce a structured warning
+PASS  contract: native-voice set is single-source; synth dispatch and resolve gate agree with schema.NATIVE_OSC_SHAPES
+PASS  contract: native-fx set is single-source; resolve gate covers both layer and master chains via fx_needs_native
+  SKIP no C compiler; native ladder unavailable
+  SKIP no C compiler; native tape unavailable
+
+All validate/render contract tests passed.
+........................................................................ [  7%]
+......................................s................................. [ 15%]
+........................................................................ [ 23%]
+........................................................................ [ 31%]
+........................................................................ [ 39%]
+........................................................................ [ 47%]
+........................................................................ [ 55%]
+........................................................................ [ 63%]
+........................................................................ [ 71%]
+........................................................................ [ 78%]
+........................................................................ [ 86%]
+........................................................................ [ 94%]
+..........................s.....................                         [100%]
+=============================== warnings summary ===============================
+tests/test_score.py::test_score_pdf_renders_rich_extended_score
+tests/test_score.py::test_score_pdf_handles_multi_asset_and_no_pitched_cases
+tests/test_score_layout.py::test_long_header_dense_seating_engraves
+  /tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/wt/audioforge/score.py:701: UserWarning: Glyph 108 (l) missing from font(s) Noto Music.
+    pdf.savefig(fig)
+
+tests/test_score.py::test_score_pdf_renders_rich_extended_score
+tests/test_score.py::test_score_pdf_handles_multi_asset_and_no_pitched_cases
+tests/test_score_layout.py::test_long_header_dense_seating_engraves
+  /tmp/claude-1000/-home-admin-github-mirror--framework-audioforge/6409799e-5668-47fa-9596-54b12fb7dda7/scratchpad/wt/audioforge/score.py:701: UserWarning: Glyph 112 (p) missing from font(s) Noto Music.
+    pdf.savefig(fig)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+910 passed, 2 skipped, 6 warnings in 101.35s (0:01:41)
+WT_MAKE_CHECK_EXIT=0
+END 2026-09-06T01:01:53Z
