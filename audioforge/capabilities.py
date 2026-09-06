@@ -508,9 +508,9 @@ def capability_manifest() -> dict:
             # Directives that compile to `spec.notation`; `rendering` says what the
             # renderer does with them today (HARNESS-NTUN-003 / NSEM-002).
             "directives": {
-                "tuning": {"ir": "notation.tuning", "rendering": "metadata_only",
-                           "diagnostic": "tuning_not_rendered",
-                           "roadmap": "RN-T-002 (n-EDO resolver), RN-T-003 (microtonal interop)"},
+                "tuning": {"ir": "notation.tuning", "rendering": "n_edo_resolver",
+                           "adr": "ADR-0014", "spelling": "chain of fifths",
+                           "interop": "decimal <alter> in MusicXML; per-note pitch bend in MIDI"},
                 "tuplet": {"ir": "notation.tuplets", "rendering": "authored_durations",
                            "note": "groups notes whose durations are already explicit; "
                                    "notation only, no change in sound"},
@@ -725,12 +725,6 @@ def capability_manifest() -> dict:
             },
             "unsupported_layer_type": {
                 "repair_hint": "Only layers with note events export; render other layers to audio or leave them out of the interchange."
-            },
-            # Notation (ADR-0011): the tuning directive is metadata until the resolver lands.
-            "tuning_not_rendered": {
-                "repair_hint": "The tuning directive is stored but the renderer stays 12-TET; "
-                               "remove it, or wait for the n-EDO resolver (engine 3.1 line) "
-                               "that applies it and proves the frequencies by FFT."
             },
             # Harmony (RM-E-001): unresolved pitch collections are preserved and reported.
             "ambiguous_harmony": {

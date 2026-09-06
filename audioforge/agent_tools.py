@@ -48,9 +48,15 @@ def tool_schemas() -> dict:
         for name in ops
     }
     schemas["analyze"]["request"] = {
-        "type": "object", "required": ["audio", "sample_rate"],
+        "type": "object",
+        "description": "Either audio analysis (`audio` + `sample_rate`) or pitch-class-set theory "
+                       "(`pitch_classes` or `notes`); one form is required (RN-A-002, decision D5).",
+        "oneOf": [{"required": ["audio", "sample_rate"]}, {"required": ["pitch_classes"]}, {"required": ["notes"]}],
         "properties": {"audio": {"type": "array"}, "sample_rate": {"type": "integer", "minimum": 1},
-                       "context": {"type": "object", "description": "Compiled spec or declared analysis expectations"}},
+                       "context": {"type": "object", "description": "Compiled spec or declared analysis expectations"},
+                       "pitch_classes": {"type": "array", "items": {"type": "integer", "minimum": 0, "maximum": 11}},
+                       "notes": {"type": "array", "items": {"type": "string"},
+                                 "description": "note names (C4, Eb3 …); reduced to pitch classes"}},
     }
     schemas["export"]["request"] = {
         "type": "object", "required": ["spec"],
@@ -59,6 +65,35 @@ def tool_schemas() -> dict:
                        "grid": {"type": "number", "exclusiveMinimum": 0, "multipleOf": .03125, "default": .25}},
     }
     return schemas
+
+
+def pitch_class_set_report(request: dict) -> dict:
+    """Pitch-class-set theory (AF-M01, `theory_pcset`) for agents: normal form, prime
+    form, interval-class vector, set class and symmetry counts. The scope line says what
+    this is not: no key, function or style claim (RN-A-002)."""
+    from . import theory_pcset
+    from .theory import note_to_semis
+    if "pitch_classes" in request:
+        pcs = [int(x) for x in request["pitch_classes"]]
+        if any(not 0 <= x <= 11 for x in pcs):
+            raise ValueError("analyze: pitch_classes must be integers 0..11")
+    else:
+        pcs = [note_to_semis(str(n)) % 12 for n in request["notes"]]
+    if not pcs:
+        raise ValueError("analyze: at least one pitch class is required")
+    s = theory_pcset.pcset(pcs)
+    cardinality, prime = theory_pcset.set_class(s)
+    return {
+        "input_pitch_classes": sorted(set(pcs)),
+        "normal_form": list(theory_pcset.normal_form(s)),
+        "prime_form": list(prime),
+        "interval_class_vector": list(theory_pcset.interval_class_vector(s)),
+        "set_class": {"cardinality": cardinality, "prime_form": list(prime)},
+        "transposition_symmetry": theory_pcset.transposition_symmetry(s),
+        "complement": list(theory_pcset.complement(s)),
+        "assessment_scope": "pitch-class set theory over the given classes; "
+                            "no key, harmonic function, or stylistic claim",
+    }
 
 
 def run_tool(operation: str, request: dict) -> dict:
@@ -114,6 +149,8 @@ def run_tool(operation: str, request: dict) -> dict:
         if operation == "repair":
             return _response(True, artifacts=[plan_repair(request)])
         if operation == "analyze":
+            if "pitch_classes" in request or "notes" in request:
+                return _response(True, artifacts=[{"pitch_class_set": pitch_class_set_report(request)}])
             report = analyze_audio(request["audio"], int(request["sample_rate"]),
                                    context=request.get("context"))
             return _response(True, artifacts=[{"analysis": report}])

@@ -78,6 +78,6 @@ node scripts/check-backlog-governance.mjs
 | BL-047 | ADR-0011 | Notated and exact-tick MusicXML export derive structure from the spec | feature | bug | done | L | high | mine | BL-046 |
 | BL-048 | ADR-0011 | MusicXML import keeps parts, chords, voices and attribute changes; corpus round trips | feature | bug | done | M | high | mine | BL-046 |
 | BL-049 | ADR-0011 | MIDI export: one track per layer and the tempo map | feature | bug | done | S | high | mine | BL-046 |
-| BL-050 | AF-M05 | Tuning directive: loud while inert, then an n-EDO resolver with FFT proof | feature | bug | ready | M | high | mine | BL-022, BL-045 |
+| BL-050 | AF-M05 | Tuning directive: loud while inert, then an n-EDO resolver with FFT proof | feature | bug | done | M | high | mine | BL-022, BL-045 |
 
 See `backlog.yml` for each item's full summary, rationale, acceptance criteria, dependencies, references, and live evidence checks.

@@ -373,11 +373,15 @@ Closed for G6 first extension set *as metadata*. Asset-level `tuning:`, `tuplet:
 `lyrics:` compile into typed `notation` metadata; notation metadata is
 hash-excluded unless future render passes lower it into explicit render IR.
 
-**Measured limit (2026-09-06, `docs/evolution/harness-notation.md`).** The `tuning:`
-directive is accepted and never read by any render path: a 19-EDO spec renders in 12-TET
-(`HARNESS-NTUN-001` FAIL). Until the resolver lands (roadmap `RN-T-002`), a non-12-EDO
-tuning compiles with the diagnostic `tuning_not_rendered` (`HARNESS-NTUN-003`). Tuplets and
-lyrics are not projected to MusicXML (`HARNESS-NSEM-002`).
+**Measured limit (2026-09-06, `docs/evolution/harness-notation.md`).** At T0 the `tuning:`
+directive was accepted and never read by any render path: a 19-EDO spec rendered in 12-TET
+(`HARNESS-NTUN-001` FAIL). Checkpoint T4 of `docs/evolution/roadmap-notation.xlsx` closed it
+for equal divisions of the octave (ADR-0014): note names are spelled along the chain of
+fifths, the render lands on the EDO degree (FFT proof within ±5 cents, `HARNESS-NTUN-001`),
+the default path is byte-identical (`HARNESS-NTUN-002`), and microtonal pitches leave the
+engine as decimal MusicXML `<alter>`s and per-note MIDI pitch bends (`HARNESS-NTUN-004`).
+Just intonation, historical temperaments and Scala files remain AF-M05 (`RN-T-004`, parked).
+Tuplets and lyrics project to MusicXML `<time-modification>` and `<lyric>` (`HARNESS-NSEM-002`).
 
 **Definition of Ready**
 

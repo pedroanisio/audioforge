@@ -113,3 +113,24 @@ def test_unknown_method_errors():
 def test_resource_read_unknown_uri_errors():
     r = _rpc(MCPServer(), "resources/read", {"uri": "audioforge://session/nope"})
     assert r["error"]["code"] == -32602
+
+
+def test_analyze_tool_exposes_pitch_class_set_theory():
+    """RN-A-002 / HARNESS-NANA-004: theory_pcset is reachable through the agent surface."""
+    direct = agent_tools.run_tool("analyze", {"pitch_classes": [0, 4, 7]})
+    assert direct["ok"] is True
+    report = direct["artifacts"][0]["pitch_class_set"]
+    assert report["prime_form"] == [0, 3, 7] and report["normal_form"] == [0, 4, 7]
+    assert report["interval_class_vector"] == [0, 0, 1, 1, 1, 0]
+    assert report["set_class"] == {"cardinality": 3, "prime_form": [0, 3, 7]}
+    assert "no key" in report["assessment_scope"]
+    by_notes = agent_tools.run_tool("analyze", {"notes": ["C4", "E4", "G4", "C5"]})
+    assert by_notes["artifacts"][0]["pitch_class_set"]["prime_form"] == [0, 3, 7]
+    bad = agent_tools.run_tool("analyze", {"pitch_classes": [12]})
+    assert bad["ok"] is False
+    server = MCPServer()
+    out = _rpc(server, "tools/call", {"name": "analyze", "arguments": {"pitch_classes": [0, 1, 6]}})["result"]
+    envelope = json.loads(out["content"][0]["text"])
+    assert envelope["ok"] is True and envelope["artifacts"][0]["pitch_class_set"]["prime_form"] == [0, 1, 6]
+    schema = agent_tools.tool_schemas()["analyze"]["request"]
+    assert "pitch_classes" in schema["properties"] and "notes" in schema["properties"]

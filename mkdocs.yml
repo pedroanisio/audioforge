@@ -65,3 +65,4 @@ nav:
       - ADR-0011 Notation interchange oracles: adr/0011-notation-interchange-oracles.md
       - ADR-0012 Native DSP kernels and bounded drift: adr/0012-native-dsp-kernels-bounded-drift.md
       - ADR-0013 Video cue library and scene resolver: adr/0013-video-cue-library-and-scene-resolver.md
+      - ADR-0014 n-EDO tuning resolution: adr/0014-n-edo-tuning-resolution.md

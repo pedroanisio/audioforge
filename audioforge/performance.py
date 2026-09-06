@@ -4,7 +4,8 @@ from __future__ import annotations
 import numpy as np
 
 from .determinism import note_seed_paths, rng_for
-from .synth import freq_to_midi, note_to_freq
+from .synth import freq_to_midi
+from .tuning import freq_for
 
 
 def conductor_spans(spec: dict, spans: list[dict]) -> list[dict]:
@@ -156,7 +157,7 @@ def schedule_notes(track: dict, total_n: int, sr: int, timeline, rng_factory,
     accents = (groove or {}).get("accent")
     scheduled = []
     for index, (event, path) in enumerate(zip(events, paths)):
-        frequency = event.get("freq_hz") or note_to_freq(event["note"])
+        frequency = freq_for(event, track)       # ADR-0014: note names follow the layer tuning
         velocity = float(event.get("vel", 1.0))
         beat = event["start_beat"]
         slot = groove_slot(beat, track.get("name", ""), track.get("_score", {}), len(timing or accents or [0] * 16))

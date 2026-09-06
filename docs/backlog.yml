@@ -1323,7 +1323,7 @@ items:
     summary: "Interim tuning_not_rendered diagnostic; audioforge/tuning.py threaded through note_to_freq, sampler and plan with the default path byte-identical; microtonal interop."
     category: "feature"
     type: "bug"
-    status: "ready"
+    status: "done"
     complexity: "M"
     priority: "high"
     rationale: "AF-M05 slice: the directive is accepted and silently renders 12-TET."
@@ -1333,6 +1333,7 @@ items:
     acceptance_criteria:
       - "HARNESS-NTUN-001..004 PASS; goldens unchanged."
     references:
+      - "tests/test_tuning.py (HARNESS-NTUN-001/002/004; ADR-0014)"
       - "docs/ROADMAP.md"
     evidence_checks:
       - kind: file-exists

@@ -23,6 +23,7 @@ from pathlib import Path
 import numpy as np
 
 from . import synth, sequencer
+from .tuning import freq_for, with_tuning
 from .determinism import ENGINE_VERSION, performance_hash, rng_for, spec_hash
 from .fx import apply_fx_chain, gain_fx
 from .dynamics import master_loudness
@@ -143,6 +144,7 @@ def _layer_signal(layer: dict, total_n: int, sr: int, tm, swing: float,
         original["duration_s"] = source["layer_duration_s"]
         original["automation"] = [a for a in source.get("automation", []) if a["target"] == "scan"]
         original["_score"] = source.get("score", {})
+        original = with_tuning(original, source)
         source_tm = sequencer.TimelineMap(sequencer.TempoMap(source["tempo_map"]), source.get("holds"))
         dry = _layer_signal(original, int(round(source["duration_s"] * sr)), sr,
                             source_tm, swing, root, idx, groove, report)
@@ -169,7 +171,7 @@ def _layer_signal(layer: dict, total_n: int, sr: int, tm, swing: float,
     if layer.get("clip_map"):
         pass
     elif t == "tone":
-        freq = layer.get("freq_hz") or synth.note_to_freq(layer["note"])
+        freq = freq_for(layer, layer)            # ADR-0014: tone layers follow the tuning too
         sig = synth.osc(layer.get("osc", "sine"), freq, dur_n, sr,
                         detune_cents=layer.get("detune_cents", 0.0),
                         fm_ratio=layer.get("fm_ratio", 2.0),
@@ -203,8 +205,7 @@ def _layer_signal(layer: dict, total_n: int, sr: int, tm, swing: float,
         if srcname in ("white", "pink", "brown"):
             src_buf = synth.noise(srcname, src_n, rng("grain_src"))
         else:
-            freq = (layer.get("freq_hz")
-                    or synth.note_to_freq(layer.get("note", "A3")))
+            freq = freq_for({"freq_hz": layer.get("freq_hz"), "note": layer.get("note", "A3")}, layer)
             src_buf = synth.osc(srcname, freq, src_n, sr,
                                 rng=rng("grain_src"),
                                 voice=_voice_params(layer))
@@ -352,8 +353,9 @@ def _layer_signals(spec: dict, total_n: int, sr: int, tm, swing: float,
     libraries re-loaded per process. ``report`` is write-only metadata and is
     shared across threads (it never feeds back into the audio)."""
     layers = spec["layers"]
-    prepped = [{**ly, "_score": spec.get("score", {}),
-                **({"_library": spec["library"]} if ly.get("type") == "instrument" else {})}
+    prepped = [with_tuning({**ly, "_score": spec.get("score", {}),
+                            **({"_library": spec["library"]} if ly.get("type") == "instrument" else {})},
+                           spec)                       # ADR-0014: `_tuning` sidecar, only when declared
                for ly in layers]
     n = len(prepped)
     parallel = jobs > 1 and n > 1

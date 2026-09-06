@@ -60,7 +60,7 @@ against `cli.py`, so a verb cannot be added or removed without this file failing
 | `repair` | Apply structured repairs to a spec. |
 | `capabilities` | Emit the machine-readable capability manifest (see §6). |
 | `grammar` | Emit the DSL grammar (EBNF/GBNF), derived from the single Lark grammar. |
-| `score` | Proportional proof-sheet PDF: pitch, meter, dynamics, stage plot, intensity, provenance. Typeset engraving uses external LilyPond (ADR-0011); an integrated backend remains notation M5. |
+| `score` | Proportional proof-sheet PDF: pitch, meter, dynamics, stage plot, intensity, provenance. Not a typeset score (ADR-0011). `--engrave` hands the notated MusicXML to LilyPond (`musicxml2ly` + `lilypond` from the `engrave` extra) and attributes the PDF to it; without the extra it prints the install hint and exits 3. |
 | `export-midi` | Export compiled note events to a Standard MIDI File (`-o`). |
 | `export-musicxml` | Export MusicXML 3.1 (`-o`; `--notated` quantizes to measures, `--bars`). |
 | `import-midi` | Import a MIDI file to `.af`/IR (`--id`). |

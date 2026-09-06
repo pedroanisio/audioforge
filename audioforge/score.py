@@ -27,7 +27,6 @@ from __future__ import annotations
 
 import math
 import re
-import warnings
 
 import matplotlib
 matplotlib.use("Agg")
@@ -42,16 +41,22 @@ from . import theory
 from .version import ENGINE_VERSION
 
 # ----------------------------------------------------------------- fonts ----
+# The clef glyphs need a music font. matplotlib measures every text's line metrics
+# with the probe string "lp" in the text's own font, and music fonts carry no Latin
+# letters — so the music font is listed with a Latin fallback family (matplotlib's
+# per-glyph fallback, >= 3.6) instead of alone. That is what silenced the
+# "Glyph 108 (l) missing from font(s) Noto Music" warnings (RN-P-002, HARNESS-NENG-004);
+# no warning filter hides them any more.
 _NOTO = None
 for _cand in ("Noto Music", "Bravura", "Leland"):
     try:
-        _NOTO = fm.FontProperties(fname=fm.findfont(_cand, fallback_to_default=False))
+        fm.findfont(_cand, fallback_to_default=False)
+        _NOTO = fm.FontProperties(family=[_cand, "DejaVu Sans"])
         break
     except Exception:
         continue
 _SERIF = fm.FontProperties(family="serif")
 _ACCFONT = fm.FontProperties(family="DejaVu Sans")     # has ♯ ♭ ♮
-warnings.filterwarnings("ignore", message="Glyph .* missing from font")
 
 _CLEF = {"treble": "\U0001D11E", "bass": "\U0001D122"}
 _ACC = {1: "♯", -1: "♭", 0: "♮"}

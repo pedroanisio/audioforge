@@ -550,7 +550,7 @@ audioforge export-midi spec.(af|json) -o out.mid
 audioforge import-midi out.mid [--id ID]
 audioforge export-musicxml spec.(af|json) -o out.musicxml [--notated [--bars N]]
 audioforge import-musicxml out.musicxml [--id ID]
-audioforge score    spec.(af|json) [-o out.pdf] [--title T] [--bars N]
+audioforge score    spec.(af|json) [-o out.pdf] [--title T] [--bars N] [--engrave]
 audioforge render   spec.(af|json) [-o dir] [--preset P] [--stems] [--variant T] [--intensity K] [--analyze] [--jobs N] [--plan PLAN.json] [--explain]
 audioforge pack     spec.af [--variants N] [-o dir] [--preset P]
 audioforge campaign spec.af [-o dir] [--preset P] [--intensity K]

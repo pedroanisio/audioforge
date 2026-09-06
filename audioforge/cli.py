@@ -507,6 +507,9 @@ def main(argv=None) -> int:
     p.add_argument("-o", "--out", default=None)
     p.add_argument("--title", default=None)
     p.add_argument("--bars", type=int, default=10)
+    p.add_argument("--engrave", action="store_true",
+                   help="engrave the notated MusicXML with LilyPond instead of drawing the proof sheet "
+                        "(needs the `engrave` extra; exit 3 without it)")
 
     p = sub.add_parser("import-midi"); p.add_argument("midi")
     p.add_argument("--id", default="imported_midi")
@@ -649,6 +652,18 @@ def main(argv=None) -> int:
             assets = list(_assets(args.spec))
             specs = [a.spec for a in assets]
             out = args.out or (Path(args.spec).stem + ".pdf")
+            if args.engrave:
+                from .lilypond import EXIT_OPTIONAL_DEPENDENCY_MISSING, EngraverUnavailable, engrave
+                if len(specs) != 1:
+                    raise SpecError("score --engrave expects exactly one asset")
+                try:
+                    result = engrave(specs[0], out)
+                except EngraverUnavailable as e:
+                    print(str(e), file=sys.stderr)
+                    return EXIT_OPTIONAL_DEPENDENCY_MISSING
+                print(f"score -> {result.pdf}  (engraved by LilyPond {result.lilypond_version}"
+                      f"{'; ' + str(len(result.warnings)) + ' warning(s)' if result.warnings else ''})")
+                return 0
             program = None
             try:
                 lines = []

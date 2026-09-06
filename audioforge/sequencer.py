@@ -11,6 +11,7 @@ from . import synth
 from .curves import evaluate_curve
 from .determinism import rng_for
 from .performance import groove_slot, timing_deviation
+from .tuning import freq_for
 from .fx import filter_auto_fx, filter_fx
 
 
@@ -357,7 +358,7 @@ def render_note_track(track: dict, total_n: int, sr: int, tm: "TempoMap",
     pending: list = []                  # notes awaiting the batched filter
     for note in scheduled:
         ev = note["event"]
-        freq = ev.get("freq_hz") or synth.note_to_freq(ev["note"])
+        freq = freq_for(ev, track)              # note names follow the layer tuning (ADR-0014)
         vel, start, gate_n = note["vel"], note["start"], note["dur_n"]
         start_beat, t, ev_rng = note["start_beat"], note["start_time_s"], note["rng"]
         release_s = env_p["release"] + float(ev.get("release_s_add", 0.0))
