@@ -1,0 +1,3 @@
+interop-check: docs/INTEROP.md is in sync with audioforge.interop.COVERAGE
+.                                                                        [100%]
+1 passed, 22 deselected in 0.92s
