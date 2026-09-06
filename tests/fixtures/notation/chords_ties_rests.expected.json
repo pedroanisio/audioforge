@@ -1,0 +1,19 @@
+{
+  "meter": [
+    4,
+    4
+  ],
+  "parts": 1,
+  "key_fifths": [
+    -3
+  ],
+  "chords": 4,
+  "rests": true,
+  "cross_bar_ties": true,
+  "constructs": [
+    "chord",
+    "rest",
+    "tie",
+    "key"
+  ]
+}

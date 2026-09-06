@@ -1,0 +1,11 @@
+asset form_sections_repeat { kind: cue
+  duration: 8s
+  tempo: 120bpm
+  key: C major
+  meter: 4 4
+  form: intro 0b for 4b, verse 4b for 8b, outro 12b for 4b
+  repeat: verse x2
+  layer m : notes { osc: sine
+    gain: -12db
+    notes: C4 @ 0b for 4b, E4 @ 4b for 4b, G4 @ 8b for 4b, C5 @ 12b for 4b }
+}

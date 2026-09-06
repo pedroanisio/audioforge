@@ -16,7 +16,7 @@ PYTHON ?= $(shell [ -x ./.venv/bin/python ] && printf '%s' ./.venv/bin/python ||
 export PYTHON
 
 .DEFAULT_GOAL := help
-.PHONY: help check test native-check schema-check manifest-check golden-check drift-check version-check docs-gen-check lock-check floor-check docs docs-check clean
+.PHONY: help check test native-check schema-check manifest-check golden-check drift-check version-check docs-gen-check lock-check floor-check oracle-check docs docs-check clean
 
 help:  ## List available targets
 	@grep -hE '^[a-zA-Z0-9_.-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -59,6 +59,11 @@ version-check:  ## Version-consistency gate: every version literal == version.py
 lock-check:  ## Lockfile gate: uv.lock agrees with pyproject.toml (RM-B-004; CI installs uv; skips loudly without it)
 	@if command -v uv >/dev/null 2>&1; then uv lock --check && echo "lock-check: uv.lock in sync with pyproject.toml"; \
 	else echo "lock-check: SKIPPED — uv is not installed (install uv to enforce; CI does)"; fi
+
+oracle-check:  ## Oracle gate: MusicXML XSD validity, music21 parity, LilyPond engraving (needs the `oracles` extra; skips loudly without it; ADR-0009)
+	@if $(PYTHON) -c "import music21, xmlschema, lilypond" >/dev/null 2>&1; then \
+	  $(PYTHON) -m pytest -q tests/test_notation_oracles.py; \
+	else echo "oracle-check: SKIPPED — install the oracles extra (uv pip install -e '.[oracles]') to run music21/LilyPond/XSD parity"; fi
 
 floor-check:  ## Python-floor gate: no 3.11-only stdlib constructs without a guarded fallback (requires-python >= 3.10; RM-B-004)
 	@if grep -rnE 'from datetime import[^#]*\bUTC\b|datetime\.UTC\b|^import tomllib\b|from typing import[^#]*\b(Self|LiteralString|Never)\b|\bStrEnum\b|except\*' --include='*.py' audioforge tests scripts; then \

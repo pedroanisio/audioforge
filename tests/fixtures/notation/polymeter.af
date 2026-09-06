@@ -1,0 +1,13 @@
+asset polymeter { kind: cue
+  duration: 8s
+  tempo: 120bpm
+  key: C major
+  meter: 4 4
+  polymeter: waltz 3 4
+  layer main : notes { osc: sine
+    gain: -12db
+    notes: C4 @ 0b for 1b, D4 @ 1b for 1b, E4 @ 2b for 1b, F4 @ 3b for 1b, G4 @ 4b for 4b, C4 @ 8b for 4b }
+  layer waltz : notes { osc: sine
+    gain: -14db
+    notes: E3 @ 0b for 1b, G3 @ 1b for 1b, B3 @ 2b for 1b, E3 @ 3b for 1b, G3 @ 4b for 1b, B3 @ 5b for 1b, E3 @ 6b for 6b }
+}

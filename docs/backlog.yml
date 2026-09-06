@@ -23,7 +23,7 @@ metadata:
   generated_by: "recipe-forge add-backlog-governance; ported from docs/ROADMAP.md via Claude Opus 4.8"
   generated_on: "2026-07-04"
   system_of_record: "docs/backlog.yml"
-  total_items: 44
+  total_items: 50
   id_prefix: "BL"
   decision_prefix: "D"
   categories: ["feature","docs","ops","security","testing","tooling"]
@@ -1179,3 +1179,160 @@ items:
       - "engine-3.0"
       - "adr"
       - "review"
+  - id: BL-045
+    title: "Notation surface: semantic contract with oracle-verified interchange (epic)"
+    summary: "Make the MusicXML/MIDI hand-off to LilyPond and music21 faithful and honest, activate the tuning directive, label the proof sheet; engine 3.1.0 / DSL 2.1 (ADR-0009)."
+    category: "feature"
+    type: "tech-debt"
+    status: "in-progress"
+    complexity: "XL"
+    priority: "high"
+    rationale: "T0 against external oracles: notated export valid and engravable but structurally wrong (7/8 as 7/4, key/tempo changes dropped); exact-tick and MIDI exports flatten parts and chords; the importer flattens a chorale into a monody; the tuning directive is inert."
+    dependencies:
+      - "BL-032"
+    acceptance_criteria:
+      - "docs/evolution/harness-notation.md section 7 holds (every non-waived HARNESS-N row PASS on the tagged 3.1.0 commit)."
+    references:
+      - "docs/adr/0009-notation-positioning.md"
+      - "docs/evolution/roadmap-notation.xlsx"
+    evidence_checks:
+      - kind: file-exists
+        path: "docs/adr/0009-notation-positioning.md"
+      - kind: file-exists
+        path: "docs/evolution/harness-notation.md"
+      - kind: file-exists
+        path: "scripts/harness-notation.sh"
+    owner: "mine"
+    source: "docs/evolution/report-notation.md; docs/evolution/harness-notation.md (T0 2026-09-06)"
+    tags:
+      - "ADR-0009"
+      - "notation"
+      - "harness-notation"
+  - id: BL-046
+    title: "Oracle toolchain: oracles extra, vendored MusicXML XSD, fixture corpus, oracle-check"
+    summary: "music21, the lilypond wheel and xmlschema as a dev extra; MusicXML 3.1 XSD vendored with licence; ten notation fixtures with expected features; tests/test_notation_oracles.py; make oracle-check skipping loudly."
+    category: "testing"
+    type: "infra"
+    status: "in-progress"
+    complexity: "M"
+    priority: "high"
+    rationale: "Interchange claims were verified only by our own reader reading our own writer."
+    dependencies:
+      - "BL-045"
+    acceptance_criteria:
+      - "HARNESS-NORA-001..003 and HARNESS-NGATE-001 PASS."
+    references:
+      - "docs/evolution/harness-notation.md"
+    evidence_checks:
+      - kind: grep
+        path: "pyproject.toml"
+        pattern: "^oracles"
+      - kind: file-exists
+        path: "tests/fixtures/musicxml/xsd/musicxml.xsd"
+      - kind: grep
+        path: "Makefile"
+        pattern: "oracle-check"
+    owner: "mine"
+    source: "docs/evolution/report-notation.md; docs/evolution/harness-notation.md (T0 2026-09-06)"
+    tags:
+      - "notation"
+      - "oracles"
+      - "harness-notation"
+  - id: BL-047
+    title: "Notated and exact-tick MusicXML export derive structure from the spec"
+    summary: "Meter unit and bar length from the spec, key and tempo changes, pickup, chords and one part per layer in both exporters, dynamics, articulations, slurs, fermatas, rehearsal marks, tuplets and lyrics, and a generated coverage matrix."
+    category: "feature"
+    type: "bug"
+    status: "ready"
+    complexity: "L"
+    priority: "high"
+    rationale: "A 7/8 spec exports as 7/4; chord tones are serialized; expressive notation is dropped without a code."
+    dependencies:
+      - "BL-046"
+    acceptance_criteria:
+      - "HARNESS-NXML-001..011 and HARNESS-NSEM-001/002 PASS."
+    references:
+      - "docs/INTEROP.md"
+    evidence_checks:
+      - kind: file-exists
+        path: "audioforge/interop.py"
+    owner: "mine"
+    source: "docs/evolution/report-notation.md; docs/evolution/harness-notation.md (T0 2026-09-06)"
+    tags:
+      - "notation"
+      - "musicxml"
+      - "harness-notation"
+  - id: BL-048
+    title: "MusicXML import keeps parts, chords, voices and attribute changes; corpus round trips"
+    summary: "One layer per part, chord/backup/forward/voice handling, per-measure divisions/time/key/tempo, merged ties; vendored public-domain chorales round-trip within 1 percent."
+    category: "feature"
+    type: "bug"
+    status: "ready"
+    complexity: "M"
+    priority: "high"
+    rationale: "A four-voice chorale imports as one 92-second monody."
+    dependencies:
+      - "BL-046"
+    acceptance_criteria:
+      - "HARNESS-NIMP-001..005 PASS."
+    references:
+      - "docs/INTEROP.md"
+    evidence_checks:
+      - kind: file-exists
+        path: "audioforge/interop.py"
+    owner: "mine"
+    source: "docs/evolution/report-notation.md; docs/evolution/harness-notation.md (T0 2026-09-06)"
+    tags:
+      - "notation"
+      - "musicxml"
+      - "harness-notation"
+  - id: BL-049
+    title: "MIDI export: one track per layer and the tempo map"
+    summary: "The MIDI exporter flattens layers into one channel (same-pitch notes cut each other) and writes a single tempo."
+    category: "feature"
+    type: "bug"
+    status: "ready"
+    complexity: "S"
+    priority: "high"
+    rationale: "music21 reads 1 315 of 2 580 notes and one tempo from the orchestral piece."
+    dependencies:
+      - "BL-046"
+    acceptance_criteria:
+      - "HARNESS-NMIDI-002/003 PASS."
+    references:
+      - "docs/INTEROP.md"
+    evidence_checks:
+      - kind: file-exists
+        path: "audioforge/interop.py"
+    owner: "mine"
+    source: "docs/evolution/report-notation.md; docs/evolution/harness-notation.md (T0 2026-09-06)"
+    tags:
+      - "notation"
+      - "midi"
+      - "harness-notation"
+  - id: BL-050
+    title: "Tuning directive: loud while inert, then an n-EDO resolver with FFT proof"
+    summary: "Interim tuning_not_rendered diagnostic; audioforge/tuning.py threaded through note_to_freq, sampler and plan with the default path byte-identical; microtonal interop."
+    category: "feature"
+    type: "bug"
+    status: "ready"
+    complexity: "M"
+    priority: "high"
+    rationale: "AF-M05 slice: the directive is accepted and silently renders 12-TET."
+    dependencies:
+      - "BL-022"
+      - "BL-045"
+    acceptance_criteria:
+      - "HARNESS-NTUN-001..004 PASS; goldens unchanged."
+    references:
+      - "docs/ROADMAP.md"
+    evidence_checks:
+      - kind: file-exists
+        path: "audioforge/dsl.py"
+    owner: "mine"
+    source: "docs/evolution/report-notation.md; docs/evolution/harness-notation.md (T0 2026-09-06)"
+    tags:
+      - "notation"
+      - "tuning"
+      - "AF-M05"
+      - "harness-notation"

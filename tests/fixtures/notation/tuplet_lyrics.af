@@ -1,0 +1,11 @@
+asset tuplet_lyrics { kind: cue
+  duration: 6s
+  tempo: 120bpm
+  key: C major
+  meter: 4 4
+  tuplet: v 0b for 2b ratio=3:2
+  lyrics: v 0b "la la la"
+  layer v : notes { osc: sine
+    gain: -12db
+    notes: C4 @ 0b for 0.6667b, D4 @ 0.6667b for 0.6667b, E4 @ 1.3333b for 0.6667b, F4 @ 2b for 2b, G4 @ 4b for 4b }
+}

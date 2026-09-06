@@ -627,6 +627,12 @@ def capability_manifest() -> dict:
                 "repair_hint": "A held sampled note outlasts its recording without a usable loop; "
                                "shorten the note, pick a region with a sustain loop, or accept the gap."
             },
+            # Notation (ADR-0009): the tuning directive is metadata until the resolver lands.
+            "tuning_not_rendered": {
+                "repair_hint": "The tuning directive is stored but the renderer stays 12-TET; "
+                               "remove it, or wait for the n-EDO resolver (engine 3.1 line) "
+                               "that applies it and proves the frequencies by FFT."
+            },
             # Harmony (RM-E-001): unresolved pitch collections are preserved and reported.
             "ambiguous_harmony": {
                 "repair_hint": "Author an explicit chord symbol (for example C3maj7) so root and "

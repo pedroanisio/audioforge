@@ -1,4 +1,8 @@
-"""Engrave a compiled AudioForge spec as an *extended* score PDF.
+"""Draw a compiled AudioForge spec as a proportional *proof sheet* PDF.
+
+This is not a typeset score (ADR-0009): LilyPond typesetting is delegated to
+`audioforge/lilypond.py` (`audioforge score --lilypond-pdf`, engine 3.1 line). The
+proof sheet exists to show what the engine knows and a staff cannot.
 
 This lives **outside the render path** — like analysis and the MIDI/MusicXML
 interop, it observes the IR and produces a human-facing artifact; it never feeds
@@ -588,7 +592,7 @@ def _title_page(pdf, title, subtitle, meta, program, staves, spec):
             "rests). Durations are non-metric by design.",
             fontproperties=_SERIF, fontsize=6.8, style="italic", color=_FAINT,
             ha="left", va="center", linespacing=1.4)
-    ax.text(PAGE_W - RM, 0.5, "engraved by AudioForge", fontproperties=_SERIF,
+    ax.text(PAGE_W - RM, 0.5, "proof sheet by AudioForge", fontproperties=_SERIF,
             fontsize=8, style="italic", color=_FAINT, ha="right")
     pdf.savefig(fig)
     plt.close(fig)
@@ -671,7 +675,7 @@ def _render_asset(pdf, spec, title, subtitle, program, bars_per_system):
             f"{int(dur // 60)}'{int(dur % 60):02d}\"   ·   {len(staves)} staves")
 
     _title_page(pdf, title, subtitle, meta, program, staves, spec)
-    # Study-score layout: each time-window is engraved once per instrument
+    # Study-score layout: each time-window is drawn once per instrument
     # family, on its own page, so a few staves get roomy, well-separated lanes
     # instead of 17 staves merging into one over-packed grid. A family page is
     # skipped for windows in which that family has no note onset.
@@ -705,8 +709,8 @@ def _render_asset(pdf, spec, title, subtitle, program, bars_per_system):
 
 def score_pdf(spec, out_path, *, title=None, subtitle=None, program=None,
               bars_per_system=8):
-    """Engrave one spec — or a list of specs (e.g. multi-movement work) — to a
-    single score PDF. The program note is shown once, on the first movement."""
+    """Draw one spec — or a list of specs (e.g. multi-movement work) — to a
+    single proof-sheet PDF. The program note is shown once, on the first movement."""
     specs = spec if isinstance(spec, list) else [spec]
     with PdfPages(out_path) as pdf:
         drawn = 0
@@ -716,5 +720,5 @@ def score_pdf(spec, out_path, *, title=None, subtitle=None, program=None,
                              bars_per_system):
                 drawn += 1
         if not drawn:
-            raise ValueError("no pitched layers to engrave")
+            raise ValueError("no pitched layers to draw")
     return out_path

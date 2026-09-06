@@ -1,0 +1,9 @@
+asset meter_7_8_key_change { kind: cue
+  duration: 8s
+  tempo: 120bpm
+  key: C major, 3.5b=F major
+  meter: 7 8
+  layer m : notes { osc: sine
+    gain: -12db
+    notes: C4 @ 0b for 0.5b, D4 @ 0.5b for 0.5b, E4 @ 1b for 0.5b, F4 @ 1.5b for 0.5b, G4 @ 2b for 0.5b, A4 @ 2.5b for 1b, Bb4 @ 3.5b for 3.5b }
+}

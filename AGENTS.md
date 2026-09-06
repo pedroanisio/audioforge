@@ -49,7 +49,7 @@ against `cli.py`, so a verb cannot be added or removed without this file failing
 | `repair` | Apply structured repairs to a spec. |
 | `capabilities` | Emit the machine-readable capability manifest (see §6). |
 | `grammar` | Emit the DSL grammar (EBNF/GBNF), derived from the single Lark grammar. |
-| `score` | Score-layout output. |
+| `score` | Proportional proof-sheet PDF: pitch, meter, dynamics, stage plot, intensity, provenance. Not a typeset score (ADR-0009); `--engrave` (engine 3.1 line) delegates to LilyPond via the `engrave` extra. |
 | `verify` | Re-render a spec (compiled JSON IR or a single-asset `.af`) and SHA-256 compare against a manifest. Exit **0** = `REPRODUCIBLE`, **2** = `MISMATCH`, **1** = structured input error. |
 <!-- END cli-verbs -->
 
@@ -67,6 +67,7 @@ against `cli.py`, so a verb cannot be added or removed without this file failing
 | `manifest-check` | Capability-manifest drift gate: `gen_capability --check` (AF-R07). |
 | `golden-check` | Golden-audio drift gate: `render_golden --check` (AF-R06). |
 | `docs-check` / `version-check` | Fast doc / version-hygiene subsets. |
+| `oracle-check` | MusicXML XSD validity, music21 parity and LilyPond engraving of the notation fixtures; needs `uv pip install -e '.[oracles]'`, skips loudly without it (ADR-0009; not composed into `check`). |
 | `lock-check` / `floor-check` | `uv lock --check` (skips loudly without uv; CI installs it) / no 3.11-only stdlib constructs (the Python 3.10 floor, RM-B-004). |
 | `clean` | Remove Python caches. |
 
@@ -139,4 +140,5 @@ Context / Decision / Consequences. Current records: ADR-0001 (determinism oracle
 0002 (non-vocal scope), 0003 (IR-is-truth), 0004 (native kernels fail loud), 0005
 (one IR source of truth; Phase B deferred), 0006 (generator-owns-artifact),
 0007 (musical rendering semantics and stable performance identity), 0008
-(structured diagnostic codes on every Diagnostic and agent/MCP envelope).
+(structured diagnostic codes on every Diagnostic and agent/MCP envelope), 0009
+(notation: semantic contract with oracle-verified interchange; engraving and musicology delegated).

@@ -157,6 +157,29 @@ tests/               determinism suite + v2 suite (DSL, SDK, plugins,
                      automation, LUFS, stems, reproducibility)
 ```
 
+## Notation and analysis
+
+AudioForge is a render contract, not a notation program (ADR-0009). What it offers:
+
+* **Semantic score fields** — `meter`, `pickup`, `form`, `repeat`, `polymeter` compile to
+  `spec.score` and, since 3.0, drive rendering (repeats expand, meter sets groove phase).
+  `tuning:`, `tuplet:` and `lyrics:` compile to typed `spec.notation` metadata.
+* **Interchange** — `audioforge export-musicxml` (exact-tick, and `--notated` quantized to
+  measures), `export-midi`, `import-musicxml`, `import-midi`. The notated export is judged by
+  the MusicXML 3.1 schema, by music21 and by LilyPond (`make oracle-check`, needs
+  `uv pip install -e '.[oracles]'`). What each construct becomes in each format is the
+  coverage matrix in `docs/INTEROP.md`; anything lossy carries a registered diagnostic code.
+* **Analysis** — chord identity from evidence (ambiguous or unrecognised collections are
+  reported, never guessed), key-aware extensions, conservative cadence candidates, a
+  pitch-class-set core (normal/prime form, interval-class vector). No key finding, no
+  roman numerals, no stylistic judgment: export MusicXML and use music21 for those.
+* **Proof sheet** — `audioforge score` draws a proportional PDF (noteheads at beat × pitch,
+  duration bars, stage plot, intensity ribbon, provenance). It is a proof sheet, not
+  engraving; `audioforge score --engrave` (engine 3.1 line) hands the notated MusicXML to
+  LilyPond when the `engrave` extra is installed.
+
+Current limits are measured in `docs/evolution/harness-notation.md`.
+
 ## Honest limits
 
 * The LUFS meter is a production-consistent BS.1770-style approximation, not a certified meter; manifests record measured values so you can confirm against a reference meter where compliance matters. The limiter is a clean lookahead design, not a multi-stage mastering limiter.

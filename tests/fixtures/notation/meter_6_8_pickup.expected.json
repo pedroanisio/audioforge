@@ -1,0 +1,15 @@
+{
+  "meter": [
+    6,
+    8
+  ],
+  "parts": 1,
+  "pickup_beats": 1,
+  "key_fifths": [
+    2
+  ],
+  "constructs": [
+    "meter_unit",
+    "pickup"
+  ]
+}

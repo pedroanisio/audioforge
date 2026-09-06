@@ -25,7 +25,7 @@ Machine-readable surface of AudioForge **engine 3.0.0 · DSL 2.0**, generated fr
 | grooves | 6 |
 | style packs | 12 |
 | automation targets | 5 |
-| diagnostic codes | 40 |
+| diagnostic codes | 41 |
 
 ## Per-capability status
 
