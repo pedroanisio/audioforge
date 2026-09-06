@@ -1,8 +1,8 @@
 """Draw a compiled AudioForge spec as a proportional *proof sheet* PDF.
 
-This is not a typeset score (ADR-0009): LilyPond typesetting is delegated to
-`audioforge/lilypond.py` (`audioforge score --lilypond-pdf`, engine 3.1 line). The
-proof sheet exists to show what the engine knows and a staff cannot.
+This is not a typeset score (ADR-0011). Export MusicXML for external LilyPond
+typesetting; an integrated typesetting backend remains notation milestone M5.
+The proof sheet shows engine metadata alongside the notes.
 
 This lives **outside the render path** — like analysis and the MIDI/MusicXML
 interop, it observes the IR and produces a human-facing artifact; it never feeds

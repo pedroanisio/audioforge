@@ -1,0 +1,6 @@
+{
+  "lilypond_exit": 0,
+  "log": "musicxml2ly: Reading MusicXML from /tmp/audioforge-notation-path-verification/work/test_lilypond_zero_warnings_fo0/chords_ties_rests.musicxml ...\nmusicxml2ly: Converting to LilyPond expressions...\nmusicxml2ly: Output to `/tmp/audioforge-notation-path-verification/work/test_lilypond_zero_warnings_fo0/chords_ties_rests.ly'\nmusicxml2ly: Converting to current version (2.25.12) notations ...\nChanging working directory to: `/tmp/audioforge-notation-path-verification/work/test_lilypond_zero_warnings_fo0'\nProcessing `/tmp/audioforge-notation-path-verification/work/test_lilypond_zero_warnings_fo0/chords_ties_rests.ly'\nParsing...\nInterpreting music...\nPreprocessing graphical objects...\nFinding the ideal number of pages...\nFitting music on 1 page...\nDrawing systems...\nConverting to `chords_ties_rests.pdf'...\nSuccess: compilation successfully completed\n",
+  "musicxml2ly_exit": 0,
+  "pdf_bytes": 50214
+}

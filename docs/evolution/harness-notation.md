@@ -347,6 +347,8 @@ one test and no skip, failure or error in their JUnit report. A failed or blocke
 row makes the runner exit nonzero. NORA-001 installs the pinned extra in a fresh environment
 using the local uv cache (populate it with `uv pip install -e '.[dev,oracles]'` first).
 Schema access is local-only. No warning category is filtered from the LilyPond logs.
+The shell wrapper adds the oracle wheel's binary directory to `PATH` so that
+`musicxml2ly` can resolve its own `lilypond --version` probe.
 
 Evidence includes all row logs, the command/interpreter/commit context, JUnit reports, and
 XSD, music21 and LilyPond reports. Generated heavy artifacts and environments stay in
@@ -369,3 +371,4 @@ bundle is the source, this table is the index. Counts are PASS / FAIL / BLOCKED 
 |---|---|---|---|---|---|
 | T1 | `8e550c5` | 2026-09-06 | 16 / 37 / 0 | 13 of 13 PASS (NGATE-005 passes once the bundle is committed) | Oracles via `ORACLE_PY`; the first run used the wrong interpreter (worktree has no `.venv`) and was discarded. |
 | T2 | `73728b7` | 2026-09-06 | 31 / 22 / 0 | NXML-002…005/009, NIMP-001…003, NMIDI-002/003 | Run on a clean detached worktree at the commit; a first run on a tree with T3 edits in progress was discarded. |
+| T3 | `cb6f9b8` | 2026-09-06 12:15–13:10 | 42 / 0 / 0; 11 N/A | All 42 rows due by T3 PASS | Isolated integration snapshot; all 257 source hashes match this commit. Full gate green, coverage 91.69%, goldens 5/5. See [delivery record](evidence-notation/T3/delivery.json) for the clean oracle rerun after the shell setup correction. |

@@ -1,0 +1,26 @@
+{
+  "checkpoint": "T3",
+  "base_commit": "f2f7e3d2ab1dc417c05cf0f22bef879fb4c20294",
+  "implementation_commit": "cb6f9b82f0bcf700ee2fbfe9feb3f1b88602a6ba",
+  "required_pass": 42,
+  "future_not_due": 11,
+  "full_gate_summaries": [
+    "1023 passed, 8 skipped, 6 warnings in 994.79s (0:16:34)",
+    "1030 passed, 1 skipped in 1852.71s (0:30:52)"
+  ],
+  "coverage_percent": 91.69198055893074,
+  "source_inputs_changed_during_run": [],
+  "source_inputs_sha256": "94fd32d2ee663c1239aa65e9a9d51167f89e910e751d0717251075d37eb3a9e0",
+  "postflight": {
+    "change": "The shell wrapper adds the oracle wheel binary directory to PATH for the musicxml2ly version probe.",
+    "validation": "24 oracle tests passed; all 11 engraving logs have no missing-tool notices, warnings or errors; wrapper smoke checks passed with and without oracles.",
+    "evidence": "postflight-oracles/run.log",
+    "documentation_corrections": [
+      "pyproject.toml oracle-extra comment: ADR-0011",
+      "audioforge/score.py module docstring: ADR-0011 and external typesetting with the integrated backend deferred to M5"
+    ],
+    "surface_validation": "24 public notation and score tests passed after the documentation corrections; see postflight-oracles/surface.log.",
+    "executable_logic_or_test_source_changed": false
+  },
+  "validation_scope": "Isolated checkout at base_commit plus the source hashes in context.json. Concurrent main-checkout composition and other task changes are excluded."
+}

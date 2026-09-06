@@ -5,6 +5,11 @@ This checkpoint integrates notation M1–M3 from `feat/notation-interchange` com
 [roadmap workbook](roadmap-notation.xlsx), [harness](harness-notation.md), and
 [ADR-0011](../adr/0011-notation-interchange-oracles.md).
 
+**M1–M3 completed on 2026-09-06.** Implementation commit
+`cb6f9b82f0bcf700ee2fbfe9feb3f1b88602a6ba` matches all 257 source hashes recorded
+by the isolated acceptance run. All 42 assertions due by T3 passed; 11 later
+assertions are N/A. The workbook records 28 completed items with their evidence.
+
 ## Delivered behavior
 
 - MusicXML keeps one part per pitched layer, independent voices for overlaps,
@@ -31,12 +36,31 @@ The runner rejects empty or skipped pytest selections, missing oracles, failed c
 and incomplete gates. The roadmap updater refuses to advance M3 until every required
 row is PASS.
 
+| Check | Result |
+|---|---|
+| Full `make check`, including all 16 script suites | PASS; pytest: 1,023 passed, 8 expected skips |
+| Full pytest under coverage with the oracles installed | 1,030 passed, 1 expected skip |
+| Coverage | 91.69%; required floor 90.1% |
+| Audio goldens | 5/5 unchanged |
+| Chord-root parity | 156/156 resolved comparisons agree; ambiguity and naming disputes recorded |
+| Vendored Bach chorales | Both retain four parts and match music21's performed durations |
+
 The oracle environment pins music21 10.5.0, LilyPond 2.25.12 and xmlschema 4.3.2.
 All 11 authored fixtures are checked against the offline MusicXML 3.1 schema,
 compared with music21, and passed through musicxml2ly and LilyPond with no warning
 category excluded. The independent parity test compares each source note's pitch,
 onset and duration, including overlapping voices. Reports are under
 [evidence-notation/T3/reports](evidence-notation/T3/reports/).
+
+The acceptance logs exposed a `musicxml2ly` version probe that lacked LilyPond on
+`PATH`. The shell wrapper now adds the oracle wheel's binary directory. A
+[follow-up oracle run](evidence-notation/T3/postflight-oracles/run.log) passed all
+24 tests; all 11 engraving logs have no missing-tool notices, warnings or errors.
+The [public notation and score checks](evidence-notation/T3/postflight-oracles/surface.log)
+also passed after correcting the remaining documentation references. These changes
+and the exact validation scope are recorded in [delivery.json](evidence-notation/T3/delivery.json).
+The generated MusicXML, LilyPond sources and PDFs are retained locally under the
+evidence bundle's ignored `work/` directories and are reproduced by the command below.
 
 ```bash
 uv venv /tmp/audioforge-notation-oracles --python 3.12

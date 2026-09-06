@@ -1,0 +1,4 @@
+PATH prefix: /tmp/audioforge-notation-oracles/lib/python3.12/site-packages/lilypond-binaries/bin
+['/tmp/audioforge-notation-oracles/bin/python', '-m', 'pytest', '-q', 'tests/test_notation_oracles.py', '--basetemp=/tmp/audioforge-notation-path-verification/work', '--junitxml=/tmp/audioforge-notation-path-verification/junit.xml']
+........................                                                 [100%]
+24 passed in 16.31s

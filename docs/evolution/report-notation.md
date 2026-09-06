@@ -10,6 +10,13 @@ disclaimer:
 
 # Implementation Assessment and Evolution Plan: notation, interchange and musical analysis
 
+**Current checkpoint — 2026-09-06:** notation M1–M3 is complete in implementation
+commit `cb6f9b8`, with all 42 assertions due by T3 passing and 91.69% coverage.
+See [the integration and acceptance record](NOTATION_PHASE3.md) for the delivered
+behavior, evidence and remaining milestones. The assessment below preserves the
+original T0 baseline and proposed release numbering; this integration remains
+Unreleased on engine 3.1.0 / DSL 2.0.
+
 Companion artifacts: [harness-notation.md](harness-notation.md) (53 assertions, measured T0,
 runner) and [roadmap-notation.xlsx](roadmap-notation.xlsx) (36 items, 7 milestones, 35
 dependency edges, 13 risks, 7 decisions). IDs are shared: `NREQ-n` requirements here,

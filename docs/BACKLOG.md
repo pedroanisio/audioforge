@@ -73,11 +73,11 @@ node scripts/check-backlog-governance.mjs
 | BL-042 | ADR-0007 | Render-plan size and validate cost for sections and loop-safe assets | feature | tech-debt | ready | M | medium | unassigned | BL-032 |
 | BL-043 | ADR-0007 | Vectorize beat-based automation and share one timeline factory | feature | tech-debt | ready | M | medium | unassigned | BL-032 |
 | BL-044 | ADR-0007 | Decide the IR schema version format | docs | research | ready | S | medium | unassigned | BL-032 |
-| BL-045 | ADR-0009 | Notation surface: semantic contract with oracle-verified interchange (epic) | feature | tech-debt | in-progress | XL | high | mine | BL-032 |
-| BL-046 | ADR-0009 | Oracle toolchain: oracles extra, vendored MusicXML XSD, fixture corpus, oracle-check | testing | infra | in-progress | M | high | mine | BL-045 |
-| BL-047 | ADR-0009 | Notated and exact-tick MusicXML export derive structure from the spec | feature | bug | ready | L | high | mine | BL-046 |
-| BL-048 | ADR-0009 | MusicXML import keeps parts, chords, voices and attribute changes; corpus round trips | feature | bug | ready | M | high | mine | BL-046 |
-| BL-049 | ADR-0009 | MIDI export: one track per layer and the tempo map | feature | bug | ready | S | high | mine | BL-046 |
+| BL-045 | ADR-0011 | Notation surface: semantic contract with oracle-verified interchange (epic) | feature | tech-debt | in-progress | XL | high | mine | BL-032 |
+| BL-046 | ADR-0011 | Oracle toolchain: oracles extra, vendored MusicXML XSD, fixture corpus, oracle-check | testing | infra | done | M | high | mine | BL-045 |
+| BL-047 | ADR-0011 | Notated and exact-tick MusicXML export derive structure from the spec | feature | bug | done | L | high | mine | BL-046 |
+| BL-048 | ADR-0011 | MusicXML import keeps parts, chords, voices and attribute changes; corpus round trips | feature | bug | done | M | high | mine | BL-046 |
+| BL-049 | ADR-0011 | MIDI export: one track per layer and the tempo map | feature | bug | done | S | high | mine | BL-046 |
 | BL-050 | AF-M05 | Tuning directive: loud while inert, then an n-EDO resolver with FFT proof | feature | bug | ready | M | high | mine | BL-022, BL-045 |
 
 See `backlog.yml` for each item's full summary, rationale, acceptance criteria, dependencies, references, and live evidence checks.

@@ -1,0 +1,8 @@
+docs-gen-check: docs pages in sync; all 23 nav pages resolve
+manifest-check: docs/capability-manifest.json + DIAGNOSTIC_CODES.md are in sync
+interop-check: docs/INTEROP.md is in sync with audioforge.interop.COVERAGE
+schema-check: /home/admin/github-mirror/_framework/audioforge/docs/ir.schema.json is in sync with ir_json_schema()
+version-check: all version sites agree: engine 3.1.0, dsl 2.0
+floor-check: no 3.11-only stdlib constructs in audioforge/ tests/ scripts/
+Resolved 44 packages in 0.71ms
+lock-check: uv.lock in sync with pyproject.toml
