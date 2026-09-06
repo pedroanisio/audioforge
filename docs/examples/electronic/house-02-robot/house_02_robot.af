@@ -1,0 +1,79 @@
+# house_02_robot — "Talking synth". A vocoder bus: the saw/pad chords are the carrier,
+# a hidden "mouth" bus (formant-swept noise plus a drum machine) is the modulator.
+# The engine transfers the modulator's spectral envelope; nothing here is a voice.
+asset house_02_robot { kind: soundtrack
+  duration: 62s
+  tempo: 124bpm
+  key: A minor
+  meter: 4 4
+  groove: pushed 0.2
+  form: intro 0b for 16b, talk 16b for 80b, outro 96b for 32b
+  bus drums {
+    fx: comp(threshold=-12, ratio=2.5, attack=0.004, release=0.09)
+  }
+  bus mouth {
+    gain: -60db
+    fx: bandpass(900hz, q=1.6)
+    auto cutoff: 0s=500, 2s=1800, 4s=700, 6s=2600, 8s=600, 10s=1500, 12s=3000, 14s=800, 16s=500, 18s=1800, 20s=700, 22s=2600, 24s=600, 26s=1500, 28s=3000, 30s=800, 32s=500, 34s=1800, 36s=700, 38s=2600, 40s=600, 42s=1500, 44s=3000, 46s=800, 48s=500, 50s=1800, 52s=700, 54s=2600, 56s=600, 58s=1500, 60s=3000, 62s=800
+  }
+  bus robot {
+    gain: -1db
+    vocoder: source=bus:mouth bands=20 low=90hz high=7500hz smooth=0.006s depth=1.1 mix=0.92
+    duck: source=kick amount=4db attack=0.01s release=0.18s threshold=-40db
+    fx: highpass(120hz), saturate(amount=0.15), plate(decay=0.6, mix=0.1)
+  }
+  bus keys {
+    gain: -3db
+    duck: source=kick amount=6db attack=0.008s release=0.2s threshold=-40db
+    fx: lowpass(2400hz, q=0.9), chorus(rate=0.4, depth=5, delay=18, voices=3, mix=0.3)
+  }
+  layer kick : drums { voice: kick
+    bus: drums
+    gain: -3db
+    decay: 0.5
+    snap: 0.7
+    pattern: x...x...x...x... }
+  layer snare : drums { voice: snare
+    bus: drums
+    gain: -14db
+    pattern: ....x.......x..x }
+  layer hat : drums { voice: hat
+    bus: drums
+    gain: -18db
+    decay: 0.3
+    pattern: x.x.x.x.x.x.x.x. }
+  layer breath : noise { color: pink
+    bus: mouth
+    gain: 0db
+    env: a=0.02s d=0.1s s=1 r=0.1s }
+  layer syllables : drums { voice: snare
+    bus: mouth
+    gain: -4db
+    decay: 0.5
+    snap: 1
+    pattern: x.x..x.xx..x.x.. }
+  layer carrier : notes { osc: saw
+    bus: robot
+    gain: -8db
+    notes: A2min7 @ 0b for 16b voicing drop2, F2maj7 @ 16b for 16b voicing drop2, C3maj7 @ 32b for 16b voicing drop2, G2 @ 48b for 16b voicing drop2,
+           A2min7 @ 64b for 16b voicing drop2, F2maj7 @ 80b for 16b voicing drop2, E2min7 @ 96b for 16b voicing drop2, A2min7 @ 112b for 16b voicing drop2
+    env: a=0.01s d=0.2s s=0.9 r=0.2s }
+  layer keys : notes { osc: organ
+    bus: keys
+    gain: -15db
+    notes: A3min7 @ 0.5b for 0.5b voicing drop2, A3min7 @ 2.5b for 0.5b voicing drop2, A3min7 @ 3.5b for 0.5b voicing drop2,
+           F3maj7 @ 4.5b for 0.5b voicing drop2, F3maj7 @ 6.5b for 0.5b voicing drop2, F3maj7 @ 7.5b for 0.5b voicing drop2,
+           C4maj7 @ 8.5b for 0.5b voicing drop2, C4maj7 @ 10.5b for 0.5b voicing drop2, C4maj7 @ 11.5b for 0.5b voicing drop2,
+           G3 @ 12.5b for 0.5b voicing drop2, G3 @ 14.5b for 0.5b voicing drop2, G3 @ 15.5b for 0.5b voicing drop2
+    loop: 16b
+    env: a=0.004s d=0.12s s=0.4 r=0.08s }
+  layer bass : notes { osc: pluck
+    gain: -7db
+    notes: A1 @ 0b for 0.5b, A1 @ 1.5b for 0.5b, A1 @ 2b for 0.5b, E2 @ 3b for 0.5b, F1 @ 4b for 0.5b, F1 @ 5.5b for 0.5b, F1 @ 6b for 0.5b, C2 @ 7b for 0.5b,
+           C2 @ 8b for 0.5b, C2 @ 9.5b for 0.5b, C2 @ 10b for 0.5b, G2 @ 11b for 0.5b, G1 @ 12b for 0.5b, G1 @ 13.5b for 0.5b, G1 @ 14b for 0.5b, D2 @ 15b for 0.5b
+    loop: 16b
+    fx: lowpass(800hz, q=1.2), saturate(amount=0.2) }
+  master { peak: -1db
+    lufs: -9
+    fx: mbcomp(threshold=-16, ratio=2.5, low=160, high=3000), saturate(amount=0.06) }
+}

@@ -98,6 +98,74 @@ def gain_fx(x: np.ndarray, db: float) -> np.ndarray:
     return x * (10.0 ** (db / 20.0))
 
 
+def chorus_fx(x: np.ndarray, sr: int, rate_hz: float = 0.8, depth_ms: float = 6.0,
+              delay_ms: float = 20.0, voices: int = 3, mix: float = 0.5) -> np.ndarray:
+    """Chorus: `voices` fractional delay lines (linear interpolation) swept by
+    LFOs `2π/voices` apart around `delay_ms` ± `depth_ms`/2, summed and mixed
+    with the dry signal. No feedback, so it is a pure read-position map and
+    vectorizes; the derivative of the sweep is the audible detune."""
+    n = x.size
+    voices = max(1, int(voices))
+    t = np.arange(n, dtype=np.float64)
+    wet = np.zeros(n)
+    for v in range(voices):
+        phase = 2.0 * np.pi * v / voices
+        d = (delay_ms + depth_ms * 0.5 * (1.0 + np.sin(2.0 * np.pi * rate_hz * t / sr + phase))) * sr / 1000.0
+        wet += np.interp(t - d, t, x, left=0.0, right=0.0)
+    wet /= voices
+    return x * (1.0 - mix) + wet * mix
+
+
+def bitcrush_fx(x: np.ndarray, bits: int = 8, downsample: int = 1, mix: float = 1.0) -> np.ndarray:
+    """Bit-depth and sample-rate reduction: mid-tread quantization to
+    2^bits levels, then sample-and-hold every `downsample` samples."""
+    bits = int(min(24, max(1, int(bits))))
+    q = 2.0 ** (bits - 1)
+    y = np.round(np.clip(x, -1.0, 1.0) * q) / q
+    k = max(1, int(downsample))
+    if k > 1:
+        y = y[(np.arange(x.size) // k) * k]
+    return x * (1.0 - mix) + y * mix
+
+
+def vocoder_bus(carrier: np.ndarray, modulator: np.ndarray, sr: int, bands: int = 16,
+                low_hz: float = 80.0, high_hz: float = 8000.0, smooth_s: float = 0.008,
+                depth: float = 1.0, mix: float = 1.0) -> np.ndarray:
+    """Channel vocoder (cross-synthesis): the modulator's per-band envelopes
+    shape the carrier. Log-spaced 2nd-order Butterworth band-passes split both
+    signals; each carrier band is multiplied by the one-pole-smoothed rectified
+    modulator band; the wet sum is level-matched to the carrier's RMS times
+    `depth`, then mixed. The modulator is whatever layer or bus the spec names —
+    the engine transfers a spectral envelope it was given and generates no
+    voice (ADR-0002). Stereo carrier (n, 2) shares one mono modulator."""
+    from scipy.signal import butter, sosfilt
+    car = carrier[:, None] if carrier.ndim == 1 else carrier
+    n = car.shape[0]
+    mod = np.asarray(modulator, dtype=np.float64)[:n]
+    if mod.size < n:
+        mod = np.concatenate([mod, np.zeros(n - mod.size)])
+    peak = float(np.max(np.abs(mod))) if mod.size else 0.0
+    if peak <= 1e-9 or mix <= 0.0:
+        wet = np.zeros_like(car)
+    else:
+        mod = mod / peak
+        high = min(float(high_hz), 0.45 * sr)
+        low = max(20.0, min(float(low_hz), high / 2.0))
+        edges = np.geomspace(low, high, int(max(2, bands)) + 1)
+        wet = np.zeros_like(car)
+        for lo, hi in zip(edges[:-1], edges[1:]):
+            sos = butter(2, [lo, hi], btype="bandpass", fs=sr, output="sos")
+            env = _onepole(np.abs(sosfilt(sos, mod)), sr, smooth_s)
+            for c in range(car.shape[1]):
+                wet[:, c] += sosfilt(sos, car[:, c]) * env
+        c_rms = float(np.sqrt(np.mean(car ** 2)))
+        w_rms = float(np.sqrt(np.mean(wet ** 2)))
+        if w_rms > 1e-12:
+            wet *= depth * c_rms / w_rms
+    out = car * (1.0 - mix) + wet * mix
+    return out[:, 0] if carrier.ndim == 1 else out
+
+
 def filter_auto_fx(x: np.ndarray, sr: int, kind: str,
                    cutoff_env: np.ndarray, q: float = 0.7071,
                    block: int = 512) -> np.ndarray:
@@ -177,6 +245,24 @@ def apply_fx_chain(x: np.ndarray, sr: int, chain: list[dict],
                               fx.get("flutter", 0.3), fx.get("tone", 0.5))
             mix = float(fx.get("mix", 1.0))
             x = wet if mix >= 1.0 else (1.0 - mix) * x + mix * wet
+        elif kind == "phaser":
+            from ._native import phaser_native
+            wet = phaser_native(x, sr, fx.get("rate_hz", 0.4), fx.get("depth", 0.7),
+                                int(fx.get("stages", 4)), fx.get("feedback", 0.4),
+                                fx.get("center_hz", 900.0), fx.get("spread", 2.0))
+            mix = float(fx.get("mix", 0.5))
+            x = (1.0 - mix) * x + mix * wet
+        elif kind == "flanger":
+            from ._native import flanger_native
+            wet = flanger_native(x, sr, fx.get("rate_hz", 0.25), fx.get("depth_ms", 3.0),
+                                 fx.get("delay_ms", 2.0), fx.get("feedback", 0.5))
+            mix = float(fx.get("mix", 0.5))
+            x = (1.0 - mix) * x + mix * wet
+        elif kind == "chorus":
+            x = chorus_fx(x, sr, fx.get("rate_hz", 0.8), fx.get("depth_ms", 6.0),
+                          fx.get("delay_ms", 20.0), int(fx.get("voices", 3)), fx.get("mix", 0.5))
+        elif kind == "bitcrush":
+            x = bitcrush_fx(x, int(fx.get("bits", 8)), int(fx.get("downsample", 1)), fx.get("mix", 1.0))
         else:
             from .plugins import FX as FX_PLUGINS
             if kind in FX_PLUGINS:

@@ -1,0 +1,146 @@
+# house_05_full — "Around the block". The full arrangement: filter intro, talking-synth
+# verse, chopped-sample drop, phased/flanged/crushed bridge and a stretched outro,
+# with a key change, a tempo ramp and repeats expanding the form. ~2 minutes.
+asset house_05_full { kind: soundtrack
+  duration: 124s
+  tempo: 124bpm, 224b=124bpm, 256b=112bpm
+  key: F minor, 128b=Ab major, 192b=F minor
+  meter: 4 4
+  groove: swing16 0.22
+  form: intro 0b for 32b, verse 32b for 32b, drop 64b for 32b, bridge 96b for 32b, verse2 128b for 32b, drop2 160b for 32b, outro 192b for 64b
+  bus drums {
+    gain: -1db
+    fx: comp(threshold=-13, ratio=3, attack=0.004, release=0.08), saturate(amount=0.1)
+  }
+  bus mouth {
+    gain: -60db
+    fx: bandpass(1000hz, q=1.6)
+    auto cutoff: 0s=600, 3s=2200, 6s=700, 9s=2800, 12s=600, 15s=1600, 18s=3200, 21s=800, 24s=600, 27s=2200, 30s=700, 33s=2800, 36s=600, 39s=1600, 42s=3200, 45s=800, 48s=600, 51s=2200, 54s=700, 57s=2800, 60s=600, 63s=1600, 66s=3200, 69s=800, 72s=600, 75s=2200, 78s=700, 81s=2800, 84s=600, 87s=1600, 90s=3200, 93s=800, 96s=600, 99s=2200, 102s=700, 105s=2800, 108s=600, 111s=1600, 114s=3200, 117s=800, 124s=600
+  }
+  bus robot {
+    gain: -2db
+    vocoder: source=bus:mouth bands=20 low=90hz high=7500hz smooth=0.006s depth=1.1 mix=0.9
+    duck: source=kick amount=5db attack=0.01s release=0.2s threshold=-40db
+    fx: highpass(120hz), saturate(amount=0.15), plate(decay=0.6, mix=0.1)
+  }
+  bus music {
+    gain: -2db
+    duck: source=kick amount=7db attack=0.008s release=0.22s threshold=-42db
+    fx: lowpass(500hz, q=2.0), saturate(amount=0.15, warmth=0.4)
+    auto cutoff: 0s=300, 15s=1400, 31s=5000, 47s=5000, 63s=8000, 79s=6000, 95s=2000, 111s=6000, 124s=400
+  }
+  bus chops {
+    gain: -3db
+    duck: source=kick amount=6db attack=0.008s release=0.2s threshold=-40db
+    fx: lowpass(6500hz, q=0.9), saturate(amount=0.12)
+  }
+  bus crush {
+    gain: -5db
+    duck: source=kick amount=5db attack=0.01s release=0.2s threshold=-40db
+    fx: bitcrush(bits=5, downsample=4, mix=0.85), lowpass(3200hz, q=1.3), plate(decay=0.5, mix=0.15)
+  }
+  layer kick : drums { voice: kick
+    bus: drums
+    gain: -3db
+    tune: -2st
+    decay: 0.55
+    snap: 0.6
+    pattern: x...x...x...x... }
+  layer clap : drums { voice: clap
+    bus: drums
+    gain: -12db
+    pattern: ....x.......x... }
+  layer hat : drums { voice: hat
+    bus: drums
+    gain: -17db
+    decay: 0.35
+    pattern: ..x...x...x...x.
+    fx: flanger(rate=0.15, depth=2, delay=1.5, feedback=0.45, mix=0.4) }
+  layer ohat : drums { voice: open_hat
+    bus: drums
+    gain: -22db
+    decay: 0.6
+    pattern: ......x.......x. }
+  layer bass : notes { osc: saw
+    bus: music
+    gain: -7db
+    notes: F1min @ 0b for 128b voicing close, Ab1maj @ 128b for 64b voicing close, F1min @ 192b for 64b voicing close
+    arp: up rate=0.5b octaves=2 gate=0.7
+    env: a=0.004s d=0.16s s=0.35 r=0.06s
+    fx: lowpass(700hz, q=1.4), drive(amount=0.25) }
+  layer stabs : notes { osc: organ
+    bus: music
+    gain: -13db
+    notes: F3min7 @ 0.5b for 0.5b voicing drop2, F3min7 @ 2.5b for 0.75b voicing drop2, Bb3min7 @ 4.5b for 0.5b voicing drop2, Bb3min7 @ 6.5b for 0.75b voicing drop2,
+           Db3maj7 @ 8.5b for 0.5b voicing drop2, Db3maj7 @ 10.5b for 0.75b voicing drop2, Eb3maj7 @ 12.5b for 0.5b voicing drop2, C3min7 @ 14.5b for 1.25b voicing drop2
+    loop: 16b
+    env: a=0.004s d=0.14s s=0.45 r=0.08s
+    fx: highpass(160hz), chorus(rate=0.5, depth=4, delay=14, voices=3, mix=0.3) }
+  layer pad : notes { osc: pad
+    bus: music
+    gain: -20db
+    notes: F3min7 @ 0b for 64b voicing spread, Db3maj7 @ 64b for 32b voicing spread, Bb2min7 @ 96b for 32b voicing spread, Ab3maj7 @ 128b for 64b voicing spread, F3min7 @ 192b for 64b voicing spread
+    env: a=1.2s d=0.5s s=0.9 r=1.5s
+    dynamic: 0b=pp, 32b=mf, 64b=f, 96b=mp, 128b=f, 192b=p
+    fx: phaser(rate=0.2, depth=0.8, stages=6, feedback=0.4, center=700hz, spread=2, mix=0.5) }
+  layer breath : noise { color: pink
+    bus: mouth
+    gain: 0db
+    env: a=0.02s d=0.1s s=1 r=0.1s }
+  layer syllables : drums { voice: snare
+    bus: mouth
+    gain: -4db
+    decay: 0.5
+    snap: 1
+    pattern: x.x..x.xx..x.x.. }
+  layer carrier : notes { osc: saw
+    bus: robot
+    gain: -9db
+    notes: F2min7 @ 32b for 16b voicing drop2, Db2maj7 @ 48b for 16b voicing drop2, Ab2maj7 @ 128b for 16b voicing drop2, Eb2 @ 144b for 16b voicing drop2
+    env: a=0.01s d=0.2s s=0.9 r=0.2s }
+  layer chops : sample { file: "house_source_loop.wav"
+    sha256: "42bc41e2fe3b5a4995ccf606c5756970fd2958bdc4eb06fcc494572fc82bd8e1"
+    bus: chops
+    gain: -5db
+    start: 30.968s
+    slices: 16
+    pattern: 0.1.2.3.4.5.6.7.0.1.2.3.c.d.e.f.
+    duration: 31s }
+  layer chops2 : sample { file: "house_source_loop.wav"
+    sha256: "42bc41e2fe3b5a4995ccf606c5756970fd2958bdc4eb06fcc494572fc82bd8e1"
+    bus: chops
+    gain: -5db
+    start: 77.419s
+    pitch: 3st
+    slices: 16
+    pattern: 0.1.2.3.4.5.6.7.0.1.2.3.c.d.e.f.
+    duration: 31s }
+  layer reverse_swell : sample { file: "house_source_loop.wav"
+    sha256: "42bc41e2fe3b5a4995ccf606c5756970fd2958bdc4eb06fcc494572fc82bd8e1"
+    bus: chops
+    gain: -11db
+    offset: 3.871s
+    length: 1.936s
+    reverse: on
+    stretch: 2
+    start: 46.452s
+    pattern: x...............
+    duration: 15s
+    fx: lowpass(3500hz, q=1.2) }
+  layer crushed : notes { osc: pluck
+    bus: crush
+    gain: -12db
+    notes: Bb2min7 @ 96b for 8b voicing drop2, Db3maj7 @ 104b for 8b voicing drop2, Eb3maj7 @ 112b for 8b voicing drop2, C3min7 @ 120b for 8b voicing drop2
+    arp: downup rate=0.125b octaves=2 gate=0.7
+    env: a=0.002s d=0.15s s=0.2 r=0.05s }
+  layer outro_stretch : sample { file: "house_source_loop.wav"
+    sha256: "42bc41e2fe3b5a4995ccf606c5756970fd2958bdc4eb06fcc494572fc82bd8e1"
+    gain: -14db
+    stretch: 2.5
+    pitch: -5st
+    start: 92.9s
+    fx: lowpass(1500hz, q=1.0), plate(decay=0.9, mix=0.3) }
+  master { peak: -1db
+    lufs: -9
+    fx: mbcomp(threshold=-16, ratio=2.5, low=160, high=3000), saturate(amount=0.06) }
+}

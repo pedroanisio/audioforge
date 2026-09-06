@@ -17,7 +17,7 @@ The AudioForge IR (`https://audioforge.local/schemas/audioforge-ir-2.0.schema.js
 
 | Definition | Type | Properties |
 |------------|------|------------|
-| `bus` | object | `automation`, `duck`, `fx`, `gain_db`, `name` |
+| `bus` | object | `automation`, `duck`, `fx`, `gain_db`, `name`, `vocoder` |
 | `clip_source` | object | `automation`, `duration_s`, `holds`, `layer_duration_s`, `score`, `start_s`, `tempo_map` |
 | `curve` | object | `fx_index`, `points`, `rate_hz`, `t0`, `target`, `time_basis`, `time_map`, … |
 | `curve_point` | — | — |

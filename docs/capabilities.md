@@ -20,7 +20,7 @@ Machine-readable surface of AudioForge **engine 3.2.0 · DSL 2.0**, generated fr
 | kinds | 8 |
 | layer types | 10 |
 | oscillators | 15 |
-| fx | 22 |
+| fx | 26 |
 | articulations | 8 |
 | grooves | 6 |
 | style packs | 12 |

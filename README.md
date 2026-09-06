@@ -261,6 +261,17 @@ AudioForge is a render contract, not a notation program (ADR-0011). What it offe
 
 Current limits are measured in `docs/evolution/harness-notation.md`.
 
+## Electronic production
+
+The French-house toolkit (ADR-0015): a `drums` machine with groove and swing, sidechain
+`duck:` pumping, resonant `ladder` sweeps under `auto cutoff:`, and since this line
+`phaser`, `flanger`, `chorus` and `bitcrush` effects, a bus `vocoder:` that lets any layer's
+spectral envelope shape a synth bus (robot voices from material you supply — the engine
+generates no voice), and sample layers that can be cut (`offset`, `length`), reversed,
+time-stretched at constant pitch and chopped into pattern-triggered `slices`. Five
+tracks in `docs/examples/electronic/house-*/house_*.af` exercise every piece; `docs/ELECTRONIC_TRACKS.md`
+lists them with their render manifests.
+
 ## Honest limits
 
 * The LUFS meter is a production-consistent BS.1770-style approximation, not a certified meter; manifests record measured values so you can confirm against a reference meter where compliance matters. The limiter is a clean lookahead design, not a multi-stage mastering limiter.
@@ -269,6 +280,7 @@ Current limits are measured in `docs/evolution/harness-notation.md`.
 * The compressors are deterministic offline lookahead-RMS designs with documented semantics — built for reproducibility, not analog emulation.
 * The Dattorro plate IR is still a sequential Python loop (0.8–2.6 s CPU for 3.6–12 s tails, cached per process and parameter set); FDN IRs are generated natively. The two 10-minute examples (`s03_highway_opens`, `last_24h`) render in 24 s and 34 s of CPU.
 * Determinism is guaranteed within an environment (native kernels give identical bits across SSE2/AVX2/AVX-512 builds); cross-platform float reproducibility is *checked* by the `verify` gate rather than assumed.
+* The vocoder is a channel vocoder (band envelopes), not a formant or LPC model; the time stretch is a plain phase vocoder (transients smear at large ratios). Neither generates voices.
 * Recorded material uses content-addressed WAV sample layers or pinned SFZ-subset instrument libraries. Recorded transitions and ensemble realism depend on the source material; synthesized approximations are declared in the render plan.
 
 Requires Python 3.10+, lark, numpy, scipy, matplotlib and a C compiler. Engine 3.2.0 · DSL 2.0.

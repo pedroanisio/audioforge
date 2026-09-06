@@ -160,6 +160,30 @@ _FX_BUILDERS = {
                        "flutter": a.get("flutter", 0.3),
                        "tone": a.get("tone", 0.5),
                        "mix": a.get("mix", 1.0)},
+    "phaser": lambda a: {"type": "phaser",
+                         "rate_hz": a.get("rate", a.get("_0", 0.4)),
+                         "depth": a.get("depth", 0.7),
+                         "stages": int(a.get("stages", 4)),
+                         "feedback": a.get("feedback", 0.4),
+                         "center_hz": a.get("center", 900.0),
+                         "spread": a.get("spread", 2.0),
+                         "mix": a.get("mix", 0.5)},
+    "flanger": lambda a: {"type": "flanger",
+                          "rate_hz": a.get("rate", a.get("_0", 0.25)),
+                          "depth_ms": a.get("depth", 3.0),
+                          "delay_ms": a.get("delay", 2.0),
+                          "feedback": a.get("feedback", 0.5),
+                          "mix": a.get("mix", 0.5)},
+    "chorus": lambda a: {"type": "chorus",
+                         "rate_hz": a.get("rate", a.get("_0", 0.8)),
+                         "depth_ms": a.get("depth", 6.0),
+                         "delay_ms": a.get("delay", 20.0),
+                         "voices": int(a.get("voices", 3)),
+                         "mix": a.get("mix", 0.5)},
+    "bitcrush": lambda a: {"type": "bitcrush",
+                           "bits": int(a.get("bits", a.get("_0", 8))),
+                           "downsample": int(a.get("downsample", 1)),
+                           "mix": a.get("mix", 1.0)},
     "lowpass": lambda args: {"type": "filter", "mode": "lowpass",
                              "cutoff_hz": args["_0"], "q": args.get("q", 0.7071)},
     "highpass": lambda args: {"type": "filter", "mode": "highpass",
@@ -1627,7 +1651,7 @@ def compile_asset(a: Asset, variant=None) -> tuple[dict, list[str]]:
                           "release": "release_s"}
                 while i < len(toks):
                     k = toks[i].text
-                    if k not in keymap or i + 2 > len(toks) \
+                    if k not in keymap or i + 2 >= len(toks) \
                             or toks[i + 1].text != "=":
                         raise DSLError(
                             "duck expects 'source=<layer|bus:name> "
@@ -1638,12 +1662,38 @@ def compile_asset(a: Asset, variant=None) -> tuple[dict, list[str]]:
                             and toks[i + 3].text == ":":
                         d["source"] = f"{val.text}:{toks[i + 4].text}"
                         i += 5
-                    else:
+                    else:                    # `bus:name` arrives as one QUALIFIED token
                         d[keymap[k]] = (val.value if val.kind == "NUMBER"
                                         else val.text)
                         i += 3
                 d.setdefault("source", "")
                 out_b["duck"] = d
+            if "vocoder" in b:
+                toks = b.pop("vocoder")
+                v, i = {}, 0
+                keymap = {"source": "source", "bands": "bands", "low": "low_hz",
+                          "high": "high_hz", "smooth": "smooth_s", "depth": "depth",
+                          "mix": "mix"}
+                while i < len(toks):
+                    k = toks[i].text
+                    if k not in keymap or i + 2 >= len(toks) \
+                            or toks[i + 1].text != "=":
+                        raise DSLError(
+                            "vocoder expects 'source=<layer|bus:name> bands=N "
+                            "low=…hz high=…hz smooth=…s depth=… mix=…'", toks[i].line)
+                    val = toks[i + 2]
+                    if keymap[k] == "source" and i + 4 < len(toks) \
+                            and toks[i + 3].text == ":":
+                        v["source"] = f"{val.text}:{toks[i + 4].text}"
+                        i += 5
+                    else:                    # `bus:name` arrives as one QUALIFIED token
+                        v[keymap[k]] = (val.value if val.kind == "NUMBER"
+                                        else val.text)
+                        i += 3
+                if "bands" in v:
+                    v["bands"] = int(v["bands"])
+                v.setdefault("source", "")
+                out_b["vocoder"] = v
             for tgt, pts in b.pop("auto", []):
                 out_b.setdefault("automation", []).append(
                     _auto_block(tgt, pts))
@@ -2098,6 +2148,16 @@ def _compile_layer(lay: Layer, motifs: dict, scale, diags: list[str],
     if "preserve" in p:
         out["preserve_channels"] = _one(p.pop("preserve"), line) in (
             "stereo", "channels", "true", 1.0)
+    if "offset" in p:
+        out["offset_s"] = _one(p.pop("offset"), line, "s", "offset")
+    if "length" in p:
+        out["length_s"] = _one(p.pop("length"), line, "s", "length")
+    if "reverse" in p:
+        out["reverse"] = _one(p.pop("reverse"), line) in ("on", "true", "yes", 1.0)
+    if "stretch" in p:
+        out["stretch"] = float(_one(p.pop("stretch"), line, None, "stretch"))
+    if "slices" in p:
+        out["slices"] = int(_one(p.pop("slices"), line, None, "slices"))
     if "bus" in p:
         out["bus"] = _one(p.pop("bus"), line)
     if "model" in p:

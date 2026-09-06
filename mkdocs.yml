@@ -50,6 +50,7 @@ nav:
   - Release notes: RELEASE_NOTES.md
   - Migration to engine 3: MIGRATION_3.md
   - Musical correctness: MUSICAL_CORRECTNESS.md
+  - Electronic tracks: ELECTRONIC_TRACKS.md
   - Design records:
       - Template: adr/adr-template.md
       - ADR-0001 Determinism oracle: adr/0001-determinism-oracle.md
@@ -66,3 +67,4 @@ nav:
       - ADR-0012 Native DSP kernels and bounded drift: adr/0012-native-dsp-kernels-bounded-drift.md
       - ADR-0013 Video cue library and scene resolver: adr/0013-video-cue-library-and-scene-resolver.md
       - ADR-0014 n-EDO tuning resolution: adr/0014-n-edo-tuning-resolution.md
+      - ADR-0015 Electronic production effects: adr/0015-electronic-production-effects.md

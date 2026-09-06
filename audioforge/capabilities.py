@@ -226,6 +226,11 @@ def capability_manifest() -> dict:
             "file": _param("string"),
             "sha256": _param("sha256"),
             "pitch": _param("number", unit="st", default=0.0),
+            "offset": _param("number", unit="s", default=0.0),
+            "length": _param("number", unit="s"),
+            "reverse": _param("enum", enum={"on", "off"}, default="off"),
+            "stretch": _param("number", minimum=0.25, maximum=4.0, default=1.0),
+            "slices": _param("integer", minimum=2, maximum=64),
         },
         "foley": {"model": _param("enum", enum={"rain", "wind", "fire", "surf"})},
         "instrument": {

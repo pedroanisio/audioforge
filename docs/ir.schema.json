@@ -121,6 +121,10 @@
         },
         "name": {
           "type": "string"
+        },
+        "vocoder": {
+          "additionalProperties": true,
+          "type": "object"
         }
       },
       "required": [
@@ -453,12 +457,15 @@
         },
         "type": {
           "enum": [
+            "bitcrush",
+            "chorus",
             "comp",
             "convolve",
             "delay",
             "drive",
             "fdn",
             "filter",
+            "flanger",
             "gain",
             "hall",
             "highshelf",
@@ -466,6 +473,7 @@
             "lowshelf",
             "mbcomp",
             "peak",
+            "phaser",
             "plate",
             "reverb",
             "saturate",
@@ -661,6 +669,10 @@
         "instrument": {
           "type": "string"
         },
+        "length_s": {
+          "minimum": 0.001,
+          "type": "number"
+        },
         "max_fret": {
           "minimum": 0,
           "type": "integer"
@@ -794,6 +806,10 @@
           },
           "type": "array"
         },
+        "offset_s": {
+          "minimum": 0,
+          "type": "number"
+        },
         "osc": {
           "enum": [
             "blown",
@@ -819,6 +835,14 @@
           "minimum": -1,
           "type": "number"
         },
+        "pitch_st": {
+          "maximum": 24,
+          "minimum": -24,
+          "type": "number"
+        },
+        "reverse": {
+          "type": "boolean"
+        },
         "role": {
           "type": "string"
         },
@@ -833,11 +857,21 @@
         "sha256": {
           "type": "string"
         },
+        "slices": {
+          "maximum": 64,
+          "minimum": 2,
+          "type": "integer"
+        },
         "source_kind": {
           "type": "string"
         },
         "start_s": {
           "minimum": 0,
+          "type": "number"
+        },
+        "stretch": {
+          "maximum": 4,
+          "minimum": 0.25,
           "type": "number"
         },
         "tuning": {

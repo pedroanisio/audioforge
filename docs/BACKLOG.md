@@ -79,5 +79,6 @@ node scripts/check-backlog-governance.mjs
 | BL-048 | ADR-0011 | MusicXML import keeps parts, chords, voices and attribute changes; corpus round trips | feature | bug | done | M | high | mine | BL-046 |
 | BL-049 | ADR-0011 | MIDI export: one track per layer and the tempo map | feature | bug | done | S | high | mine | BL-046 |
 | BL-050 | AF-M05 | Tuning directive: loud while inert, then an n-EDO resolver with FFT proof | feature | bug | done | M | high | mine | BL-022, BL-045 |
+| BL-051 | ADR-0015 | Electronic-production toolkit: modulation/lo-fi effects, bus vocoder, sample editing, five demo tracks | feature | feature | done | L | high | mine | BL-045 |
 
 See `backlog.yml` for each item's full summary, rationale, acceptance criteria, dependencies, references, and live evidence checks.

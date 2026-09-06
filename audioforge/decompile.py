@@ -213,6 +213,18 @@ def _fx(fx: dict) -> str:
         "convolve": [("file", "file", "STR"), ("sha256", "sha256", "STR"),
                      ("mix", "mix", ""), ("gain_db", "gain", "")],
         "gain":     [("gain_db", None, "db")],
+        "phaser":   [("rate_hz", "rate", ""), ("depth", "depth", ""),
+                     ("stages", "stages", ""), ("feedback", "feedback", ""),
+                     ("center_hz", "center", ""), ("spread", "spread", ""),
+                     ("mix", "mix", "")],
+        "flanger":  [("rate_hz", "rate", ""), ("depth_ms", "depth", ""),
+                     ("delay_ms", "delay", ""), ("feedback", "feedback", ""),
+                     ("mix", "mix", "")],
+        "chorus":   [("rate_hz", "rate", ""), ("depth_ms", "depth", ""),
+                     ("delay_ms", "delay", ""), ("voices", "voices", ""),
+                     ("mix", "mix", "")],
+        "bitcrush": [("bits", "bits", ""), ("downsample", "downsample", ""),
+                     ("mix", "mix", "")],
     }
     if t in TABLE:
         parts = []
@@ -476,6 +488,18 @@ def spec_to_dsl(spec: dict) -> str:
         lines.append(f"  bus {bus['name']} {{")
         if "gain_db" in bus:
             lines.append(f"    gain: {_fmt_num(bus['gain_db'])}db")
+        for side, keymap in (("duck", (("source", "source", ""), ("amount_db", "amount", "db"),
+                                        ("threshold_db", "threshold", "db"), ("attack_s", "attack", "s"),
+                                        ("release_s", "release", "s"))),
+                             ("vocoder", (("source", "source", ""), ("bands", "bands", ""),
+                                          ("low_hz", "low", "hz"), ("high_hz", "high", "hz"),
+                                          ("smooth_s", "smooth", "s"), ("depth", "depth", ""),
+                                          ("mix", "mix", "")))):
+            block = bus.get(side)
+            if isinstance(block, dict):
+                parts = [f"{name}={block[key] if key == 'source' else _fmt_num(block[key]) + unit}"
+                         for key, name, unit in keymap if key in block]
+                lines.append(f"    {side}: " + " ".join(parts))
         if "fx" in bus:
             lines.append("    fx: " + ", ".join(_fx(fx) for fx in bus["fx"]))
         for au_line in _automation_lines(bus.get("automation", [])):
@@ -500,6 +524,8 @@ def spec_to_dsl(spec: dict) -> str:
             lines.append(f"    gain: {_fmt_num(layer['gain_db'])}db")
         if "pan" in layer:
             lines.append(f"    pan: {_fmt_num(layer['pan'])}")
+        if layer.get("start_s"):
+            lines.append(f"    start: {_fmt_num(layer['start_s'])}s")
         for field in ("clip_source", "clip_map"):
             if field in layer:
                 lines.append(f"    {_json_property(field, layer[field])}")
@@ -555,6 +581,25 @@ def spec_to_dsl(spec: dict) -> str:
             lines.append(f"    {curve_line}")
         for play in layer_semantic.get("plays", []):
             lines.append(f"    {_play_stmt(play)}")
+        if layer.get("type") == "sample":
+            if "file" in layer:
+                lines.append(f'    file: "{layer["file"]}"')
+            if "sha256" in layer:
+                lines.append(f'    sha256: "{layer["sha256"]}"')
+            if "pitch_st" in layer:
+                lines.append(f"    pitch: {_fmt_num(layer['pitch_st'])}st")
+            if "offset_s" in layer:
+                lines.append(f"    offset: {_fmt_num(layer['offset_s'])}s")
+            if "length_s" in layer:
+                lines.append(f"    length: {_fmt_num(layer['length_s'])}s")
+            if layer.get("reverse"):
+                lines.append("    reverse: on")
+            if "stretch" in layer:
+                lines.append(f"    stretch: {_fmt_num(layer['stretch'])}")
+            if "slices" in layer:
+                lines.append(f"    slices: {int(layer['slices'])}")
+            if layer.get("preserve_channels"):
+                lines.append("    preserve: stereo")
         if "pattern" in layer:
             lines.append(f"    pattern: {layer['pattern']}")
         if "fx" in layer:

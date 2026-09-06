@@ -735,6 +735,12 @@
     "bandpass": {
       "type": "bandpass"
     },
+    "bitcrush": {
+      "type": "bitcrush"
+    },
+    "chorus": {
+      "type": "chorus"
+    },
     "comp": {
       "type": "comp"
     },
@@ -752,6 +758,9 @@
     },
     "filter": {
       "type": "filter"
+    },
+    "flanger": {
+      "type": "flanger"
     },
     "gain": {
       "type": "gain"
@@ -779,6 +788,9 @@
     },
     "peak": {
       "type": "peak"
+    },
+    "phaser": {
+      "type": "phaser"
     },
     "plate": {
       "type": "plate"
@@ -2056,6 +2068,15 @@
           "type": "number",
           "unit": "db"
         },
+        "length": {
+          "type": "number",
+          "unit": "s"
+        },
+        "offset": {
+          "default": 0.0,
+          "type": "number",
+          "unit": "s"
+        },
         "pan": {
           "default": 0.0,
           "max": 1.0,
@@ -2067,13 +2088,32 @@
           "type": "number",
           "unit": "st"
         },
+        "reverse": {
+          "default": "off",
+          "enum": [
+            "off",
+            "on"
+          ],
+          "type": "enum"
+        },
         "sha256": {
           "type": "sha256"
+        },
+        "slices": {
+          "max": 64,
+          "min": 2,
+          "type": "integer"
         },
         "start": {
           "default": 0.0,
           "type": "number",
           "unit": "s"
+        },
+        "stretch": {
+          "default": 1.0,
+          "max": 4.0,
+          "min": 0.25,
+          "type": "number"
         }
       }
     },
@@ -2693,12 +2733,15 @@
   "statuses": {
     "by_capability": {
       "fx_types": {
+        "bitcrush": "stable",
+        "chorus": "stable",
         "comp": "stable",
         "convolve": "stable",
         "delay": "stable",
         "drive": "stable",
         "fdn": "stable",
         "filter": "stable",
+        "flanger": "experimental",
         "gain": "stable",
         "hall": "stable",
         "highshelf": "stable",
@@ -2706,6 +2749,7 @@
         "lowshelf": "stable",
         "mbcomp": "stable",
         "peak": "stable",
+        "phaser": "experimental",
         "plate": "stable",
         "reverb": "stable",
         "saturate": "stable",

@@ -23,7 +23,7 @@ metadata:
   generated_by: "recipe-forge add-backlog-governance; ported from docs/ROADMAP.md via Claude Opus 4.8"
   generated_on: "2026-07-04"
   system_of_record: "docs/backlog.yml"
-  total_items: 50
+  total_items: 51
   id_prefix: "BL"
   decision_prefix: "D"
   categories: ["feature","docs","ops","security","testing","tooling"]
@@ -1345,3 +1345,35 @@ items:
       - "tuning"
       - "AF-M05"
       - "harness-notation"
+  - id: BL-051
+    title: "Electronic-production toolkit: modulation/lo-fi effects, bus vocoder, sample editing, five demo tracks"
+    summary: "phaser and flanger native kernels, chorus and bitcrush effects, a bus vocoder sidechain (cross-synthesis on supplied audio, no voice generation), sample-layer offset/length/reverse/stretch/slices, decompiler round trips for sample layers and bus sidechains, and five rendered tracks under docs/examples/electronic/house-*/house_*.af."
+    category: "feature"
+    type: "feature"
+    status: "done"
+    complexity: "L"
+    priority: "high"
+    rationale: "A capability assessment against French house found the robot voice, the chopped-record workflow and the modulation family missing; the engine could only render the skeleton of the idiom."
+    dependencies:
+      - "BL-045"
+    acceptance_criteria:
+      - "tests/test_fx_modulation.py, tests/test_sample_slicing.py, tests/test_vocoder.py pass; goldens unchanged; drift gate green with fx(23)."
+      - "docs/examples/electronic/house-*/house_01..05.af render with manifests recorded in docs/ELECTRONIC_TRACKS.md."
+    references:
+      - "docs/adr/0015-electronic-production-effects.md"
+      - "docs/ELECTRONIC_TRACKS.md"
+    evidence_checks:
+      - kind: file-exists
+        path: "audioforge/native/phaser.c"
+      - kind: file-exists
+        path: "audioforge/stretch.py"
+      - kind: grep
+        path: "audioforge/schema.py"
+        pattern: "bitcrush"
+    owner: "mine"
+    source: "Capability assessment 2026-09-06 (Daft Punk idiom); operator goal: implement all that is missing and render five tracks"
+    tags:
+      - "effects"
+      - "sampling"
+      - "vocoder"
+      - "adr-0011"

@@ -1,0 +1,34 @@
+# house_00_source_loop — the "record" the chop track samples.
+# A four-bar (16-beat, 7.742 s) disco-flavoured loop rendered by this engine (no third-party
+# material): Rhodes-ish organ stabs, a plucked bass, a clap and hats. Rendered
+# once, mixed to mono 16-bit as samples/house_source_loop.wav; house_03_chop.af pins its sha256.
+asset house_00_source_loop { kind: loop
+  duration: 7.742s
+  tempo: 124bpm
+  key: F minor
+  meter: 4 4
+
+  layer bass : notes { osc: pluck
+    gain: -8db
+    notes: F2 @ 0b for 0.5b, F2 @ 1b for 0.5b, Ab2 @ 1.5b for 0.5b, F2 @ 2b for 0.5b, C3 @ 3b for 0.5b, Eb2 @ 3.5b for 0.5b,
+           F2 @ 4b for 0.5b, F2 @ 5b for 0.5b, Ab2 @ 5.5b for 0.5b, F2 @ 6b for 0.5b, Bb2 @ 7b for 0.5b, C3 @ 7.5b for 0.5b,
+           Db2 @ 8b for 0.5b, Db2 @ 9b for 0.5b, F2 @ 9.5b for 0.5b, Db2 @ 10b for 0.5b, Ab2 @ 11b for 0.5b, Eb2 @ 11.5b for 0.5b,
+           Eb2 @ 12b for 0.5b, Eb2 @ 13b for 0.5b, G2 @ 13.5b for 0.5b, Eb2 @ 14b for 0.5b, Bb2 @ 15b for 0.5b, C3 @ 15.5b for 0.5b
+    fx: lowpass(900hz, q=0.9), saturate(amount=0.2) }
+  layer stabs : notes { osc: organ
+    gain: -14db
+    notes: F3min7 @ 0.5b for 0.5b voicing drop2, F3min7 @ 2.5b for 0.75b voicing drop2,
+           F3min7 @ 4.5b for 0.5b voicing drop2, Bb3min7 @ 6.5b for 0.75b voicing drop2,
+           Db3maj7 @ 8.5b for 0.5b voicing drop2, Db3maj7 @ 10.5b for 0.75b voicing drop2,
+           Eb3maj7 @ 12.5b for 0.5b voicing drop2, C3min7 @ 14.5b for 1.25b voicing drop2
+    env: a=0.005s d=0.12s s=0.5 r=0.08s
+    fx: highpass(180hz), chorus(rate=0.6, depth=4, delay=16, voices=3, mix=0.35) }
+  layer clap : drums { voice: clap
+    gain: -10db
+    pattern: ....x.......x... }
+  layer hat : drums { voice: hat
+    gain: -16db
+    decay: 0.4
+    pattern: ..x...x...x...x. }
+  master { peak: -1db }
+}

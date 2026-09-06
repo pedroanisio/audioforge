@@ -106,6 +106,90 @@
       ]
     },
     {
+      "id": "house-00-source-loop",
+      "category": "electronic",
+      "source": "docs/examples/electronic/house-00-source-loop/house_00_source_loop.af",
+      "legacy_source": "static/samples/house_00_source_loop.af",
+      "title": "House 00 — source loop",
+      "description": "The four-bar engine-rendered loop that house_03_chop samples; rendered once to samples/house_source_loop.wav and pinned by hash.",
+      "libraries": [],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "house_00_source_loop"
+      ]
+    },
+    {
+      "id": "house-01-filter",
+      "category": "electronic",
+      "source": "docs/examples/electronic/house-01-filter/house_01_filter.af",
+      "legacy_source": "static/samples/house_01_filter.af",
+      "title": "House 01 — filter house",
+      "description": "A four-on-the-floor machine pumping under the kick with a resonant low-pass sweep across the form; 124 BPM, F minor.",
+      "libraries": [],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "house_01_filter"
+      ]
+    },
+    {
+      "id": "house-02-robot",
+      "category": "electronic",
+      "source": "docs/examples/electronic/house-02-robot/house_02_robot.af",
+      "legacy_source": "static/samples/house_02_robot.af",
+      "title": "House 02 — talking synth",
+      "description": "A bus vocoder: saw and pad chords carry the spectral envelope of a formant-swept noise bus; no voice is generated.",
+      "libraries": [],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "house_02_robot"
+      ]
+    },
+    {
+      "id": "house-03-chop",
+      "category": "electronic",
+      "source": "docs/examples/electronic/house-03-chop/house_03_chop.af",
+      "legacy_source": "static/samples/house_03_chop.af",
+      "title": "House 03 — chop shop",
+      "description": "The sampling workflow on the engine's own loop: slices re-sequenced by pattern, reversed, time-stretched and bit-crushed.",
+      "libraries": [],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "house_03_chop"
+      ]
+    },
+    {
+      "id": "house-04-phase",
+      "category": "electronic",
+      "source": "docs/examples/electronic/house-04-phase/house_04_phase.af",
+      "legacy_source": "static/samples/house_04_phase.af",
+      "title": "House 04 — phase & flange",
+      "description": "The modulation family on arpeggios: phaser pad, flanger hats, chorus keys, a bit-crushed breakdown and a tape lead.",
+      "libraries": [],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "house_04_phase"
+      ]
+    },
+    {
+      "id": "house-05-full",
+      "category": "electronic",
+      "source": "docs/examples/electronic/house-05-full/house_05_full.af",
+      "legacy_source": "static/samples/house_05_full.af",
+      "title": "House 05 — around the block",
+      "description": "The full arrangement combining every electronic production tool, with a key change, a tempo ramp and repeats; about two minutes.",
+      "libraries": [],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "house_05_full"
+      ]
+    },
+    {
       "id": "ode-to-fable",
       "category": "orchestral",
       "source": "docs/examples/orchestral/ode-to-fable/ode_to_fable.af",
