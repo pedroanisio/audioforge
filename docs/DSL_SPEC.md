@@ -138,7 +138,7 @@ Motifs may contain chord symbols; transforms move the chord root and preserve th
 | `noise` | `color:` (`white pink brown`) |
 | `drums` | `voice:` (`kick snare hat open_hat clap tom` + plugins), `pattern:` (§6), depth params `tune: ±12st`, `decay: 0.25..4`, `snap: 0..1`, `bend: 0..1.5`, `humanize:` |
 | `grain` | granular texture: `source:` (any oscillator or noise color), `note:`/`freq:` for pitched sources, `srcdur:` (s), `grainsize:` (s), `density:` (grains/s), `pitchspread:` (c), `scatter:` (0 = scan through the source, 1 = anywhere) |
-| `sample` | content-addressed audio: `file: "name.wav"`, `sha256: "…64 hex…"`, then either `start:` (one-shot) or `pattern:` (drum-grid triggering with groove/humanize), `pitch: ±Nst`. WAV PCM 16/24/32-bit, auto mono-mix, deterministic resample. The pinned hash participates in the spec hash; a byte mismatch refuses with both hashes named |
+| `sample` | content-addressed audio: `file: "name.wav"`, `sha256: "…64 hex…"`, then either `start:` (one-shot) or `pattern:` (drum-grid triggering with groove/humanize), `pitch: ±Nst`. Editing (ADR-0011): `offset: 0.5s` / `length: 1s` cut a window, `reverse: on` flips it, `stretch: 1.5` changes duration at constant pitch (phase vocoder), `slices: 8` splits it for `pattern:` where digits `0-9` pick a slice and `x`/`X` play the first — the chopped-record workflow. WAV PCM 16/24/32-bit, auto mono-mix, deterministic resample. The pinned hash participates in the spec hash; a byte mismatch refuses with both hashes named |
 | `audio` | recorded-audio authoring alias for `sample`: same `file`/`sha256` discipline, plus `preserve: stereo|channels` to keep source channels for non-pattern audio. It compiles to explicit `type: sample` IR with `source_kind: audio` |
 | `foley` | procedural ambience: `model:` (`rain wind fire surf`), `intensity: 0..1`, `brightness: 0..1` |
 | `instrument` | sampled instruments from a content-addressed library: `instrument:` (name in the manifest), `articulation:` (layer default, per-note `art` overrides), `dynamic:` curve, `notes:` events, performance props. Requires a spec-level `library:` pin |
@@ -218,6 +218,7 @@ All deviation from the grid comes from per-note seeded RNG paths or fixed templa
 bus music {
   gain: -1db
   duck: source=kick amount=5db attack=0.012s release=0.18s threshold=-38db
+  vocoder: source=talk bands=16 low=80hz high=8000hz smooth=0.008s depth=1 mix=1
   fx: peak(400hz, gain=-2, q=1.1), hall(rt60=2.3s, mix=0.22), saturate(amount=0.15)
   auto gain: 0s=-3db, 8s=0db
 }
@@ -227,6 +228,8 @@ layer pad : tone { ... bus: music ... }
 Layers without `bus:` route directly to the master. Buses process in declaration order: **duck → fx chain → gain → gain automation**, then sum into the mix. Bus fx run through the same true-stereo chain machinery as the master, so a bus hall is one shared reverb instance, not N copies.
 
 **Sidechain ducking:** `duck.source` is a layer name or `bus:<name>` of an *earlier* bus (cycles are impossible by construction). The gain curve gates the source against `threshold` per 1 ms block, then approaches full/zero reduction with exact piecewise-exponential attack/release — deterministic, no per-sample loops. A hash-pinned VO sample layer as duck source gives reproducible voiceover ducking.
+
+**Vocoder (cross-synthesis):** `vocoder: source=<layer|bus:name> bands=16 low=80hz high=8000hz smooth=0.008s depth=1 mix=1` makes the bus the *carrier* and the named signal the *modulator*: log-spaced band-passes split both, each carrier band is multiplied by the smoothed envelope of the same modulator band, and the wet sum is level-matched to the carrier's RMS times `depth`. Feed a saw or pad bus with a rhythmic layer for the classic robot-voice effect. The engine transfers a spectral envelope it was given — a recording you supply as a `sample` layer, a drum pattern, any layer — and generates no voice (ADR-0002, ADR-0011).
 
 ---
 
@@ -267,6 +270,10 @@ layer vln1 : instrument { ... seat: -16deg @ 4.5m ... }
 | `drive(amount=0.3)` | | harder oversampled tanh |
 | `ladder(cutoff, resonance=0.5, drive=0, mix=1)` | | nonlinear Moog-style transistor-ladder lowpass: 2×-oversampled tanh saturation inside the resonance feedback, so it self-oscillates and squelches as a flat biquad cannot (**native kernel**) |
 | `tape(drive=0.4, flutter=0.3, tone=0.5, mix=1)` | | analog tape: LFO-swept fractional delay (wow/flutter) feeding a saturation with light magnetic hysteresis, plus HF loss (`tone`) — time-varying *and* nonlinear (**native kernel**) |
+| `phaser(rate=0.4, depth=0.7, stages=4, feedback=0.4, center=900hz, spread=2, mix=0.5)` | stages 1..12 | native: `stages` first-order allpasses swept `center·2^(±spread·depth)` by the LFO, feedback into the chain — `stages/2` moving notches |
+| `flanger(rate=0.25, depth=3, delay=2, feedback=0.5, mix=0.5)` | ms | native: LFO-swept fractional delay with feedback (comb notches at odd multiples of 1/(2·delay)) |
+| `chorus(rate=0.8, depth=6, delay=20, voices=3, mix=0.5)` | ms | `voices` modulated delay lines 2π/voices apart, no feedback |
+| `bitcrush(bits=8, downsample=1, mix=1)` | | mid-tread quantization to 2^bits levels, then sample-and-hold every `downsample` samples |
 | `tremolo(rate=5, depth=0.5)` `gain(db)` | | |
 | *any plugin name* | named args pass through | |
 

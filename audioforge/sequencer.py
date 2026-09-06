@@ -244,7 +244,11 @@ def render_drum_track(track: dict, total_n: int, sr: int, tm: "TempoMap",
     from .plugins import DRUM_VOICES as PLUGIN_VOICES
     voice = DRUM_VOICES.get(track.get("voice"))   # patterned sample layers carry no voice
     dp = {k: track[k] for k in ("tune_st", "decay", "snap", "bend") if k in track}
-    if hit_override is not None:
+    bank = None
+    if isinstance(hit_override, (list, tuple)):
+        bank = list(hit_override)          # sample slices: pattern digits pick one
+        hit = bank[0]
+    elif hit_override is not None:
         hit = hit_override                 # content-addressed sample as the hit
     elif rng_factory is not None:
         hit = None                         # synthesized per hit below from its own seeded stream
@@ -263,6 +267,8 @@ def render_drum_track(track: dict, total_n: int, sr: int, tm: "TempoMap",
         ch = pattern[i % len(pattern)]
         if ch == ".":
             continue
+        if bank is not None:
+            hit = bank[int(ch) % len(bank)] if ch.isdigit() else bank[0]
         grid_beat = i * 0.25
         beat = grid_beat
         if swing and i % 2 == 1:

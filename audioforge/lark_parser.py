@@ -99,8 +99,11 @@ _vitem: _scalar | AT | EQ | DOT | COLON | group | _vcomma
 _vcomma: COMMA _NL*
 group: LPAR _gitem* RPAR
 _gitem: _scalar | AT | EQ | DOT | COLON | COMMA | group | _NL
-_scalar: IDENT | NUMBER | STRING
+_scalar: QUALIFIED | IDENT | NUMBER | STRING
 
+// `bus:music` — a scoped reference written without spaces (duck/vocoder sources).
+// One token, so a value never splits into a second `name: …` property mid-line.
+QUALIFIED.2: /[A-Za-z_][A-Za-z0-9_]*:[A-Za-z_][A-Za-z0-9_]*/
 IDENT: /[A-Za-z_][A-Za-z0-9_#]*/
 NUMBER: /[+-]?\d+(\.\d+)?([eE][+-]?\d+)?(s|b|bpm|db|hz|st|c|deg|m)?\b/
 STRING: /"(?:\\.|[^"\\\n])*"/
@@ -161,7 +164,7 @@ def _tok(token: Token):
         unit = _num_unit(text)
         number = text[: -len(unit)] if unit else text
         return Tok("NUMBER", text, line, float(number), unit)
-    if kind == "IDENT":
+    if kind in ("IDENT", "QUALIFIED"):
         return Tok("IDENT", text, line)
     # AT / EQ / DOT / COLON / COMMA / LPAR / RPAR
     return Tok("PUNCT", text, line)

@@ -80,6 +80,36 @@ _layer_library_cache: dict = {}   # (name, manifest_sha256) -> Library
 _premaster_reports: dict = {}     # transient: id(spec) -> render report
 
 
+def _shape_sample(hit: np.ndarray, sr: int, layer: dict) -> np.ndarray:
+    """Sample-layer editing in the IR: `offset_s`/`length_s` cut a window,
+    `reverse` flips it, `stretch` changes duration at constant pitch (phase
+    vocoder, audioforge.stretch). Applied after hash verification and
+    resampling, before triggering — the chopped-record workflow."""
+    off = int(round(float(layer.get("offset_s", 0.0)) * sr))
+    if off > 0:
+        hit = hit[off:]
+    if layer.get("length_s") is not None:
+        hit = hit[:max(1, int(round(float(layer["length_s"]) * sr)))]
+    if layer.get("reverse"):
+        hit = hit[::-1].copy()
+    ratio = float(layer.get("stretch", 1.0))
+    if abs(ratio - 1.0) > 1e-9 and hit.shape[0] > 0:
+        from .stretch import time_stretch
+        hit = time_stretch(hit, ratio)
+    return hit
+
+
+def _slice_bank(hit: np.ndarray, layer: dict):
+    """`slices: N` splits the (shaped) sample into N equal pieces; pattern
+    digits pick a piece per step, `x`/`X` play the first. Returns the hit
+    itself when no slicing is requested."""
+    k = int(layer.get("slices", 0) or 0)
+    if k < 2 or hit.shape[0] < k:
+        return hit
+    step = hit.shape[0] // k
+    return [hit[i * step:(i + 1) * step] for i in range(k)]
+
+
 def _layer_signal(layer: dict, total_n: int, sr: int, tm, swing: float,
                   root: str, idx: int,
                   groove: dict | None = None,
@@ -225,10 +255,12 @@ def _layer_signal(layer: dict, total_n: int, sr: int, tm, swing: float,
         else:
             hit = smod.load_sample(layer["file"], layer["sha256"], sr,
                                    pitch_st=float(layer.get("pitch_st", 0.0)))
+        hit = _shape_sample(hit, sr, layer)      # offset / length / reverse / stretch
         if "pattern" in layer:
             sig = sequencer.render_drum_track(
                 layer, dur_n, sr, tm, swing, rng("voice"), groove=groove,
-                rng_humanize=rng("humanize"), hit_override=hit, rng_factory=rng)
+                rng_humanize=rng("humanize"), hit_override=_slice_bank(hit, layer),
+                rng_factory=rng)
         elif hit.ndim == 2:
             sig = np.zeros((dur_n, hit.shape[1]))
             seg = min(hit.shape[0], dur_n)
@@ -343,7 +375,8 @@ def _premaster(spec: dict, root: str, sr: int, master: dict,
     swing = float(spec.get("swing", 0.0))
 
     buses = spec.get("buses", [])
-    duck_sources = {b["duck"]["source"] for b in buses if "duck" in b}
+    duck_sources = {b["duck"]["source"] for b in buses if "duck" in b} \
+        | {b["vocoder"]["source"] for b in buses if "vocoder" in b}   # sidechain feeds
     acc = {None: np.zeros((total_n, 2))}
 
     def _acc_add(bus, st):                  # lazy: unrouted declared
@@ -424,6 +457,16 @@ def _premaster(spec: dict, root: str, sr: int, master: dict,
                               attack_s=d.get("attack_s", 0.012),
                               release_s=d.get("release_s", 0.18))
             st = st * g[:, None]
+        if "vocoder" in b:                   # cross-synthesis: the bus is the carrier
+            v = b["vocoder"]
+            mod_sig = kept.get(v["source"])
+            if mod_sig is None:
+                mod_sig = kept[f"bus:{v['source']}"]
+            from .fx import vocoder_bus
+            st = vocoder_bus(st, mod_sig, sr, bands=int(v.get("bands", 16)),
+                             low_hz=float(v.get("low_hz", 80.0)), high_hz=float(v.get("high_hz", 8000.0)),
+                             smooth_s=float(v.get("smooth_s", 0.008)), depth=float(v.get("depth", 1.0)),
+                             mix=float(v.get("mix", 1.0)))
         b_gain_env, b_cutoff_envs, _ = _automation_envs(b, total_n, sr, tm)
         if "fx" in b:
             bl, br = apply_master_chain(

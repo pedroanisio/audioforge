@@ -58,11 +58,11 @@ OSC_SHAPES = {"sine", "saw", "square", "triangle", "fm", "organ",
 # single-source discipline as NATIVE_OSC_SHAPES. `fx_needs_native()` below is
 # the one predicate the resolve readiness gate calls, so a native effect can't
 # silently bypass the fail-loud "no compiler" check.
-NATIVE_FX_TYPES = {"ladder", "tape"}
+NATIVE_FX_TYPES = {"ladder", "tape", "phaser", "flanger"}
 FX_TYPES = {"filter", "delay", "reverb", "hall", "plate", "fdn",
             "comp", "mbcomp", "drive", "tremolo", "gain",
             "peak", "lowshelf", "highshelf", "transient", "saturate",
-            "convolve"} | NATIVE_FX_TYPES
+            "convolve", "chorus", "bitcrush"} | NATIVE_FX_TYPES
 # Modes for the `filter` fx — one source shared by validate_spec (below) and the
 # generated JSON Schema (ir_schema.py), so the two cannot drift (ADR-0005, AF-R08).
 FILTER_MODES = {"lowpass", "highpass", "bandpass"}
@@ -301,6 +301,30 @@ def _validate_fx(chain, path):
             _num(fx, "drive", p, 0.0, 1.0, required=False)
             _num(fx, "flutter", p, 0.0, 1.0, required=False)
             _num(fx, "tone", p, 0.0, 1.0, required=False)
+            _num(fx, "mix", p, 0.0, 1.0, required=False)
+        if t == "phaser":
+            _num(fx, "rate_hz", p, 0.0, 10.0, required=False)
+            _num(fx, "depth", p, 0.0, 1.0, required=False)
+            _num(fx, "stages", p, 1, 12, required=False)
+            _num(fx, "feedback", p, 0.0, 0.95, required=False)
+            _num(fx, "center_hz", p, 20.0, 12000.0, required=False)
+            _num(fx, "spread", p, 0.0, 4.0, required=False)
+            _num(fx, "mix", p, 0.0, 1.0, required=False)
+        if t == "flanger":
+            _num(fx, "rate_hz", p, 0.0, 10.0, required=False)
+            _num(fx, "depth_ms", p, 0.0, 20.0, required=False)
+            _num(fx, "delay_ms", p, 0.0, 30.0, required=False)
+            _num(fx, "feedback", p, -0.95, 0.95, required=False)
+            _num(fx, "mix", p, 0.0, 1.0, required=False)
+        if t == "chorus":
+            _num(fx, "rate_hz", p, 0.0, 10.0, required=False)
+            _num(fx, "depth_ms", p, 0.0, 30.0, required=False)
+            _num(fx, "delay_ms", p, 1.0, 60.0, required=False)
+            _num(fx, "voices", p, 1, 8, required=False)
+            _num(fx, "mix", p, 0.0, 1.0, required=False)
+        if t == "bitcrush":
+            _num(fx, "bits", p, 1, 24, required=False)
+            _num(fx, "downsample", p, 1, 64, required=False)
             _num(fx, "mix", p, 0.0, 1.0, required=False)
 
 
@@ -846,6 +870,15 @@ def validate_spec(spec: dict) -> dict:
                 raise SpecError(f"{p}.sha256: required 64-char hex hash — "
                                 f"pin the sample's content identity")
             _num(layer, "pitch_st", p, -24.0, 24.0, required=False)
+            _num(layer, "offset_s", p, 0.0, 3600.0, required=False)
+            _num(layer, "length_s", p, 0.001, 3600.0, required=False)
+            _num(layer, "stretch", p, 0.25, 4.0, required=False)
+            if "reverse" in layer and not isinstance(layer["reverse"], bool):
+                raise SpecError(f"{p}.reverse: must be a boolean")
+            if "slices" in layer:
+                _num(layer, "slices", p, 2, 64)
+                if "pattern" not in layer:
+                    raise SpecError(f"{p}.slices: needs a pattern (digits pick the slice)")
             if "pattern" in layer and not isinstance(layer["pattern"], str):
                 raise SpecError(f"{p}.pattern: must be a string")
 
@@ -876,6 +909,21 @@ def validate_spec(spec: dict) -> dict:
             _num(d, "threshold_db", f"{p}.duck", -80.0, 0.0, required=False)
             _num(d, "attack_s", f"{p}.duck", 0.001, 0.5, required=False)
             _num(d, "release_s", f"{p}.duck", 0.01, 2.0, required=False)
+        v = b.get("vocoder")
+        if v is not None:
+            srcn = v.get("source", "")
+            ok = srcn in layer_names or (
+                srcn.startswith("bus:") and srcn[4:] in seen_buses)
+            if not ok:
+                raise SpecError(
+                    f"{p}.vocoder.source: '{srcn}' must be a layer name or "
+                    f"'bus:<name>' of a bus declared earlier (no cycles)")
+            _num(v, "bands", f"{p}.vocoder", 2, 64, required=False)
+            _num(v, "low_hz", f"{p}.vocoder", 20.0, 2000.0, required=False)
+            _num(v, "high_hz", f"{p}.vocoder", 500.0, 20000.0, required=False)
+            _num(v, "smooth_s", f"{p}.vocoder", 0.0005, 0.5, required=False)
+            _num(v, "depth", f"{p}.vocoder", 0.0, 4.0, required=False)
+            _num(v, "mix", f"{p}.vocoder", 0.0, 1.0, required=False)
         seen_buses.append(name)
     for j, ly in enumerate(spec.get("layers", [])):
         bref = ly.get("bus")

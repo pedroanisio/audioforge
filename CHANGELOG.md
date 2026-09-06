@@ -38,6 +38,13 @@ _Notation and interchange line (ADR-0009; `docs/evolution/roadmap-notation.xlsx`
   form, interval-class vector, set class and symmetry (theory_pcset) with its scope stated.
 - `tests/test_notation_perf.py`: export, import, proof-sheet and LilyPond budgets.
 - CI `oracles` job (Python 3.12, `.[oracles]`, `make oracle-check`); runs once Actions execute.
+- Electronic-production toolkit (ADR-0011): `phaser` and `flanger` native kernels,
+  `chorus` and `bitcrush` effects; bus `vocoder:` cross-synthesis (source layer or bus
+  shapes the bus carrier; no voice generation, ADR-0002); sample layers gain `offset`,
+  `length`, `reverse`, `stretch` (phase-vocoder time stretch) and `slices` with pattern
+  digits picking slices. The decompiler now round-trips sample layers (`file`, `sha256`,
+  `pitch`, the new props), bus `duck:`/`vocoder:` blocks and layer `start:`.
+- `static/samples/house_00…05.af`: five rendered demonstration tracks (`docs/ELECTRONIC_TRACKS.md`).
 - `audioforge.musicxml`: the MusicXML exporters and importer, re-exported by `audioforge.interop`.
 - `audioforge.interop.COVERAGE` / `coverage()`: the construct × format registry that drives
   `interop_diagnostics()`, the capability manifest (`interop.coverage`, `notation.directives`)
