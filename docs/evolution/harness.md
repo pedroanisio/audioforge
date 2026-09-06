@@ -220,7 +220,7 @@ Failure meaning: the repair exists as one uncommitted copy on one machine; a dis
 |---|---|---|---|---|---|---|---|---|
 | HARNESS-VCS-001 | The repair is committed; the tree under test is clean | `git status --porcelain` | empty output | A | FAIL: 45 modified (+1 605/−609) and 12 untracked files | PASS | RM-C-001 | T1 |
 | HARNESS-VCS-002 | A second copy exists: the tree is clean and the release branch is pushed and equals local | `test -z "$(git status --porcelain)" && git fetch -q origin && test "$(git rev-parse HEAD)" = "$(git rev-parse origin/$(git branch --show-current))"` | equal SHAs | A | FAIL: `origin` last pushed 2026-07-05; local `main` = `origin/main` = `60c0fd5`, so the repair has never left this machine | PASS | RM-C-001 | T1 |
-| HARNESS-VCS-003 | The repair was reviewed by someone other than its author and findings were closed | PR exists; `gh pr view --json reviews` shows ≥ 1 `APPROVED`; review notes (including `/code-review` output) attached | approval present; every finding marked fixed or explicitly declined with reason | A+M | FAIL (no branch, no PR) | PASS | RM-C-003 | T3 |
+| HARNESS-VCS-003 | The repair was reviewed by someone other than its author and findings were closed | PR exists; `gh pr view --json reviews` shows ≥ 1 `APPROVED`, or, in a single-account repository where GitHub forbids self-approval, a comment written by the repository owner (never by an agent) beginning "Approved by the repository owner"; review notes (`/code-review` output) attached | approval present; every finding marked fixed, deferred with a registered item, or declined with reason | A+M | FAIL (no branch, no PR) | PASS | RM-C-003 | T3 |
 | HARNESS-VCS-004 | The tree is clean and the release commit is an ancestor of `origin/main` | `test -z "$(git status --porcelain)" && git merge-base --is-ancestor <release-sha> origin/main` | exit 0 | A | FAIL | PASS | RM-C-005 | T4 |
 
 ### 3.8 REL — release hygiene
@@ -549,7 +549,13 @@ run HARNESS-CI-004 "backlog-governance green" bash -c "gh run list --workflow ba
 # --- VCS / REL ------------------------------------------------------------
 run HARNESS-VCS-001 "tree clean"             bash -c "test -z \"\$($CLEAN)\""
 run HARNESS-VCS-002 "branch pushed == local" bash -c "test -z \"\$($CLEAN)\" && git fetch -q origin && test \"\$(git rev-parse HEAD)\" = \"\$(git rev-parse origin/\$(git branch --show-current))\""
-run HARNESS-VCS-003 "PR approved"            bash -c 'gh pr view --json reviews --jq ".reviews[].state" | grep -q APPROVED'
+vcs003() { gh pr view --json reviews --jq '.reviews[].state' | grep -q APPROVED && return 0
+  # A one-maintainer repository cannot self-approve on GitHub: the owner's own comment, written by the
+  # owner, beginning "Approved by the repository owner" is the recorded sign-off (agents must not post it).
+  local owner n; owner=$(gh repo view --json owner --jq .owner.login) || return 1
+  n=$(gh pr view --json number --jq .number) || return 1
+  [ "$(gh api "repos/{owner}/{repo}/issues/$n/comments" --jq "[.[] | select(.user.login==\"$owner\") | select(.body|startswith(\"Approved by the repository owner\"))] | length")" -ge 1 ]; }
+run HARNESS-VCS-003 "PR approved"            vcs003
 run HARNESS-VCS-004 "merged into origin/main" bash -c "test -z \"\$($CLEAN)\" && git merge-base --is-ancestor $SHA origin/main"
 run HARNESS-REL-001 "version literals"       "$PY" -m audioforge.tools.bump_version --check
 run HARNESS-REL-002 "changelog consolidated" bash -c "! awk '/^## \[Unreleased\]/,/^## \[3.0.0\]/' CHANGELOG.md | grep -q 'Track E' && grep -Eq '^## \[3.0.0\] - 20[0-9]{2}-' CHANGELOG.md"
@@ -651,7 +657,7 @@ follows §5 and §6. Counts exclude rows the runner filtered out.
 | T1 | `4157c74` (`release/engine-3.0.0`) | `HARNESS_ONLY` = the T1 gate rows + CI-001 | 7 | 1 (CI-001) | — | **open**: VCS-001, VCS-002, REL-004, PORT-001, OBS-002, GATE-006, SEC-002 all PASS; CI-001 diagnosed in `evidence/T1/ci-root-cause.md`, owner = repository admin |
 | T2 | `4157c74` | full run; `T2-attempt1` on `cacee01` exposed five runner defects and two real gaps, fixed before this run; MIG-001 re-measured in `T2-supplement` after two more runner fixes (relative interpreter path; the 2.16.0 tag predates the golden corpus, so the spec is taken from this tree) | 49 + 1 | 7 (CI-001…004, VCS-003, VCS-004, REL-003) | 2 MANUAL (ACC-003, GOV-008) | **open**: every T2 gate row PASS on the branch head; PORT-002/003 green (3.11: 253 s, 3.12: 194 s); RB-002 PASS with the documented fixture failure tolerated; SEC-001 PASS under `unshare -rn` |
 | T2 → T3 (review fixes) | `f4f4eaf` | agent code review (8 passes): 9 reproduced defects fixed, 9 findings deferred to BL-036…BL-044; isolated `make check` on the branch head: 910 passed, 2 skipped, goldens 5/5 byte-for-byte, lock-check and floor-check green (`evidence/T2/review-fixes-make-check-f4f4eaf.log`) | — | — | — | functional rows unchanged in substance; the full harness re-runs as T3 when CI executes |
-| T3 | — | pending | — | — | — | **closed**: CI-001/002/004 need the Actions fix (operator); VCS-003 needs an approving review (operator); GOV-001…003, GOV-008, CON-002 already PASS on the branch |
+| T3 (partial) | `54781fd` | `HARNESS_ONLY` = VCS-003, CI-001, CI-002 on 2026-09-06 after the agent review | 0 | 3 | — | **still closed**: the owner approved in session on 2026-09-06 but GitHub forbids self-approval and the sign-off comment must be written by the owner (not yet posted, so VCS-003 FAIL); Actions still fail at startup with zero jobs and the runs cannot be retried (CI-001/002 FAIL); GOV-001…003, GOV-008, CON-002 already PASS on the branch |
 
 `HARNESS-GOV-008` (ledger citations labelled) was completed by hand in commit `baecfaa` and
 is recorded here as PASS; `HARNESS-ACC-003` awaits a listener.

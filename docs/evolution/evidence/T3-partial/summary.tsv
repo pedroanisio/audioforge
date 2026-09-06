@@ -1,0 +1,55 @@
+id	result	description	seconds	log
+HARNESS-AUD-001	SKIPPED	A1 gain once (filtered)	0	-
+HARNESS-AUD-002	SKIPPED	A2 release at note-off (filtered)	0	-
+HARNESS-AUD-003	SKIPPED	A3 anti-alias (filtered)	0	-
+HARNESS-AUD-004	SKIPPED	A4 mastering (filtered)	0	-
+HARNESS-MUS-001	SKIPPED	M1 harmony (filtered)	0	-
+HARNESS-MUS-002	SKIPPED	M2 phrase evidence (filtered)	0	-
+HARNESS-MUS-003	SKIPPED	M3 technique fidelity (filtered)	0	-
+HARNESS-MUS-004	SKIPPED	M4 arrangement + loops (filtered)	0	-
+HARNESS-MUS-005	SKIPPED	M5 performance identity (filtered)	0	-
+HARNESS-MUS-006	SKIPPED	M6 analysis context (filtered)	0	-
+HARNESS-ACC-001	SKIPPED	acceptance cases pass (filtered)	0	-
+HARNESS-ACC-002	SKIPPED	baseline fails, current passes (filtered)	0	-
+HARNESS-ACC-004	SKIPPED	acceptance bundle reproducible (filtered)	0	-
+HARNESS-GATE-001	SKIPPED	make check (filtered)	0	-
+HARNESS-GATE-002	SKIPPED	coverage >= 90.1 (filtered)	0	-
+HARNESS-GATE-003	SKIPPED	golden strict same-env (filtered)	0	-
+HARNESS-GATE-004	SKIPPED	mkdocs strict (filtered)	0	-
+HARNESS-GATE-005	SKIPPED	backlog governance (filtered)	0	-
+HARNESS-GATE-006	SKIPPED	git diff --check (filtered)	0	-
+HARNESS-PORT-004	SKIPPED	cross-env golden advisory (no PORT logs)	0	-
+HARNESS-CI-001	FAIL	a CI job executed	1	/home/admin/github-mirror/_framework/audioforge/docs/evolution/evidence/T3-partial/HARNESS-CI-001.log
+HARNESS-CI-002	FAIL	ci green on branch head	1	/home/admin/github-mirror/_framework/audioforge/docs/evolution/evidence/T3-partial/HARNESS-CI-002.log
+HARNESS-CI-003	SKIPPED	ci green on main (filtered)	0	-
+HARNESS-CI-004	SKIPPED	backlog-governance green (filtered)	0	-
+HARNESS-VCS-001	SKIPPED	tree clean (filtered)	0	-
+HARNESS-VCS-002	SKIPPED	branch pushed == local (filtered)	0	-
+HARNESS-VCS-003	FAIL	PR approved	1	/home/admin/github-mirror/_framework/audioforge/docs/evolution/evidence/T3-partial/HARNESS-VCS-003.log
+HARNESS-VCS-004	SKIPPED	merged into origin/main (filtered)	0	-
+HARNESS-REL-001	SKIPPED	version literals (filtered)	0	-
+HARNESS-REL-002	SKIPPED	changelog consolidated (filtered)	0	-
+HARNESS-REL-003	SKIPPED	release tags on origin (filtered)	0	-
+HARNESS-REL-004	SKIPPED	uv lock in sync (filtered)	0	-
+HARNESS-GOV-001	SKIPPED	backlog knows the repair (filtered)	0	-
+HARNESS-GOV-002	SKIPPED	Track E statuses done (filtered)	0	-
+HARNESS-GOV-003	SKIPPED	ledger vocabulary + harness ids (filtered)	0	-
+HARNESS-GOV-004	SKIPPED	ADR-0001 points to ADR-0007 (filtered)	0	-
+HARNESS-GOV-005	SKIPPED	index.md claim corrected (filtered)	0	-
+HARNESS-GOV-006	SKIPPED	ADR-0007 status honest (filtered)	0	-
+HARNESS-GOV-007	SKIPPED	agent-task pointer valid (filtered)	0	-
+HARNESS-CON-001	SKIPPED	emitted codes registered (filtered)	0	-
+HARNESS-CON-002	SKIPPED	Diagnostic has code field (filtered)	0	-
+HARNESS-CON-003	SKIPPED	verify .af gives structured error (filtered)	0	-
+HARNESS-CON-004	SKIPPED	validate does not mutate caller (filtered)	0	-
+HARNESS-PERF-001	SKIPPED	make check <= 300 s	0	-
+HARNESS-PERF-002	SKIPPED	resampler cost bounded + documented (filtered)	0	-
+HARNESS-MIG-001	SKIPPED	legacy manifest -> MISMATCH exit 2 (filtered)	0	-
+HARNESS-MIG-002	SKIPPED	repo .af specs compile+render (filtered)	0	-
+HARNESS-MIG-003	SKIPPED	migration flags audio review (filtered)	0	-
+HARNESS-RB-001	SKIPPED	rollback anchor resolves (filtered)	0	-
+HARNESS-RB-002	SKIPPED	previous release gate green in export (filtered)	0	-
+HARNESS-OBS-001	SKIPPED	manifest carries identities (filtered)	0	-
+HARNESS-OBS-002	SKIPPED	evidence bundle tracked (filtered)	0	-
+HARNESS-SEC-001	SKIPPED	suite offline (filtered)	0	-
+HARNESS-SEC-002	SKIPPED	no secrets tracked (filtered)	0	-

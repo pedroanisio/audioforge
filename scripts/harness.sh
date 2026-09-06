@@ -75,7 +75,13 @@ run HARNESS-CI-004 "backlog-governance green" bash -c "gh run list --workflow ba
 # --- VCS / REL ------------------------------------------------------------
 run HARNESS-VCS-001 "tree clean"             bash -c "test -z \"\$($CLEAN)\""
 run HARNESS-VCS-002 "branch pushed == local" bash -c "test -z \"\$($CLEAN)\" && git fetch -q origin && test \"\$(git rev-parse HEAD)\" = \"\$(git rev-parse origin/\$(git branch --show-current))\""
-run HARNESS-VCS-003 "PR approved"            bash -c 'gh pr view --json reviews --jq ".reviews[].state" | grep -q APPROVED'
+vcs003() { gh pr view --json reviews --jq '.reviews[].state' | grep -q APPROVED && return 0
+  # A one-maintainer repository cannot self-approve on GitHub: the owner's own comment, written by the
+  # owner, beginning "Approved by the repository owner" is the recorded sign-off (agents must not post it).
+  local owner n; owner=$(gh repo view --json owner --jq .owner.login) || return 1
+  n=$(gh pr view --json number --jq .number) || return 1
+  [ "$(gh api "repos/{owner}/{repo}/issues/$n/comments" --jq "[.[] | select(.user.login==\"$owner\") | select(.body|startswith(\"Approved by the repository owner\"))] | length")" -ge 1 ]; }
+run HARNESS-VCS-003 "PR approved"            vcs003
 run HARNESS-VCS-004 "merged into origin/main" bash -c "test -z \"\$($CLEAN)\" && git merge-base --is-ancestor $SHA origin/main"
 run HARNESS-REL-001 "version literals"       "$PY" -m audioforge.tools.bump_version --check
 run HARNESS-REL-002 "changelog consolidated" bash -c "! awk '/^## \[Unreleased\]/,/^## \[3.0.0\]/' CHANGELOG.md | grep -q 'Track E' && grep -Eq '^## \[3.0.0\] - 20[0-9]{2}-' CHANGELOG.md"

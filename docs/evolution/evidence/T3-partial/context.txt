@@ -1,0 +1,4 @@
+checkpoint=T3-partial
+sha=54781fd457ac6157bf575d02351580c059fb547e
+date=2026-09-06T01:20:10Z
+dirty_paths=3
