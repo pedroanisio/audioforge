@@ -24,6 +24,8 @@ and branded sonic identities.
 ## Start here
 
 - **[Composition examples](examples/index.md)** — scores, local audio, render commands and source requirements.
+- **[Cues for video](CUES.md)** — prebuilt music beds, stings and sound effects, resolved
+  straight into scene-render documents.
 
 - **[The DSL](DSL_SPEC.md)** — the `.af` authoring language.
 - **[IR schema](IR_SCHEMA.md)** (prose) and the generated **[IR reference](reference.md)**

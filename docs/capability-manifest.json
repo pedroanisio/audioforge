@@ -52,6 +52,7 @@
       "campaign",
       "capabilities",
       "compile",
+      "cue",
       "decompile",
       "export-midi",
       "export-musicxml",
@@ -65,10 +66,474 @@
       "render",
       "repair",
       "sample-catalog",
+      "scene",
       "score",
       "validate",
       "verify"
     ]
+  },
+  "cues": {
+    "categories": [
+      "bed",
+      "sting",
+      "transition",
+      "ui",
+      "foley",
+      "ambience"
+    ],
+    "commands": [
+      "list",
+      "show",
+      "dsl",
+      "render",
+      "gallery"
+    ],
+    "cues": [
+      {
+        "category": "ambience",
+        "id": "ambience/fire",
+        "kind": "sound-effect",
+        "params": [
+          "duration",
+          "intensity",
+          "brightness",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "ambience",
+        "id": "ambience/ocean",
+        "kind": "sound-effect",
+        "params": [
+          "duration",
+          "intensity",
+          "brightness",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "ambience",
+        "id": "ambience/rain",
+        "kind": "sound-effect",
+        "params": [
+          "duration",
+          "intensity",
+          "brightness",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "ambience",
+        "id": "ambience/room-tone",
+        "kind": "sound-effect",
+        "params": [
+          "duration",
+          "hum",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "ambience",
+        "id": "ambience/wind",
+        "kind": "sound-effect",
+        "params": [
+          "duration",
+          "intensity",
+          "brightness",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "bed",
+        "id": "bed/ambient-calm",
+        "kind": "music",
+        "params": [
+          "duration",
+          "bpm",
+          "key",
+          "intensity",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "bed",
+        "id": "bed/cinematic-epic",
+        "kind": "music",
+        "params": [
+          "duration",
+          "bpm",
+          "key",
+          "intensity",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "bed",
+        "id": "bed/corporate-uplift",
+        "kind": "music",
+        "params": [
+          "duration",
+          "bpm",
+          "key",
+          "intensity",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "bed",
+        "id": "bed/dark-ambient",
+        "kind": "music",
+        "params": [
+          "duration",
+          "bpm",
+          "key",
+          "intensity",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "bed",
+        "id": "bed/documentary-airy",
+        "kind": "music",
+        "params": [
+          "duration",
+          "bpm",
+          "key",
+          "intensity",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "bed",
+        "id": "bed/electronic-drive",
+        "kind": "music",
+        "params": [
+          "duration",
+          "bpm",
+          "key",
+          "intensity",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "bed",
+        "id": "bed/lofi-chill",
+        "kind": "music",
+        "params": [
+          "duration",
+          "bpm",
+          "key",
+          "intensity",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "bed",
+        "id": "bed/news-pulse",
+        "kind": "music",
+        "params": [
+          "duration",
+          "bpm",
+          "key",
+          "intensity",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "bed",
+        "id": "bed/playful-quirky",
+        "kind": "music",
+        "params": [
+          "duration",
+          "bpm",
+          "key",
+          "intensity",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "bed",
+        "id": "bed/tension-underscore",
+        "kind": "music",
+        "params": [
+          "duration",
+          "bpm",
+          "key",
+          "intensity",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "foley",
+        "id": "foley/paper-swish",
+        "kind": "sound-effect",
+        "params": [
+          "duration",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "foley",
+        "id": "foley/paper-tap",
+        "kind": "sound-effect",
+        "params": [
+          "duration",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "foley",
+        "id": "foley/pencil-scratch",
+        "kind": "sound-effect",
+        "params": [
+          "duration",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "foley",
+        "id": "foley/pin-tap",
+        "kind": "sound-effect",
+        "params": [
+          "duration",
+          "pitch",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "foley",
+        "id": "foley/stamp",
+        "kind": "sound-effect",
+        "params": [
+          "duration",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "foley",
+        "id": "foley/typing",
+        "kind": "sound-effect",
+        "params": [
+          "duration",
+          "speed",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "sting",
+        "id": "sting/closer",
+        "kind": "music",
+        "params": [
+          "duration",
+          "key",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "sting",
+        "id": "sting/error",
+        "kind": "music",
+        "params": [
+          "duration",
+          "key",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "sting",
+        "id": "sting/logo",
+        "kind": "music",
+        "params": [
+          "duration",
+          "key",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "sting",
+        "id": "sting/notification",
+        "kind": "music",
+        "params": [
+          "duration",
+          "key",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "sting",
+        "id": "sting/opener",
+        "kind": "music",
+        "params": [
+          "duration",
+          "key",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "sting",
+        "id": "sting/section",
+        "kind": "music",
+        "params": [
+          "duration",
+          "key",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "sting",
+        "id": "sting/success",
+        "kind": "music",
+        "params": [
+          "duration",
+          "key",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "transition",
+        "id": "transition/downlifter",
+        "kind": "sound-effect",
+        "params": [
+          "duration",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "transition",
+        "id": "transition/glitch",
+        "kind": "sound-effect",
+        "params": [
+          "duration",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "transition",
+        "id": "transition/impact",
+        "kind": "sound-effect",
+        "params": [
+          "duration",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "transition",
+        "id": "transition/reverse-swell",
+        "kind": "sound-effect",
+        "params": [
+          "duration",
+          "key",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "transition",
+        "id": "transition/riser",
+        "kind": "sound-effect",
+        "params": [
+          "duration",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "transition",
+        "id": "transition/whoosh",
+        "kind": "sound-effect",
+        "params": [
+          "duration",
+          "direction",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "ui",
+        "id": "ui/click",
+        "kind": "sound-effect",
+        "params": [
+          "duration",
+          "pitch",
+          "seed"
+        ],
+        "version": 1
+      },
+      {
+        "category": "ui",
+        "id": "ui/pop",
+        "kind": "sound-effect",
+        "params": [
+          "duration",
+          "pitch",
+          "seed"
+        ],
+        "version": 1
+      }
+    ],
+    "loudness": {
+      "ambience": {
+        "lufs": -30.0,
+        "peak": -1.0
+      },
+      "bed": {
+        "lufs": -18.0,
+        "peak": -1.0
+      },
+      "foley": {
+        "normalize": "peak",
+        "peak": -3.0
+      },
+      "sting": {
+        "lufs": -16.0,
+        "peak": -1.0
+      },
+      "transition": {
+        "normalize": "peak",
+        "peak": -3.0
+      },
+      "ui": {
+        "normalize": "peak",
+        "peak": -3.0
+      }
+    },
+    "scene_commands": [
+      "resolve",
+      "add"
+    ],
+    "scene_provider": "audioforge",
+    "schema": "audioforge.cue/1"
   },
   "diagnostic_codes": {
     "ambiguous_harmony": {

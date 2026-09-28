@@ -80,6 +80,7 @@ CLI_COMMANDS = [
     "campaign",
     "capabilities",
     "compile",
+    "cue",
     "decompile",
     "export-midi",
     "export-musicxml",
@@ -93,6 +94,7 @@ CLI_COMMANDS = [
     "render",
     "repair",
     "sample-catalog",
+    "scene",
     "score",
     "validate",
     "verify",
@@ -127,6 +129,23 @@ COMMON_LAYER_PROPS = {
     "auto": _param("automation", enum=AUTO_TARGETS),
     "bus": _param("string"),
 }
+
+
+def _cue_capabilities() -> dict:
+    """The prebuilt cue library and its scene-render resolver (ADR-0013)."""
+    from .cues import CATEGORIES, CUE_COMMANDS, CUE_SCHEMA_VERSION, LOUDNESS, list_cues
+    from .scene import PROVIDER, SCENE_COMMANDS
+    return {
+        "schema": CUE_SCHEMA_VERSION,
+        "commands": list(CUE_COMMANDS),
+        "scene_commands": list(SCENE_COMMANDS),
+        "scene_provider": PROVIDER,
+        "categories": list(CATEGORIES),
+        "loudness": LOUDNESS,
+        "cues": [{"id": c.id, "kind": c.kind, "category": c.category,
+                  "params": [p.name for p in c.params], "version": c.version}
+                 for c in list_cues()],
+    }
 
 
 def _capability_statuses() -> dict:
@@ -366,6 +385,7 @@ def capability_manifest() -> dict:
                 "missing_interval": "reported stationary-sample approximation; strict policy refuses",
             },
         },
+        "cues": _cue_capabilities(),
         "sample_catalog": {
             "builder_version": SAMPLE_CATALOG_BUILDER_VERSION,
             "artifact_schemas": {

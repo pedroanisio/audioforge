@@ -558,6 +558,13 @@ audioforge ingest   samples_dir/ [-o catalog.json]
 audioforge libgen   library_dir/ [--name N] [--version V] [--license L]
 audioforge sample-catalog search|resolve-openverse|download|analyze|build-sfz|audit-license|review ...
 audioforge batch    specs_dir/ [-o dir]
+audioforge cue list [--kind music|sound-effect] [--category C] [--tag T] [--json]
+audioforge cue show ID
+audioforge cue dsl ID [name=value ...]
+audioforge cue render ID [name=value ...] -o out.wav [--sample-rate N] [--bit-depth 16|24] [--snippet audio|generated] [--id ID]
+audioforge cue gallery -o dir [--category C]
+audioforge scene resolve scene.xml [--check] [--force] [--json]
+audioforge scene add scene.xml ID [name=value ...] [--id ID] [--cache PATH] [--start S] [--gain DB] [--bus B] [--duck-under IDS] [--no-resolve]
 audioforge verify   spec manifest
 ```
 

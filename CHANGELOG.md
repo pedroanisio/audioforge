@@ -19,6 +19,15 @@ structured, per-version summary. Version consistency across sites is gated by
 
 ## [Unreleased]
 
+### Added — cues for video
+- `audioforge.cues`: 36 prebuilt, parameterized cues (10 music beds, 7 stings, 6 transitions,
+  2 UI, 6 foley, 5 ambiences) that compile to ordinary `.af` source; fixed loudness per
+  category; `cue list / show / dsl / render / gallery` CLI.
+- `audioforge.scene`: resolver for scene-render `<generated provider="audioforge">` assets
+  (`scene resolve`, incremental, `--check` exits 3 when stale; `duration=auto` sizes beds to
+  the project) and `scene add` to insert a cue and its `audioTrack` (ADR-0013).
+- Capability manifest `cues` section; guide in `docs/CUES.md`.
+
 ## [3.2.0]
 
 _Engine 3.2.0 · DSL 2.0._

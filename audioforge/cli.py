@@ -301,6 +301,67 @@ def _analysis_summary(records: list[dict]) -> dict:
     return summary
 
 
+def _cmd_cue(args) -> int:
+    from .cues import cue_dsl, get_cue, list_cues, render_cue
+    if args.cue_cmd == "list":
+        cues = list_cues(kind=args.kind, category=args.category, tag=args.tag)
+        if args.json:
+            print(json.dumps([c.describe() for c in cues], indent=2))
+            return 0
+        for c in cues:
+            print(f"{c.id:28s} {c.kind:12s} {c.title} — {c.description}")
+        return 0
+    if args.cue_cmd == "show":
+        print(json.dumps(get_cue(args.cue).describe(), indent=2))
+        return 0
+    if args.cue_cmd == "gallery":
+        from .cues import build_gallery
+        print(f"wrote {build_gallery(args.out, category=args.category)}")
+        return 0
+    params = " ".join(args.params)
+    if args.cue_cmd == "dsl":
+        print(cue_dsl(args.cue, params), end="")
+        return 0
+    info = render_cue(args.cue, params, args.out, sample_rate=args.sample_rate,
+                      bit_depth=args.bit_depth)
+    print(f"wrote {args.out}  {info['duration_s']} s  sha256 {info['sha256']}")
+    if args.snippet != "none":
+        from .scene import audio_snippet, generated_snippet, track_snippet
+        aid = args.id or info["cue"].replace("/", "-")
+        if args.snippet == "audio":
+            print(audio_snippet(info, asset_id=aid, src=args.out))
+        else:
+            print(generated_snippet(info["cue"], {**info["params"]}, asset_id=aid,
+                                    cache=args.out, sha256=info["sha256"]))
+        print(track_snippet(info["cue"], aid))
+    return 0
+
+
+def _cmd_scene(args) -> int:
+    from .scene import add_cue, resolve_scene
+    if args.scene_cmd == "add":
+        results = add_cue(args.scene, args.cue, " ".join(args.params), asset_id=args.id,
+                          cache=args.cache, start=args.start, gain_db=args.gain,
+                          bus=args.bus, duck_under=args.duck_under,
+                          resolve=not args.no_resolve)
+        if args.no_resolve:
+            print(f"added {args.cue} to {args.scene} (run `audioforge scene resolve`)")
+            return 0
+    else:
+        results = resolve_scene(args.scene, check=args.check, force=args.force)
+        if args.json:
+            print(json.dumps([r.as_dict() for r in results], indent=2))
+    if not getattr(args, "json", False):
+        if not results:
+            print("no <generated provider=\"audioforge\"> audio assets")
+        for r in results:
+            extra = f"  {r.message}" if r.message else ""
+            print(f"{r.status:10s} {r.asset_id:22s} {r.cue:26s} {r.cache}{extra}")
+    failed = any(r.status == "error" for r in results)
+    stale = any(r.status == "stale" for r in results)
+    return 1 if failed else (3 if stale else 0)
+
+
 def main(argv=None) -> int:
     argv = sys.argv[1:] if argv is None else list(argv)
     if argv in (["--version"], ["-V"]):
@@ -442,6 +503,50 @@ def main(argv=None) -> int:
 
     p = sub.add_parser("verify"); p.add_argument("spec")
     p.add_argument("manifest")
+
+    from .cues import CUE_COMMANDS
+    from .scene import SCENE_COMMANDS
+
+    p = sub.add_parser("cue", help="prebuilt, parameterized compositions (beds, stings, sfx)")
+    cs = p.add_subparsers(dest="cue_cmd", required=True)
+    cue_parsers = {command: cs.add_parser(command) for command in CUE_COMMANDS}
+    q = cue_parsers["list"]
+    q.add_argument("--kind", choices=("music", "sound-effect"))
+    q.add_argument("--category")
+    q.add_argument("--tag")
+    q.add_argument("--json", action="store_true")
+    cue_parsers["show"].add_argument("cue")
+    q = cue_parsers["gallery"]
+    q.add_argument("-o", "--out", required=True, help="directory for WAVs + index.html")
+    q.add_argument("--category")
+    q = cue_parsers["dsl"]
+    q.add_argument("cue"); q.add_argument("params", nargs="*")
+    q = cue_parsers["render"]
+    q.add_argument("cue"); q.add_argument("params", nargs="*")
+    q.add_argument("-o", "--out", required=True, help="output .wav path")
+    q.add_argument("--sample-rate", type=int, default=48000)
+    q.add_argument("--bit-depth", type=int, choices=(16, 24), default=24)
+    q.add_argument("--snippet", choices=("none", "audio", "generated"), default="none",
+                   help="also print a scene-render <audio> or <generated> element")
+    q.add_argument("--id", default=None, help="asset id used in the snippet")
+
+    p = sub.add_parser("scene", help="scene-render integration (resolve <generated provider=audioforge>)")
+    ss = p.add_subparsers(dest="scene_cmd", required=True)
+    scene_parsers = {command: ss.add_parser(command) for command in SCENE_COMMANDS}
+    q = scene_parsers["resolve"]
+    q.add_argument("scene")
+    q.add_argument("--check", action="store_true", help="report stale assets; render nothing")
+    q.add_argument("--force", action="store_true", help="re-render even if up to date")
+    q.add_argument("--json", action="store_true")
+    q = scene_parsers["add"]
+    q.add_argument("scene"); q.add_argument("cue"); q.add_argument("params", nargs="*")
+    q.add_argument("--id", default=None, help="asset id (default: derived from the cue)")
+    q.add_argument("--cache", default=None, help="WAV path relative to the scene")
+    q.add_argument("--start", type=float, default=0.0, help="track start in seconds")
+    q.add_argument("--gain", type=float, default=None, help="track gain in dB")
+    q.add_argument("--bus", default=None)
+    q.add_argument("--duck-under", default=None, help="bus/track ids to duck under (beds)")
+    q.add_argument("--no-resolve", action="store_true")
 
     args = ap.parse_args(argv)
 
@@ -840,6 +945,10 @@ def main(argv=None) -> int:
                 for a in _assets(str(f)):
                     meta = a.export(args.out)
                     print(f"{meta['file']:44s} {meta['output_sha256'][:16]}")
+        elif args.cmd == "cue":
+            return _cmd_cue(args)
+        elif args.cmd == "scene":
+            return _cmd_scene(args)
         elif args.cmd == "verify":
             manifest = _load_json_object(args.manifest, "verify: manifest")
             if "output_sha256" not in manifest:

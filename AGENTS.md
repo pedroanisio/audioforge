@@ -66,6 +66,8 @@ against `cli.py`, so a verb cannot be added or removed without this file failing
 | `import-midi` | Import a MIDI file to `.af`/IR (`--id`). |
 | `import-musicxml` | Import a MusicXML file to `.af`/IR (`--id`). |
 | `sample-catalog` | Public-domain sample pipeline: `search`, `resolve-openverse`, `download`, `analyze`, `build-sfz`, `audit-license`, `review`. |
+| `cue` | Prebuilt parameterized compositions for video: `list`, `show`, `dsl` (the exact `.af` source), `render` (`-o out.wav`, `--snippet audio|generated`), `gallery` (render all + `index.html`). See `docs/CUES.md`. |
+| `scene` | scene-render integration: `resolve SCENE` renders `<generated provider="audioforge">` caches and pins `cacheSha256` (`--check` exits 3 when stale, renders nothing); `add SCENE CUE [k=v…]` inserts the asset and an `audioTrack` (`--start`, `--gain`, `--bus`, `--duck-under`). |
 | `verify` | Re-render a spec (compiled JSON IR or a single-asset `.af`) and SHA-256 compare against a manifest. Exit **0** = `REPRODUCIBLE`, **2** = `MISMATCH`, **1** = structured input error. |
 <!-- END cli-verbs -->
 

@@ -60,6 +60,21 @@ asset.set("layers.2.gain_db", -10)            # schema-checked mutation
 meta = asset.export("out", preset="social_video", stems=True)
 ```
 
+## Cues for video
+
+A library of 36 prebuilt, parameterized cues — music beds that fit any length, stings,
+transitions, UI, foley and ambience — renders on demand and drops into our
+scene-render videos as resolved `<generated provider="audioforge">` assets:
+
+```bash
+audioforge cue list
+audioforge scene add scene.xml bed/documentary-airy "key='E minor'" --id mus-bed --duck-under bus-vo
+audioforge scene add scene.xml transition/whoosh duration=0.8 --id fx-cut --start 12.4
+audioforge scene resolve --check scene.xml     # CI: exit 3 when a cue is stale
+```
+
+Guide, loudness standard and catalog: [docs/CUES.md](docs/CUES.md).
+
 ## Composition examples
 
 Browse [all compositions](docs/examples/index.md) for the DSL, source requirements and render commands. Generate the local listening gallery with `.venv/bin/python scripts/examples.py gallery`, then open `docs/examples/listen.html`.
@@ -172,6 +187,7 @@ against `cli.py`).
 | Author and inspect | `validate` (`--no-resolve`), `compile`, `decompile`, `plan` (`--explain`), `grammar` (`--format ebnf\|gbnf`), `capabilities`, `repair` |
 | Render | `render` (`--stems`, `--preset`, `--variant`, `--intensity`, `--jobs`, `--analyze`, `--plan`, `--explain`), `batch`, `verify SPEC MANIFEST` (exit 2 on mismatch) |
 | Variation | `pack` (`--variants`, `--preset`), `campaign` (`--preset`, `--intensity`) |
+| Video cues | `cue list / show / dsl / render / gallery`, `scene resolve` (`--check`, `--force`), `scene add` |
 | Samples and libraries | `ingest`, `libgen`, `sample-catalog search / resolve-openverse / download / analyze / build-sfz / audit-license / review` |
 | Notation | `export-musicxml` (`--notated`, `--bars`), `export-midi`, `import-musicxml`, `import-midi`, `score` |
 
