@@ -16,13 +16,13 @@ from .fx import filter_fx
 
 def _smooth_walk(n: int, sr: int, rng, rate_hz: float) -> np.ndarray:
     """Slow seeded control curve in 0..1: steps at ~rate_hz, one-pole
-    smoothed (lfilter — no Python loop)."""
-    from scipy.signal import lfilter
+    smoothed (native one-pole, lfilter-identical)."""
+    from ._native import biquad
     n_steps = max(2, int(n / sr * rate_hz) + 2)
     steps = rng.random(n_steps)
     coarse = np.repeat(steps, int(np.ceil(n / n_steps)))[:n]
     a = np.exp(-2.0 * np.pi * rate_hz * 0.5 / sr)
-    return lfilter([1.0 - a], [1.0, -a], coarse)
+    return biquad(coarse, [1.0 - a], [1.0, -a])
 
 
 def rain(n: int, sr: int, rng, intensity: float = 0.5,

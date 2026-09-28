@@ -177,8 +177,8 @@ def test_layer_signals_serial_and_parallel_match():
 
     assert len(sigs_s) == len(sigs_p) == len(spec["layers"])
     # order preserved AND each layer's signal identical regardless of jobs
-    for i, (a, b) in enumerate(zip(sigs_s, sigs_p)):
-        assert np.array_equal(a, b), f"layer {i} signal diverged"
+    for i, ((sa, a), (sb, b)) in enumerate(zip(sigs_s, sigs_p)):
+        assert sa == sb and np.array_equal(a, b), f"layer {i} signal diverged"
     assert [l.get("name") for l in prepped_p] == \
            [l.get("name") for l in spec["layers"]]
 

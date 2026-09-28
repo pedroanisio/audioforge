@@ -29,39 +29,81 @@ from .dynamics import master_loudness
 from .schema import validate_spec
 
 
-def _automation_envs(layer: dict, total_n: int, sr: int, tm=None):
+class _SampledCurve:
+    """A per-sample automation envelope evaluated only where it is read.
+
+    Cutoff automation is consumed at one index per filter block, so building
+    the full-length array (and its exp) wasted a pass over every sample.
+    Indexing yields exactly what the full array would hold at those indices."""
+
+    def __init__(self, fn, size: int):
+        self._fn = fn
+        self.size = size
+
+    def __getitem__(self, idx):
+        return self._fn(np.asarray(idx))
+
+
+_AUTOMATION_TARGETS = frozenset({"gain_db", "cutoff_hz", "scan"})
+_DB_TO_LN = float(np.log(10.0) / 20.0)
+
+
+def _automation_envs(layer: dict, total_n: int, sr: int, tm=None,
+                     targets=_AUTOMATION_TARGETS):
     """Split a layer/master automation list into (gain_env | None,
-    {fx_index: cutoff_env})."""
+    {fx_index: cutoff_env}, scan_env | None), computing only ``targets``."""
     gain_env = None
     cutoff_envs: dict[int, "np.ndarray"] = {}
     scan_env = None
+    wanted = [au for au in layer.get("automation", [])
+              if au["target"] in targets]
+    if not wanted:
+        return gain_env, cutoff_envs, scan_env
     from .curves import curve_points, evaluate_curve
-    seconds = np.arange(total_n, dtype=float) / sr
-    beats = None
-    for au in layer.get("automation", []):
-        if au["target"] not in {"gain_db", "cutoff_hz", "scan"}:
-            continue
-        times = seconds
-        if au.get("time_basis") == "layer_beats":
-            if tm is None:
-                raise ValueError("beat-based automation requires the render timeline")
-            if beats is None:
-                offset = layer.get("start_s", 0)
-                beats = np.array([tm.beat_at(float(t) + offset) - tm.beat_at(offset) for t in seconds])
-            times = beats
+    offset = layer.get("start_s", 0)
+
+    def times_at(idx, au):
+        seconds = idx / sr
+        if au.get("time_basis") != "layer_beats":
+            return seconds
+        if tm is None:
+            raise ValueError("beat-based automation requires the render timeline")
+        return tm.beats_at(seconds + offset) - tm.beat_at(offset)
+
+    full = {}                                  # time basis -> all-sample times
+
+    def all_times(au):
+        key = au.get("time_basis") == "layer_beats"
+        if key not in full:
+            full[key] = times_at(np.arange(total_n, dtype=float), au)
+        return full[key]
+
+    from ._native import curve_seconds
+
+    def fused(au, mode):                       # seconds timeline: one native
+        if au.get("time_basis") == "layer_beats":  # pass, no time array
+            return None
+        return curve_seconds(au, total_n, sr, mode, _DB_TO_LN)
+
+    for au in wanted:
         if au["target"] == "gain_db":
-            db = evaluate_curve(au, times)
-            env = 10.0 ** (db / 20.0)
+            env = fused(au, 1)                         # 10^(dB/20) fused
+            if env is None:
+                env = evaluate_curve(au, all_times(au))    # dB -> linear, in
+                np.multiply(env, _DB_TO_LN, out=env)       # place: 10^(dB/20)
+                np.exp(env, out=env)                       # = e^(dB ln10/20)
             gain_env = env if gain_env is None else gain_env * env
         elif au["target"] == "cutoff_hz":
             logarithmic = {k: v for k, v in au.items() if k not in {"t0", "rate_hz", "values"}}
             logarithmic["points"] = [[p[0], float(np.log(max(p[1], 1e-9))), *p[2:]]
                                       for p in curve_points(au)]
-            cutoff_envs[au.get("fx_index", 0)] = np.exp(evaluate_curve(logarithmic, times))
+            cutoff_envs[au.get("fx_index", 0)] = _SampledCurve(
+                lambda idx, _c=logarithmic, _au=au: np.exp(evaluate_curve(
+                    _c, times_at(idx.astype(float), _au))), total_n)
         elif au["target"] == "scan":
-            import numpy as _np
-            scan_env = _np.clip(
-                evaluate_curve(au, times), 0.0, 1.0)
+            scan_env = fused(au, 2)
+            if scan_env is None:
+                scan_env = np.clip(evaluate_curve(au, all_times(au)), 0.0, 1.0)
     return gain_env, cutoff_envs, scan_env
 
 
@@ -83,7 +125,10 @@ def _layer_signal(layer: dict, total_n: int, sr: int, tm, swing: float,
                   root: str, idx: int,
                   groove: dict | None = None,
                   report: dict | None = None,
-                  render_plan: dict | None = None) -> np.ndarray:
+                  render_plan: dict | None = None,
+                  placed: bool = False) -> np.ndarray:
+    """The layer's full-length signal, or with ``placed=True`` the tuple
+    (start_sample, signal[:active]) without the zero padding around it."""
     layer = {**layer, "_performance_root": root}
     t = layer["type"]
     name = layer.get("name", f"layer{idx}")
@@ -117,7 +162,7 @@ def _layer_signal(layer: dict, total_n: int, sr: int, tm, swing: float,
             sig[start:start + count] = piece[:count]
         # The source layer already applied its gain; effects follow assembly.
         layer = {**layer, "gain_db": 0}
-    _, _, scan_env = _automation_envs(layer, dur_n, sr, tm)
+    _, _, scan_env = _automation_envs(layer, dur_n, sr, tm, targets={"scan"})
     if scan_env is not None:
         layer = {**layer, "_scan_env": scan_env}   # reaches osc via voice
 
@@ -242,7 +287,8 @@ def _layer_signal(layer: dict, total_n: int, sr: int, tm, swing: float,
     if "gain_db" in layer and t not in ("drums", "notes", "instrument") \
             and not (t == "sample" and "pattern" in layer):
         sig = gain_fx(sig, layer["gain_db"])
-    gain_env, cutoff_envs, _scan = _automation_envs(layer, sig.shape[0], sr, tm)
+    gain_env, cutoff_envs, _scan = _automation_envs(
+        layer, sig.shape[0], sr, tm, targets={"gain_db", "cutoff_hz"})
     if "fx" in layer:
         if sig.ndim == 2:                # section layers: fx per channel
             sig = np.stack([
@@ -259,11 +305,18 @@ def _layer_signal(layer: dict, total_n: int, sr: int, tm, swing: float,
     if gain_env is not None:
         sig = sig * (gain_env[:, None] if sig.ndim == 2 else gain_env)
 
-    out = np.zeros((total_n, 2) if sig.ndim == 2 else total_n)
     start = int(layer.get("start_s", 0.0) * sr)
-    seg = min(sig.shape[0], total_n - start)
-    if seg > 0:
-        out[start:start + seg] = sig[:seg]
+    seg = max(0, min(sig.shape[0], total_n - start))
+    if placed:
+        return start, sig[:seg]
+    return _expand(start, sig[:seg], total_n)
+
+
+def _expand(start: int, part: np.ndarray, total_n: int) -> np.ndarray:
+    """Zero-padded full-length copy of a placed layer signal."""
+    out = np.zeros((total_n, 2) if part.ndim == 2 else total_n)
+    if part.shape[0]:
+        out[start:start + part.shape[0]] = part
     return out
 
 
@@ -290,7 +343,8 @@ def _layer_signals(spec: dict, total_n: int, sr: int, tm, swing: float,
                    render_plan: dict | None = None):
     """Render every layer's full-length signal, optionally across threads.
 
-    Returns ``(prepped_layers, signals)`` in spec order. Layer signals are
+    Returns ``(prepped_layers, signals)`` in spec order, each signal placed
+    as ``(start_sample, active_samples)`` (see ``_expand``). Layer signals are
     order-independent (seeded per-layer RNG keyed by name); the caller sums
     them back in order, so the result is identical for any ``jobs``. The hot
     work (synthesis, sampling, FX) is largely in GIL-releasing numpy/scipy C,
@@ -317,7 +371,7 @@ def _layer_signals(spec: dict, total_n: int, sr: int, tm, swing: float,
     def _one(i):
         return _layer_signal(prepped[i], total_n, sr, tm, swing, root, i,
                              groove=groove, report=report,
-                             render_plan=render_plan)
+                             render_plan=render_plan, placed=True)
 
     if parallel:
         from concurrent.futures import ThreadPoolExecutor
@@ -342,12 +396,19 @@ def _premaster(spec: dict, root: str, sr: int, master: dict,
 
     buses = spec.get("buses", [])
     duck_sources = {b["duck"]["source"] for b in buses if "duck" in b}
-    acc = {None: np.zeros((total_n, 2))}
+    # bus accumulators as contiguous (left, right) channel arrays: every
+    # later stage works per channel, so no strided column passes or restacking
+    acc = {None: (np.zeros(total_n), np.zeros(total_n))}
 
-    def _acc_add(bus, st):                  # lazy: unrouted declared
+    def _bus(bus):                          # lazy: unrouted declared
         if bus not in acc:                  # buses cost nothing
-            acc[bus] = np.zeros((total_n, 2))
-        acc[bus] += st
+            acc[bus] = (np.zeros(total_n), np.zeros(total_n))
+        return acc[bus]
+
+    def _acc_add(bus, st):
+        bl, br = _bus(bus)
+        bl += st[:, 0]
+        br += st[:, 1]
     kept: dict[str, np.ndarray] = {}        # duck-source signals (mono mix)
     stems: dict[str, np.ndarray] = {}
     report: dict = {}
@@ -360,8 +421,24 @@ def _premaster(spec: dict, root: str, sr: int, master: dict,
     prepped, sigs = _layer_signals(spec, total_n, sr, tm, swing, root,
                                    groove, report, jobs, render_plan)
     for i, layer in enumerate(prepped):
-        sig = sigs[i]
+        start, part = sigs[i]
+        sigs[i] = None                       # release as we go
         seat = layer.get("seat")
+        lname = layer.get("name", f"layer{i}")
+        if (part.ndim == 1 and not return_stems and lname not in duck_sources
+                and (seat is None or spec.get("stage") is None)):
+            # mono layer: constant-power pan straight into its bus over the
+            # active span only (outside it the full-length path adds zeros)
+            pan = float(layer.get("pan", 0.0))  # -1 L..+1 R, const power
+            theta = (pan + 1.0) * np.pi / 4.0
+            bl, br = _bus(layer.get("bus"))
+            if part.size:
+                end = start + part.size
+                bl[start:end] += np.cos(theta) * part
+                br[start:end] += np.sin(theta) * part
+            continue
+        sig = _expand(start, part, total_n)
+        del part
         if seat is not None and spec.get("stage") is not None:
             from .stage import direct_tap, early_tap
             stg = spec["stage"]
@@ -393,7 +470,6 @@ def _premaster(spec: dict, root: str, sr: int, master: dict,
             theta = (pan + 1.0) * np.pi / 4.0
             st = np.stack([np.cos(theta) * sig, np.sin(theta) * sig],
                           axis=1)
-        lname = layer.get("name", f"layer{i}")
         _acc_add(layer.get("bus"), st)
         if lname in duck_sources:
             kept[lname] = st.mean(axis=1)
@@ -405,20 +481,23 @@ def _premaster(spec: dict, root: str, sr: int, master: dict,
         lib._region_cache.clear()                  # audio before the
     import gc                                      # memory-peak tail conv
     gc.collect()
-    mix = acc[None]
+    mix_l, mix_r = acc[None]
     stg = spec.get("stage")
     if stg is not None and np.any(stage_tail_in):
         from .stage import hall_tail
-        mix = mix + float(stg.get("mics", {}).get("ambient", 0.3)) \
+        tail = float(stg.get("mics", {}).get("ambient", 0.3)) \
             * hall_tail(stage_tail_in, sr, stg["hall_file"],
                         stg["hall_sha256"])
+        mix_l = mix_l + tail[:, 0]
+        mix_r = mix_r + tail[:, 1]
+        del tail
     del stage_tail_in
     from .fx import apply_master_chain, duck_envelope
     for b in buses:                          # declared order; ducks resolve
         bn = b["name"]
         if bn not in acc:                    # nothing routed here (lazy acc)
             continue
-        st = acc[bn]
+        st_l, st_r = acc[bn]
         if "duck" in b:
             d = b["duck"]
             src_sig = kept.get(d["source"])
@@ -429,23 +508,24 @@ def _premaster(spec: dict, root: str, sr: int, master: dict,
                               threshold_db=d.get("threshold_db", -35.0),
                               attack_s=d.get("attack_s", 0.012),
                               release_s=d.get("release_s", 0.18))
-            st = st * g[:, None]
+            st_l, st_r = st_l * g, st_r * g
         b_gain_env, b_cutoff_envs, _ = _automation_envs(b, total_n, sr, tm)
         if "fx" in b:
-            bl, br = apply_master_chain(
-                st[:, 0], st[:, 1], sr, b["fx"],
+            st_l, st_r = apply_master_chain(
+                st_l, st_r, sr, b["fx"],
                 lambda ch, sub, _bn=bn: rng_for(root, f"bus:{_bn}", ch, sub),
                 automation_envs=b_cutoff_envs)
-            st = np.stack([bl, br], axis=1)
         if "gain_db" in b:
-            st = st * 10.0 ** (b["gain_db"] / 20.0)
+            k = 10.0 ** (b["gain_db"] / 20.0)
+            st_l, st_r = st_l * k, st_r * k
         if b_gain_env is not None:
-            st = st * b_gain_env[:, None]
+            st_l, st_r = st_l * b_gain_env, st_r * b_gain_env
         if f"bus:{bn}" in duck_sources:     # later buses may duck off this one
-            kept[f"bus:{bn}"] = st.mean(axis=1)
-        mix += st
+            kept[f"bus:{bn}"] = (st_l + st_r) / 2.0    # == mean over L/R
+        mix_l += st_l
+        mix_r += st_r
     del acc, kept
-    left, right = mix[:, 0], mix[:, 1]
+    left, right = mix_l, mix_r
 
     m_gain_env, m_cutoff_envs, _mscan = _automation_envs(master, total_n, sr, tm)
     if "fx" in master:
@@ -465,9 +545,8 @@ def _premaster(spec: dict, root: str, sr: int, master: dict,
     left, right = mid + side, mid - side
 
     # DC safety: synthesis offset eats headroom and biases the limiter
-    from .dynamics import dc_block
-    st_dc = dc_block(np.stack([left, right], axis=1), sr)
-    left, right = st_dc[:, 0], st_dc[:, 1]
+    from .dynamics import dc_block_lr
+    left, right = dc_block_lr(left, right, sr)
     return left, right, stems
 
 
@@ -583,16 +662,18 @@ def render(spec: dict, return_stems: bool = False, jobs: int | None = None,
     ``jobs`` renders layers across that many threads (``None`` -> the
     ``AUDIOFORGE_JOBS`` env var, default 1). Output is byte-identical for any
     ``jobs`` — the determinism contract is preserved."""
+    from ._memory import render_heap
     jobs = _resolve_jobs(jobs)
     spec = validate_spec(spec)
     plan_result = _plan_for_render(spec, render_plan)
     root = spec_hash(spec)
     sr = int(spec.get("sample_rate", 48000))
     master = _master_with_intensity(spec)
-    left, right, stems = _premaster(spec, root, sr, master, return_stems,
-                                    jobs, plan_result.plan)
-    return _finish(left, right, sr, master, spec, root, stems, return_stems,
-                   plan_result.plan_hash)
+    with render_heap():
+        left, right, stems = _premaster(spec, root, sr, master, return_stems,
+                                        jobs, plan_result.plan)
+        return _finish(left, right, sr, master, spec, root, stems,
+                       return_stems, plan_result.plan_hash)
 
 
 def _master_with_intensity(spec: dict) -> dict:

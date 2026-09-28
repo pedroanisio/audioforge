@@ -5,6 +5,14 @@ Engine ground truth: the compiled JSON spec, hashed for reproducibility.
 Integration surface: audioforge.sdk.AudioForge.
 """
 import importlib
+import os
+
+# The engine makes no multi-threaded BLAS calls, but OpenBLAS starts one
+# busy-waiting worker per core as soon as numpy loads: measured ~1.35 s of
+# CPU per process at import and ~3% of render CPU spinning. One thread also
+# keeps any BLAS-backed arithmetic independent of the host's core count.
+# setdefault: an explicit user setting wins; no effect if numpy loaded first.
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 
 from .catalog import Catalog, Instrument, Library
 from .analysis import analyze_audio

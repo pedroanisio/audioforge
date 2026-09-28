@@ -21,7 +21,7 @@ Determinism: no randomness anywhere; fixed constants, fixed iteration order.
 from __future__ import annotations
 
 import numpy as np
-from scipy.signal import fftconvolve
+from .convolution import convolve_head
 
 _IR_CACHE: dict = {}
 _REF_SR = 29761.0
@@ -171,39 +171,10 @@ def _fdn_irs(sr: int, rt60_low: float, rt60_high: float, crossover_hz: float,
         b1 = 0.5 * (gl * (1.0 - p) - gh * (1.0 + p))
         coefs.append((b0, b1))
 
-    bufs = [[0.0] * Li for Li in Ls]
-    idx = [0] * N
-    x1 = [0.0] * N   # filter input memory
-    y1 = [0.0] * N   # filter output memory
-    in_apf = [{"buf": [0.0] * max(2, int(round(d * scale))), "i": 0, "g": g,
-               "n": max(2, int(round(d * scale)))} for d, g in _FDN_IN_APF]
-    irL = np.zeros(ir_len)
-    irR = np.zeros(ir_len)
-    two_over_n = 2.0 / N
-    inj = 1.0 / np.sqrt(N)
-    for n in range(ir_len):
-        x = 1.0 if n == 0 else 0.0
-        for st in in_apf:  # brief input diffusion
-            buf, i, g = st["buf"], st["i"], st["g"]
-            z = buf[i]
-            v = x + g * z
-            buf[i] = v
-            st["i"] = (i + 1) % st["n"]
-            x = z - g * v
-        outs = [bufs[i][idx[i]] for i in range(N)]
-        filt = []
-        for i in range(N):
-            b0, b1 = coefs[i]
-            yi = b0 * outs[i] + b1 * x1[i] + p * y1[i]
-            x1[i] = outs[i]
-            y1[i] = yi
-            filt.append(yi)
-        s = sum(filt) * two_over_n
-        for i in range(N):
-            bufs[i][idx[i]] = inj * x + (filt[i] - s)   # Householder mix
-            idx[i] = (idx[i] + 1) % Ls[i]
-        irL[n] = 0.5 * (outs[0] - outs[2] + outs[4] - outs[6])
-        irR[n] = 0.5 * (outs[1] - outs[3] + outs[5] - outs[7])
+    from ._native import fdn_ir
+    irL, irR = fdn_ir(ir_len, Ls, [c[0] for c in coefs], [c[1] for c in coefs],
+                      p, [max(2, int(round(d * scale))) for d, _ in _FDN_IN_APF],
+                      [g for _, g in _FDN_IN_APF], 1.0 / np.sqrt(N), 2.0 / N)
 
     e = np.sqrt(np.sum(irL * irL) + np.sum(irR * irR))
     irL *= 1.0 / max(e, 1e-9)
@@ -235,8 +206,7 @@ def _plate_wet(mono: np.ndarray, sr: int, fx: dict):
         wetR = wetR / cal
     else:
         irL, irR = _plate_irs(sr, decay, damp, mono.size)
-        wetL = fftconvolve(mono, irL, mode="full")[:mono.size]
-        wetR = fftconvolve(mono, irR, mode="full")[:mono.size]
+        wetL, wetR = convolve_head(mono, irL, irR)
     pd = fx.get("predelay", 0.0)
     if pd:
         s = int(pd * sr)
@@ -261,8 +231,7 @@ def fdn_stereo(left: np.ndarray, right: np.ndarray, sr: int,
                         left.size)
     mono = 0.5 * (left + right)
     mix = float(fx.get("mix", 0.3))
-    wetL = fftconvolve(mono, irL, mode="full")[:left.size]
-    wetR = fftconvolve(mono, irR, mode="full")[:right.size]
+    wetL, wetR = convolve_head(mono, irL, irR)
     return (1 - mix) * left + mix * wetL, (1 - mix) * right + mix * wetR
 
 
@@ -280,7 +249,7 @@ def fdn_mono(x: np.ndarray, sr: int, fx: dict) -> np.ndarray:
                         x.size)
     ir = 0.5 * (irL + irR)
     mix = float(fx.get("mix", 0.3))
-    return (1 - mix) * x + mix * fftconvolve(x, ir, mode="full")[:x.size]
+    return (1 - mix) * x + mix * convolve_head(x, ir)[0]
 
 
 STEREO_FX = {"plate": plate_stereo, "fdn": fdn_stereo}

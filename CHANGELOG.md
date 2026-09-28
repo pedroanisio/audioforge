@@ -19,6 +19,30 @@ structured, per-version summary. Version consistency across sites is gated by
 
 ## [Unreleased]
 
+## [3.2.0]
+
+_Engine 3.2.0 · DSL 2.0._
+
+### Changed — render CPU time
+Measured on the 17 locally renderable compositions in `docs/examples` (library-backed
+pieces need their sample libraries): total render CPU 1009 s -> 230 s (4.4x), every output
+within -131 dBFS of engine 3.1.0 (max per-sample difference); short CLI renders ~7.5x
+less CPU (1.42 s -> 0.19 s for `transition_sweep`). Output bits change, so golden hashes
+were re-pinned; see `docs/MIGRATION_3.md` ("Engine 3.2: render cost and numeric drift").
+- Streaming DSP moved to native kernels (`audioforge/native/dsp.c`, `upfirdn.c`), built
+  with `-O3 -march=native -ffp-contract=off` and cached per CPU: fused 4x true-peak
+  detection, fused oversampled saturation, Freeverb hall, FDN impulse-response generator,
+  time-varying and multi-channel biquads, delay taps, wavetable playback, Karplus-Strong
+  feedback, running minimum, automation-curve evaluation. Recursive kernels flush values
+  below 1e-290 to zero (subnormal stalls measured up to 25x on long silent tails).
+- Reverb convolution: batched overlap-add FFT (float32 for large transforms, input
+  spectrum shared by L/R IRs, silent blocks skipped).
+- `.af` parsing uses LALR (~65x faster; Earley only re-parses invalid input for the
+  richer diagnostic). OpenBLAS is pinned to one thread (its idle workers spun ~1.35 s of
+  CPU per process). `scipy.signal` and libsndfile are no longer loaded on the render path.
+- Mixing works on per-layer active spans and per-channel bus buffers; glibc keeps freed
+  render buffers for reuse during a render (`AUDIOFORGE_MALLOC_TUNE=0` disables).
+
 _Notation and interchange line (ADR-0011; `docs/evolution/roadmap-notation.xlsx`)._
 
 ### Added

@@ -3,44 +3,44 @@
   "numeric_env": {
     "machine": "x86_64",
     "numpy": "2.4.6",
-    "platform": "Linux-7.0.11-76070011-generic-x86_64-with-glibc2.39",
-    "python": "3.13.12",
+    "platform": "Linux-5.15.0-194-generic-x86_64-with-glibc2.35",
+    "python": "3.11.16",
     "scipy": "1.17.1"
   },
   "specs": {
     "fx_filter_sweep": {
       "channels": 2,
       "frames": 96000,
-      "output_sha256": "12e3b010f45af7c46bd25d4962d590cb98b7ed8a58ebc7f2982a6f8b82d7ee1f",
-      "spec_hash": "1c0a6301fe4fd99a3fb8658fb66a76c16a2166d815d611d39a3be8812a3a2a93",
+      "output_sha256": "eb87ae325f401ddb5182b15acc833c0b0eaab49844b756c9e03b0950954486ff",
+      "spec_hash": "cf08d08e7283a2c9efa77afba91cdcf266dda63157b1237530d1c41a36040022",
       "sr": 48000
     },
     "groove_beat": {
       "channels": 2,
       "frames": 96000,
       "output_sha256": "0a85d59c65bb30eac02c4b58eb2eb6162591e9cdfd8e37269a439a8b8f04769e",
-      "spec_hash": "c0fcce747ef75e0d4fe849c20fa9af11beda61d4b15243d9f1fe78d98dfec6a2",
+      "spec_hash": "6d9153abdc945c2da287c2e519bd96294b1d175183122b8a0659700867a7645d",
       "sr": 48000
     },
     "loudness_limiter": {
       "channels": 2,
       "frames": 96000,
       "output_sha256": "3b1bfe6993a7eb3e07b732d41167b8cb84df51e75ebd996665e39e4431c20948",
-      "spec_hash": "26d9ce207f7ee518b98afddb85841693a5e2c9d16e0033fcb9f69d24d4bec786",
+      "spec_hash": "b2637104a914258466828d7029aed61a0739a65c04aa0c7ffa64037b745fc69f",
       "sr": 48000
     },
     "multi_layer": {
       "channels": 2,
       "frames": 96000,
       "output_sha256": "1daa0f510e4acfb4ac435e77e6fb121cb79924c5857411e44eb3f34ac166a9ab",
-      "spec_hash": "2d3b5f441cc101ffcc30397ce60ef17a74c14d39c26af195b523dd2ecd63647c",
+      "spec_hash": "53f7a775fd058acee716e9da41b28258ae10a8b0273a5b7bf3c10df6763e865f",
       "sr": 48000
     },
     "synth_voice": {
       "channels": 2,
       "frames": 96000,
       "output_sha256": "65f311542467f88bf81f76af003a3a21da22205dad44ffe9ac29ba5388cc961a",
-      "spec_hash": "c20f94bb5b836f213c7ab7d1fd50f69a968cfe3ba23249a6b345e7ebbf494a01",
+      "spec_hash": "9cc94a4fb7ada0c29ffa57a388a6b258f0e4f3bc6bd667505bdfc2662129e73d",
       "sr": 48000
     }
   }

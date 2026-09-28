@@ -10,7 +10,6 @@ Pure DSP — fully deterministic.
 from __future__ import annotations
 
 import numpy as np
-from scipy.signal import lfilter
 
 
 def _rbj_highshelf(fc: float, gain_db: float, sr: int, s: float = 1.0):
@@ -40,25 +39,36 @@ def _rbj_highpass(fc: float, sr: int, q: float = 0.5):
 
 def k_weight(x: np.ndarray, sr: int) -> np.ndarray:
     """Stage 1: +4 dB high shelf ~1681 Hz; stage 2: high-pass ~38 Hz."""
+    from ._native import biquad
     b, a = _rbj_highshelf(1681.0, 4.0, sr)
-    x = lfilter(b, a, x)
+    x = biquad(x, b, a)
     b, a = _rbj_highpass(38.0, sr)
-    return lfilter(b, a, x)
+    return biquad(x, b, a)
 
 
 def integrated_lufs(stereo: np.ndarray, sr: int) -> float:
     """stereo: [n, 2] float in -1..1. Returns gated integrated loudness."""
     n = stereo.shape[0]
-    kw = np.stack([k_weight(stereo[:, c], sr) for c in range(2)], axis=1)
+    from ._native import iir_multi
+    kl, kr = iir_multi([stereo[:, 0], stereo[:, 1]],
+                       [_rbj_highshelf(1681.0, 4.0, sr), _rbj_highpass(38.0, sr)])
     block = int(0.400 * sr)
     hop = int(0.100 * sr)
     if n < block:  # very short assets: single block
         block, hop = n, n
-    powers = []
-    for start in range(0, n - block + 1, hop):
-        seg = kw[start:start + block]
-        powers.append(np.mean(seg[:, 0] ** 2) + np.mean(seg[:, 1] ** 2))
-    powers = np.array(powers)
+    nblocks = (n - block) // hop + 1
+    if block == 4 * hop:
+        # 400 ms blocks at 75% overlap are exactly four 100 ms hops: sum the
+        # squares once per hop, then each block's power is four hop sums
+        nh = nblocks + 3
+        hs = [np.einsum("ij,ij->i", h, h) for h in
+              (kl[:nh * hop].reshape(nh, hop), kr[:nh * hop].reshape(nh, hop))]
+        powers = sum((c[:nblocks] + c[1:nblocks + 1] + c[2:nblocks + 2]
+                      + c[3:nblocks + 3]) / block for c in hs)
+    else:
+        powers = np.array([np.mean(kl[s0:s0 + block] ** 2)
+                           + np.mean(kr[s0:s0 + block] ** 2)
+                           for s0 in range(0, n - block + 1, hop)])
     lk = -0.691 + 10.0 * np.log10(np.maximum(powers, 1e-12))
     mask = lk > -70.0                                  # absolute gate
     if not np.any(mask):

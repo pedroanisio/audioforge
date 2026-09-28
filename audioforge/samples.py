@@ -19,7 +19,6 @@ from fractions import Fraction
 from pathlib import Path
 
 import numpy as np
-from scipy.signal import resample_poly
 
 from .schema import SpecError
 
@@ -147,6 +146,7 @@ def load_sample(name: str, expected_sha256: str, target_sr: int,
     ratio = (sr / target_sr) * 2.0 ** (pitch_st / 12.0)
     frac = Fraction(ratio).limit_denominator(2000)
     if frac != 1:
+        from scipy.signal import resample_poly   # lazy: heavy import
         x = resample_poly(x, frac.denominator, frac.numerator)
     _CACHE[key] = x
     return x

@@ -4,36 +4,9 @@ stereo stage, which happens at mixdown. Ordering follows the spec's fx list.
 from __future__ import annotations
 
 import numpy as np
-from scipy.signal import fftconvolve, lfilter, resample_poly
 
 _FV_COMBS = (1116, 1188, 1277, 1356, 1422, 1491, 1557, 1617)   # @44.1k
 _FV_ALLPASS = (556, 441, 341, 225)
-
-
-def _lbcf(x, L, g, d):
-    """Lowpass-feedback comb (Freeverb building block), block recurrence:
-    y[n] = x[n] + g * f[n];  f[n] = (1-d) * y[n-L] + d * f[n-1]."""
-    n = x.size
-    y = np.zeros(n)
-    zi = np.zeros(1)
-    for s in range(0, n, L):
-        e = min(s + L, n)
-        ydel = y[s - L:e - L] if s >= L else np.zeros(e - s)
-        fblk, zi = lfilter([1.0 - d], [1.0, -d], ydel, zi=zi)
-        y[s:e] = x[s:e] + g * fblk
-    return y
-
-
-def _fv_allpass(x, L, g=0.5):
-    """Schroeder allpass y[n] = -g x[n] + x[n-L] + g y[n-L], blockwise."""
-    n = x.size
-    y = np.zeros(n)
-    for s in range(0, n, L):
-        e = min(s + L, n)
-        xdel = x[s - L:e - L] if s >= L else np.zeros(e - s)
-        ydel = y[s - L:e - L] if s >= L else np.zeros(e - s)
-        y[s:e] = -g * x[s:e] + xdel + g * ydel
-    return y
 
 
 def hall_fx(x: np.ndarray, sr: int, rt60: float = 2.5, damp: float = 0.4,
@@ -42,15 +15,12 @@ def hall_fx(x: np.ndarray, sr: int, rt60: float = 2.5, damp: float = 0.4,
     feedback combs + series allpasses. Per-comb feedback derived from the
     requested RT60, in-loop damping rolls highs off faster — natural,
     frequency-dependent decay without metallic ringing. Deterministic."""
+    from ._native import freeverb
     scale = sr / 44100.0
-    wet = np.zeros_like(x)
-    for L0 in _FV_COMBS:
-        L = max(8, int(round(L0 * scale)))
-        g = 10.0 ** (-3.0 * L / (max(rt60, 0.05) * sr))
-        wet += _lbcf(x, L, g, float(np.clip(damp, 0.0, 0.95)))
-    wet /= len(_FV_COMBS)
-    for L0 in _FV_ALLPASS:
-        wet = _fv_allpass(wet, max(4, int(round(L0 * scale))))
+    lengths = [max(8, int(round(L0 * scale))) for L0 in _FV_COMBS]
+    gains = [10.0 ** (-3.0 * L / (max(rt60, 0.05) * sr)) for L in lengths]
+    wet = freeverb(x, lengths, gains, float(np.clip(damp, 0.0, 0.95)),
+                   [max(4, int(round(L0 * scale))) for L0 in _FV_ALLPASS])
     return (1.0 - mix) * x + mix * wet
 
 
@@ -74,31 +44,26 @@ def _biquad(kind: str, fc: float, sr: int, q: float = 0.7071):
 
 def filter_fx(x: np.ndarray, sr: int, kind: str, cutoff_hz: float,
               q: float = 0.7071) -> np.ndarray:
+    from ._native import biquad
     b, a = _biquad(kind, cutoff_hz, sr, q)
-    return lfilter(b, a, x)
+    return biquad(x, b, a)
 
 
 def delay_fx(x: np.ndarray, sr: int, time_s: float, feedback: float,
              mix: float) -> np.ndarray:
+    from ._native import delay_taps
     d = max(1, int(time_s * sr))
     out = np.copy(x)
-    buf = np.zeros(x.size + d)
-    buf[:x.size] += x
-    wet = np.zeros_like(buf)
     fb = min(max(feedback, 0.0), 0.95)
-    src = buf
+    gains = []
     gain = 1.0
     # bounded number of echo taps -> fully deterministic, no recursion drift
     for tap in range(1, 24):
         gain *= fb
-        if gain < 1e-4:
+        if gain < 1e-4 or tap * d >= x.size:
             break
-        start = tap * d
-        if start >= wet.size:
-            break
-        seg = min(x.size, wet.size - start)
-        wet[start:start + seg] += gain * x[:seg]
-    wet = wet[:x.size]
+        gains.append(gain)
+    wet = delay_taps(x, d, gains)
     return (1.0 - mix) * out + mix * (out + wet)
 
 
@@ -109,9 +74,11 @@ def reverb_fx(x: np.ndarray, sr: int, decay_s: float, mix: float,
     n_ir = max(16, int(decay_s * sr))
     t = np.arange(n_ir) / sr
     ir = rng.standard_normal(n_ir) * np.exp(-6.0 * t / max(decay_s, 1e-3))
-    ir = lfilter(*_biquad("lowpass", 6000.0, sr), ir)
+    from ._native import biquad
+    ir = biquad(ir, *_biquad("lowpass", 6000.0, sr))
     ir /= (np.sqrt(np.sum(ir**2)) or 1.0)
-    wet = fftconvolve(x, ir, mode="full")[:x.size]
+    from .convolution import convolve_head
+    wet, = convolve_head(x, ir)
     return (1.0 - mix) * x + mix * wet
 
 
@@ -137,14 +104,15 @@ def filter_auto_fx(x: np.ndarray, sr: int, kind: str,
     """Time-varying biquad: cutoff follows a per-sample envelope, with the
     filter state carried across fixed-size blocks (deterministic, no zipper
     noise at these block sizes for musical sweeps)."""
-    out = np.empty_like(x)
-    zi = np.zeros(2)
-    for start in range(0, x.size, block):
-        seg = x[start:start + block]
-        fc = float(cutoff_env[min(start + seg.size // 2, cutoff_env.size - 1)])
-        b, a = _biquad(kind, fc, sr, q)
-        out[start:start + seg.size], zi = lfilter(b, a, seg, zi=zi)
-    return out
+    from ._native import biquad_tv
+    starts = np.arange(0, x.size, block)
+    sizes = np.minimum(block, x.size - starts)
+    fcs = cutoff_env[np.minimum(starts + sizes // 2, cutoff_env.size - 1)]
+    uniq, which = np.unique(fcs, return_inverse=True)   # held cutoffs repeat
+    rows = np.array([np.concatenate((b, a[1:]))
+                     for b, a in (_biquad(kind, float(fc), sr, q)
+                                  for fc in uniq.tolist())]).reshape(-1, 5)
+    return biquad_tv(x, rows[which.ravel()], block)
 
 
 def apply_fx_chain(x: np.ndarray, sr: int, chain: list[dict],
@@ -234,6 +202,16 @@ def apply_master_chain(left: np.ndarray, right: np.ndarray, sr: int,
         kind = fx["type"]
         if kind in stereo_fx:
             left, right = stereo_fx[kind](left, right, sr, fx)
+        elif (kind == "filter" and i not in automation_envs) or kind in (
+                "peak", "lowshelf", "highshelf"):
+            # static biquad, same coefficients both sides: one paired pass
+            from ._native import iir_multi
+            if kind == "filter":
+                ba = _biquad(fx["mode"], fx["cutoff_hz"], sr, fx.get("q", 0.7071))
+            else:
+                ba = _rbj_coeffs(kind, sr, fx["freq_hz"], fx.get("gain_db", 0.0),
+                                 fx.get("q", 0.7071))
+            left, right = iir_multi([left, right], [ba])
         else:
             env = {0: automation_envs[i]} if i in automation_envs else None
             left = apply_fx_chain(left, sr, [fx],
@@ -277,15 +255,15 @@ def _rbj_coeffs(kind: str, sr: int, freq: float, gain_db: float,
 
 def eq_fx(x: np.ndarray, sr: int, kind: str, freq: float, gain_db: float,
           q: float = 0.7071) -> np.ndarray:
-    from scipy.signal import lfilter
+    from ._native import biquad
     b, a = _rbj_coeffs(kind, sr, freq, gain_db, q)
-    return lfilter(b, a, x)
+    return biquad(x, b, a)
 
 
 def _onepole(x: np.ndarray, sr: int, tau_s: float) -> np.ndarray:
-    from scipy.signal import lfilter
+    from ._native import biquad
     a = np.exp(-1.0 / max(tau_s * sr, 1.0))
-    return lfilter([1.0 - a], [1.0, -a], x)
+    return biquad(x, [1.0 - a], [1.0, -a])
 
 
 def transient_fx(x: np.ndarray, sr: int, attack_db: float = 0.0,
@@ -308,12 +286,12 @@ def saturate_fx(x: np.ndarray, amount: float = 0.3, mix: float = 1.0,
     term, dry/wet mix. Gentler than drive; meant for buses and masters."""
     if amount <= 0.0 or mix <= 0.0:
         return x
-    from scipy.signal import resample_poly
+    from ._native import saturate4
     d = 1.0 + amount * 5.0
     bias = warmth * 0.12                        # curve bias -> even harmonics
-    up = resample_poly(x, 4, 1)
-    up = (np.tanh((up + bias) * d) - np.tanh(bias * d)) / np.tanh(d)
-    wet = resample_poly(up, 1, 4)[:x.size]
+    # resample_poly 4x up -> (tanh((u + bias) d) - tanh(bias d)) / tanh(d)
+    # -> resample_poly 4x down, fused in cache by one native pass
+    wet = saturate4(x, bias, d)
     return x * (1.0 - mix) + wet * mix
 
 
@@ -357,9 +335,9 @@ def convolve_fx(x: np.ndarray, sr: int, file: str, sha256: str,
     the same content-addressing discipline as samples. The IR is located,
     byte-verified, mono-mixed and resampled by the sample loader; a wrong
     file refuses with both hashes named."""
-    from scipy.signal import fftconvolve
     from .samples import load_sample
     ir = load_sample(file, sha256, sr)
     ir = ir / max(np.sqrt(np.sum(ir ** 2)), 1e-9)      # energy-normalized
-    wet = fftconvolve(x, ir)[:x.size] * 10.0 ** (gain_db / 20.0)
+    from .convolution import convolve_head
+    wet = convolve_head(x, ir)[0] * 10.0 ** (gain_db / 20.0)
     return x * (1.0 - mix) + wet * mix

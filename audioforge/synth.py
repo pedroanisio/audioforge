@@ -85,13 +85,13 @@ def osc(shape: str, freq: float, n: int, sr: int, *,
         if rng is None:
             raise ValueError(f"oscillator '{shape}' needs a seeded rng "
                              "(strike excitation)")
-        from scipy.signal import lfilter
+        from ._native import biquad
         L = max(int(sr / f), 4)
         b_c = 0.15 + 0.85 * float(np.clip(v.get("brightness", 0.6), 0.0, 1.0))
         # seeded strike burst, brightness-colored (as pluck) and amplitude-
         # scaled by `strike` (the played string's hit)
         exc = rng.uniform(-1.0, 1.0, n)
-        exc = lfilter([b_c], [1.0, -(1.0 - b_c)], exc)
+        exc = biquad(exc, [b_c], [1.0, -(1.0 - b_c)])
         exc[L + 2:] = 0.0                                  # burst at the front
         exc *= 0.4 + 0.6 * float(np.clip(v.get("strike", 0.7), 0.0, 1.0))
         if shape == "struck":
@@ -127,26 +127,31 @@ def osc(shape: str, freq: float, n: int, sr: int, *,
                             noise=rng.standard_normal(n))
     if shape in OSCILLATORS:
         return OSCILLATORS[shape](f, n, sr)
+    if shape in ("saw", "square", "triangle"):
+        return _classic_acc(shape, f, n, sr, phase0, 1.0, np.zeros(n))
     ph = _phase(f, n, sr, phase0)
     if shape == "organ":
         return organ(f, n, sr, phase0)
     if shape == "sine":
         return np.sin(ph)
-    if shape in ("saw", "square", "triangle"):
-        # Bandlimited-to-Nyquist via single-cycle wavetable built by inverse
-        # FFT (exact Fourier series, every harmonic below Nyquist), played
-        # back with linear interpolation. Replaces the old 64-harmonic cap:
-        # a C1 saw now carries its full ~700 harmonics.
-        k_max = max(1, int((sr / 2.0) / max(f, 1e-9)))
-        table = _classic_table(shape, k_max)
-        pos = (ph / (2.0 * np.pi)) * table.size
-        i0 = np.floor(pos).astype(np.int64) % table.size
-        fr = pos - np.floor(pos)
-        return table[i0] * (1.0 - fr) + table[(i0 + 1) % table.size] * fr
     if shape == "fm":
         mod = np.sin(_phase(f * fm_ratio, n, sr))
         return np.sin(ph + fm_index * mod)
     raise ValueError(f"unknown oscillator shape: {shape!r}")
+
+
+def _classic_acc(shape: str, f: float, n: int, sr: int, phase0: float,
+                 amp: float, out: np.ndarray) -> np.ndarray:
+    """out += amp * bandlimited saw/square/triangle; returns out.
+
+    Bandlimited-to-Nyquist via single-cycle wavetable built by inverse FFT
+    (exact Fourier series, every harmonic below Nyquist), played back with
+    linear interpolation by a native loop (one pass instead of ~10 numpy
+    passes). A C1 saw carries its full ~700 harmonics."""
+    from ._native import wavetable_acc
+    k_max = max(1, int((sr / 2.0) / max(f, 1e-9)))
+    return wavetable_acc(_classic_table(shape, k_max), TWO_PI * f, phase0,
+                         sr, n, amp, out)
 
 
 ORGAN_DRAWBARS = [(0.5, 0.55), (1.0, 1.0), (1.5, 0.35), (2.0, 0.6),
@@ -315,6 +320,7 @@ def unison(shape: str, freq: float, n: int, sr: int, voices: int,
     voice dominant. Works for any classic shape."""
     if voices <= 1:
         return osc(shape, freq, n, sr, phase0=phase0, **osc_kw)
+    from .plugins import OSCILLATORS
     out = np.zeros(n, dtype=np.float64)
     norm = 0.0
     for i in range(voices):
@@ -324,19 +330,27 @@ def unison(shape: str, freq: float, n: int, sr: int, voices: int,
         ph_i = phase0 + 2.0 * np.pi * ((i * _GOLDEN) % 1.0)
         kw = dict(osc_kw)
         kw["detune_cents"] = kw.get("detune_cents", 0.0) + det
-        out += amp * osc(shape, freq, n, sr, phase0=ph_i, **kw)
+        if (shape in ("saw", "square", "triangle") and shape not in OSCILLATORS
+                and kw.get("voice", {}).get("unison", 1) <= 1):
+            f_i = freq * 2.0 ** (kw["detune_cents"] / 1200.0)
+            _classic_acc(shape, f_i, n, sr, ph_i, amp, out)
+        else:
+            out += amp * osc(shape, freq, n, sr, phase0=ph_i, **kw)
         norm += amp * amp
     return out / np.sqrt(norm)
 
 
-def padsynth(freq: float, n: int, sr: int, rng, harmonics: int = 48,
-             bandwidth_cents: float = 40.0, profile_exp: float = 1.0,
-             phase0: float = 0.0) -> np.ndarray:
-    """PADsynth (Nasca, public domain): each harmonic is a Gaussian-widened
-    band in a long spectrum; one inverse FFT yields a perfectly looping
-    wavetable with a lush ensemble character. The random bin phases come
-    from the injected seeded RNG, so output is fully deterministic."""
-    N = 1 << 18                                   # ~5.5 s table at 48 kHz
+_PAD_AMP_CACHE: dict = {}
+
+
+def _pad_amplitudes(freq: float, sr: int, harmonics: int,
+                    bandwidth_cents: float, profile_exp: float, N: int):
+    """PADsynth magnitude spectrum and its nonzero bins, cached: every note of
+    a pad track at the same pitch shares it (only the phases are per-note)."""
+    key = (freq, sr, harmonics, bandwidth_cents, profile_exp, N)
+    hit = _PAD_AMP_CACHE.get(key)
+    if hit is not None:
+        return hit
     nyq = sr / 2.0
     amp = np.zeros(N // 2 + 1)
     bins = np.arange(N // 2 + 1)
@@ -353,35 +367,44 @@ def padsynth(freq: float, n: int, sr: int, rng, harmonics: int = 48,
         hi = min(N // 2, int(center + 5 * sigma) + 1)
         x = (bins[lo:hi] - center) / sigma
         amp[lo:hi] += a_i * np.exp(-x * x)
-    phases = rng.uniform(0.0, 2.0 * np.pi, N // 2 + 1)
-    spec = amp * np.exp(1j * phases)
-    spec[0] = 0.0
-    table = np.fft.irfft(spec)
+    nz = np.flatnonzero(amp[1:]) + 1           # bin 0 is zeroed anyway
+    if len(_PAD_AMP_CACHE) > 256:
+        _PAD_AMP_CACHE.clear()
+    _PAD_AMP_CACHE[key] = (nz, amp[nz])
+    return _PAD_AMP_CACHE[key]
+
+
+def padsynth(freq: float, n: int, sr: int, rng, harmonics: int = 48,
+             bandwidth_cents: float = 40.0, profile_exp: float = 1.0,
+             phase0: float = 0.0) -> np.ndarray:
+    """PADsynth (Nasca, public domain): each harmonic is a Gaussian-widened
+    band in a long spectrum; one inverse FFT yields a perfectly looping
+    wavetable with a lush ensemble character. The random bin phases come
+    from the injected seeded RNG, so output is fully deterministic."""
+    N = 1 << 18                                   # ~5.5 s table at 48 kHz
+    nz, amp_nz = _pad_amplitudes(freq, sr, harmonics, bandwidth_cents,
+                                 profile_exp, N)
+    phases = rng.uniform(0.0, 2.0 * np.pi, N // 2 + 1)   # full draw: the
+    spec = np.zeros(N // 2 + 1, dtype=np.complex64)      # RNG stream is
+    spec[nz] = amp_nz * np.exp(1j * phases[nz])          # unchanged
+    # float32 inverse FFT: half the cost of the per-note 2^18-point
+    # transform; the table is peak-normalized, so the error is ~1e-7
+    # absolute (about -140 dB)
+    import scipy.fft as sfft
+    table = sfft.irfft(spec, N).astype(np.float64)
     table /= max(np.max(np.abs(table)), 1e-12)
     start = int((phase0 / (2.0 * np.pi)) * N) % N
+    if start + n <= N:
+        return table[start:start + n].copy()
     reps = int(np.ceil((start + n) / N)) + 1
     return np.tile(table, reps)[start:start + n]
 
 
 def _sparse_feedback(x: np.ndarray, taps: dict[int, float]) -> np.ndarray:
-    """y[n] = x[n] + sum_l taps[l] * y[n-l], all lags >= block size.
-    Vectorized block recurrence: O(n) regardless of lag length."""
-    n = x.size
-    block = min(taps)
-    y = np.zeros(n)
-    for s in range(0, n, block):
-        e = min(s + block, n)
-        acc = x[s:e].copy()
-        for lag, c in taps.items():
-            lo = s - lag
-            if lo + (e - s) <= 0:
-                continue
-            seg = y[max(lo, 0):lo + (e - s)]
-            if lo < 0:
-                seg = np.concatenate([np.zeros(-lo), seg])
-            acc += c * seg
-        y[s:e] = acc
-    return y
+    """y[n] = x[n] + sum_l taps[l] * y[n-l] (taps summed in dict order):
+    one native pass over the recurrence."""
+    from ._native import sparse_feedback
+    return sparse_feedback(x, taps)
 
 
 def pluck(freq: float, n: int, sr: int, rng, damping: float = 0.5,
@@ -389,13 +412,13 @@ def pluck(freq: float, n: int, sr: int, rng, damping: float = 0.5,
     """Extended Karplus-Strong plucked string: seeded noise burst excitation
     -> pick-position comb -> brightness lowpass -> fractionally tuned
     recirculating delay with two-tap loss filter (Jaffe/Smith lineage)."""
-    from scipy.signal import lfilter
+    from ._native import biquad
     L_f = max(sr / freq - 0.5, 3.0)
     L = int(L_f)
     fr = L_f - L
     exc = rng.uniform(-1.0, 1.0, L + 2)
     b_c = 0.15 + 0.85 * np.clip(brightness, 0.0, 1.0)
-    exc = lfilter([b_c], [1.0, -(1.0 - b_c)], exc)         # excitation color
+    exc = biquad(exc, [b_c], [1.0, -(1.0 - b_c)])          # excitation color
     pp = max(1, int(np.clip(pluck_pos, 0.02, 0.5) * L))
     exc = exc - np.concatenate([np.zeros(pp), exc[:-pp]])  # pick position
     rho = 0.985 + 0.0149 * np.clip(damping, 0.0, 1.0)

@@ -11,10 +11,17 @@ disclaimer:
 
 ## Current Runtime Contract
 
-- Engine 3.1.0
+- Engine 3.2.0
 - DSL 2.0
 - IR schema 2.0
 - Version source of truth: `audioforge.version`
+
+Engine 3.2.0 renders with about 4.4x less CPU over the example corpus (short CLI renders
+~7.5x less) by moving streaming DSP to native kernels, batching FFT convolution and
+parsing with LALR. Output is not bit-identical to 3.1.0: every example stays within
+-131 dBFS of it (sources and sizes in the migration guide's "Engine 3.2: render cost
+and numeric drift"); regenerate manifests and golden hashes with this engine. Renders
+now always require a C compiler. DSL 2.0 authoring is unchanged.
 
 Engine 3.1.0 preserves native stereo instrument recordings and adds explicitly
 mapped recorded note transitions. Stereo mixes change level and image; review

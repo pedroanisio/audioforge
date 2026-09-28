@@ -132,7 +132,7 @@ def test_antiphase_information_survives_seated_mix_and_stem(pin, monkeypatch):
     wave = np.sin(2*np.pi*220*t)*.1
     signal = np.column_stack([wave, -wave])
     layer = dict(type='instrument', name='probe', seat=dict(az_deg=-25, dist_m=1))
-    monkeypatch.setattr(renderer, '_layer_signals', lambda *args: ([layer], [signal]))
+    monkeypatch.setattr(renderer, '_layer_signals', lambda *args: ([layer], [(0, signal)]))
     spec = dict(duration_s=1, layers=[layer], stage=dict(mics=dict(close=1,tree=0,ambient=0)))
     lib = library.load_library(f'stereo_probe@{pin}')
     spec['stage'].update(hall_file=str(lib.root/'stereo.wav'), hall_sha256=lib._by_path['stereo.wav'])

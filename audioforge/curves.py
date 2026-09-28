@@ -173,27 +173,49 @@ def evaluate_curve(curve: dict, times: Sequence[float] | np.ndarray) -> np.ndarr
 
     first_t, first_v, _ = points[0]
     last_t, last_v, _ = points[-1]
-    out[xs <= first_t] = first_v
-    out[xs >= last_t] = last_v
-    active = (xs > first_t) & (xs < last_t)
-    if not np.any(active):
-        return out
-
-    for idx in range(1, len(points)):
+    # An active x (first_t < x < last_t) belongs to segment k = #points with
+    # t <= x -- the last segment whose closed span holds x, as later segments
+    # win ties -- so t[k-1] <= x < t[k] and zero-length segments are never
+    # selected. Evaluating per segment slice keeps the per-element arithmetic
+    # unchanged while avoiding one full-length mask per segment.
+    ts = np.array([p[0] for p in points])
+    if xs.ndim == 1 and (xs.size < 2 or bool(np.all(xs[1:] >= xs[:-1]))):
+        # Sorted times (every render path): segments are contiguous runs.
+        lo = int(np.searchsorted(xs, first_t, side="right"))
+        hi = int(np.searchsorted(xs, last_t, side="left"))
+        out[:lo] = first_v
+        out[hi:] = last_v
+        bounds = np.searchsorted(xs, ts, side="left").tolist()
+        where, xa = None, xs
+        spans = [(k, max(bounds[k - 1], lo), bounds[k]) for k in range(1, len(points))]
+    else:
+        out[xs <= first_t] = first_v
+        out[xs >= last_t] = last_v
+        where = np.flatnonzero((xs > first_t) & (xs < last_t))
+        xa = xs[where]
+        seg = np.searchsorted(ts, xa, side="right")
+        order = np.argsort(seg, kind="stable")
+        where, xa, seg = where[order], xa[order], seg[order]
+        cuts = np.searchsorted(seg, np.arange(1, len(points) + 1), side="left").tolist()
+        spans = [(k, cuts[k - 1], cuts[k]) for k in range(1, len(points))]
+    for idx, a, b in spans:
+        if b <= a:
+            continue
         t0, v0, _ = points[idx - 1]
         t1, v1, shape = points[idx]
-        mask = active & (xs >= t0) & (xs <= t1)
-        if not np.any(mask):
-            continue
-        if t1 == t0:
-            out[mask] = v1
-            continue
-        u = (xs[mask] - t0) / (t1 - t0)
         kind = _shape_kind(shape)
+        # u = (x - t0) / (t1 - t0); value = v0 + (v1 - v0) * shape(u) -- the
+        # same operations, evaluated in place to avoid full-length temporaries
+        dst = out[a:b] if where is None else np.empty(b - a)
+        np.subtract(xa[a:b], t0, out=dst)
+        np.divide(dst, t1 - t0, out=dst)
         if kind == "hold":
-            values = np.where(u < 1.0, v0, v1)
+            np.copyto(dst, np.where(dst < 1.0, v0, v1))
         else:
-            shaped = u if kind == "linear" else u ** _pow_exponent(shape)
-            values = v0 + (v1 - v0) * shaped
-        out[mask] = values
+            if kind != "linear":
+                np.power(dst, _pow_exponent(shape), out=dst)
+            np.multiply(dst, v1 - v0, out=dst)
+            np.add(dst, v0, out=dst)
+        if where is not None:
+            out[where[a:b]] = dst
     return out

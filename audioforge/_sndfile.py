@@ -56,11 +56,21 @@ def _load():
     return None
 
 
-_LIB = _load()
+_UNSET = object()
+_LIB = _UNSET          # the library handle, or None when absent; lazy
+
+
+def _lib():
+    """libsndfile, located on first use (find_library spawns ldconfig, so an
+    eager lookup cost every process ~0.1 s even when no sample is decoded)."""
+    global _LIB
+    if _LIB is _UNSET:
+        _LIB = _load()
+    return _LIB
 
 
 def available() -> bool:
-    return _LIB is not None
+    return _lib() is not None
 
 
 def decode(data: bytes, ext: str = "") -> tuple[np.ndarray, int]:
@@ -69,7 +79,7 @@ def decode(data: bytes, ext: str = "") -> tuple[np.ndarray, int]:
     libsndfile reads from a path, so the verified bytes are staged in a temp
     file (suffixed by `ext` to help format sniffing) and removed afterwards.
     """
-    if _LIB is None:
+    if _lib() is None:
         raise RuntimeError(
             f"cannot decode '{ext or 'compressed'}' sample: libsndfile not "
             f"found. Install it (apt: libsndfile1, brew: libsndfile) — WAV "
@@ -80,18 +90,18 @@ def decode(data: bytes, ext: str = "") -> tuple[np.ndarray, int]:
         with os.fdopen(fd, "wb") as f:
             f.write(data)
         info = _SF_INFO()
-        handle = _LIB.sf_open(path.encode(), _SFM_READ, ctypes.byref(info))
+        handle = _lib().sf_open(path.encode(), _SFM_READ, ctypes.byref(info))
         if not handle:
-            msg = _LIB.sf_strerror(None)
+            msg = _lib().sf_strerror(None)
             raise ValueError(f"libsndfile could not open {ext or 'audio'}: "
                              f"{(msg or b'').decode(errors='replace')}")
         try:
             n = int(info.frames) * int(info.channels)
             buf = (ctypes.c_double * n)()
-            got = _LIB.sf_readf_double(handle, buf, info.frames)
+            got = _lib().sf_readf_double(handle, buf, info.frames)
             x = np.ctypeslib.as_array(buf).astype(np.float64).copy()
         finally:
-            _LIB.sf_close(handle)
+            _lib().sf_close(handle)
         ch = int(info.channels)
         if ch > 1:
             x = x[: int(got) * ch].reshape(-1, ch)

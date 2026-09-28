@@ -183,13 +183,44 @@ three):
 
 Playback at or below the source rate costs about the same as before. Separately,
 automation declared in layer beats (`time_basis: layer_beats`) is mapped to seconds per
-sample through the tempo/hold map; on a 30 s tone that path measured 1.9 s against 0.5 s
-for seconds-based automation, a cost to keep in mind for long beat-based curves. Large upward
+sample through the tempo/hold map. Engine 3.0 did that per sample in Python (1.9 s against
+0.5 s for seconds-based automation on a 30 s tone); engine 3.2 vectorizes it (0.058 s
+against 0.017 s for a 30 s gain curve). Large upward
 transpositions of long sampled parts (orchestral libraries pitched far from their
 key centres) render noticeably slower; `--jobs` parallelises across layers, not
 inside one note. `tests/test_perf_budget.py` pins the shape of the curve (ratio
 bounds), and `docs/evolution/harness.md` `HARNESS-PERF-002` pins the absolute
 budget on the reference machine.
+
+## Engine 3.2: render cost and numeric drift
+
+Engine 3.2.0 renders the same specs with about 4.4x less CPU (1009 s -> 230 s over the 17
+locally renderable compositions in `docs/examples`; short CLI renders ~7.5x less, most of it
+startup). Nothing audible changes, but output samples are not bit-identical to 3.1.0:
+
+| Source of difference | Size (max per-sample, measured) |
+|---|---|
+| float32 FFTs in long-IR reverbs (`reverb`, `fdn`, `plate`, `convolve`) | ~ -126 dB re the reverb's output peak |
+| float32 inverse FFT in `pad` (PADsynth) tables | ~ -132 dB re the table peak |
+| libm-free `tanh` in `saturate`; limiter/compressor windows via float64 overlap-add | ~ 1e-15 relative |
+| summation order in LUFS block powers, automation `exp` instead of `10**x` | ~ 1e-15 relative |
+| subnormal flushing (values below 1e-290 set to 0 in recursive kernels) | none audible (below -5800 dBFS) |
+
+End to end, every composition in `docs/examples` stays within -131 dBFS of engine 3.1.0 --
+below the 24-bit quantization step, so 24-bit masters differ at most in isolated LSBs and
+dither. Golden hashes (`tests/golden/audio.lock.json`) were re-pinned for 3.2.0.
+
+Determinism is unchanged: a given engine version renders identical bytes run to run on a
+given machine. The native kernels are built for the host CPU (`-march=native`) with FMA
+contraction and fast-math disabled and use only lane-parallel vectorization, so builds for
+different vector widths (SSE2/AVX2/AVX-512) produce the same bits; the kernel cache key
+includes the CPU identity. A C compiler is now required for every render, not only for the
+physical-model voices (`make native-check`).
+
+Process-level effects of importing the engine: `OPENBLAS_NUM_THREADS` defaults to 1 (set it
+before importing numpy to override), and during a render glibc keeps freed large buffers for
+reuse, returning them to the OS when the render ends; set `AUDIOFORGE_MALLOC_TUNE=0` to
+leave malloc untouched.
 
 ## Rolling back to engine 2.16.0
 

@@ -117,8 +117,16 @@ for t in sorted(schema.NATIVE_FX_TYPES):
 
 # ---------------------------------------------------- native kernels (.c) ---
 KNOWN_NONREGISTRY = {"plate_mod"}   # plate's modulated path, gated by mod>0
+from audioforge._native import ENGINE_KERNELS   # engine infrastructure kernels
+for c, wrappers in sorted(ENGINE_KERNELS.items()):
+    if c not in native_c:
+        drift("native", f"ENGINE_KERNELS lists '{c}' but no native/{c}.c")
+    for w in wrappers:
+        if not re.search(rf"^def {re.escape(w)}\(", native, re.M):
+            drift("native", f"ENGINE_KERNELS['{c}'] names {w}() but _native.py "
+                  f"defines no such wrapper")
 for c in sorted(native_c):
-    if c in KNOWN_NONREGISTRY:
+    if c in KNOWN_NONREGISTRY or c in ENGINE_KERNELS:
         continue
     if c not in schema.NATIVE_OSC_SHAPES and c not in schema.NATIVE_FX_TYPES:
         drift("native", f"native/{c}.c exists but '{c}' is in no NATIVE_* set")

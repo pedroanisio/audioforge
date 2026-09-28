@@ -261,7 +261,7 @@
     "urgency",
     "wonder"
   ],
-  "engine_version": "3.1.0",
+  "engine_version": "3.2.0",
   "examples": {
     "audio_layer": "layer vocal : audio { file: \"take.wav\" sha256: \"...64 hex...\" preserve: stereo }",
     "intent_block": "intent {\n  density: sparse\n  contour: arch\n  texture: smooth\n  affect: tense\n  avoid: clipping, noise\n  repair: \"make the melody less rough\"\n}",
@@ -927,7 +927,7 @@
           "note_seconds"
         ]
       },
-      "engine_version": "3.1.0",
+      "engine_version": "3.2.0",
       "field_layers": {
         "provenance": [
           "_meta"
@@ -2433,7 +2433,7 @@
   },
   "version_contract": {
     "dsl_version": "2.0",
-    "engine_version": "3.1.0",
+    "engine_version": "3.2.0",
     "source": "audioforge.version"
   }
 }

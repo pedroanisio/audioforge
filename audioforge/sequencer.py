@@ -142,6 +142,26 @@ class TempoMap:
                 return b0 + (v0 / k) * (np.exp(dt * k / 60.0) - 1.0)
         return b0 + dt * v0 / 60.0
 
+    def beats_at(self, t) -> np.ndarray:
+        """Vectorized ``beat_at``: the same per-element float operations in
+        the same order, so each value is bit-identical to the scalar call."""
+        t = np.asarray(t, dtype=float)
+        t0 = np.asarray(self.t0)
+        idx = np.maximum(np.searchsorted(t0, t, side="right") - 1, 0)
+        out = np.empty_like(t)
+        for i in np.unique(idx).tolist():
+            m = idx == i
+            b0, v0 = self.pts[i]
+            dt = t[m] - self.t0[i]
+            if i + 1 < len(self.pts):
+                b1, v1 = self.pts[i + 1]
+                if b1 != b0 and v1 != v0:
+                    k = (v1 - v0) / (b1 - b0)
+                    out[m] = b0 + (v0 / k) * (np.exp(dt * k / 60.0) - 1.0)
+                    continue
+            out[m] = b0 + dt * v0 / 60.0
+        return out
+
 
 class TimelineMap:
     """Beat timeline wrapper that inserts absolute-time holds.
@@ -184,6 +204,25 @@ class TimelineMap:
             offset += hold["duration_s"]
         return self.tempo_map.beat_at(t - offset)
 
+    def beats_at(self, t) -> np.ndarray:
+        """Vectorized ``beat_at`` (bit-identical per element)."""
+        t = np.asarray(t, dtype=float)
+        out = np.empty_like(t)
+        todo = np.ones(t.shape, dtype=bool)
+        offset = 0.0
+        for hold in self.holds:
+            start = hold["base_time_s"] + offset
+            end = start + hold["duration_s"]
+            before = todo & (t < start)
+            out[before] = self.tempo_map.beats_at(t[before] - offset)
+            todo &= ~before
+            held = todo & (t <= end)
+            out[held] = hold["beat"]
+            todo &= ~held
+            offset += hold["duration_s"]
+        out[todo] = self.tempo_map.beats_at(t[todo] - offset)
+        return out
+
 
 def dyn_env(points, tm, start_n: int, n: int, sr: int) -> np.ndarray:
     """Per-sample dynamic value over [start_n, start_n+n): the layer's
@@ -192,7 +231,7 @@ def dyn_env(points, tm, start_n: int, n: int, sr: int) -> np.ndarray:
     pts = np.asarray(points, dtype=np.float64)
     step = max(1, sr // 1000)
     grid_n = np.arange(start_n, start_n + n + step, step)
-    beats = np.array([tm.beat_at(t) for t in grid_n / sr])
+    beats = tm.beats_at(grid_n / sr)
     v = np.interp(beats, pts[:, 0], pts[:, 1])
     full = np.repeat(v, step)[: n]
     if full.size < n:
@@ -211,10 +250,7 @@ def _note_curve_times(curve: dict, tm: "TempoMap", start_beat: float,
     samples = np.arange(n, dtype=float) / sr
     basis = curve.get("time_basis", "note_beats")
     if basis == "note_beats":
-        return np.array([
-            tm.beat_at(start_time_s + float(t)) - start_beat
-            for t in samples
-        ], dtype=float)
+        return tm.beats_at(start_time_s + samples) - start_beat
     return samples
 
 
@@ -301,7 +337,7 @@ def render_note_track(track: dict, total_n: int, sr: int, tm: "TempoMap",
     portamento (glide_s, monophonic-line semantics), per-note vibrato, and
     velocity->brightness. All deviation is drawn from per-note seeded RNG
     paths: 'imperfect' and byte-reproducible at once."""
-    from .fx import filter_fx
+    from .fx import _biquad
     from .render import _voice_params
     env_p = track.get("env", {"attack": 0.01, "decay": 0.1,
                               "sustain": 0.7, "release": 0.1})
@@ -318,6 +354,7 @@ def render_note_track(track: dict, total_n: int, sr: int, tm: "TempoMap",
     scheduled = schedule_notes(track, total_n, sr, tm, factory, groove)
     prev_freq = None
     prev_start = None
+    pending: list = []                  # notes awaiting the batched filter
     for note in scheduled:
         ev = note["event"]
         freq = ev.get("freq_hz") or synth.note_to_freq(ev["note"])
@@ -374,8 +411,28 @@ def render_note_track(track: dict, total_n: int, sr: int, tm: "TempoMap",
             dyn_v = dyn_env(dyn_pts, tm, start, n, sr)
         bright_vel = float(dyn_v[0]) if dyn_v is not None else vel
         cutoff = synth.vel_brightness_cutoff(bright_vel, freq, sr, vb_amount)
-        if cutoff is not None:
-            sig = filter_fx(sig, sr, "lowpass", cutoff, 0.7071)
+        pending.append((sig, None if cutoff is None
+                        else _biquad("lowpass", cutoff, sr, 0.7071),
+                        (ev, start_beat, t, n, start, env, vel, dyn_v)))
+        if len(pending) == 8:
+            _flush_notes(pending, out, gain, tm, sr)
+        prev_freq, prev_start = freq, start_beat
+    _flush_notes(pending, out, gain, tm, sr)
+    return out
+
+
+def _flush_notes(pending: list, out: np.ndarray, gain: float, tm, sr: int):
+    """Brightness-filter the queued notes together (independent biquads
+    overlap in one native pass), then finish and mix each in note order --
+    the same per-note arithmetic and summation order as filtering one by
+    one."""
+    from ._native import biquad_batch
+    from .fx import filter_auto_fx
+    todo = [(sig, *ba) for sig, ba, _ in pending if ba is not None]
+    filtered = iter(biquad_batch(todo)) if todo else iter(())
+    for sig, ba, (ev, start_beat, t, n, start, env, vel, dyn_v) in pending:
+        if ba is not None:
+            sig = next(filtered)
         note_cutoff = _sum_note_curve(ev, "cutoff_hz", tm, start_beat, t,
                                       n, sr)
         if note_cutoff is not None:
@@ -389,5 +446,4 @@ def render_note_track(track: dict, total_n: int, sr: int, tm: "TempoMap",
         if note_gain_db is not None:
             contrib = contrib * (10.0 ** (note_gain_db / 20.0))
         out[start:start + n] += contrib
-        prev_freq, prev_start = freq, start_beat
-    return out
+    pending.clear()

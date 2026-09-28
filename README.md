@@ -197,4 +197,4 @@ Current limits are measured in `docs/evolution/harness-notation.md`.
 * Determinism is guaranteed within an environment; cross-platform float reproducibility is *checked* by the `verify` gate rather than assumed.
 * Recorded material uses content-addressed WAV sample layers or pinned SFZ-subset instrument libraries. Recorded transitions and ensemble realism depend on the source material; synthesized approximations are declared in the render plan.
 
-Requires Python 3.10+, numpy, scipy. Engine 3.1.0 · DSL 2.0.
+Requires Python 3.10+, numpy, scipy. Engine 3.2.0 · DSL 2.0.
