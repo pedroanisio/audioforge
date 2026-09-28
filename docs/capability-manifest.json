@@ -2268,7 +2268,7 @@
         "triangle": "stable"
       }
     },
-    "predicate": "stable = pure-Python, always available; experimental = requires the native C-kernel toolchain (fails loudly if the compiler is absent)"
+    "predicate": "stable = rendered by the core engine kernels; experimental = also needs a dedicated physical-model or effect kernel. Every render requires a C compiler since engine 3.2 (ADR-0012)"
   },
   "style_packs": [
     "ambient",

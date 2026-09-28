@@ -3,8 +3,8 @@ disclaimer:
   notice: >-
     No information within this document should be taken for granted. Behavioral
     claims below are bounded by the named implementation and acceptance tests.
-  generated_by: "GPT-6 via Codex"
-  date: "2026-09-05"
+  generated_by: "GPT-6 via Codex; revised by Claude Opus 5.5 via Claude Code"
+  date: "2026-09-28"
 ---
 
 # Migrating to engine 3.0, DSL 2.0 and IR 2.0
@@ -14,6 +14,10 @@ different levels, note tails, sample spectra, arrangements and performances.
 Review renders and regenerate manifests and golden hashes. Structural migration
 through `audioforge.ir_schema.migrate_ir_spec` preserves numeric authoring intent;
 it does not reproduce an older engine's audio.
+
+Upgrading from 3.1 to 3.2 changes output bits but nothing audible and adds a C
+compiler requirement for every render; see
+[Engine 3.2: render cost and numeric drift](#engine-32-render-cost-and-numeric-drift).
 
 ## Levels, gates and sample playback
 
@@ -216,6 +220,15 @@ contraction and fast-math disabled and use only lane-parallel vectorization, so 
 different vector widths (SSE2/AVX2/AVX-512) produce the same bits; the kernel cache key
 includes the CPU identity. A C compiler is now required for every render, not only for the
 physical-model voices (`make native-check`).
+
+What to expect operationally: `validate` does not check for the compiler, so a spec
+reported render-ready still fails at render on a host without one (`render failed: ...
+needs a C compiler`); run `make native-check` in new environments. Compiled kernels live
+in `$AUDIOFORGE_NATIVE_CACHE` (default `$XDG_CACHE_HOME/audioforge` or
+`~/.cache/audioforge`), one file per kernel source, flag set and CPU; nothing evicts old
+entries, and the key does not include the compiler version, so clear the cache after
+changing compilers. The stage hall (`stage:` blocks) still convolves in float64 through
+`scipy.signal.oaconvolve` and is unaffected by the float32 change.
 
 Process-level effects of importing the engine: `OPENBLAS_NUM_THREADS` defaults to 1 (set it
 before importing numpy to override), and during a render glibc keeps freed large buffers for

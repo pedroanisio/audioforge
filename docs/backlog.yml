@@ -1138,10 +1138,10 @@ items:
     summary: "Evaluate layer_beats automation with a vectorized beat grid (interp on tempo/hold breakpoints) instead of per-sample TimelineMap.beat_at, build the seconds grid lazily, and replace the eight inline TimelineMap(TempoMap(...)) constructions with one timeline_for(spec)."
     category: "feature"
     type: "tech-debt"
-    status: "ready"
+    status: "in-progress"
     complexity: "M"
     priority: "medium"
-    rationale: "Measured: beat-based automation on a 30 s tone renders in 1.9 s against 0.5 s for seconds-based automation; the timeline construction is duplicated with differing defaults."
+    rationale: "Measured: beat-based automation on a 30 s tone rendered in 1.9 s against 0.5 s for seconds-based automation; the timeline construction is duplicated with differing defaults. Engine 3.2.0 vectorized the beat mapping (TempoMap/TimelineMap.beats_at): 0.058 s against 0.017 s on a 30 s gain curve (3.4x, above the 1.2x target); the single timeline factory is still open."
     dependencies:
       - "BL-032"
     acceptance_criteria:

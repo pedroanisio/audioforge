@@ -4,8 +4,8 @@ disclaimer:
     No information within this document should be taken for granted.
     Any statement or premise not backed by a real logical definition
     or verifiable reference may be invalid, erroneous, or a hallucination.
-  generated_by: "Claude Opus 4.8 via Claude Code"
-  date: "2026-06-12"
+  generated_by: "Claude Opus 4.8 via Claude Code; revised by Claude Opus 5.5 via Claude Code"
+  date: "2026-09-28"
 ---
 
 # ShadowMD
@@ -82,8 +82,7 @@ Integrity violation: article.md was modified outside ShadowMD.
   Expected: sha256:abc...
   Actual:   sha256:def...
 
-Resolve with: `shadowmd repair article.md --restore-projection` (discard)
-           or `shadowmd absorb article.md -m MSG` (keep).
+Resolve with: `shadowmd repair FILE --restore-projection` (discard) or `shadowmd absorb FILE -m MSG` (keep).
 ```
 
 ## Commands
@@ -128,7 +127,9 @@ atomic-IO, locking and journal paths are exercised for real, not mocked.
 
 ```text
 shadowmd/
+  __main__.py     # `python -m shadowmd` entry point
   cli.py          # the only write API; typed errors -> exit codes
+  errors.py       # typed errors (the CLI maps them to exit codes)
   repo.py         # discovery, init, operation orchestration, reentrant repo lock
   store.py        # content-addressed blob storage (sha256 fan-out)
   index.py        # atomic working-projection index
@@ -139,7 +140,7 @@ shadowmd/
   locks.py        # repo/file lock hierarchy + stale detection (§9.1)
   fsck.py         # integrity verification + journal recovery
   restore.py gc.py status.py diff.py patchtools.py
-  atomicio.py hashing.py protection.py config.py layout.py ids.py models.py
+  atomicio.py hashing.py protection.py config.py layout.py ids.py models.py jsonio.py
 ```
 
 ## License

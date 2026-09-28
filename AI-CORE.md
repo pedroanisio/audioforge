@@ -4,8 +4,8 @@ disclaimer:
     No information within this document should be taken for granted.
     Any statement or premise not backed by a real logical definition
     or verifiable reference may be invalid, erroneous, or a hallucination.
-  generated_by: "Claude Opus 4.8 (1M context) via Claude Code"
-  date: "2026-06-11"
+  generated_by: "Claude Opus 4.8 (1M context) via Claude Code; revised by Claude Opus 5.5 via Claude Code"
+  date: "2026-09-28"
 ---
 
 # AI Core Concepts
@@ -59,24 +59,30 @@ The claim the constraint above is meant to support.
   work is coverage, ergonomics, and verification — not a theoretical
   expressiveness gap. See [DSL_GAP_SPEC.md §2](docs/DSL_GAP_SPEC.md).
 
-## 3. Pillars (open gaps toward strong universality)
+## 3. Pillars (gap contracts delivered; strong universality still pending)
 
 The capabilities that move the thesis from "universal in principle" to
-"universal without qualification" (acceptance criteria in
-[DSL_GAP_SPEC.md §5](docs/DSL_GAP_SPEC.md)).
+"universal without qualification". Each pillar's initial contract is now closed
+in [DSL_GAP_SPEC.md](docs/DSL_GAP_SPEC.md); the strong-universality acceptance
+criteria in [§5](docs/DSL_GAP_SPEC.md) remain the open work.
 
 - **Formal Universal Music IR Schema** — a versioned, published schema that
   separates semantic intent, expanded render data, and provenance, so the IR is
-  a checkable contract rather than implicit dictionaries.
+  a checkable contract rather than implicit dictionaries. Delivered:
+  `audioforge/ir_schema.py` → `docs/ir.schema.json` (G2 closed).
   See [DSL_GAP_SPEC.md G2](docs/DSL_GAP_SPEC.md).
 - **Semantic Round-Trip Preservation** — `DSL → IR → DSL → IR` that preserves
   authored *altitude* (smart directives, motifs, intent), not just
-  render-equivalent output, so an agent reads back what it wrote.
+  render-equivalent output, so an agent reads back what it wrote. Delivered:
+  `_meta.semantic` capture plus `decompile` round-trip diagnostics (G4 closed).
   See [DSL_GAP_SPEC.md G4](docs/DSL_GAP_SPEC.md).
 - **Library-Aware Orchestration** — orchestration that chooses playable
   instruments from a catalog, enforces comfortable/hard ranges, selects
   articulations by technique, and forms divisi from real instrument
-  capabilities. See [DSL_GAP_SPEC.md G5](docs/DSL_GAP_SPEC.md).
+  capabilities. Delivered: `catalog.DEFAULT_INSTRUMENT_CAPABILITIES` enforced by
+  validation (G5 closed). See [DSL_GAP_SPEC.md G5](docs/DSL_GAP_SPEC.md).
 - **Interop Depth** — documented MIDI/MusicXML subsets, real-world fixture
   coverage, session/stems bundle export, and structured lossy-conversion
-  diagnostics. See [DSL_GAP_SPEC.md G8](docs/DSL_GAP_SPEC.md).
+  diagnostics. Delivered: `docs/INTEROP.md` coverage matrix and
+  `interop_diagnostics()` (G8 initial contract closed).
+  See [DSL_GAP_SPEC.md G8](docs/DSL_GAP_SPEC.md).

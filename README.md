@@ -3,8 +3,8 @@ disclaimer:
   notice: >-
     No information within this document should be taken for granted. Claims
     require verification against the implementation and its acceptance tests.
-  generated_by: "GPT-6 via Codex"
-  date: "2026-09-05"
+  generated_by: "GPT-6 via Codex; revised by Claude Opus 5.5 via Claude Code"
+  date: "2026-09-28"
 ---
 
 # AudioForge
@@ -25,9 +25,23 @@ This work is subject to the methodological caveats and commitments described in 
 
 Every spec is canonically hashed (with the engine version folded in). The manifest records `spec_hash` and `output_sha256`; `audioforge verify` re-renders and compares bytes — a CI gate against silent drift. Randomness derives from named component paths under `performance_seed` and `variant`; changing gain or metadata preserves the performance. The complete spec hash still identifies the render contract. No wall clocks, no global RNG.
 
+## Install
+
+Requires Python 3.10+ and a C compiler (`cc`, `gcc` or `clang`) on `PATH`: every render runs
+through native kernels compiled on first use (`make native-check` confirms the compiler).
+
+```bash
+uv sync --extra dev                  # or: python -m pip install -e '.[dev]'
+```
+
+Runtime dependencies: lark, numpy, scipy, matplotlib. Optional extras: `dev` (tests),
+`oracles` (MusicXML XSD, music21 on Python 3.11+, LilyPond; `make oracle-check`) and
+`engrave` (LilyPond only). The `audioforge` console script is equivalent to
+`python -m audioforge.cli`.
+
 ## Quick start
 
-Engine 3.0 changes audible behavior. Read the [migration guide](docs/MIGRATION_3.md) for gate/release, gain, mastering, repeat and performance-seed changes. The [acceptance ledger](docs/MUSICAL_CORRECTNESS.md) separates measured correctness from listening judgments.
+Engine 3.0 changes audible behavior. Read the [migration guide](docs/MIGRATION_3.md) for gate/release, gain, mastering, repeat and performance-seed changes. Engine 3.2 changes output bits again (native kernels, at most −131 dBFS from 3.1 on the example corpus) and renders with about 4.4× less CPU; see "Engine 3.2: render cost and numeric drift" in the same guide. The [acceptance ledger](docs/MUSICAL_CORRECTNESS.md) separates measured correctness from listening judgments.
 
 ```bash
 python -m audioforge.cli validate docs/examples/sound-design/transition-sweep/transition_sweep.af
@@ -89,18 +103,18 @@ Design rule: **the DSL is sugar; the JSON IR is truth.** Emotion tags, intensity
 * **Loudness & dynamics** — BS.1770-style gated LUFS targeting backed by a lookahead true-peak limiter (4× oversampled, stereo-linked, iterative makeup); stereo-linked glue and 3-band multiband compression (`comp`, `mbcomp`); always-on DC blocker before quantization. Gain reduction is reported in the manifest.
 * **Stems** — `--stems` writes per-layer pre-master stereo files, each seeded-dithered on its own deterministic path.
 * **Sync** — markers land in the manifest and a `.markers.json` sidecar; an example plugin exports EDL marker lists for editors.
-* **Export presets** — `social_video` (48k/16/−14 LUFS), `broadcast` (48k/24/−23), `cinematic_master` (96k/24/−16), `web_preview` (22k05/16). Presets derive a re-id'd spec, so every delivery variant is itself hash-tracked.
+* **Export presets** — `social_video` (48k/16/−14 LUFS), `broadcast` (48k/24/−23), `cinematic_master` (96k/24/−16), `web_preview` (22k05/16/−16). Presets derive a re-id'd spec, so every delivery variant is itself hash-tracked.
 * **Loop safety** — `loopsafe: on` checks duration under the actual tempo/hold map and measures the premaster and delivered seam and tails.
 
 ## SDK & plugins
 
-`audioforge.sdk.AudioForge` is the integration surface: `compile / load_file / load_spec` → `AudioAsset` with `validate / set / mutated / render / preview / export`. Compilation never raises on user input — agents get structured `Diagnostic`s with line numbers.
+`audioforge.sdk.AudioForge` is the integration surface: `compile(dsl)` and `load_file(path)` return a `CompileResult` (assets + diagnostics); `load_spec(dict)` returns an `AudioAsset`. An `AudioAsset` offers `validate / set / mutated / render / preview / export`, plus `plan`, `analyze`, `variant`, `with_intensity`, `export_cutdowns` and `to_json / to_dsl / to_midi / to_musicxml`; `AudioForge` also provides `export_pack`, `catalog`, `import_midi` and `import_musicxml`. DSL compilation never raises on user input — agents get structured `Diagnostic`s with line numbers; JSON specs are validated directly and raise `SpecError`. Agent tool schemas (`tool_schemas` / `run_tool`) and an MCP server (`python -m audioforge.mcp`) expose the same surface; see [docs/AGENT_TOOLS.md](docs/AGENT_TOOLS.md).
 
-Five extension points (`audioforge.plugins`): oscillators, fx, drum voices, exporters, validators. Plugins receive an injected seeded RNG and must use no other entropy; plugin names live in specs, so spec hashing covers plugin selection automatically. See `examples/custom_plugin.py`.
+Five extension points (`audioforge.plugins`): oscillators, fx, drum voices, exporters, validators. Fx and drum-voice plugins receive an injected seeded RNG; no plugin may use other entropy; plugin names live in specs, so spec hashing covers plugin selection automatically. See `examples/custom_plugin.py`.
 
 ## The validate/render contract (v2.14)
 
-From an external review (2026-06-10): `validate` now performs resource **binding**, not just shape checks — `OK: valid` means render-ready, placeholder pins get a distinct diagnostic, render refuses with structured line-cited lists instead of raw tracebacks, and a property test locks the contract (render-time SpecErrors must be pre-reported by validate). DSL ergonomics: multiline `auto` continuation, self-explaining `notes:`/`play` diagnostics, and `slur( play …, play … )` support. `pytest -q` now collects cleanly; `scripts/run_tests.sh` is the canonical full runner. The review's three historical scores live in `docs/examples/archive/` and remain diagnostic regressions.
+From an external review (2026-06-10): `validate` now performs resource **binding**, not just shape checks — `OK: valid` means render-ready (on a host with a C compiler; `validate` does not check for one), placeholder pins get a distinct diagnostic, render refuses with structured line-cited lists instead of raw tracebacks, and a property test locks the contract (render-time SpecErrors must be pre-reported by validate). DSL ergonomics: multiline `auto` continuation, self-explaining `notes:`/`play` diagnostics, and `slur( play …, play … )` support. `pytest -q` now collects cleanly; `scripts/run_tests.sh` is the canonical full runner. The review's three historical scores live in `docs/examples/archive/` (historical DSL, migration required) and are covered by the DSL-AST golden snapshot.
 
 ## Stage & room (v2.13 — P4)
 
@@ -124,7 +138,7 @@ A **blown reed waveguide** (native kernel sibling to bowed; loop-gain constants 
 
 ## Variation at scale (v2.8)
 
-One spec → a **pack** (`audioforge pack --variants 8`: seeded variant siblings + `vary()` structural choice sets, every render hash-tracked in a pack manifest), a **campaign** (declared `cutdowns { 15s: keep … }` spliced from one premaster with crossfades and per-cut loudness, full lineage), and an **intensity ladder** (`--intensity 0.3/0.6/1.0`).
+One spec → a **pack** (`audioforge pack --variants 8`: seeded variant siblings + `vary()` structural choice sets, every render hash-tracked in a pack manifest), a **campaign** (declared `cutdowns { 15s: keep … }` spliced from one premaster with crossfades and per-cut loudness, full lineage), and an **intensity ladder** (`render --intensity 0.3`, then `0.6`, then `1.0`; also accepted by `campaign`).
 
 ## Composition ergonomics (v2.7)
 
@@ -146,20 +160,62 @@ Notes stop sitting on a perfect grid with identical timbre: **groove templates**
 
 Research-grade, fully mechanized voices — no samples, all seed-deterministic: **PADsynth** ensemble pads (Nasca's public-domain Gaussian-harmonic IFFT, perfectly looping), **Karplus-Strong** plucked strings (Jaffe/Smith lineage, fractional tuning, pick-position comb), **modal resonator banks** (bell/glass/marimba/gong/steel mode tables with frequency-dependent decay), **supersaw unison** (golden-ratio phase decorrelation), and exact-Fourier wavetables that lift the old 64-harmonic cap to full Nyquist bandwidth. Spatial (Tier 2): a **Dattorro plate** (the published 1997 figure-8 tank — delay lengths, diffusion coefficients, and stereo output-tap tables, rendered as an exact LTI impulse response and applied by FFT convolution) and a **per-band FDN hall** (8 coprime delay lines, Householder feedback, independent low/high RT60 — long lows, faster highs). Both are true stereo on the master bus with decorrelated tails; a **Freeverb-lineage hall** remains as the lightweight option, alongside the convolution reverb. Saturation runs 4× oversampled; 16-bit exports get high-pass TPDF dither.
 
+## Command line
+
+`audioforge <command>` (or `python -m audioforge.cli <command>`); `audioforge --version`
+prints the engine and DSL versions. [docs/DSL_SPEC.md](docs/DSL_SPEC.md#cli) has the
+complete command block, and [AGENTS.md](AGENTS.md) the verb table (both test-gated
+against `cli.py`).
+
+| Area | Commands |
+|---|---|
+| Author and inspect | `validate` (`--no-resolve`), `compile`, `decompile`, `plan` (`--explain`), `grammar` (`--format ebnf\|gbnf`), `capabilities`, `repair` |
+| Render | `render` (`--stems`, `--preset`, `--variant`, `--intensity`, `--jobs`, `--analyze`, `--plan`, `--explain`), `batch`, `verify SPEC MANIFEST` (exit 2 on mismatch) |
+| Variation | `pack` (`--variants`, `--preset`), `campaign` (`--preset`, `--intensity`) |
+| Samples and libraries | `ingest`, `libgen`, `sample-catalog search / resolve-openverse / download / analyze / build-sfz / audit-license / review` |
+| Notation | `export-musicxml` (`--notated`, `--bars`), `export-midi`, `import-musicxml`, `import-midi`, `score` |
+
+## Environment variables
+
+| Variable | Effect |
+|---|---|
+| `AUDIOFORGE_JOBS` | Layer-rendering threads (default 1; `render --jobs` sets it). Output is byte-identical for any value. |
+| `AUDIOFORGE_NATIVE_CACHE` | Directory for compiled kernels (default `$XDG_CACHE_HOME/audioforge` or `~/.cache/audioforge`). Kernels are keyed by source, compiler flags and CPU identity. |
+| `AUDIOFORGE_MALLOC_TUNE=0` | Leave glibc malloc untouched during renders (by default freed render buffers are kept for reuse and returned when the render ends). |
+| `OPENBLAS_NUM_THREADS` | Defaults to 1 when `audioforge` is imported before numpy (idle BLAS workers only burn CPU); an explicit value wins. |
+
+## Development
+
+`make check` is the gate CI runs: native-check, schema/manifest/interop/golden/drift/version/
+docs/lock/floor drift gates, then the full suite (`scripts/run_tests.sh`). `make help` lists
+every target; discrete fast gates such as `make docs-check` exist for local iteration.
+Generated artifacts (`docs/ir.schema.json`, `docs/capability-manifest.json`,
+`docs/DIAGNOSTIC_CODES.md`, `docs/INTEROP.md`, `docs/reference.md`,
+`docs/capabilities.md`, `tests/golden/audio.lock.json`) are rewritten by their tools under
+`audioforge/tools/`, never by hand.
+
 ## Layout
 
 ```
-audioforge/          engine: determinism, synth, fx, sequencer, loudness,
-                     schema (IR validation), render, dsl, sdk, plugins, cli
-docs/examples/sound-design/  self-contained quick-start DSL
+audioforge/          engine package
+  dsl.py, lark_parser.py      .af DSL: grammar (LALR) and compiler to the JSON IR
+  schema.py, ir_schema.py     IR validation and the generated JSON Schema
+  render.py, sequencer.py     layer rendering, timelines, mixing, mastering
+  synth.py, sampler.py, ...   voices: synthesis, SFZ-subset sampler, foley, samples
+  fx.py, spaces.py, dynamics.py, loudness.py, convolution.py   effects and mastering
+  _native.py, native/*.c      ctypes wrappers and C kernels (compiled on first use)
+  sdk.py, cli.py, agent_tools.py, mcp/   integration surfaces
+  interop.py, musicxml.py, score.py      MIDI/MusicXML interchange, proof sheets
+  tools/                      generators and gates behind `make check`
+docs/                DSL spec, IR schema, migration guide, ADRs, generated references
 docs/examples/       compositions: DSL, documentation and local rendered audio
+examples/            agent_loop.py, integration_pipeline.py, custom_plugin.py, reverb_ab.py
+samples/             shipped content-addressed samples and impulse responses
+scripts/             test runner, example gallery, drift inspection, library fetchers
 static/fixtures/     focused acceptance/rejection fixtures (.af)
-AI-CORE.md           agent-facing core concepts (consumption model,
-                     IR-is-truth, universality claim, open pillars)
-docs/DSL_SPEC.md     full DSL grammar + emotion mapping table
-examples/            agent_loop.py, integration_pipeline.py, custom_plugin.py
-tests/               determinism suite + v2 suite (DSL, SDK, plugins,
-                     automation, LUFS, stems, reproducibility)
+tests/               pytest suite, golden locks and fixtures
+AI-CORE.md           agent-facing core concepts (consumption model, IR-is-truth,
+                     universality claim, open pillars)
 ```
 
 ## Notation and analysis
@@ -172,7 +228,7 @@ AudioForge is a render contract, not a notation program (ADR-0011). What it offe
 * **Interchange** — `audioforge export-musicxml` (exact-tick, and `--notated` quantized to
   measures), `export-midi`, `import-musicxml`, `import-midi`. The notated export is judged by
   the MusicXML 3.1 schema, by music21 and by LilyPond (`make oracle-check`, needs
-  `uv pip install -e '.[oracles]'`). Parts, chords, meter, key and tempo changes, the pickup,
+  `uv pip install -e '.[oracles]'`; music21 installs on Python 3.11+ only). Parts, chords, meter, key and tempo changes, the pickup,
   dynamics, articulations, slurs, tuplets, lyrics, sections and repeats are projected.
   Fermata positions are shown, but their pause lengths are unspecified on import.
   Polymeter uses the global score meter with `lossy_polymeter`;
@@ -184,17 +240,18 @@ AudioForge is a render contract, not a notation program (ADR-0011). What it offe
   roman numerals, no stylistic judgment: export MusicXML and use music21 for those.
 * **Proof sheet** — `audioforge score` draws a proportional PDF (noteheads at beat × pitch,
   duration bars, stage plot, intensity ribbon, provenance). It is a proof sheet, not
-  engraving. Use `musicxml2ly` followed by `lilypond` for typeset scores. A built-in `score --engrave` backend is planned for notation M5.
+  engraving. Use `musicxml2ly` followed by `lilypond` for typeset scores. A built-in `score --engrave` backend is planned for notation M5; the `engrave` extra only pre-installs LilyPond for the external path.
 
 Current limits are measured in `docs/evolution/harness-notation.md`.
 
 ## Honest limits
 
 * The LUFS meter is a production-consistent BS.1770-style approximation, not a certified meter; manifests record measured values so you can confirm against a reference meter where compliance matters. The limiter is a clean lookahead design, not a multi-stage mastering limiter.
-* The plate and FDN render the exact published topologies as impulse responses. Plate delay-line modulation (`mod>0`) is available via an on-demand-compiled native kernel (validated against the Python path at machine epsilon for mod=0); it requires a C compiler and fails loudly rather than silently substituting different audio.
+* The plate and FDN render the exact published topologies as impulse responses. Plate delay-line modulation (`mod>0`) uses a native kernel validated against the IR path at machine epsilon for mod=0.
+* Rendering requires a C compiler: limiting, filtering, saturation, halls, delays and wavetable voices run in native kernels (`audioforge/native/`), built with `-O3 -march=native -ffp-contract=off` and cached per CPU. Without a compiler, rendering fails loudly rather than substituting different audio.
 * The compressors are deterministic offline lookahead-RMS designs with documented semantics — built for reproducibility, not analog emulation.
-* IR computation is a sequential Python loop bounded by tail length (~2-4 s per parameter set, cached); long multi-space cinematic masters render in tens of seconds rather than seconds.
-* Determinism is guaranteed within an environment; cross-platform float reproducibility is *checked* by the `verify` gate rather than assumed.
+* The Dattorro plate IR is still a sequential Python loop (0.8–2.6 s CPU for 3.6–12 s tails, cached per process and parameter set); FDN IRs are generated natively. The two 10-minute examples (`s03_highway_opens`, `last_24h`) render in 24 s and 34 s of CPU.
+* Determinism is guaranteed within an environment (native kernels give identical bits across SSE2/AVX2/AVX-512 builds); cross-platform float reproducibility is *checked* by the `verify` gate rather than assumed.
 * Recorded material uses content-addressed WAV sample layers or pinned SFZ-subset instrument libraries. Recorded transitions and ensemble realism depend on the source material; synthesized approximations are declared in the render plan.
 
-Requires Python 3.10+, numpy, scipy. Engine 3.2.0 · DSL 2.0.
+Requires Python 3.10+, lark, numpy, scipy, matplotlib and a C compiler. Engine 3.2.0 · DSL 2.0.

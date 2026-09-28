@@ -1,10 +1,13 @@
-"""On-demand compilation + ctypes loading of the native kernel.
+"""On-demand compilation + ctypes loading of the native C kernels.
 
-The kernel is required only for plate modulation (`plate(..., mod>0)`),
-which is not expressible as an LTI impulse response. Policy: if no C
-compiler is available the feature raises a clear error — never a silent
-fallback that would make the same spec render differently across machines.
-Compiled artifacts are cached, keyed by a hash of the source.
+Every render goes through native kernels (ADR-0012): the engine-wide streaming
+DSP in native/dsp.c and native/upfirdn.c (registered in ENGINE_KERNELS), plus
+the dedicated physical-model voices, ladder/tape effects and modulated plate.
+Policy (ADR-0004): if no C compiler is available rendering fails loudly -- never
+a silent fallback that would make the same spec render differently across
+machines; the only fallback is one proven bit-identical by a test
+(resample_poly -> scipy). Compiled artifacts are cached, keyed by a hash of the
+source (and, for the SIMD kernels, the compiler flags and CPU identity).
 """
 from __future__ import annotations
 

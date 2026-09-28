@@ -29,7 +29,7 @@ Machine-readable surface of AudioForge **engine 3.2.0 · DSL 2.0**, generated fr
 
 ## Per-capability status
 
-Status is derived by predicate (ADR-0006 / AF-R07): `stable` = pure-Python, always available; `experimental` = requires the native C-kernel toolchain (fails loudly if absent).
+Status is derived by predicate (AF-R07; ADR-0004, ADR-0012): `stable` = rendered by the core engine kernels; `experimental` = also needs a dedicated physical-model or effect kernel. Every render requires a C compiler since engine 3.2.
 
 **Experimental oscillators:** `blown`, `bowed`, `brass`, `struck`, `sympathetic`.
 

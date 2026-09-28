@@ -21,7 +21,7 @@ classifiers = [
   "Topic :: Text Processing :: Markup :: Markdown",
 ]
 # Zero runtime dependencies: the design is deliberately stdlib-only
-# (hashlib, difflib, os.replace, argparse). See docs/shadowmd-design-v2.md.
+# (hashlib, difflib, os.replace, argparse). See docs/design.md.
 dependencies = []
 
 [project.optional-dependencies]

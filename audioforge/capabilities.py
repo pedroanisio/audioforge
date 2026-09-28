@@ -132,12 +132,12 @@ COMMON_LAYER_PROPS = {
 def _capability_statuses() -> dict:
     """Per-capability lifecycle status, derived by predicate (AF-R07) — not hand-listed.
 
-    stable       = pure-Python, always available.
-    experimental = requires the native C-kernel toolchain (fails loudly if the
-                   compiler is absent), so its availability is environment-dependent.
-    A new voice inherits its status from *where it is registered*: a pure-Python
-    oscillator is `stable`; a native kernel is `experimental` until it too is
-    pure-Python — no manifest edit required, so the field cannot rot.
+    stable       = rendered by the core engine kernels shared by every render.
+    experimental = additionally needs a dedicated physical-model or effect kernel
+                   (NATIVE_OSC_SHAPES / NATIVE_FX_TYPES).
+    Since engine 3.2 every render needs the C toolchain (ADR-0012), so neither
+    status means "no compiler needed". A new voice inherits its status from *where
+    it is registered* — no manifest edit required, so the field cannot rot.
     """
 
     def _status(name: str, native: set) -> str:
@@ -145,8 +145,9 @@ def _capability_statuses() -> dict:
 
     return {
         "predicate": (
-            "stable = pure-Python, always available; experimental = requires the "
-            "native C-kernel toolchain (fails loudly if the compiler is absent)"
+            "stable = rendered by the core engine kernels; experimental = also "
+            "needs a dedicated physical-model or effect kernel. Every render "
+            "requires a C compiler since engine 3.2 (ADR-0012)"
         ),
         "by_capability": {
             "oscillators": {

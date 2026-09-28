@@ -3,15 +3,15 @@ disclaimer:
   notice: >-
     No information within this document should be taken for granted. Claims
     require verification against the implementation and its acceptance tests.
-  generated_by: "GPT-6 via Codex"
-  date: "2026-09-05"
+  generated_by: "GPT-6 via Codex; revised by Claude Opus 5.5 via Claude Code"
+  date: "2026-09-28"
 ---
 
 # AudioForge DSL Specification
 
 **DSL 2.0 · Engine 3.2.0**
 
-The `.af` DSL is the authoring surface for humans and AI agents. It compiles to a JSON spec — the deterministic intermediate representation (IR) that the engine renders. Everything expressive in the DSL (emotion tags, intensity curves, motifs, chords, transforms, groove templates, `vary()` choices) is **expanded at compile time** into explicit JSON parameters, so the IR is always the single, inspectable ground truth for what will be rendered. Under the same engine version, same DSL text → same IR → same spec hash → byte-identical audio.
+The `.af` DSL is the authoring surface for humans and AI agents. It compiles to a JSON spec — the deterministic intermediate representation (IR) that the engine renders. Everything expressive in the DSL (emotion tags, intensity curves, motifs, chords, transforms, groove templates, `vary()` choices) is **expanded at compile time** into explicit JSON parameters, so the IR is always the single, inspectable ground truth for what will be rendered. Under the same engine version, in one verified environment (with the C compiler every render needs), same DSL text → same IR → same spec hash → byte-identical audio. Identity across engine versions is not promised: 3.2.0 output differs from 3.1.0 within −131 dBFS.
 
 This document is the implemented language reference. Remaining DSL architecture
 and expressiveness gaps are tracked in [DSL_GAP_SPEC.md](DSL_GAP_SPEC.md).
@@ -36,7 +36,7 @@ Numbers may carry a unit suffix, validated against what the property expects:
 | `deg` | degrees | `seat: -16deg @ 4.5m` |
 | `m` | meters | `size: 15m, 23m, 12m` |
 
-**Pitches.** Notes are pitch names: `C4`, `F#2`, `Eb3`, `A-1` (MIDI-style octaves, A4 = 440 Hz). Raw frequencies are accepted anywhere a note is: `432hz @ 0b for 4b`. **Chord symbols** are a root-with-octave plus a quality, accepted anywhere a note is (including motifs): `C3min7`, `Ab2maj7`, `E4sus4`. Qualities: `maj min m dim aug 6 7 9 m6 m7 maj7 min7 maj9 min9 m9 sus2 sus4 add9 dim7 min7b5 m7b5 7sus4 dom7sus4 maj7#11 maj7s11` (`s11` spells #11 without the DSL comment char).
+**Pitches.** Notes are pitch names: `C4`, `F#2`, `Eb3` (MIDI-style octaves, A4 = 440 Hz; negative octaves such as `A-1` are accepted in hand-written IR but do not parse in the DSL — write the frequency instead). Raw frequencies are accepted anywhere a note is: `432hz @ 0b for 4b`. **Chord symbols** are a root-with-octave plus a quality, accepted anywhere a note is (including motifs): `C3min7`, `Ab2maj7`, `E4sus4`. Qualities: `maj min m dim aug 6 7 9 m6 m7 maj7 min7 maj9 min9 m9 sus2 sus4 add9 dim7 min7b5 m7b5 7sus4 dom7sus4 maj7#11 maj7s11` (`s11` spells #11 without the DSL comment char).
 
 ---
 
@@ -55,7 +55,7 @@ asset <id> {
 }
 ```
 
-A file may contain multiple `asset` blocks; each compiles to its own spec. Buses must be declared before layers reference them.
+A file may contain multiple `asset` blocks; each compiles to its own spec. Layers may reference a bus declared anywhere in the asset; only a bus's `duck.source: bus:<name>` must name an earlier-declared bus.
 
 ### 2.1 Asset properties
 
@@ -67,7 +67,8 @@ A file may contain multiple `asset` blocks; each compiles to its own spec. Buses
 | `bitdepth:` | `16` or `24` | `bit_depth` (default 24) |
 | `tempo:` | bpm, or a **tempo map**: `96bpm, 20b=96bpm, 26b=128bpm` | `bpm` + `tempo_map` |
 | `key:` | e.g. `C minor`, or a **key map**: `A minor, 26b=C major` | `key` + `key_map` |
-| `swing:` | 0..1 | `swing` (legacy; prefer `groove:`) |
+| `swing:` | 0..0.5 (fraction of a 16th step) | `swing` (legacy; prefer `groove:`) |
+| `seed:` | unsigned integer | `performance_seed` — selects a reproducible take independently of mix settings |
 | `groove:` | `<template> [amount]` — `straight swing16 shuffle laidback pushed heavy_one` | explicit 16-slot `timing`/`accent` arrays |
 | `loopsafe:` | `on` | whole-beat duration under the tempo/hold map; premaster and delivered seam/tail checks at render |
 | `emotion:` | `name=0..1, ...` | metadata + Emotion macro expansion |
@@ -83,6 +84,9 @@ A file may contain multiple `asset` blocks; each compiles to its own spec. Buses
 | `ensemble:` | `family size=N spread=... octaves=N` | explicit unison/section/octave events and role buses |
 | `voicing:` | `richness=... extensions=... voice_leading=on` | root/quality-aware extensions in the local key; optional register search preserving chord tones |
 | `space:` | `hall=... depth=...` | explicit room/glue processing |
+| `tuning:` | `edo divisions=N base=A4 hz=440` | `notation.tuning` (hash-excluded, **not rendered**; warns `tuning_not_rendered`) |
+| `tuplet:` | `layer STARTb for DURb ratio=N:M` | `notation` metadata (hash-excluded) |
+| `lyrics:` | `layer STARTb "text" [phonemes=a_b]` | `notation` metadata (hash-excluded) |
 
 **Tempo maps** ramp BPM linearly between points; beat→seconds is the exact analytic integral (logarithmic per ramp segment), so accelerandi are smooth, not stepped. Keep them austere: `tempo_map` is only `[beat, bpm]` points. `fermata: 12b=1.5s` (or `hold:`) compiles to first-class `holds` events that insert absolute seconds at the named beat, before events at that beat and all later beats. `perform: rubato=...` is smart directive sugar: the compiler analyzes phrases and writes dense piecewise-linear tempo points with ≤2 ms segment error, so the render IR stays diffable and verifiable. Every musical grid — note starts/durations, drum steps, groove and swing offsets, loop expansion — follows the map plus holds. Layer `start:`, automation breakpoints, and markers remain in real seconds. **Key maps** modulate mid-asset: scale advisories and `diatonic` transforms (§3) resolve whichever key is in force at their position.
 
@@ -90,7 +94,7 @@ Known emotion tags: `tension awe sadness triumph suspense intimacy urgency calm 
 
 ### 2.2 Markers
 
-`performance_seed: 42` selects a reproducible take independently of mix settings. `routing: fallbacks=allow|warn|forbid` applies to technique, sampled legato and section approximations as well as missing articulation routes.
+`seed: 42` (IR `performance_seed`) selects a reproducible take independently of mix settings. `routing: fallbacks=allow|warn|forbid` applies to technique, sampled legato and section approximations as well as missing articulation routes.
 
 `marker climax @ 26s` — compiled into `markers`, written to the manifest and a `.markers.json` sidecar for video-timeline alignment.
 
@@ -134,7 +138,7 @@ Motifs may contain chord symbols; transforms move the chord root and preserve th
 |------|--------------------|
 | `tone` | `osc:` (§5), `note:`/`freq:`, `detune:` (c), `fmratio:`/`fmindex:`, voice params (§5) |
 | `notes` | `osc:`, `notes:` event list, `play` statements, `loop:` (beats), `arp:` (§6), voice + performance params (§5–6) |
-| `sweep` | `shape:` (an oscillator waveform), `from:`/`to:` (hz), `curve:` (`lin`/`exp`) |
+| `sweep` | `shape:` (`sine saw square triangle`; the sweep's saw/square/triangle are naive, not bandlimited), `from:`/`to:` (hz), `curve:` (`lin`/`exp`) |
 | `noise` | `color:` (`white pink brown`) |
 | `drums` | `voice:` (`kick snare hat open_hat clap tom` + plugins), `pattern:` (§6), depth params `tune: ±12st`, `decay: 0.25..4`, `snap: 0..1`, `bend: 0..1.5`, `humanize:` |
 | `grain` | granular texture: `source:` (any oscillator or noise color), `note:`/`freq:` for pitched sources, `srcdur:` (s), `grainsize:` (s), `density:` (grains/s), `pitchspread:` (c), `scatter:` (0 = scan through the source, 1 = anywhere) |
@@ -143,7 +147,7 @@ Motifs may contain chord symbols; transforms move the chord root and preserve th
 | `foley` | procedural ambience: `model:` (`rain wind fire surf`), `intensity: 0..1`, `brightness: 0..1` |
 | `instrument` | sampled instruments from a content-addressed library: `instrument:` (name in the manifest), `articulation:` (layer default, per-note `art` overrides), `dynamic:` curve, `notes:` events, performance props. Requires a spec-level `library:` pin |
 
-**Validate means render-ready (since 2.14).** `validate` runs the structural schema check *plus* a resource-binding resolve pass: libraries located and manifest-verified, instruments and articulations resolved, sample/IR files found and hash-checked, native kernels probed. `OK: valid — render-ready` is a true predicate for "will render"; resource problems are reported as line-cited diagnostics, and `render` refuses with the same structured list rather than a raw traceback (`--no-resolve` gives the pure structural check). Timeline issues that still render, such as note events extending past the asset duration, are reported as warnings with paths. Pins that are one repeated hex character (e.g. all zeros) are reported distinctly as **unbound placeholders**. Source line numbers travel in a `_meta` sidecar that is **excluded from the spec hash** — the same music reformatted hashes identically.
+**Validate means render-ready (since 2.14).** `validate` runs the structural schema check *plus* a resource-binding resolve pass: libraries located and manifest-verified, instruments and articulations resolved, sample/IR files found and hash-checked, native kernels probed. `OK: valid — render-ready` is a true predicate for "will render" on a host with a C compiler (`validate` does not itself check for the compiler every render needs since engine 3.2; `make native-check` does); resource problems are reported as line-cited diagnostics, and `render` refuses with the same structured list rather than a raw traceback (`--no-resolve` gives the pure structural check). Timeline issues that still render, such as note events extending past the asset duration, are reported as warnings with paths. Pins that are one repeated hex character (e.g. all zeros) are reported distinctly as **unbound placeholders**. Source line numbers travel in a `_meta` sidecar that is **excluded from the spec hash** — the same music reformatted hashes identically.
 
 **Render plans (since 2.16).** `audioforge plan spec.af` writes a derived
 `audioforge.render-plan/1` artifact after validation/resource resolution and
@@ -169,7 +173,7 @@ Render manifests record `plan_hash`, and exports write `<id>.plan.json`.
 
 ## 5. Oscillator voices
 
-All oscillators are bandlimited; all randomness derives from per-note seeded RNG paths, so every voice is byte-reproducible.
+All note oscillators are bandlimited (the `sweep` layer's shapes are not); all randomness derives from per-note seeded RNG paths, so every voice is byte-reproducible.
 
 | Voice | Properties (defaults) | Character |
 |-------|----------------------|-----------|
@@ -177,17 +181,17 @@ All oscillators are bandlimited; all randomness derives from per-note seeded RNG
 | `fm` | `fmratio: 2`, `fmindex: 0` | 2-operator FM |
 | `organ` | — | drawbar partial stack |
 | `pad` | `bandwidth: 40c`, `harmonics: 48` | PADsynth (public domain): Gaussian-widened harmonics — lush, perfectly-looping ensemble pads |
-| `pluck` | `damping: 0.5`, `brightness: 0.6`, `pluckpos: 0.28` | extended Karplus-Strong string |
-| `modal` | `material: bell glass marimba gong steel`, `modedecay: Ns`, **or** `modes: r a t, r a t, …` (1–32 `ratio amp t60_share` triplets — bespoke percussion from a list of numbers) | decaying-partial resonator bank + seeded strike |
+| `pluck` | `damping: 0.5`, `brightness: 0.6`, `pluckpos: 0.28` (0.02..0.5) | extended Karplus-Strong string |
+| `modal` | `material: bell glass marimba gong steel` (bell), `modedecay: Ns`, **or** `modes: r a t, r a t, …` (1–32 `ratio amp t60_share` triplets, ratio 0.05..40, amp 0..2, share 0.01..3 — bespoke percussion from a list of numbers) | decaying-partial resonator bank + seeded strike |
 | `morph` | `scan: 0..1` (automatable, §10) | wavetable morphing: sine→triangle→pulse→saw→square between bandlimited frames |
-| `bowed` | `pressure: 0.2..1`, `bowpos: 0.05..0.45`, `brightness:` | McIntyre-Woodhouse/STK-lineage friction-curve waveguide (**native kernel** — needs a C compiler, fails loudly without) |
-| `blown` | `pressure: 0.2..1`, `brightness:` | STK-Clarinet-lineage reed waveguide; loop-gain constants solved analytically so it self-oscillates across the pressure range; odd-harmonic cylindrical-bore spectrum; seeded breath turbulence (**native kernel**) |
-| `brass` | `pressure: 0.2..1`, `brightness:`, `lip: 0..1` | STK-Brass-lineage lip-reed waveguide; in-loop wave-steepening brightens with pressure and a bell-flare rectifier supplies even harmonics; `lip` is the embouchure (bends pitch ±~20c); seeded breath turbulence (**native kernel**) |
-| `struck` | `tension: 0..1`, `strike: 0..1`, `damping:`, `brightness:` | tension-modulated Karplus-Strong string: a hard strike starts sharp and glides down to nominal pitch (the "boing"); `tension: 0` reduces to the linear `pluck`; seeded strike excitation (**native kernel**) |
-| `sympathetic` | `coupling: 0..1`, `buzz: 0..1`, `damping:`, `brightness:` | one struck string driving a bank of tarab strings (tuned to its near-harmonics) through a shared nonlinear (sitar-`buzz`) bridge; the un-struck strings ring on for an evolving halo; `coupling: 0` reduces to a single Karplus-Strong string; seeded strike excitation (**native kernel**) |
-| any classic shape | `unison: 2..16`, `spread: Nc` | detuned stack, golden-ratio phases (no RNG); survives pitch envelopes |
+| `bowed` | `pressure: 0.2..1` (0.6), `bowpos: 0.05..0.45` (0.13), `brightness:` (0.6) | McIntyre-Woodhouse/STK-lineage friction-curve waveguide (**native kernel** — needs a C compiler, fails loudly without) |
+| `blown` | `pressure: 0.2..1` (0.6), `brightness:` (0.6) | STK-Clarinet-lineage reed waveguide; loop-gain constants solved analytically so it self-oscillates across the pressure range; odd-harmonic cylindrical-bore spectrum; seeded breath turbulence (**native kernel**) |
+| `brass` | `pressure: 0.2..1` (0.6), `brightness:` (0.6), `lip: 0..1` (0.5) | STK-Brass-lineage lip-reed waveguide; in-loop wave-steepening brightens with pressure and a bell-flare rectifier supplies even harmonics; `lip` is the embouchure (bends pitch ±~20c); seeded breath turbulence (**native kernel**) |
+| `struck` | `tension: 0..1` (0.5), `strike: 0..1` (0.7), `damping:` (0.5), `brightness:` (0.6) | tension-modulated Karplus-Strong string: a hard strike starts sharp and glides down to nominal pitch (the "boing"); `tension: 0` reduces to the linear `pluck`; seeded strike excitation (**native kernel**) |
+| `sympathetic` | `coupling: 0..1` (0.5), `buzz: 0..1` (0.2), `damping:` (0.4), `brightness:` (0.6) | one struck string driving a bank of tarab strings (tuned to its near-harmonics) through a shared nonlinear (sitar-`buzz`) bridge; the un-struck strings ring on for an evolving halo; `coupling: 0` reduces to a single Karplus-Strong string; seeded strike excitation (**native kernel**) |
+| `sine saw square triangle organ fm` | `unison: 1..16`, `spread: Nc` (default 18c) | detuned stack, golden-ratio phases (no RNG); survives pitch envelopes; ignored on other voices |
 
-The physical models (`pluck`, `modal`, `bowed`, `blown`, `brass`, `struck`, `sympathetic`) ignore pitch envelopes (glide/vibrato) by design. The `bowed`/`blown` waveguides speak ~2% sharp of nominal (delay-line quantization + excitation phase delay); `brass` carries a measured loop-phase correction (~±10c); `struck`/`sympathetic` (Karplus-Strong) are in tune. Plugin oscillators and drum voices extend the `osc:`/`voice:` choices.
+Pitch envelopes (glide/vibrato, lowered to `pitch_cents` note curves) are rejected with `curve_unsupported_voice` on the native waveguides (`bowed blown brass struck sympathetic`) and accepted but not rendered on `pluck`/`modal`. The `bowed`/`blown` waveguides speak ~2% sharp of nominal (delay-line quantization + excitation phase delay); `brass` carries a measured loop-phase correction (~±10c); `struck`/`sympathetic` (Karplus-Strong) are in tune. Plugin oscillators and drum voices extend the `osc:`/`voice:` choices.
 
 ---
 
@@ -252,20 +256,20 @@ layer vln1 : instrument { ... seat: -16deg @ 4.5m ... }
 | Call | Parameters (defaults) | Notes |
 |------|----------------------|-------|
 | `lowpass(hz, q=0.7071)` `highpass(hz, q=0.7071)` `bandpass(hz, q=0.9)` | | biquads; cutoff automatable (§10) |
-| `peak(freq, gain, q=0.7071)` | dB ±24 | RBJ parametric bell |
-| `lowshelf(freq, gain)` `highshelf(freq, gain)` | | RBJ shelves |
+| `peak(freq, gain, q=0.7071)` | recommended dB ±24 (not validated) | RBJ parametric bell |
+| `lowshelf(freq=1000, gain=0, q=0.7071)` `highshelf(…)` | | RBJ shelves |
 | `delay(time=0.25, feedback=0.3, mix=0.3)` | | |
 | `reverb(decay=1.2, mix=0.25)` | | seeded-IR convolution reverb |
 | `hall(rt60=2.5, damp=0.4, mix=0.3)` | | Freeverb-lineage combs + allpasses |
-| `plate(decay=0.7, damp=0.3, predelay=0, mod=0, modrate=1, mix=0.3)` | feedback 0.1..0.97 | Dattorro 1997 tank, published constants. `mod>0` engages the original's delay modulation via the native kernel (needs a C compiler; mod=0 path validated to machine epsilon against it) |
+| `plate(decay=0.7, damp=0.3, predelay=0, mod=0, modrate=1, mix=0.3)` (`modrate` → IR `mod_rate`) | feedback 0.1..0.97 | Dattorro 1997 tank, published constants. `mod>0` engages the original's delay modulation via the native kernel (needs a C compiler; mod=0 path validated to machine epsilon against it) |
 | `fdn(rt60=3, rt60_high=rt60·0.4, crossover=2500, size=1, mix=0.3)` | | 8-line Householder FDN, per-line shelving: independent low/high RT60. True stereo on master/buses |
 | `convolve(file="ir.wav", sha256="…", mix=0.3, gain=0db)` | | hash-pinned impulse response: real spaces under sample content-addressing. Energy-normalized; mismatch refuses. Mono IR per channel in stereo chains |
 | `comp(threshold=-18, ratio=2.5, attack=0.03, release=0.15, knee=6, makeup=0)` | | lookahead windowed-RMS, soft knee; stereo-linked on master/buses |
-| `mbcomp(threshold=-20, ratio=2, low=180, high=2800, …)` | | 3-band LR4 glue |
-| `transient(attack=0, sustain=0)` | dB ±12 | envelope-follower transient shaper: onsets vs body |
+| `mbcomp(threshold=-20, ratio=2, attack=0.04, release=0.18, knee=6, makeup=0, low=180, high=2800)` | DSL defaults; IR omitting keys falls back to threshold −18, ratio 2.5, attack 0.03, release 0.15 | 3-band LR4 glue |
+| `transient(attack=0, sustain=0)` | recommended dB ±12 (not validated) | envelope-follower transient shaper: onsets vs body |
 | `saturate(amount=0.3, mix=1, warmth=0.3)` | | 4×-oversampled biased-tanh glue; `warmth` adds even harmonics; `mix=0` is bit-exact bypass |
 | `drive(amount=0.3)` | | harder oversampled tanh |
-| `ladder(cutoff, resonance=0.5, drive=0, mix=1)` | | nonlinear Moog-style transistor-ladder lowpass: 2×-oversampled tanh saturation inside the resonance feedback, so it self-oscillates and squelches as a flat biquad cannot (**native kernel**) |
+| `ladder(cutoff, resonance=0.5, drive=0, mix=1)` (alias `res=`) | resonance 0..1.1; cutoff automation validates but is not applied at render | nonlinear Moog-style transistor-ladder lowpass: 2×-oversampled tanh saturation inside the resonance feedback, so it self-oscillates and squelches as a flat biquad cannot (**native kernel**) |
 | `tape(drive=0.4, flutter=0.3, tone=0.5, mix=1)` | | analog tape: LFO-swept fractional delay (wow/flutter) feeding a saturation with light magnetic hysteresis, plus HF loss (`tone`) — time-varying *and* nonlinear (**native kernel**) |
 | `tremolo(rate=5, depth=0.5)` `gain(db)` | | |
 | *any plugin name* | named args pass through | |
@@ -275,7 +279,7 @@ layer vln1 : instrument { ... seat: -16deg @ 4.5m ... }
 ## 10. Automation
 
 ```
-auto cutoff: 0s=400, 26s=2400, 36s=600    # first filter in this fx chain
+auto cutoff: 0s=400, 26s=2400, 36s=600    # the fx at index 0 (IR fx_index, default 0); must be a filter
 auto gain:   0s=-12db, 26s=0db            # layer / bus / master gain
 auto scan:   0s=0, 8s=1, 16s=0.2          # morph oscillator wavetable position
 ```
@@ -290,7 +294,11 @@ normalized performance dynamic in `[0, 1]`, and G13/P1 reserves note-scope
 timbre targets `cutoff_hz`, `gain_db`, and `scan` for explicit per-note timbre
 data. Curves may live on note events (`note_beats` or `note_seconds`) or layer
 automation (`layer_beats` or `layer_seconds`); existing automation targets
-continue to use layer scope.
+continue to use layer scope. Layer-scope `pitch_cents` and `dynamic` automation
+validates and is kept in the IR but is **not yet rendered** (only note-scope curves
+and the legacy `dynamic:` field sound). The DSL `curves:` syntax accepts one shape
+name (`linear`, `hold`) after `@`; `pow:k` shapes and `auto` time bases are
+authored through `automation_ir:`/`notes_ir:` JSON.
 
 The compiler lowers legacy expressive fields before render:
 
@@ -374,12 +382,16 @@ trap`. Explicit directives override those defaults.
 preserves it under `intent.analysis.phrases`; then it expands to concrete
 `humanize`, `phrasing`, `velbright`, `dynamic`, vibrato, slur ids, and phrase-peak
 lengthening. `ensemble:` expands synth notes to unison/spread and sampled
-instruments to `section`; `octaves` adds explicit octave-doubling note events and
-role-routes layers through generated `af_bass`/`af_harmony`/`af_melody` buses.
+instruments to `section`; `octaves>0` adds one explicit copy of each note an octave
+below. Whenever `ensemble:` or `space:` is present, layers are role-routed through
+generated `af_bass`/`af_harmony`/`af_melody` buses.
 `voicing:` adds requested 7/9/11/13 extensions to simultaneous chord stacks as
 normal note events and may add `gen voice_leading`, `gen suspension`, or
-`gen passing_tone` notes. `space:` appends deterministic master glue and creates
-an `af_space` bus with shared room processing. The compiler emits a diagnostic
+`gen passing_tone` notes. `space:` appends deterministic master hall and glue
+saturation; it also declares an `af_space` bus, but no layer is routed to it, so
+that bus is currently silent. `perform: rubato=` shapes are `arch` (default),
+`ritard|rit|release`, `accelerando|accel|push` and `sigh|push_pull`; `amount` is
+clamped to 0..0.35. The compiler emits a diagnostic
 naming the expansion; inspect `compile` output to see the exact render-layer IR.
 
 Structured `intent {}` blocks preserve higher-level agent goals without hiding
@@ -463,8 +475,8 @@ audioforge export-musicxml spec.af -o out.musicxml
 audioforge import-musicxml out.musicxml --id from_xml
 ```
 
-MIDI pitch-bend import becomes layer-scope `pitch_cents` automation and honors
-RPN pitch-bend range when present. Arbitrary AudioForge pitch or dynamic curves
+MIDI pitch-bend import becomes layer-scope `pitch_cents` automation (kept in the IR,
+not yet rendered — see §10) and honors RPN pitch-bend range when present. Arbitrary AudioForge pitch or dynamic curves
 that cannot be represented by the current MIDI/MusicXML exporters are reported
 through `interop_diagnostics()` as `lossy_pitch_curve` or
 `lossy_dynamic_curve`.
@@ -489,8 +501,8 @@ Emotion never invents notes or changes timing — only spatial/spectral framing,
 
 | Derived axis | Formula | Effect |
 |--------------|---------|--------|
-| `awe` | `awe + 0.6·wonder` | reverb `decay ×(1+0.8·awe)` (cap 15 s), reverb `mix +0.15·awe` (cap 0.7), width `+0.25·awe` |
-| `big` | `cinematic_intensity + 0.5·triumph` | width `+0.15·big` (cap 1.0) |
+| `awe` | `awe + 0.6·wonder` | reverb `decay ×(1+0.8·awe)` (cap 15 s), reverb `mix +0.15·awe` (cap 0.7), width `(explicit width or 0.7) + 0.25·awe` — narrows from the renderer default 1.0 when no `width:` is set; decay/mix scaling touches `reverb(...)` fx only |
+| `big` | `cinematic_intensity + 0.5·triumph` | width `+0.15·big` (same base; cap 1.0) |
 | `calm` | `calm + 0.5·intimacy` | `fade_in ≥ 0.6·calm` s, `fade_out ≥ 1.2·calm` s |
 | `dark` | `tension + fear + 0.7·suspense` | appends master lowpass at `9000·(1−0.65·min(dark,1))` Hz |
 
@@ -527,7 +539,7 @@ The executable grammar lives in `audioforge.lark_parser` as a Lark grammar and i
 ## 19. CLI
 
 ```
-audioforge validate spec.af
+audioforge validate spec.af [--no-resolve]
 audioforge compile  spec.af
 audioforge plan     spec.(af|json) [-o file] [--explain]
 audioforge decompile spec.(af|json)
@@ -539,7 +551,7 @@ audioforge import-midi out.mid [--id ID]
 audioforge export-musicxml spec.(af|json) -o out.musicxml [--notated [--bars N]]
 audioforge import-musicxml out.musicxml [--id ID]
 audioforge score    spec.(af|json) [-o out.pdf] [--title T] [--bars N]
-audioforge render   spec.(af|json) [-o dir] [--preset P] [--stems] [--variant T] [--intensity K] [--analyze]
+audioforge render   spec.(af|json) [-o dir] [--preset P] [--stems] [--variant T] [--intensity K] [--analyze] [--jobs N] [--plan PLAN.json] [--explain]
 audioforge pack     spec.af [--variants N] [-o dir] [--preset P]
 audioforge campaign spec.af [-o dir] [--preset P] [--intensity K]
 audioforge ingest   samples_dir/ [-o catalog.json]
@@ -551,4 +563,4 @@ audioforge verify   spec manifest
 
 ## 20. Honest limits
 
-LUFS is a BS.1770-style approximation (manifests record measured values). Compressors are documented offline lookahead-RMS designs, not analog models. The native-kernel features — the `bowed`/`blown`/`brass`/`struck`/`sympathetic` voices, the `ladder` and `tape` effects, and plate-`mod` — need a C compiler and fail loudly without one (never a silent fallback that would change the audio). Space IRs are computed in a Python loop bounded by tail length (seconds per parameter set, cached). Physical models ignore pitch envelopes; the `bowed`/`blown` waveguides speak ~2% sharp (`brass` is loop-phase-corrected, `struck` is in tune). Layers are mono pre-pan, except sectioned instrument layers, staged layers, and non-pattern audio layers with `preserve: stereo|channels`, which are true stereo. The stage approximates: ISO 9613-1-flavored air shelf, integer-sample ITD (≤ ~21 µs quantization), image-source to second order only, no B-format decoding (stereo IRs only). Sample layers accept WAV PCM only. The darkness emotion macro can over-darken (it warns). Encoder-dependent formats (future FLAC/MP3) will sit outside the byte-hash guarantee. The sampler covers a documented SFZ subset only (no filters/LFOs/CC — AudioForge fx and automation own that ground); synth-layer dynamic brightness samples at note onset (the level term is fully time-varying); sampled-layer crossfades are time-varying throughout.
+LUFS is a BS.1770-style approximation (manifests record measured values). Compressors are documented offline lookahead-RMS designs, not analog models. Every render needs a C compiler (engine 3.2): the limiter, filters, halls, delays, saturation and wavetable voices run in native kernels built with `-march=native` and cached per CPU; the `bowed`/`blown`/`brass`/`struck`/`sympathetic` voices, the `ladder` and `tape` effects, and plate-`mod` have dedicated kernels. Without a compiler, rendering fails loudly (never a silent fallback that would change the audio). The plate IR is computed in a Python loop bounded by tail length (0.8–2.6 s CPU, cached); FDN IRs are native. Pitch envelopes are rejected on the native waveguides and not rendered on `pluck`/`modal`; the `bowed`/`blown` waveguides speak ~2% sharp (`brass` is loop-phase-corrected, `struck` is in tune). Layers are mono pre-pan, except sectioned instrument layers, staged layers, and non-pattern audio layers with `preserve: stereo|channels`, which are true stereo. The stage approximates: ISO 9613-1-flavored air shelf, integer-sample ITD (≤ ~21 µs quantization), image-source to second order only, no B-format decoding (stereo IRs only). Sample layers accept WAV PCM only (instrument libraries also decode FLAC/Ogg/AIFF through libsndfile when it is installed). The darkness emotion macro can over-darken (it warns). Encoder-dependent formats (future FLAC/MP3) will sit outside the byte-hash guarantee. The sampler covers a documented SFZ subset only (no filters/LFOs/CC — AudioForge fx and automation own that ground); synth-layer dynamic brightness samples at note onset (the level term is fully time-varying); sampled-layer crossfades are time-varying throughout.

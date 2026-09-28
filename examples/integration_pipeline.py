@@ -27,7 +27,7 @@ CHANNELS = {            # channel -> export preset
 
 def main():
     forge = AudioForge()
-    asset = forge.load_file(ROOT / "presets" / "brand_signature.af").assets[0]
+    asset = forge.load_file(ROOT / "docs" / "examples" / "sound-design" / "transition-sweep" / "transition_sweep.af").assets[0]
 
     ledger = {"campaign": "spring_launch", "assets": []}
     for channel, preset in CHANNELS.items():
@@ -44,7 +44,7 @@ def main():
         print(f"{channel:12s} {meta['file']:44s} {meta['output_sha256'][:12]}")
 
     # CI-style gate: re-render one deliverable and check byte identity
-    spec_path = OUT / "brand_signature_v2.spec.json"
+    spec_path = OUT / "transition_sweep_v2.spec.json"
     spec_path.write_text(asset.to_json())
     print("\nverify (re-render == manifest)?",
           "OK" if _verify_one(forge, asset, OUT / "instagram") else "MISMATCH")

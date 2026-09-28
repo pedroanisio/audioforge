@@ -3,8 +3,8 @@ disclaimer:
   notice: >-
     No information within this document should be taken for granted. Claims
     require the implementation and verification evidence recorded below.
-  generated_by: "GPT-6 via Codex"
-  date: "2026-09-05"
+  generated_by: "GPT-6 via Codex; revised by Claude Opus 5.5 via Claude Code"
+  date: "2026-09-28"
 ---
 
 # Audio and music correctness acceptance ledger
@@ -46,6 +46,13 @@ row may read `ci-verified` on the strength of a local run.
 | A4 | Default mastering preserves deliberate quiet levels; normalization is explicit and peak safety remains enforced. | HARNESS-AUD-004; `tests/test_audio_correctness.py`, `tests/test_dynamics.py`, `tests/test_sdk_edges.py`: quiet-level preservation, explicit normalization, LUFS, intersample ceiling and final fades. | independently-reproduced |
 | G1 | Public contracts, SDK, CLI/MCP, generated schema/capabilities/docs, examples, versions and golden audio agree with the final behavior. | HARNESS-GATE-001…005, HARNESS-REL-001, HARNESS-MIG-001…003; `make check` with coverage on the pytest phase: generated schema/capabilities/docs, five exact golden renders, registry/version checks, 16 script suites and the full pytest suite. ADR-0007 and migration guide delivered. | independently-reproduced |
 | L1 | A human listening review of the seven acceptance cases is recorded and cited here; `listening_status` is no longer `not_reviewed`. | HARNESS-ACC-003; `docs/evolution/evidence/<checkpoint>/listening-review.json` (schema `audioforge.listening-review/1`) with 7 judgments, the reviewed commit SHA and acceptance `spec_hash`es. | not-started |
+
+> **Engine 3.2.0 note (2026-09-28).** The golden hashes behind G1 and the records
+> below were produced by engine 3.0/3.1. Engine 3.2.0 re-pinned all five golden specs
+> after bounded numeric drift (at most −131 dBFS over the example corpus; see
+> "Engine 3.2: render cost and numeric drift" in [MIGRATION_3.md](MIGRATION_3.md) and
+> [ADR-0012](adr/0012-native-dsp-kernels-bounded-drift.md)). The records remain dated
+> evidence of what was reproduced then; `make golden-check` is today's gate.
 
 ## Verification discipline
 

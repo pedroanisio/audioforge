@@ -4,8 +4,8 @@ disclaimer:
     No information within this document should be taken for granted. Any statement
     or premise not backed by a real logical definition or verifiable reference may
     be invalid, erroneous, or a hallucination.
-  generated_by: "Claude Fable 5.1 via Claude Code"
-  date: "2026-09-06"
+  generated_by: "Claude Fable 5.1 via Claude Code; revised by Claude Opus 5.5 via Claude Code"
+  date: "2026-09-28"
 ---
 
 # ADR-0011: Notation is a semantic contract with oracle-verified interchange
@@ -59,8 +59,8 @@ stay ahead.
 ## Consequences
 
 Exporter output changes for every spec (structure now comes from the spec) and importer output
-changes for multi-part files. This is an Unreleased notation change on engine 3.1.0 /
-DSL 2.0: engine 3.1 already shipped stereo playback before notation integration. The original
+changes for multi-part files. This notation change was developed on engine 3.1.0 and shipped in
+engine 3.2.0 / DSL 2.0: engine 3.1 already shipped stereo playback before notation integration. The original
 roadmap's proposed release numbers are historical, not a reason to change runtime versions.
 ADR-0011 replaces the branch's proposed ADR-0009 number because ADR-0009 already governs
 native stereo playback. The `oracles` extra adds about 60 MB of development dependencies and a vendored

@@ -4,8 +4,8 @@ disclaimer:
     No information within this document should be taken for granted.
     Any statement or premise not backed by a real logical definition
     or verifiable reference may be invalid, erroneous, or a hallucination.
-  generated_by: "rendered view of docs/backlog.yml; statuses reconciled by Claude Fable 5.1 via Claude Code"
-  date: "2026-09-05"
+  generated_by: "rendered view of docs/backlog.yml; statuses reconciled by Claude Fable 5.1 via Claude Code; revised by Claude Opus 5.5 via Claude Code"
+  date: "2026-09-28"
 ---
 
 # Backlog
@@ -71,7 +71,7 @@ node scripts/check-backlog-governance.mjs
 | BL-040 | ADR-0007 | Producers carry diagnostic codes; retire message inference | feature | tech-debt | ready | M | medium | unassigned | BL-032 |
 | BL-041 | ADR-0007 | Render path cleanups from the 3.0 review | tooling | tech-debt | ready | S | medium | unassigned | BL-032 |
 | BL-042 | ADR-0007 | Render-plan size and validate cost for sections and loop-safe assets | feature | tech-debt | ready | M | medium | unassigned | BL-032 |
-| BL-043 | ADR-0007 | Vectorize beat-based automation and share one timeline factory | feature | tech-debt | ready | M | medium | unassigned | BL-032 |
+| BL-043 | ADR-0007 | Vectorize beat-based automation and share one timeline factory | feature | tech-debt | in-progress | M | medium | unassigned | BL-032 |
 | BL-044 | ADR-0007 | Decide the IR schema version format | docs | research | ready | S | medium | unassigned | BL-032 |
 | BL-045 | ADR-0011 | Notation surface: semantic contract with oracle-verified interchange (epic) | feature | tech-debt | in-progress | XL | high | mine | BL-032 |
 | BL-046 | ADR-0011 | Oracle toolchain: oracles extra, vendored MusicXML XSD, fixture corpus, oracle-check | testing | infra | done | M | high | mine | BL-045 |

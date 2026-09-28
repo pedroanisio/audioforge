@@ -88,9 +88,10 @@ def render_capabilities() -> str:
     lines += [
         "",
         "## Per-capability status\n",
-        "Status is derived by predicate (ADR-0006 / AF-R07): `stable` = pure-Python, "
-        "always available; `experimental` = requires the native C-kernel toolchain "
-        "(fails loudly if absent).\n",
+        "Status is derived by predicate (AF-R07; ADR-0004, ADR-0012): `stable` = "
+        "rendered by the core engine kernels; `experimental` = also needs a dedicated "
+        "physical-model or effect kernel. Every render requires a C compiler since "
+        "engine 3.2.\n",
         f"**Experimental oscillators:** {', '.join(f'`{o}`' for o in experimental) or 'none'}.\n",
         "Every diagnostic code is documented in "
         "[`DIAGNOSTIC_CODES.md`](DIAGNOSTIC_CODES.md).\n",

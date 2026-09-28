@@ -16,14 +16,14 @@ CLI = REPO / "audioforge" / "cli.py"
 
 
 def _cli_verbs() -> set[str]:
-    return set(re.findall(r'add_parser\(\s*"([a-z_]+)"', CLI.read_text(encoding="utf-8")))
+    return set(re.findall(r'add_parser\(\s*"([a-z0-9][a-z0-9_-]*)"', CLI.read_text(encoding="utf-8")))
 
 
 def _documented_verbs() -> set[str]:
     text = AGENTS.read_text(encoding="utf-8")
     block = re.search(r"<!-- BEGIN cli-verbs -->(.*?)<!-- END cli-verbs -->", text, re.S)
     assert block, "AGENTS.md must delimit its CLI-verb table with <!-- BEGIN/END cli-verbs -->"
-    return set(re.findall(r"^\|\s*`([a-z_]+)`\s*\|", block.group(1), re.M))
+    return set(re.findall(r"^\|\s*`([a-z0-9][a-z0-9_-]*)`\s*\|", block.group(1), re.M))
 
 
 def test_agents_md_exists_with_disclaimer_frontmatter():

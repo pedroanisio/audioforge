@@ -3,8 +3,8 @@ disclaimer:
   notice: >-
     No information within this document should be taken for granted. Claims
     require verification against the implementation and its acceptance tests.
-  generated_by: "GPT-6 via Codex"
-  date: "2026-09-05"
+  generated_by: "GPT-6 via Codex; revised by Claude Opus 5.5 via Claude Code"
+  date: "2026-09-28"
 ---
 
 # AudioForge Agent Tools
@@ -18,9 +18,29 @@ Every response has schema `audioforge.agent-tools/1` and contains:
 - `engine_version`
 - `dsl_version`
 
-Supported operations are `compile`, `validate`, `plan`, `render`, `analyze`,
+Operations are `compile`, `validate`, `plan`, `render`, `analyze`,
 `decompile`, `import`, `export`, and `repair`. `tool_schemas()` returns the
-request/response skeletons for constrained callers.
+request/response skeletons for constrained callers; only `analyze` and `export`
+publish a detailed request schema, the rest accept an object.
+
+Request keys: `compile` and `render` take `dsl` (source text); `validate`, `plan`,
+`decompile` and `export` take `spec` (compiled IR); `analyze` takes `audio`,
+`sample_rate` and optional `context`; `repair` takes the `plan_repair` request
+(`dsl`, `analysis`, `feedback`).
+
+Two operations are narrower in-process than their names suggest:
+
+- `render` compiles the DSL and returns `{id, renderable: true}` per asset; it does
+  not produce audio. Use the SDK (`asset.export(...)`) or the MCP `render` tool,
+  which renders the first compiled asset and exposes the WAV, manifest and a
+  waveform PNG as `audioforge://session/{id}/...` resources.
+- `import` always returns an error envelope: file import is CLI-only
+  (`audioforge import-midi` / `import-musicxml`) or SDK (`import_midi`,
+  `import_musicxml`).
+
+The MCP server (`python -m audioforge.mcp`) exposes these nine operations plus
+`capabilities` and `verify` (`{spec: <IR dict>, expected_sha256: <hex>}`, which
+re-renders and compares `output_sha256`).
 
 `run_tool("plan", {"spec": spec})` returns a canonical
 `audioforge.render-plan/1` artifact plus `plan_hash`. Use it before render when

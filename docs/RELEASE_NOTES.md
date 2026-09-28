@@ -3,8 +3,8 @@ disclaimer:
   notice: >-
     No information within this document should be taken for granted. Claims
     require verification against the implementation and its acceptance tests.
-  generated_by: "GPT-6 via Codex"
-  date: "2026-09-05"
+  generated_by: "GPT-6 via Codex; revised by Claude Opus 5.5 via Claude Code"
+  date: "2026-09-28"
 ---
 
 # AudioForge Release Notes
@@ -21,7 +21,13 @@ Engine 3.2.0 renders with about 4.4x less CPU over the example corpus (short CLI
 parsing with LALR. Output is not bit-identical to 3.1.0: every example stays within
 -131 dBFS of it (sources and sizes in the migration guide's "Engine 3.2: render cost
 and numeric drift"); regenerate manifests and golden hashes with this engine. Renders
-now always require a C compiler. DSL 2.0 authoring is unchanged.
+now always require a C compiler ([ADR-0012](adr/0012-native-dsp-kernels-bounded-drift.md)),
+so the capability `status` now separates core-engine capabilities (`stable`) from those
+that also need a dedicated physical-model or effect kernel (`experimental`) rather than
+pure Python from native. The same release ships the notation and interchange line
+([ADR-0011](adr/0011-notation-interchange-oracles.md)): structure-preserving MusicXML and
+MIDI export/import, the construct × format coverage matrix in [INTEROP.md](INTEROP.md),
+and the optional `oracles`/`engrave` extras. DSL 2.0 authoring is unchanged.
 
 Engine 3.1.0 preserves native stereo instrument recordings and adds explicitly
 mapped recorded note transitions. Stereo mixes change level and image; review

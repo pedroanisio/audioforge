@@ -42,16 +42,40 @@ Replace `<RELATIVE_PATH_TO_DISCLAIMER>` with the correct path for the file's dep
 
 ## Project Overview
 
-<!-- [PROJECT] Replace this block with a 1–3 sentence description and a directory tree. -->
-
-**Project Name** — brief description of purpose and scope.
+**AudioForge** — a deterministic, non-vocal audio-asset engine (engine 3.2.0, DSL 2.0).
+It compiles the `.af` DSL to a hashed JSON IR (the render contract) and renders
+SHA-256-verifiable WAV + manifest output through a CLI, a Python SDK, a typed agent-tools
+facade and a stdio MCP server. Requires Python ≥ 3.10 and a C compiler (native DSP kernels).
 
 ```
 .
 ├── CLAUDE.md          # This file — project guidelines for AI agents
+├── AGENTS.md          # Programmatic CLI / make / tooling reference (verb table test-gated)
+├── AI-CORE.md         # Agent-facing core concepts (IR is truth, universality thesis)
+├── PURPOSE.md         # Why the project exists (target state)
+├── README.md          # Human-facing overview and usage
+├── CHANGELOG.md       # Per-version summary (versions track audioforge/version.py)
 ├── DISCLAIMER.md      # Methodological caveats (all READMEs must reference)
-├── README.md
-└── ...
+├── Makefile           # `make check` = the local and CI gate; `make help` lists targets
+├── pyproject.toml     # Package metadata, console script `audioforge`, extras dev/oracles/engrave
+├── audioforge/        # Engine package
+│   ├── dsl.py, lark_parser.py         # .af grammar (LALR) and compiler to the IR
+│   ├── schema.py, ir_schema.py        # IR validation, registries, published JSON Schema
+│   ├── render.py, sequencer.py        # Layers → buses → master → WAV + manifest
+│   ├── synth.py, sampler.py, foley.py # Voices: synthesis, SFZ-subset sampler, foley
+│   ├── fx.py, spaces.py, dynamics.py, loudness.py, convolution.py  # Effects, mastering
+│   ├── _native.py, native/*.c         # ctypes wrappers and C kernels (ENGINE_KERNELS)
+│   ├── sdk.py, cli.py, agent_tools.py, mcp/  # Integration surfaces
+│   ├── interop.py, musicxml.py, score.py     # MIDI/MusicXML interchange, proof sheets
+│   ├── sample_catalog/                # Public-domain sample catalog pipeline
+│   └── tools/                         # Generators and gates behind `make check`
+├── docs/              # DSL spec, IR schema, migration guide, ADRs, generated references, examples
+├── examples/          # SDK and plugin integration recipes
+├── samples/           # Shipped content-addressed samples and impulse responses
+├── scripts/           # Test runner, drift inspection, example gallery, library builders
+├── static/fixtures/   # Focused acceptance/rejection .af fixtures
+├── tests/             # pytest suite, golden locks, fixtures
+└── shadowmd/          # Separate CLI subproject: read-only Markdown overlay (own tests)
 ```
 
 ---

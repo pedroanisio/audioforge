@@ -39,7 +39,7 @@ were re-pinned; see `docs/MIGRATION_3.md` ("Engine 3.2: render cost and numeric 
   spectrum shared by L/R IRs, silent blocks skipped).
 - `.af` parsing uses LALR (~65x faster; Earley only re-parses invalid input for the
   richer diagnostic). OpenBLAS is pinned to one thread (its idle workers spun ~1.35 s of
-  CPU per process). `scipy.signal` and libsndfile are no longer loaded on the render path.
+  CPU per process). libsndfile is located lazily, and `scipy.signal` is no longer loaded by synthesis-only renders (sample layers, the stage and `mbcomp` still use it).
 - Mixing works on per-layer active spans and per-channel bus buffers; glibc keeps freed
   render buffers for reuse during a render (`AUDIOFORGE_MALLOC_TUNE=0` disables).
 

@@ -1,8 +1,9 @@
 # AudioForge documentation site (roadmap item AF-R11).
 #
-# Only index.md is hand-written; reference.md and capabilities.md are GENERATED
-# from the committed contract artifacts by `python -m audioforge.tools.gen_docs`
-# (gated by `make docs-gen-check`). The remaining pages are authored references.
+# Generated pages: reference.md and capabilities.md (`python -m audioforge.tools.gen_docs`,
+# gated by `make docs-gen-check`), INTEROP.md (`gen_interop`, `make interop-check`) and
+# DIAGNOSTIC_CODES.md (`gen_capability`, `make manifest-check`). All other pages,
+# index.md included, are hand-written.
 # `make docs` runs the generator then `mkdocs build --strict`. Material theme is
 # fetched ephemerally, so it stays out of the runtime dependency set.
 site_name: AudioForge
@@ -26,7 +27,6 @@ exclude_docs: |
   ROADMAP.md
   DSL_GAP_SPEC.md
   goal.md
-  shadowmd-design-v2.md
   doc-requirements-*.md
   evolution/evidence/
   evolution/evidence-notation/
@@ -59,4 +59,7 @@ nav:
       - ADR-0006 Generator owns artifact: adr/0006-generator-owns-artifact.md
       - ADR-0007 Musical rendering semantics: adr/0007-musical-render-semantics.md
       - ADR-0008 Structured diagnostic codes: adr/0008-structured-diagnostic-codes.md
-      - ADR-0009 Notation positioning: adr/0011-notation-interchange-oracles.md
+      - ADR-0009 Native stereo & recorded transitions: adr/0009-native-stereo-recorded-transitions.md
+      - ADR-0010 Composition examples layout: adr/0010-composition-examples-layout.md
+      - ADR-0011 Notation interchange oracles: adr/0011-notation-interchange-oracles.md
+      - ADR-0012 Native DSP kernels and bounded drift: adr/0012-native-dsp-kernels-bounded-drift.md
