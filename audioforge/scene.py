@@ -26,6 +26,7 @@ import hashlib
 import json
 import re
 import xml.etree.ElementTree as ET
+from xml.parsers import expat
 from dataclasses import dataclass, field
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
@@ -108,14 +109,13 @@ def _auto_duration(root: ET.Element, asset_id: str) -> float:
     total = _seconds(project.get("duration")) if project is not None else None
     if not total:
         raise SceneError(f"{asset_id}: duration=auto needs <project duration=...>")
-    start = 0.0
+    durations = []
     for track in root.iter("audioTrack"):
         if track.get("asset") == asset_id:
             s = _seconds(track.get("start", "0"))
             clip_in = _seconds(track.get("clipIn", "0")) or 0.0
-            start = (s or 0.0) - clip_in
-            break
-    return round(max(0.05, total - max(0.0, start)), 4)
+            durations.append(total - (s or 0.0) + clip_in)
+    return round(max(0.05, max(durations, default=total)), 4)
 
 
 def generated_assets(scene_path: str | Path) -> list[ET.Element]:
@@ -127,9 +127,22 @@ def generated_assets(scene_path: str | Path) -> list[ET.Element]:
 
 def _set_attr(text: str, asset_id: str, name: str, value: str) -> str:
     """Set one attribute on the `<generated id="asset_id">` start tag in place."""
-    tag_re = re.compile(r"<generated\b[^>]*?\bid\s*=\s*([\"'])" + re.escape(asset_id)
-                        + r"\1[^>]*?/?>", re.S)
-    m = tag_re.search(text)
+    # Expat identifies actual elements (excluding comments, CDATA and PIs)
+    # while byte offsets let us preserve the author's document formatting.
+    raw = text.encode("utf-8")
+    parser = expat.ParserCreate()
+    offsets = []
+
+    def start_element(tag_name, attrs):
+        if tag_name == "generated" and attrs.get("id") == asset_id:
+            offsets.append(parser.CurrentByteIndex)
+
+    parser.StartElementHandler = start_element
+    parser.Parse(raw, True)
+    if not offsets:
+        raise SceneError(f"{asset_id}: <generated> start tag not found for rewriting")
+    start = len(raw[:offsets[0]].decode("utf-8"))
+    m = re.match(r"<generated\b(?:[^>\"']|\"[^\"]*\"|'[^']*')*>", text[start:])
     if not m:
         raise SceneError(f"{asset_id}: <generated> start tag not found for rewriting")
     tag = m.group(0)
@@ -139,7 +152,7 @@ def _set_attr(text: str, asset_id: str, name: str, value: str) -> str:
     else:
         end = len(tag) - (2 if tag.endswith("/>") else 1)
         new_tag = tag[:end].rstrip() + f' {name}="{value}"' + tag[end:]
-    return text[:m.start()] + new_tag + text[m.end():]
+    return text[:start] + new_tag + text[start + m.end():]
 
 
 def _up_to_date(cache: Path, want_sha: str, p_hash: str) -> str | None:
@@ -149,6 +162,8 @@ def _up_to_date(cache: Path, want_sha: str, p_hash: str) -> str | None:
     try:
         info = json.loads(side.read_text())
     except (OSError, ValueError):
+        return None
+    if not isinstance(info, dict):
         return None
     digest = _sha256(cache)
     if (info.get("params_hash") == p_hash and info.get("engine_version") == ENGINE_VERSION
@@ -169,6 +184,30 @@ def resolve_scene(scene_path: str | Path, *, check: bool = False,
     base = scene_path.parent
     results: list[Resolution] = []
     new_text = text
+    # Preflight every cache before rendering: a later asset must not overwrite
+    # bytes already pinned by an earlier, different request. Path.resolve also
+    # identifies relative aliases and symlinks to the same destination.
+    requests = {}
+    destinations = {}
+    for asset in root.iter("generated"):
+        if (asset.get("provider") != PROVIDER
+                or asset.get("kind") not in ("music", "sound-effect")):
+            continue
+        try:
+            if not asset.get("cache"):
+                raise SceneError(f"{asset.get('id', '')}: @cache is required")
+            cue, resolved, sr, bits = _request(root, asset)
+            cache = _resolve_path(base, asset.get("cache"))
+            p_hash = params_hash(cue, {**resolved, "_sr": sr, "_bits": bits})
+            requests[asset] = (cue, resolved, sr, bits, cache, p_hash)
+            destinations.setdefault(cache.resolve(), []).append(asset)
+        except (CueError, SceneError) as exc:
+            requests[asset] = exc
+    for cache, assets in destinations.items():
+        if len({requests[a][-1] for a in assets}) > 1:
+            ids = ", ".join(a.get("id", "") for a in assets)
+            for asset in assets:
+                requests[asset] = SceneError(f"conflicting cache requests for {cache}: {ids}")
     for asset in root.iter("generated"):
         if asset.get("provider") != PROVIDER or asset.get("kind") not in ("music", "sound-effect"):
             continue
@@ -176,13 +215,12 @@ def resolve_scene(scene_path: str | Path, *, check: bool = False,
         res = Resolution(aid, asset.get("model", ""), asset.get("cache", ""), "error")
         results.append(res)
         try:
-            if not asset.get("cache"):
-                raise SceneError(f"{aid}: @cache is required")
-            cue, resolved, sr, bits = _request(root, asset)
+            request = requests[asset]
+            if isinstance(request, Exception):
+                raise request
+            cue, resolved, sr, bits, cache, p_hash = request
             res.params = resolved
-            cache = _resolve_path(base, asset.get("cache"))
             want = (asset.get("cacheSha256") or "").lower()
-            p_hash = params_hash(cue, {**resolved, "_sr": sr, "_bits": bits})
             current = None if force else _up_to_date(cache, want, p_hash)
             if current and not current.endswith(":attr"):
                 res.status, res.sha256 = "up-to-date", current
@@ -315,14 +353,33 @@ def add_cue(scene_path: str | Path, cue_id: str, params: str | dict | None = Non
 
 
 def _insert_before_close(text: str, tag: str, fragment: str) -> str:
-    m = None
-    for m in re.finditer(r"(?m)^([ \t]*)</" + tag + r"\s*>", text):
-        pass
-    if m is None:                                  # closing tag not at line start
-        idx = text.rfind(f"</{tag}")
-        if idx < 0:
-            raise SceneError(f"</{tag}> not found")
+    raw = text.encode("utf-8")
+    parser = expat.ParserCreate()
+    depth = 0
+    closing = []
+
+    def start_element(name, attrs):
+        nonlocal depth
+        depth += 1
+
+    def end_element(name):
+        nonlocal depth
+        # Only edit the scene root or its direct assets/audioMix child.
+        if name == tag and depth == (1 if tag == "scene" else 2):
+            closing.append(parser.CurrentByteIndex)
+        depth -= 1
+
+    parser.StartElementHandler = start_element
+    parser.EndElementHandler = end_element
+    parser.Parse(raw, True)
+    if not closing:
+        raise SceneError(f"</{tag}> not found")
+    idx = len(raw[:closing[0]].decode("utf-8"))
+    if not text[idx:].startswith(f"</{tag}"):
+        raise SceneError(f"<{tag}/> must have an explicit closing tag for insertion")
+    line_start = text.rfind("\n", 0, idx) + 1
+    indent = text[line_start:idx]
+    if indent.strip():
         return text[:idx] + fragment + text[idx:]
-    indent = m.group(1)
     child = indent + ("  " if "\t" not in indent else "\t")
-    return text[:m.start()] + child + fragment + "\n" + text[m.start():]
+    return text[:line_start] + child + fragment + "\n" + text[line_start:]

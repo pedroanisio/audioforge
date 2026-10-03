@@ -17,11 +17,13 @@ import os
 import shutil
 import subprocess
 import tempfile
+import threading
 from pathlib import Path
 
 import numpy as np
 
 _LIBS: dict = {}
+_LIB_LOCK = threading.RLock()
 _NATIVE_DIR = Path(__file__).parent / "native"
 
 
@@ -128,18 +130,26 @@ def _build(stem: str, feature: str) -> Path:
         out = cache_dir / out.name
         if out.exists():
             return out
-    tmp = out.with_suffix(".tmp.so")
-    subprocess.run([cc, *_compile_flags(stem), "-fPIC", "-shared",
-                    str(src_path), "-o", str(tmp), "-lm"],
-                   check=True, capture_output=True)
-    tmp.replace(out)
+    # Separate compiler outputs also make publication safe across processes.
+    fd, filename = tempfile.mkstemp(prefix=out.stem + "_", suffix=".tmp.so",
+                                    dir=out.parent)
+    os.close(fd)
+    tmp = Path(filename)
+    try:
+        subprocess.run([cc, *_compile_flags(stem), "-fPIC", "-shared",
+                        str(src_path), "-o", str(tmp), "-lm"],
+                       check=True, capture_output=True)
+        tmp.replace(out)
+    finally:
+        tmp.unlink(missing_ok=True)
     return out
 
 
 def _lib(stem: str, feature: str):
-    if stem not in _LIBS:
-        _LIBS[stem] = ctypes.CDLL(str(_build(stem, feature)))
-    return _LIBS[stem]
+    with _LIB_LOCK:
+        if stem not in _LIBS:
+            _LIBS[stem] = ctypes.CDLL(str(_build(stem, feature)))
+        return _LIBS[stem]
 
 
 def plate_mod_native(mono: np.ndarray, sr: int, decay: float, damp: float,

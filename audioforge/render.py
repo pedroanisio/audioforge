@@ -502,7 +502,11 @@ def _premaster(spec: dict, root: str, sr: int, master: dict,
             d = b["duck"]
             src_sig = kept.get(d["source"])
             if src_sig is None:              # an earlier bus's output
-                src_sig = kept[f"bus:{d['source']}"]
+                source = d["source"]
+                key = source if source.startswith("bus:") else f"bus:{source}"
+                src_sig = kept.get(key)
+                if src_sig is None:          # declared bus with no routed layers
+                    src_sig = np.zeros(total_n)
             g = duck_envelope(src_sig, sr,
                               amount_db=d.get("amount_db", 6.0),
                               threshold_db=d.get("threshold_db", -35.0),
