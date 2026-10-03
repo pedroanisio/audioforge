@@ -148,7 +148,14 @@ class MCPServer:
             return _result(rid, {"tools": self.tool_defs()})
         if method == "tools/call":
             params = request.get("params") or {}
-            return _result(rid, self._call_tool(params.get("name"), params.get("arguments") or {}))
+            try:
+                result = self._call_tool(params.get("name"), params.get("arguments") or {})
+            except Exception as exc:
+                # Tool execution (validation, rendering, plugins and I/O) must
+                # fail this request without terminating the stdio session.
+                result = {"content": [{"type": "text", "text": str(exc)}],
+                          "isError": True}
+            return _result(rid, result)
         if method == "resources/list":
             return _result(rid, {"resources": [
                 {"uri": u, "name": u.rsplit("/", 1)[-1], "mimeType": r["mimeType"]}
@@ -181,10 +188,16 @@ def _waveform_png(wav_path: Path) -> bytes:
     with wave.open(str(wav_path)) as w:
         n, ch, sw = w.getnframes(), w.getnchannels(), w.getsampwidth()
         raw = w.readframes(n)
-    dtype = {1: np.uint8, 2: np.int16, 4: np.int32}.get(sw, np.int16)
-    data = np.frombuffer(raw, dtype=dtype).astype(np.float64)
-    if ch > 1:
-        data = data[::ch]
+    if sw == 1:
+        data = (np.frombuffer(raw, dtype=np.uint8).astype(np.float64) - 128) / 128
+        if ch > 1:
+            data = data.reshape(-1, ch)[:, 0]
+    else:
+        from audioforge.samples import _decode_wav_keep_channels
+
+        data, _, _ = _decode_wav_keep_channels(wav_path.read_bytes())
+        if data.ndim > 1:
+            data = data[:, 0]
     fig, ax = plt.subplots(figsize=(6, 2))
     ax.plot(data, linewidth=0.5)
     ax.set_axis_off()

@@ -301,6 +301,26 @@ def _analysis_summary(records: list[dict]) -> dict:
     return summary
 
 
+def _cue_cli_params(arguments: list[str]) -> dict:
+    """Parse grouped parameter strings without losing shell argv boundaries."""
+    from .cues import CueError, parse_params
+
+    params = {}
+    for argument in arguments:
+        try:
+            parsed = parse_params(argument)
+        except CueError:
+            # The shell has already removed quotes from e.g. key='C minor'.
+            # A single assignment is still one token even when its value has
+            # spaces. Multiple assignments retain parse_params' validation.
+            if argument.count("=") != 1:
+                raise
+            name, value = argument.split("=", 1)
+            parsed = {name.strip(): value.strip()}
+        params.update(parsed)
+    return params
+
+
 def _cmd_cue(args) -> int:
     from .cues import cue_dsl, get_cue, list_cues, render_cue
     if args.cue_cmd == "list":
@@ -318,7 +338,7 @@ def _cmd_cue(args) -> int:
         from .cues import build_gallery
         print(f"wrote {build_gallery(args.out, category=args.category)}")
         return 0
-    params = " ".join(args.params)
+    params = _cue_cli_params(args.params)
     if args.cue_cmd == "dsl":
         print(cue_dsl(args.cue, params), end="")
         return 0
@@ -340,7 +360,7 @@ def _cmd_cue(args) -> int:
 def _cmd_scene(args) -> int:
     from .scene import add_cue, resolve_scene
     if args.scene_cmd == "add":
-        results = add_cue(args.scene, args.cue, " ".join(args.params), asset_id=args.id,
+        results = add_cue(args.scene, args.cue, _cue_cli_params(args.params), asset_id=args.id,
                           cache=args.cache, start=args.start, gain_db=args.gain,
                           bus=args.bus, duck_under=args.duck_under,
                           resolve=not args.no_resolve)

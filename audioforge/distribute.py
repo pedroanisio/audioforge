@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -125,7 +126,10 @@ def prepare_cover(src: Path, out_jpg: Path, *, size: int = DEFAULT_COVER_SIZE,
     with tempfile.TemporaryDirectory() as td:
         png = Path(td) / "cover.png"
         _rasterize(src, png, size)
-        im = Image.open(png).convert("RGB")
+        with Image.open(png) as source:
+            rgba = source.convert("RGBA")
+        background = Image.new("RGBA", rgba.size, bg)
+        im = Image.alpha_composite(background, rgba).convert("RGB")
         w, h = im.size
         if fit == "cover":
             side = min(w, h)
@@ -252,7 +256,7 @@ def verify(out: Path, tags: dict[str, str], *, want_cover: bool,
             info.get("format", {}).get("tags", {}).items()}
     for k, v in tags.items():
         got = have.get(k.lower())
-        if got is None or str(v) not in str(got):
+        if got is None or str(v) != str(got):
             raise DistributeError(
                 f"verification: tag '{k}' missing or wrong "
                 f"(wanted {v!r}, got {got!r})")
@@ -287,9 +291,20 @@ def pack(args) -> dict:
             cover_jpg = prepare_cover(
                 Path(args.cover), Path(td) / "cover.jpg",
                 size=args.cover_size, fit=args.cover_fit)
-        encode_mp3(wav, out, tags, cover_jpg=cover_jpg, bitrate=args.bitrate)
-        report = verify(out, tags, want_cover=cover_jpg is not None,
-                        src_duration_s=_wav_duration_s(wav))
+        # Encode and verify on the destination filesystem. Only verified bytes
+        # replace the delivery, and failed attempts cannot destroy an old file.
+        out.parent.mkdir(parents=True, exist_ok=True)
+        fd, staging_name = tempfile.mkstemp(prefix=f".{out.stem}-", suffix=".mp3",
+                                            dir=out.parent)
+        os.close(fd)
+        staging = Path(staging_name)
+        try:
+            encode_mp3(wav, staging, tags, cover_jpg=cover_jpg, bitrate=args.bitrate)
+            report = verify(staging, tags, want_cover=cover_jpg is not None,
+                            src_duration_s=_wav_duration_s(wav))
+            staging.replace(out)
+        finally:
+            staging.unlink(missing_ok=True)
     report["output"] = str(out)
     return report
 
