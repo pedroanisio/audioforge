@@ -28,6 +28,43 @@ structured, per-version summary. Version consistency across sites is gated by
   the project) and `scene add` to insert a cue and its `audioTrack` (ADR-0013).
 - Capability manifest `cues` section; guide in `docs/CUES.md`.
 
+### Added — integrated feature branches (2026-10-10)
+_From `feat/notation-interchange` (notation M4/M5), `feat/electronic-production` and
+`claude/render-quality-comparison-5krec4`; ported onto engine 3.2 (see the commit messages)._
+- `audioforge.tuning` (ADR-0014): `tuning: edo divisions=N base=A4 hz=440` drives the render.
+  Note names are spelled along the chain of fifths; the default path is byte-identical;
+  microtonal pitches export as decimal MusicXML `<alter>` and per-note MIDI pitch bend
+  (RPN ±2 semitones), with `lossy_tuning` when one channel would need two bends at once.
+  The interim `tuning_not_rendered` diagnostic is retired.
+- `audioforge score --engrave`: the notated MusicXML through `musicxml2ly` + `lilypond`
+  (`engrave` extra), attributed to LilyPond; exit code 3 with an install hint without it.
+- `analyze` agent tool accepts `pitch_classes` or `notes` and returns normal form, prime
+  form, interval-class vector, set class and symmetry (theory_pcset) with its scope stated.
+- `tests/test_notation_perf.py`: export, import, proof-sheet and LilyPond budgets.
+- CI `oracles` job (Python 3.12, `.[oracles]`, `make oracle-check`); runs once Actions execute.
+- Electronic-production toolkit (ADR-0015): `phaser` and `flanger` native kernels,
+  `chorus` and `bitcrush` (peak-relative) effects, all three modulators with a `stereo`
+  LFO offset on bus and master chains; bus `vocoder:` cross-synthesis (source layer or bus
+  shapes the bus carrier; no voice generation, ADR-0002); sample layers gain `offset`,
+  `length`, `reverse`, `stretch` (phase-vocoder time stretch) and `slices` with pattern
+  digits picking slices. The decompiler now round-trips sample layers (`file`, `sha256`,
+  `pitch`, the new props), bus `duck:`/`vocoder:` blocks and layer `start:`.
+- `docs/examples/electronic/house-*/house_00…05.af`: five rendered demonstration tracks (`docs/ELECTRONIC_TRACKS.md`).
+- Content-pinned `.af` includes (ADR-0016): `import "lib.afi" @ sha256:…` pulls reusable
+  `motif`/`bus` fragments by pin; resolution is pure substitution before parsing (pin
+  mismatch refuses, cycles refuse, diamonds de-duplicate), pins are recorded in
+  `_meta.imports` (hash-excluded); `audioforge expand` writes the resolved file.
+- `audioforge.match` / `scripts/sound_match.py`: sound match — a target sample to an editable
+  `.af` patch by analysis-by-synthesis, with a re-rendered (verified) confidence.
+- `audioforge.quality` / `scripts/compare_render_quality.py`: render-quality A/B against a
+  sample-based renderer; results in `docs/RENDER_QUALITY_COMPARISON.md`; reference cues in
+  `docs/examples/sound-design/reference-piano*/`.
+
+### Changed
+- IR schema 2.1: `master.stereo_width` accepts 0..2 (M/S widening; the mid is preserved, so
+  the mono sum is unchanged). 2.0 specs migrate without an audio-review flag.
+- The interim `tuning_not_rendered` diagnostic (3.2.0) is retired now that tuning renders.
+
 ## [3.2.0]
 
 _Engine 3.2.0 · DSL 2.0._
@@ -60,25 +97,8 @@ _Notation and interchange line (ADR-0011; `docs/evolution/roadmap-notation.xlsx`
   loudly when the extra is absent.
 - `tests/fixtures/notation`: a ten-piece notation corpus with expected structure; the MusicXML
   3.1 schema is vendored under `tests/fixtures/musicxml/xsd`.
-- `audioforge.tuning` (ADR-0014): `tuning: edo divisions=N base=A4 hz=440` drives the render.
-  Note names are spelled along the chain of fifths; the default path is byte-identical;
-  microtonal pitches export as decimal MusicXML `<alter>` and per-note MIDI pitch bend
-  (RPN ±2 semitones), with `lossy_tuning` when one channel would need two bends at once.
-  The interim `tuning_not_rendered` diagnostic is retired.
-- `audioforge score --engrave`: the notated MusicXML through `musicxml2ly` + `lilypond`
-  (`engrave` extra), attributed to LilyPond; exit code 3 with an install hint without it.
-- `analyze` agent tool accepts `pitch_classes` or `notes` and returns normal form, prime
-  form, interval-class vector, set class and symmetry (theory_pcset) with its scope stated.
-- `tests/test_notation_perf.py`: export, import, proof-sheet and LilyPond budgets.
-- CI `oracles` job (Python 3.12, `.[oracles]`, `make oracle-check`); runs once Actions execute.
-- Electronic-production toolkit (ADR-0015): `phaser` and `flanger` native kernels,
-  `chorus` and `bitcrush` (peak-relative) effects, all three modulators with a `stereo`
-  LFO offset on bus and master chains; bus `vocoder:` cross-synthesis (source layer or bus
-  shapes the bus carrier; no voice generation, ADR-0002); sample layers gain `offset`,
-  `length`, `reverse`, `stretch` (phase-vocoder time stretch) and `slices` with pattern
-  digits picking slices. The decompiler now round-trips sample layers (`file`, `sha256`,
-  `pitch`, the new props), bus `duck:`/`vocoder:` blocks and layer `start:`.
-- `docs/examples/electronic/house-*/house_00…05.af`: five rendered demonstration tracks (`docs/ELECTRONIC_TRACKS.md`).
+- `tuning_not_rendered` diagnostic: a non-12-EDO `tuning:` directive compiles with a loud
+  warning instead of rendering 12-TET silently.
 - `audioforge.musicxml`: the MusicXML exporters and importer, re-exported by `audioforge.interop`.
 - `audioforge.interop.COVERAGE` / `coverage()`: the construct × format registry that drives
   `interop_diagnostics()`, the capability manifest (`interop.coverage`, `notation.directives`)
