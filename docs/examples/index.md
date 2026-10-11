@@ -40,6 +40,8 @@ A compilable score may still need an instrument library. Historical examples wit
 | Composition | Source status |
 |---|---|
 | [Transition sweep](sound-design/transition-sweep/index.md) | Compiles; self-contained |
+| [Reference piano — baseline](sound-design/reference-piano/index.md) | Compiles; self-contained |
+| [Reference piano — produced](sound-design/reference-piano-pro/index.md) | Compiles; self-contained |
 
 ## Electronic music
 
@@ -48,6 +50,12 @@ A compilable score may still need an instrument library. Historical examples wit
 | [2030 — synthesis study](electronic/2030-synth/index.md) | Compiles; self-contained |
 | [The Last 24 Hours](electronic/last-24h/index.md) | Compiles; self-contained |
 | [Neon Voltage](electronic/neon-voltage/index.md) | Compiles; self-contained |
+| [House 00 — source loop](electronic/house-00-source-loop/index.md) | Compiles; self-contained |
+| [House 01 — filter house](electronic/house-01-filter/index.md) | Compiles; self-contained |
+| [House 02 — talking synth](electronic/house-02-robot/index.md) | Compiles; self-contained |
+| [House 03 — chop shop](electronic/house-03-chop/index.md) | Compiles; self-contained |
+| [House 04 — phase & flange](electronic/house-04-phase/index.md) | Compiles; self-contained |
+| [House 05 — around the block](electronic/house-05-full/index.md) | Compiles; self-contained |
 
 ## Orchestral compositions
 

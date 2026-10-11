@@ -13,7 +13,7 @@ disclaimer:
 
 # IR reference
 
-The AudioForge IR (`https://audioforge.local/schemas/audioforge-ir-2.0.schema.json`, version 2.0) as **13** structured definitions, generated from `docs/ir.schema.json` (itself generated from `audioforge/ir_schema.py`).
+The AudioForge IR (`https://audioforge.local/schemas/audioforge-ir-2.1.schema.json`, version 2.1) as **13** structured definitions, generated from `docs/ir.schema.json` (itself generated from `audioforge/ir_schema.py`).
 
 | Definition | Type | Properties |
 |------------|------|------------|

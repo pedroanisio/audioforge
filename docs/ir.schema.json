@@ -1044,7 +1044,7 @@
           ]
         },
         "stereo_width": {
-          "maximum": 1,
+          "maximum": 2,
           "minimum": 0,
           "type": "number"
         },
@@ -1190,7 +1190,7 @@
       "type": "object"
     }
   },
-  "$id": "https://audioforge.local/schemas/audioforge-ir-2.0.schema.json",
+  "$id": "https://audioforge.local/schemas/audioforge-ir-2.1.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": true,
   "properties": {
@@ -1465,15 +1465,16 @@
       "notation"
     ],
     "migration": {
-      "current": "2.0",
-      "notes": "IR 2.0 changes gate/release, gain, mastering, randomness and repeat semantics. Migration preserves authored numeric intent, not old audio bytes. Review renders and regenerate manifests; docs/MIGRATION_3.md describes explicit compatibility choices.",
+      "current": "2.1",
+      "notes": "IR 2.0 changes gate/release, gain, mastering, randomness and repeat semantics. Migration preserves authored numeric intent, not old audio bytes. Review renders and regenerate manifests; docs/MIGRATION_3.md describes explicit compatibility choices. IR 2.1 raises master.stereo_width's ceiling from 1.0 to 2.0 (M/S widening; mid preserved, so the mono sum is unchanged); 2.0 specs migrate without audio review.",
       "policy": "structural-migration-audio-review-required",
       "supported_from": [
         "0.9",
         "1.0",
         "1.1",
         "1.2",
-        "2.0"
+        "2.0",
+        "2.1"
       ]
     },
     "render_plan": {
@@ -1481,6 +1482,6 @@
       "policy_field": "routing",
       "schema": "audioforge.render-plan/1"
     },
-    "version": "2.0"
+    "version": "2.1"
   }
 }

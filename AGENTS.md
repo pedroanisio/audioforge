@@ -49,6 +49,7 @@ against `cli.py`, so a verb cannot be added or removed without this file failing
 |------|---------|
 | `validate` | Validate an `.af` spec: resource **binding** + shape (`--no-resolve` = shape only). `OK: valid` = render-ready (given a C compiler); structured line-cited diagnostics and exit 1 otherwise. |
 | `compile` | Compile `.af` → JSON IR (the hashed render contract) for inspection. |
+| `expand` | Resolve content-pinned `import` directives (ADR-0016) and write the single resolved `.af` (`-o`; stdout without it). |
 | `render` | Render `.af` → WAV + manifest (`-o <dir>`, `--stems`, `--preset`, `--variant`, `--intensity`, `--jobs`, `--analyze`, `--plan`, `--explain`). |
 | `plan` | Emit the derived `audioforge.render-plan/1` (routes, fallbacks, evidence) before render. |
 | `batch` | Render a directory of specs. |
