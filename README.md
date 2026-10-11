@@ -115,6 +115,8 @@ Design rule: **the DSL is sugar; the JSON IR is truth.** Emotion tags, intensity
 
 ## Production features
 
+* **Expressive performance techniques** — first-class note modifiers (`tech palm_mute`, `dead_note`, `let_ring`, `accent`, `harmonic`, `sul_ponticello`, …), note-scope timbre curves (`cutoff(Nhz)`, `level(Ndb)`, `scan(N)`), and fretted/stringed mechanics (`tuning:`, `string N`, `fret N`, `max_fret:`). Every technique **lowers at compile time** to explicit, diffable, hash-owned IR — the renderer never receives a private "technique" concept (IR schema 1.2; see [docs/DSL_SPEC.md](docs/DSL_SPEC.md)).
+* **Public-domain sample catalog** — `audioforge sample-catalog` builds content-addressed, license-audited SFZ instrument libraries from public sources (download → analyze → group → generate SFZ → manifest), with per-file license evidence. Full spec in [docs/goal.md](docs/goal.md).
 * **Loudness & dynamics** — BS.1770-style gated LUFS targeting backed by a lookahead true-peak limiter (4× oversampled, stereo-linked, iterative makeup); stereo-linked glue and 3-band multiband compression (`comp`, `mbcomp`); always-on DC blocker before quantization. Gain reduction is reported in the manifest.
 * **Stems** — `--stems` writes per-layer pre-master stereo files, each seeded-dithered on its own deterministic path.
 * **Sync** — markers land in the manifest and a `.markers.json` sidecar; an example plugin exports EDL marker lists for editors.
@@ -124,6 +126,8 @@ Design rule: **the DSL is sugar; the JSON IR is truth.** Emotion tags, intensity
 ## SDK & plugins
 
 `audioforge.sdk.AudioForge` is the integration surface: `compile(dsl)` and `load_file(path)` return a `CompileResult` (assets + diagnostics); `load_spec(dict)` returns an `AudioAsset`. An `AudioAsset` offers `validate / set / mutated / render / preview / export`, plus `plan`, `analyze`, `variant`, `with_intensity`, `export_cutdowns` and `to_json / to_dsl / to_midi / to_musicxml`; `AudioForge` also provides `export_pack`, `catalog`, `import_midi` and `import_musicxml`. DSL compilation never raises on user input — agents get structured `Diagnostic`s with line numbers; JSON specs are validated directly and raise `SpecError`. Agent tool schemas (`tool_schemas` / `run_tool`) and an MCP server (`python -m audioforge.mcp`) expose the same surface; see [docs/AGENT_TOOLS.md](docs/AGENT_TOOLS.md).
+
+**Sound match** (`audioforge.match`, `scripts/sound_match.py`): give a target sample, get back an editable `.af` patch by offline analysis-by-synthesis — the engine is its own forward model, and the emitted patch is independently re-rendered to report a *verified* confidence, not an asserted one. See [docs/SOUND_MATCH.md](docs/SOUND_MATCH.md).
 
 Five extension points (`audioforge.plugins`): oscillators, fx, drum voices, exporters, validators. Fx and drum-voice plugins receive an injected seeded RNG; no plugin may use other entropy; plugin names live in specs, so spec hashing covers plugin selection automatically. See `examples/custom_plugin.py`.
 
@@ -282,5 +286,6 @@ lists them with their render manifests.
 * Determinism is guaranteed within an environment (native kernels give identical bits across SSE2/AVX2/AVX-512 builds); cross-platform float reproducibility is *checked* by the `verify` gate rather than assumed.
 * The vocoder is a channel vocoder (band envelopes), not a formant or LPC model; the time stretch is a plain phase vocoder (transients smear at large ratios). Neither generates voices.
 * Recorded material uses content-addressed WAV sample layers or pinned SFZ-subset instrument libraries. Recorded transitions and ensemble realism depend on the source material; synthesized approximations are declared in the render plan.
+* A measured A/B against a professional sample-based renderer (FluidSynth + FluidR3_GM) is recorded in [docs/RENDER_QUALITY_COMPARISON.md](docs/RENDER_QUALITY_COMPARISON.md) (`audioforge.quality`, `scripts/compare_render_quality.py`).
 
 Requires Python 3.10+, lark, numpy, scipy, matplotlib and a C compiler. Engine 3.2.0 · DSL 2.0.

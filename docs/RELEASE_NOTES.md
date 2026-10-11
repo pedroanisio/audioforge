@@ -13,7 +13,7 @@ disclaimer:
 
 - Engine 3.2.0
 - DSL 2.0
-- IR schema 2.0
+- IR schema 2.1
 - Version source of truth: `audioforge.version`
 
 Engine 3.2.0 renders with about 4.4x less CPU over the example corpus (short CLI renders
@@ -42,6 +42,23 @@ resampling, mastering, repeats and performance identity intentionally change
 renders. Review the [engine 3 migration guide](MIGRATION_3.md) and regenerate
 manifests after review. [ADR-0007](adr/0007-musical-render-semantics.md) records
 the decision; the [acceptance ledger](MUSICAL_CORRECTNESS.md) tracks proof.
+
+## Unreleased on main
+
+Integrated 2026-10-10 from `feat/notation-interchange`, `feat/electronic-production` and
+`claude/render-quality-comparison-5krec4`; see the `[Unreleased]` section of the changelog.
+
+- n-EDO tuning renders ([ADR-0014](adr/0014-n-edo-tuning-resolution.md)); the default
+  12-TET path is unchanged. `audioforge score --engrave` engraves through LilyPond.
+- Electronic production effects ([ADR-0015](adr/0015-electronic-production-effects.md)):
+  `phaser`, `flanger`, `chorus`, `bitcrush`, bus `vocoder:`, sample `offset`/`length`/
+  `reverse`/`stretch`/`slices`.
+- Content-pinned `import` directives ([ADR-0016](adr/0016-dsl-extensions.md)), resolved by
+  pure substitution before parsing; `audioforge expand` writes the resolved file.
+- IR schema 2.1 raises `master.stereo_width`'s ceiling from 1.0 to 2.0 (M/S widening; the
+  mid is preserved, so the mono sum is unchanged). 2.0 specs are unaffected.
+- Sound match (`audioforge.match`) and the render-quality A/B (`audioforge.quality`,
+  [RENDER_QUALITY_COMPARISON.md](RENDER_QUALITY_COMPARISON.md)).
 
 ## Engine 2.16.0 and DSL 1.9 history
 

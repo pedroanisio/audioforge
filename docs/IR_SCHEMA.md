@@ -15,11 +15,13 @@ fail if the checked-in JSON artifact drifts from that source.
 
 ## Versioning
 
-- Current IR schema version: `2.0`
+- Current IR schema version: `2.1`
 - Engine `3.2.0`, DSL `2.0` (source of truth: `audioforge.version`)
-- Accepted migration inputs: `0.9`, `1.0`, `1.1`, `1.2`, `2.0`; only `0.9` is
-  structurally rewritten (`metadata` → `_meta`), older inputs are stamped for audio
+- Accepted migration inputs: `0.9`, `1.0`, `1.1`, `1.2`, `2.0`, `2.1`; only `0.9` is
+  structurally rewritten (`metadata` → `_meta`), pre-2.0 inputs are stamped for audio
   review
+- IR `2.1` raises `master.stereo_width`'s ceiling from `1.0` to `2.0` (M/S widening;
+  the mid is preserved, so the mono sum is unchanged); `2.0` specs migrate without audio review
 
 `migrate_ir_spec` preserves numeric authoring intent and marks older inputs for audio review. Gate/release, gain, mastering, randomness and executable-repeat corrections intentionally change sound. This is not an audio-compatibility migration; review renders and regenerate manifests. See [migration guidance](MIGRATION_3.md).
 

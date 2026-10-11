@@ -166,7 +166,7 @@ def test_ir_schema_migration_contract_is_explicit():
     migrated = migrate_ir_spec(legacy, "0.9")
 
     assert metadata["migration"]["current"] == IR_SCHEMA_VERSION
-    assert metadata["migration"]["supported_from"] == ["0.9", "1.0", "1.1", "1.2", "2.0"]
+    assert metadata["migration"]["supported_from"] == ["0.9", "1.0", "1.1", "1.2", "2.0", "2.1"]
     assert metadata["migration"]["policy"] == "structural-migration-audio-review-required"
     assert migrated["_meta"]["source_format"] == "legacy-0.9"
     assert migrated["_meta"]["ir_schema_version"] == IR_SCHEMA_VERSION

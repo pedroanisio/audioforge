@@ -1,0 +1,123 @@
+# =============================================================================
+# reference_piano.af — a self-contained solo-piano cue for render-quality A/B.
+#
+# Purpose: a deterministic, library-free keyboard piece whose AudioForge
+# realization can be compared, render-for-render, against a professional
+# sample-based renderer (FluidSynth + FluidR3_GM grand piano) playing the
+# exact same note events exported via `audioforge export-midi`.
+#
+# Why piano: `export-midi` is program-agnostic (one flattened channel), so the
+# professional reference is GM program 0 — a grand piano. Keeping the material
+# pianistic makes that reference musically appropriate. AudioForge renders the
+# same notes with its native struck-string voice (tension-modulated
+# Karplus-Strong) and full master chain.
+#
+# 8 bars, A minor, 4/4 at 76 bpm. Three voices: a flowing right-hand melody,
+# sustained left-hand triads, and a half-note bass — a terraced dynamic arc
+# from p to f and back, enough polyphony and sustain to stress both renderers.
+# =============================================================================
+
+asset reference_piano {
+
+  kind:       cue
+  duration:   26s
+  samplerate: 48000
+  bitdepth:   24
+  tempo:      76bpm
+  key:        A minor
+
+  # Right-hand melody — eighth-note line, terraced crescendo across the arc.
+  layer melody : notes {
+    osc:        struck
+    tension:    0.0
+    brightness: 0.62
+    damping:    0.42
+    gain:       -8db
+    env:        a=0.004s d=0.6s s=0.25 r=0.6s
+    notes: A4 @ 0b for 0.5b vel 0.50, C5 @ 0.5b for 0.5b vel 0.50,
+      E5 @ 1b for 0.5b vel 0.50, C5 @ 1.5b for 0.5b vel 0.50,
+      A4 @ 2b for 0.5b vel 0.50, B4 @ 2.5b for 0.5b vel 0.50,
+      C5 @ 3b for 0.5b vel 0.50, E5 @ 3.5b for 0.5b vel 0.50,
+
+      F5 @ 4b for 0.5b vel 0.54, E5 @ 4.5b for 0.5b vel 0.54,
+      C5 @ 5b for 0.5b vel 0.54, A4 @ 5.5b for 0.5b vel 0.54,
+      F4 @ 6b for 0.5b vel 0.54, A4 @ 6.5b for 0.5b vel 0.54,
+      C5 @ 7b for 0.5b vel 0.54, F5 @ 7.5b for 0.5b vel 0.54,
+
+      E5 @ 8b for 0.5b vel 0.62, G5 @ 8.5b for 0.5b vel 0.62,
+      E5 @ 9b for 0.5b vel 0.62, C5 @ 9.5b for 0.5b vel 0.62,
+      G4 @ 10b for 0.5b vel 0.62, C5 @ 10.5b for 0.5b vel 0.62,
+      E5 @ 11b for 0.5b vel 0.62, G5 @ 11.5b for 0.5b vel 0.62,
+
+      D5 @ 12b for 0.5b vel 0.66, B4 @ 12.5b for 0.5b vel 0.66,
+      G4 @ 13b for 0.5b vel 0.66, B4 @ 13.5b for 0.5b vel 0.66,
+      D5 @ 14b for 0.5b vel 0.66, G5 @ 14.5b for 0.5b vel 0.66,
+      F5 @ 15b for 0.5b vel 0.66, D5 @ 15.5b for 0.5b vel 0.66,
+
+      E5 @ 16b for 0.5b vel 0.74, A4 @ 16.5b for 0.5b vel 0.74,
+      C5 @ 17b for 0.5b vel 0.74, E5 @ 17.5b for 0.5b vel 0.74,
+      A5 @ 18b for 0.5b vel 0.74, E5 @ 18.5b for 0.5b vel 0.74,
+      C5 @ 19b for 0.5b vel 0.74, A4 @ 19.5b for 0.5b vel 0.74,
+
+      D5 @ 20b for 0.5b vel 0.78, F5 @ 20.5b for 0.5b vel 0.78,
+      A5 @ 21b for 0.5b vel 0.78, F5 @ 21.5b for 0.5b vel 0.78,
+      D5 @ 22b for 0.5b vel 0.78, A4 @ 22.5b for 0.5b vel 0.78,
+      F4 @ 23b for 0.5b vel 0.78, A4 @ 23.5b for 0.5b vel 0.78,
+
+      E5 @ 24b for 0.5b vel 0.86, G#5 @ 24.5b for 0.5b vel 0.86,
+      B5 @ 25b for 0.5b vel 0.86, G#5 @ 25.5b for 0.5b vel 0.86,
+      E5 @ 26b for 0.5b vel 0.86, B4 @ 26.5b for 0.5b vel 0.86,
+      G#4 @ 27b for 0.5b vel 0.86, B4 @ 27.5b for 0.5b vel 0.86,
+
+      A5 @ 28b for 2b vel 0.62, E5 @ 30b for 1b vel 0.56,
+      A4 @ 31b for 1b vel 0.52
+  }
+
+  # Left-hand sustained triads — one per bar, mid register.
+  layer chords : notes {
+    osc:        struck
+    tension:    0.0
+    brightness: 0.5
+    damping:    0.5
+    gain:       -12db
+    env:        a=0.006s d=0.8s s=0.35 r=0.9s
+    notes: A3 @ 0b for 4b vel 0.46, C4 @ 0b for 4b vel 0.46, E4 @ 0b for 4b vel 0.46,
+      F3 @ 4b for 4b vel 0.48, A3 @ 4b for 4b vel 0.48, C4 @ 4b for 4b vel 0.48,
+      C4 @ 8b for 4b vel 0.54, E4 @ 8b for 4b vel 0.54, G4 @ 8b for 4b vel 0.54,
+      G3 @ 12b for 4b vel 0.56, B3 @ 12b for 4b vel 0.56, D4 @ 12b for 4b vel 0.56,
+      A3 @ 16b for 4b vel 0.62, C4 @ 16b for 4b vel 0.62, E4 @ 16b for 4b vel 0.62,
+      D3 @ 20b for 4b vel 0.64, F3 @ 20b for 4b vel 0.64, A3 @ 20b for 4b vel 0.64,
+      E3 @ 24b for 4b vel 0.70, G#3 @ 24b for 4b vel 0.70, B3 @ 24b for 4b vel 0.70,
+      A3 @ 28b for 4b vel 0.54, C4 @ 28b for 4b vel 0.54, E4 @ 28b for 4b vel 0.54
+  }
+
+  # Bass — root then fifth, half notes.
+  layer bass : notes {
+    osc:        struck
+    tension:    0.0
+    brightness: 0.4
+    damping:    0.55
+    gain:       -10db
+    env:        a=0.006s d=0.7s s=0.4 r=0.8s
+    notes: A2 @ 0b for 2b vel 0.58, E2 @ 2b for 2b vel 0.56,
+      F2 @ 4b for 2b vel 0.58, C2 @ 6b for 2b vel 0.56,
+      C2 @ 8b for 2b vel 0.60, G2 @ 10b for 2b vel 0.58,
+      G2 @ 12b for 2b vel 0.62, D2 @ 14b for 2b vel 0.60,
+      A2 @ 16b for 2b vel 0.66, E2 @ 18b for 2b vel 0.64,
+      D2 @ 20b for 2b vel 0.68, A2 @ 22b for 2b vel 0.66,
+      E2 @ 24b for 2b vel 0.72, B2 @ 26b for 2b vel 0.70,
+      A2 @ 28b for 4b vel 0.58
+  }
+
+  master {
+    width:   0.55
+    lufs:    -16
+    peak:    -1.0
+    fadein:  0.2s
+    fadeout: 2.0s
+
+    fx: highpass(28hz),
+        comp(threshold=-18, ratio=2.0, attack=0.02, release=0.25, knee=8, makeup=1),
+        highshelf(9000hz, gain=+0.5)
+  }
+}

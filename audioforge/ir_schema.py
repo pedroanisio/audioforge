@@ -28,7 +28,7 @@ from .curves import (
 )
 from .version import ENGINE_VERSION
 
-IR_SCHEMA_VERSION = "2.0"
+IR_SCHEMA_VERSION = "2.1"
 
 SEMANTIC_FIELDS = [
     "intent",
@@ -91,13 +91,16 @@ def ir_schema_metadata() -> dict[str, Any]:
         "hash_excluded_top_level": list(HASH_EXCLUDED_TOP_LEVEL),
         "migration": {
             "current": IR_SCHEMA_VERSION,
-            "supported_from": ["0.9", "1.0", "1.1", "1.2", "2.0"],
+            "supported_from": ["0.9", "1.0", "1.1", "1.2", "2.0", "2.1"],
             "policy": "structural-migration-audio-review-required",
             "notes": (
                 "IR 2.0 changes gate/release, gain, mastering, randomness and "
                 "repeat semantics. Migration preserves authored numeric intent, "
                 "not old audio bytes. Review renders and regenerate manifests; "
-                "docs/MIGRATION_3.md describes explicit compatibility choices."
+                "docs/MIGRATION_3.md describes explicit compatibility choices. "
+                "IR 2.1 raises master.stereo_width's ceiling from 1.0 to 2.0 "
+                "(M/S widening; mid preserved, so the mono sum is unchanged); "
+                "2.0 specs migrate without audio review."
             ),
         },
         "curves": {
@@ -134,7 +137,8 @@ def migrate_ir_spec(spec: dict, from_version: str) -> dict:
     out.setdefault("_meta", {})["ir_schema_version"] = IR_SCHEMA_VERSION
     if from_version != IR_SCHEMA_VERSION:
         out["_meta"]["migration"] = {"from": from_version, "to": IR_SCHEMA_VERSION,
-                                      "audio_review_required": True}
+                                      # 2.x -> 2.1 is additive (wider bounds only)
+                                      "audio_review_required": not from_version.startswith("2.")}
     return out
 
 
@@ -486,7 +490,7 @@ def ir_json_schema() -> dict[str, Any]:
                     "target_peak_dbfs": _number(minimum=-40, maximum=0),
                     "target_lufs": _number(minimum=-40, maximum=-5),
                     "normalization": {"enum": ["none", "peak"], "default": "none"},
-                    "stereo_width": _number(minimum=0, maximum=1),
+                    "stereo_width": _number(minimum=0, maximum=2),
                     "fade_in_s": _number(minimum=0),
                     "fade_out_s": _number(minimum=0),
                 },

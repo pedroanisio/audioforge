@@ -151,10 +151,16 @@ asset g {
 def _af_cases() -> dict[str, str]:
     cases = {}
     from af_corpus import source_paths
+    from audioforge.includes import has_imports, resolve_includes
 
     for path in source_paths(ROOT):
         name = str(path.relative_to(ROOT))
-        cases[name] = path.read_text()
+        src = path.read_text()
+        # `import` directives are resolved (pure substitution) before the parser
+        # sees them, so the golden pins the *resolved* AST, not a parse error.
+        if has_imports(src):
+            src = resolve_includes(src, path.parent).source
+        cases[name] = src
     return cases
 
 

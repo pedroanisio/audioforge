@@ -1,0 +1,139 @@
+# =============================================================================
+# reference_piano_pro.af — the fully *produced* sibling of reference_piano.af.
+#
+# Identical note events (same pitches, timing, velocities), so the MIDI export
+# — and therefore the professional FluidR3 reference — is unchanged. Only the
+# production differs, to show AudioForge already has the tools to win the
+# render-quality A/B on the realism axes the naive render lost:
+#
+#   * Stereo image: register-split constant-power panning (bass left, treble
+#     right — how a grand piano actually images) + a light decorrelated stereo
+#     room. Panned DRY layers raise stereo width WITHOUT filling the silent
+#     gaps, so the noise floor stays low.
+#   * Warmth: lower struck-string brightness + more damping, a low-shelf for
+#     foundation, and a high-shelf/low-pass to tame the synthesis fizz toward a
+#     piano's spectral balance.
+#   * Decay to silence: no make-up compression sustaining the floor — the
+#     struck voice decays to true digital silence (synthesis has no recorded
+#     noise floor to begin with).
+#
+# Compare:  python3 scripts/compare_render_quality.py \
+#               static/samples/reference_piano_pro.af -o compare/quality_pro
+# =============================================================================
+
+asset reference_piano_pro {
+
+  kind:       cue
+  duration:   26s
+  samplerate: 48000
+  bitdepth:   24
+  tempo:      76bpm
+  key:        A minor
+
+  # Right-hand melody — panned right, warm and singing.
+  layer melody : notes {
+    osc:        struck
+    tension:    0.0
+    brightness: 0.34
+    damping:    0.52
+    gain:       -8db
+    pan:        +0.7
+    env:        a=0.004s d=1.8s s=0.05 r=0.4s
+    notes: A4 @ 0b for 0.5b vel 0.50, C5 @ 0.5b for 0.5b vel 0.50,
+      E5 @ 1b for 0.5b vel 0.50, C5 @ 1.5b for 0.5b vel 0.50,
+      A4 @ 2b for 0.5b vel 0.50, B4 @ 2.5b for 0.5b vel 0.50,
+      C5 @ 3b for 0.5b vel 0.50, E5 @ 3.5b for 0.5b vel 0.50,
+
+      F5 @ 4b for 0.5b vel 0.54, E5 @ 4.5b for 0.5b vel 0.54,
+      C5 @ 5b for 0.5b vel 0.54, A4 @ 5.5b for 0.5b vel 0.54,
+      F4 @ 6b for 0.5b vel 0.54, A4 @ 6.5b for 0.5b vel 0.54,
+      C5 @ 7b for 0.5b vel 0.54, F5 @ 7.5b for 0.5b vel 0.54,
+
+      E5 @ 8b for 0.5b vel 0.62, G5 @ 8.5b for 0.5b vel 0.62,
+      E5 @ 9b for 0.5b vel 0.62, C5 @ 9.5b for 0.5b vel 0.62,
+      G4 @ 10b for 0.5b vel 0.62, C5 @ 10.5b for 0.5b vel 0.62,
+      E5 @ 11b for 0.5b vel 0.62, G5 @ 11.5b for 0.5b vel 0.62,
+
+      D5 @ 12b for 0.5b vel 0.66, B4 @ 12.5b for 0.5b vel 0.66,
+      G4 @ 13b for 0.5b vel 0.66, B4 @ 13.5b for 0.5b vel 0.66,
+      D5 @ 14b for 0.5b vel 0.66, G5 @ 14.5b for 0.5b vel 0.66,
+      F5 @ 15b for 0.5b vel 0.66, D5 @ 15.5b for 0.5b vel 0.66,
+
+      E5 @ 16b for 0.5b vel 0.74, A4 @ 16.5b for 0.5b vel 0.74,
+      C5 @ 17b for 0.5b vel 0.74, E5 @ 17.5b for 0.5b vel 0.74,
+      A5 @ 18b for 0.5b vel 0.74, E5 @ 18.5b for 0.5b vel 0.74,
+      C5 @ 19b for 0.5b vel 0.74, A4 @ 19.5b for 0.5b vel 0.74,
+
+      D5 @ 20b for 0.5b vel 0.78, F5 @ 20.5b for 0.5b vel 0.78,
+      A5 @ 21b for 0.5b vel 0.78, F5 @ 21.5b for 0.5b vel 0.78,
+      D5 @ 22b for 0.5b vel 0.78, A4 @ 22.5b for 0.5b vel 0.78,
+      F4 @ 23b for 0.5b vel 0.78, A4 @ 23.5b for 0.5b vel 0.78,
+
+      E5 @ 24b for 0.5b vel 0.86, G#5 @ 24.5b for 0.5b vel 0.86,
+      B5 @ 25b for 0.5b vel 0.86, G#5 @ 25.5b for 0.5b vel 0.86,
+      E5 @ 26b for 0.5b vel 0.86, B4 @ 26.5b for 0.5b vel 0.86,
+      G#4 @ 27b for 0.5b vel 0.86, B4 @ 27.5b for 0.5b vel 0.86,
+
+      A5 @ 28b for 2b vel 0.62, E5 @ 30b for 1b vel 0.56,
+      A4 @ 31b for 1b vel 0.52
+  }
+
+  # Left-hand sustained triads — panned a touch left, in the warm mid register.
+  layer chords : notes {
+    osc:        struck
+    tension:    0.0
+    brightness: 0.28
+    damping:    0.58
+    gain:       -12db
+    pan:        -0.4
+    env:        a=0.006s d=2.4s s=0.06 r=0.5s
+    notes: A3 @ 0b for 4b vel 0.46, C4 @ 0b for 4b vel 0.46, E4 @ 0b for 4b vel 0.46,
+      F3 @ 4b for 4b vel 0.48, A3 @ 4b for 4b vel 0.48, C4 @ 4b for 4b vel 0.48,
+      C4 @ 8b for 4b vel 0.54, E4 @ 8b for 4b vel 0.54, G4 @ 8b for 4b vel 0.54,
+      G3 @ 12b for 4b vel 0.56, B3 @ 12b for 4b vel 0.56, D4 @ 12b for 4b vel 0.56,
+      A3 @ 16b for 4b vel 0.62, C4 @ 16b for 4b vel 0.62, E4 @ 16b for 4b vel 0.62,
+      D3 @ 20b for 4b vel 0.64, F3 @ 20b for 4b vel 0.64, A3 @ 20b for 4b vel 0.64,
+      E3 @ 24b for 4b vel 0.70, G#3 @ 24b for 4b vel 0.70, B3 @ 24b for 4b vel 0.70,
+      A3 @ 28b for 4b vel 0.54, C4 @ 28b for 4b vel 0.54, E4 @ 28b for 4b vel 0.54
+  }
+
+  # Bass — root then fifth, panned left, deep and round.
+  layer bass : notes {
+    osc:        struck
+    tension:    0.0
+    brightness: 0.22
+    damping:    0.6
+    gain:       -10db
+    pan:        -0.85
+    env:        a=0.006s d=2.2s s=0.07 r=0.5s
+    notes: A2 @ 0b for 2b vel 0.58, E2 @ 2b for 2b vel 0.56,
+      F2 @ 4b for 2b vel 0.58, C2 @ 6b for 2b vel 0.56,
+      C2 @ 8b for 2b vel 0.60, G2 @ 10b for 2b vel 0.58,
+      G2 @ 12b for 2b vel 0.62, D2 @ 14b for 2b vel 0.60,
+      A2 @ 16b for 2b vel 0.66, E2 @ 18b for 2b vel 0.64,
+      D2 @ 20b for 2b vel 0.68, A2 @ 22b for 2b vel 0.66,
+      E2 @ 24b for 2b vel 0.72, B2 @ 26b for 2b vel 0.70,
+      A2 @ 28b for 4b vel 0.58
+  }
+
+  master {
+    # >1 widens via M/S side-scaling: it amplifies the register-panned side
+    # content (mid preserved, so mono sum and the silent floor are untouched) —
+    # a wide image with NO reverb tail, so noise floor and crest stay intact.
+    width:   1.8
+    lufs:    -16
+    peak:    -1.0
+    fadein:  0.2s
+    fadeout: 2.0s
+
+    # Foundation + de-fizz toward a real piano's spectral balance. No reverb
+    # and no make-up gain: the piano-like decay envelopes reach true digital
+    # silence, the always-on DC blocker keeps the offset clean, and dynamics
+    # are preserved.
+    fx: highpass(25hz),
+        lowshelf(150hz, gain=+2.5),
+        peak(420hz, gain=+1.0, q=0.8),
+        highshelf(5200hz, gain=-4.0),
+        lowpass(9500hz)
+  }
+}

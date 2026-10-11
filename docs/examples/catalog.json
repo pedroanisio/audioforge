@@ -597,6 +597,34 @@
       ]
     },
     {
+      "id": "reference-piano",
+      "category": "sound-design",
+      "source": "docs/examples/sound-design/reference-piano/reference_piano.af",
+      "legacy_source": "static/samples/reference_piano.af",
+      "title": "Reference piano — baseline",
+      "description": "A self-contained solo-piano cue rendered for the A/B against a sample-based renderer (docs/RENDER_QUALITY_COMPARISON.md); the naive baseline.",
+      "libraries": [],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "reference_piano"
+      ]
+    },
+    {
+      "id": "reference-piano-pro",
+      "category": "sound-design",
+      "source": "docs/examples/sound-design/reference-piano-pro/reference_piano_pro.af",
+      "legacy_source": "static/samples/reference_piano_pro.af",
+      "title": "Reference piano — produced",
+      "description": "The same solo-piano cue with the production choices that close the measured render-quality gap (docs/RENDER_QUALITY_COMPARISON.md).",
+      "libraries": [],
+      "compiles": true,
+      "diagnostics": [],
+      "asset_ids": [
+        "reference_piano_pro"
+      ]
+    },
+    {
       "id": "blue-in-five",
       "category": "jazz",
       "source": "docs/examples/jazz/blue-in-five/blue_in_five.af",

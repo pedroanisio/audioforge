@@ -82,6 +82,7 @@ CLI_COMMANDS = [
     "compile",
     "cue",
     "decompile",
+    "expand",
     "export-midi",
     "export-musicxml",
     "grammar",

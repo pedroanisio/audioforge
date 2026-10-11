@@ -1,0 +1,37 @@
+# Example: a song that imports a shared motif vocabulary, content-pinned.
+# Re-pin after editing stdlib.afi:  audioforge expand examples/includes/song.af
+import "stdlib.afi" @ sha256:eda03e6fac4d7d40157853abb9f92c05ad51554f2f220c17aa46d2292d92190f
+
+asset import_demo {
+  kind: cue
+  duration: 8s
+  tempo: 120bpm
+  key: C major
+
+  layer kick : drums {
+    voice: kick
+    pattern: x...x...x...x...
+    gain: -6db
+  }
+  layer bass : notes {
+    osc: saw
+    gain: -10db
+    env: a=0.005s d=0.25s s=0.4 r=0.2s
+    fx: lowpass(1200hz)
+    play four_on_floor @ 0b
+    play four_on_floor @ 4b
+  }
+  layer lead : notes {
+    osc: square
+    gain: -12db
+    env: a=0.005s d=0.3s s=0.3 r=0.25s
+    play rise_lick @ 0b
+    play rise_lick @ 2b transpose +5st
+    play rise_lick @ 4b transpose +7st
+    play rise_lick @ 6b transpose +12st
+  }
+  master {
+    lufs: -14
+    peak: -1db
+  }
+}

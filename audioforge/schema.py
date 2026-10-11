@@ -1030,7 +1030,9 @@ def validate_spec(spec: dict) -> dict:
         raise SpecError("spec.master.normalization: expected none or peak")
     if master.get("normalization") == "peak" and "target_lufs" in master:
         raise SpecError("spec.master: peak normalization conflicts with target_lufs")
-    _num(master, "stereo_width", "spec.master", 0.0, 1.0, required=False)
+    # 0 = mono, 1 = as-mixed, >1 = M/S widened (side scaled, mid preserved so
+    # the mono sum is unchanged). Capped at 2.0 — the conventional widener max.
+    _num(master, "stereo_width", "spec.master", 0.0, 2.0, required=False)
 
     # Grid-using specs (drums/notes/instrument) require a base tempo. Checked at
     # the end so each layer's own diagnostics surface first, and so an

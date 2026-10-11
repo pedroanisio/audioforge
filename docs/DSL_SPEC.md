@@ -519,7 +519,7 @@ Emotion never invents notes or changes timing — only spatial/spectral framing,
 
 ## 16. Master block, loudness, mastering order
 
-`width:` (0..1), `peak:` (dBFS true-peak ceiling), `normalize: none|peak` (default `none`), `lufs:` (integrated target), `fadein:`/`fadeout:` (s), `fx:`, `auto gain:`.
+`width:` (0..2 — M/S side scale: 0 = mono, 1 = as-mixed, >1 widens beyond the mix; the mid is preserved so the mono sum is unchanged), `peak:` (dBFS true-peak ceiling), `normalize: none|peak` (default `none`), `lufs:` (integrated target), `fadein:`/`fadeout:` (s), `fx:`, `auto gain:`.
 
 The master stage runs: **fx → gain automation → width/DC safety → fades → requested normalization → true-peak ceiling → seeded dither → quantization**. Without `lufs:` or `normalize: peak`, levels below the ceiling are preserved. `lufs:` requests BS.1770-style loudness normalization; the manifest reports the actual premaster measurement, applied gain, limiting and final loudness. `normalize: peak` explicitly requests peak normalization and cannot be combined with `lufs:`. Peak safety remains active even when the input already meets its loudness target. Loop-safe rendering validates both the unfaded seam/tails and the delivered buffer; these checks are numerical, not a perceptual continuity rating.
 
@@ -527,7 +527,41 @@ Export presets (SDK/CLI `--preset`): `social_video` 48k/16/−14 · `broadcast` 
 
 ---
 
-## 17. Determinism, manifests, versioning
+## 17. Includes (content-pinned imports; unreleased, after DSL 2.0)
+
+Reusable `motif`/`bus` definitions live in `.afi` fragment files and are pulled
+into a `.af` with a SHA-256-pinned `import`, before any `asset`:
+
+```
+import "stdlib/rock_buses.afi" @ sha256:ab3f…
+import "ourband/riffs.afi"     @ sha256:9c21…
+
+asset song { … play riff @ 0b … }      # imported motif used like a local one
+```
+
+Resolution is **pure substitution that runs before the parser** — it reads,
+verifies, de-duplicates, and inlines; it never computes. The rules that keep it
+safe and reproducible:
+
+- **Pinned** — the SHA-256 must match the file's bytes or compilation refuses
+  (loud and local). The same discipline as `library:`/`sample` pins.
+- **Reproducible** — the *resolved* source is what compiles, so an imported
+  patch is byte-identical to the same patch written inline: same `spec_hash`,
+  same audio. Import pins are recorded as provenance in `_meta.imports`
+  (hash-excluded); rendered identity comes from the expanded events.
+- **Acyclic** — the import graph is a DAG; cycles refuse. Diamonds (a fragment
+  reached by two paths, same pin) de-duplicate to one inclusion.
+- **Flat with collision detection** — two definitions of the same name refuse.
+  Namespacing (`import … as ns`, `ns.name`) is a deliberate follow-up that
+  needs a grammar change (`docs/adr/0016-dsl-extensions.md`).
+- **Materialisable** — `audioforge expand spec.af [-o out.af]` writes the single
+  fully-resolved file, so an agent can always read exactly what will render.
+
+Imports require a file context (`load_file` / CLI), not a bare compiled string.
+
+---
+
+## 18. Determinism, manifests, versioning
 
 The performance seed and variant define named component randomness independently of gain, pan and metadata. Every render is keyed to the complete spec content hash; `ENGINE_VERSION` folds into it, so any engine change that could alter bytes changes all hashes — stale caches can never masquerade as current renders. Manifests record spec hash, output SHA-256, loudness report, markers, variant/intensity tags, and cutdown lineage. `audioforge render --analyze` also writes deterministic observations and recommendations conditioned on declared analysis expectations into the manifest for agent critique loops. `audioforge verify spec manifest` (spec as compiled JSON IR or a single-asset `.af`) re-renders and compares output hashes — the CI reproducibility gate. Cross-platform float reproducibility is *checked* by that gate per environment, not assumed.
 
@@ -548,6 +582,7 @@ The executable grammar lives in `audioforge.lark_parser` as a Lark grammar and i
 ```
 audioforge validate spec.af [--no-resolve]
 audioforge compile  spec.af
+audioforge expand   spec.af [-o out.af]            # inline content-pinned imports
 audioforge plan     spec.(af|json) [-o file] [--explain]
 audioforge decompile spec.(af|json)
 audioforge repair   spec.af [--analysis FILE] [--feedback "…"]

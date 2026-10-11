@@ -27,7 +27,8 @@ from .version import version_banner
 def _assets(path: str, variant=None):
     forge = AudioForge()
     if variant is not None and str(path).endswith(".af"):
-        res = forge.compile(Path(path).read_text(), variant=variant)
+        res = forge.compile(Path(path).read_text(), variant=variant,
+                            base_dir=Path(path).parent)
     else:
         res = forge.load_file(path)
     for d in res.diagnostics:
@@ -482,6 +483,9 @@ def main(argv=None) -> int:
 
     p = sub.add_parser("compile"); p.add_argument("spec")
 
+    p = sub.add_parser("expand"); p.add_argument("spec")
+    p.add_argument("-o", "--out", default=None)
+
     p = sub.add_parser("decompile"); p.add_argument("spec")
 
     p = sub.add_parser("repair"); p.add_argument("spec")
@@ -588,6 +592,15 @@ def main(argv=None) -> int:
         elif args.cmd == "compile":
             for a in _assets(args.spec):
                 print(a.to_json())
+        elif args.cmd == "expand":
+            from .includes import resolve_includes
+            src = Path(args.spec).read_text()
+            resolved = resolve_includes(src, Path(args.spec).parent).source
+            if args.out:
+                Path(args.out).write_text(resolved)
+                print(f"expanded -> {args.out}")
+            else:
+                print(resolved)
         elif args.cmd == "decompile":
             for a in _assets(args.spec):
                 print(a.to_dsl())
