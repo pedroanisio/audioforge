@@ -102,7 +102,7 @@ NOTE_SCOPE_SUPPORT = {
         "scan": "unsupported",
     },
     "physical_models": {
-        "pitch_cents": "unsupported",
+        "pitch_cents": "resampled",
         "dynamic": "supported",
         "gain_db": "supported",
         "cutoff_hz": "unsupported",
@@ -361,10 +361,6 @@ def _validate_automation(autos, path, fx_chain, *, scope="layer",
             )
         except CurveError as exc:
             raise SpecError(str(exc)) from exc
-        if tgt == "pitch_cents" and osc in PHYSICAL_MODEL_OSCILLATORS:
-            raise SpecError(
-                f"{p}: {CURVE_UNSUPPORTED_VOICE_CODE}: pitch_cents curves "
-                f"are not yet supported for '{osc}'")
         if tgt == "cutoff_hz":
             # Must point at a real, cutoff-capable fx — not merely "some fx
             # chain exists" (audit F12).
@@ -417,6 +413,21 @@ def _validate_note_events(layer: dict, p: str):
     if not isinstance(notes, list) or not notes:
         raise SpecError(f"{p}.notes: must be a non-empty list")
     osc = layer.get("osc")
+    mix = layer.get("osc_mix")
+    if mix is not None:
+        if (not isinstance(mix, list) or not 2 <= len(mix) <= 3
+                or any(not isinstance(s, str) for s in mix)):
+            raise SpecError(
+                f"{p}.osc_mix: expected 2 or 3 oscillator names")
+        if len(set(mix)) != len(mix):
+            raise SpecError(f"{p}.osc_mix: duplicate oscillator in mix")
+        if "morph" in mix:
+            raise SpecError(
+                f"{p}.osc_mix: 'morph' is single-voice (scan machinery) "
+                f"and cannot join a mix")
+        if mix[0] != osc:
+            raise SpecError(
+                f"{p}.osc_mix: first entry must equal layer osc")
     layer_type = layer.get("type")
     tuning = layer.get("tuning")
     if tuning is not None:
@@ -530,10 +541,6 @@ def _validate_note_events(layer: dict, p: str):
                     )
                 except CurveError as exc:
                     raise SpecError(str(exc)) from exc
-                if target == "pitch_cents" and osc in PHYSICAL_MODEL_OSCILLATORS:
-                    raise SpecError(
-                        f"{cp}: {CURVE_UNSUPPORTED_VOICE_CODE}: pitch_cents "
-                        f"curves are not yet supported for '{osc}'")
                 if (layer_type == "instrument"
                         and target in {"cutoff_hz", "scan"}):
                     raise SpecError(

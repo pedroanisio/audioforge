@@ -1997,6 +1997,24 @@ def _compile_layer(lay: Layer, motifs: dict, scale, diags: list[str],
         if field in p:
             out[field] = _json_ir(p.pop(field), line, field)
 
+    if "osc" in p and len(p["osc"]) > 1:
+        toks = p.pop("osc")
+        texts = [getattr(tk, "text", None) or str(tk.value) for tk in toks]
+        line = toks[0].line
+        if len(texts) % 2 == 0 or texts[1::2] != ["+"] * (len(texts) // 2):
+            raise DSLError(
+                "osc_mix: expected 'osc: name + name [+ name]'", line)
+        shapes = texts[0::2]
+        if not 2 <= len(shapes) <= 3:
+            raise DSLError("osc_mix: 2 or 3 oscillators allowed", line)
+        if len(set(shapes)) != len(shapes):
+            raise DSLError("osc_mix: duplicate oscillator in mix", line)
+        if "morph" in shapes:
+            raise DSLError(
+                "osc_mix: 'morph' is single-voice and cannot join a mix",
+                line)
+        out["osc"] = shapes[0]
+        out["osc_mix"] = shapes
     simple = {"osc": ("osc", None), "voice": ("voice", None),
               "color": ("color", None), "shape": ("shape", None),
               "curve": ("curve", None), "material": ("material", None)}

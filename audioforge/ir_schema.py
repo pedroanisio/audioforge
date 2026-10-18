@@ -396,6 +396,12 @@ def ir_json_schema() -> dict[str, Any]:
                     "name": {"type": "string"},
                     "type": _string_enum(LAYER_TYPES),
                     "osc": _string_enum(OSC_SHAPES),
+                    "osc_mix": {
+                        "type": "array",
+                        "items": _string_enum(OSC_SHAPES),
+                        "minItems": 2,
+                        "maxItems": 3,
+                    },
                     "color": _string_enum(NOISE_COLORS),
                     "freq_hz": _number(minimum=1),
                     "note": {"type": "string"},

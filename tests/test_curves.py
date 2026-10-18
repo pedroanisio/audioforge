@@ -102,7 +102,7 @@ def test_validate_spec_rejects_invalid_note_curves_with_pathful_errors(curve, me
         validate_spec(spec)
 
 
-def test_validate_spec_rejects_unsupported_physical_model_pitch_curve():
+def test_validate_spec_accepts_physical_model_pitch_curve():
     spec = {
         "id": "unsupported_curve",
         "kind": "cue",
@@ -121,5 +121,4 @@ def test_validate_spec_rejects_unsupported_physical_model_pitch_curve():
         }],
     }
 
-    with pytest.raises(SpecError, match="curve_unsupported_voice"):
-        validate_spec(spec)
+    assert validate_spec(spec)["id"] == "unsupported_curve"

@@ -2354,7 +2354,7 @@
         "cutoff_hz": "unsupported",
         "dynamic": "supported",
         "gain_db": "supported",
-        "pitch_cents": "unsupported",
+        "pitch_cents": "resampled",
         "scan": "unsupported"
       }
     },
@@ -2424,11 +2424,11 @@
       },
       "physical_models": {
         "cutoff_hz": "unsupported_until_staged",
-        "diagnostic": "curve_unsupported_voice",
+        "diagnostic": "note_curve_unsupported_voice",
         "dynamic": "full",
         "gain_db": "full",
         "initial_pitch_bound_cents": 400,
-        "pitch_cents": "unsupported_until_staged",
+        "pitch_cents": "resampled_varispeed",
         "scan": "unsupported_until_staged",
         "voices": [
           "blown",
@@ -2529,7 +2529,7 @@
     "schema": "audioforge.render-plan/1"
   },
   "repair_hints": {
-    "curve_unsupported_voice": "Move the curve to a supported voice, remove it, or wait for the physical-model kernel stage advertised in the support matrix.",
+    "curve_unsupported_voice": "Retired: pitch_cents curves on physical models are realised by deterministic varispeed since engine 3.2; the code is kept for manifest compatibility and is no longer emitted.",
     "duplicate_note_timbre_curve": "Keep at most one cutoff_hz, gain_db, or scan curve per note.",
     "fret_out_of_range": "Use a fret inside 0..max_fret or the muted string value 'x'.",
     "invalid_curve": "Use a supported curve target, time basis, point encoding, and interpolation shape from performance_curves.",

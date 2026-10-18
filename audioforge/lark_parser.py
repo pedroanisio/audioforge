@@ -95,10 +95,10 @@ play_mod: "legato"           -> pm_legato
 breakpoint: NUMBER EQ NUMBER
 
 value: _vitem*
-_vitem: _scalar | AT | EQ | DOT | COLON | group | _vcomma
+_vitem: _scalar | AT | EQ | DOT | COLON | PLUS | group | _vcomma
 _vcomma: COMMA _NL*
 group: LPAR _gitem* RPAR
-_gitem: _scalar | AT | EQ | DOT | COLON | COMMA | group | _NL
+_gitem: _scalar | AT | EQ | DOT | COLON | PLUS | COMMA | group | _NL
 _scalar: QUALIFIED | IDENT | NUMBER | STRING
 
 // `bus:music` — a scoped reference written without spaces (duck/vocoder sources).
@@ -108,6 +108,7 @@ IDENT: /[A-Za-z_][A-Za-z0-9_#]*/
 NUMBER: /[+-]?\d+(\.\d+)?([eE][+-]?\d+)?(s|b|bpm|db|hz|st|c|deg|m)?\b/
 STRING: /"(?:\\.|[^"\\\n])*"/
 AT: "@"
+PLUS: /\+(?![\d.])/
 EQ: "="
 DOT: "."
 COLON: ":"

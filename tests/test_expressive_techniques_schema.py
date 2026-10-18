@@ -162,8 +162,16 @@ def test_physical_model_supported_note_scope_curve_cells_accept(target, value):
     assert validate_spec(spec)["id"] == "expressive_schema"
 
 
+def test_physical_model_pitch_curve_cell_accepts():
+    """pitch_cents on physical models is supported via varispeed."""
+    spec = _notes_spec(osc="struck", curves=[{
+        "target": "pitch_cents",
+        "points": [[0.0, 0.0], [1.0, 25.0]],
+    }])
+    assert validate_spec(spec)["id"] == "expressive_schema"
+
+
 @pytest.mark.parametrize(("target", "value", "code"), [
-    ("pitch_cents", 25.0, "curve_unsupported_voice"),
     ("cutoff_hz", 1000.0, "note_curve_unsupported_voice"),
     ("scan", 0.5, "note_curve_unsupported_voice"),
 ])

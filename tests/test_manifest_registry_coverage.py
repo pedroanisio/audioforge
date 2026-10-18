@@ -158,7 +158,8 @@ def test_manifest_performance_curve_contract_is_published():
         == "curve_unsupported_voice"
     )
     physical = curves["support_matrix"]["physical_models"]
-    assert physical["diagnostic"] == "curve_unsupported_voice"
+    assert physical["pitch_cents"] == "resampled_varispeed"
+    assert physical["diagnostic"] == "note_curve_unsupported_voice"
     assert {"bowed", "blown", "brass", "struck", "sympathetic"} <= set(
         physical["voices"]
     )

@@ -72,10 +72,17 @@ def test_expressive_techniques_acceptance_fixture_golden_ir_snapshot():
     }
 
 
+def test_physical_pitch_curve_fixture_now_compiles():
+    """Physical-model pitch curves are staged (varispeed realisation)."""
+    result = _compile_fixture(FIXTURES / "expressive_physical_pitch_curve.af")
+    assert result.ok, [d.message for d in result.diagnostics]
+    note = result.assets[0].spec["layers"][0]["notes"][0]
+    assert any(c["target"] == "pitch_cents" for c in note.get("curves", []))
+
+
 @pytest.mark.parametrize(("filename", "code"), [
     ("expressive_scan_non_morph.af", "scan_requires_morph_osc"),
     ("expressive_duplicate_cutoff.af", "duplicate_note_timbre_curve"),
-    ("expressive_physical_pitch_curve.af", "curve_unsupported_voice"),
 ])
 def test_expressive_techniques_rejection_fixtures_fail_with_codes(filename, code):
     result = _compile_fixture(FIXTURES / "rejections" / filename)

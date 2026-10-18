@@ -830,6 +830,31 @@
           ],
           "type": "string"
         },
+        "osc_mix": {
+          "items": {
+            "enum": [
+              "blown",
+              "bowed",
+              "brass",
+              "fm",
+              "modal",
+              "morph",
+              "organ",
+              "pad",
+              "pluck",
+              "saw",
+              "sine",
+              "square",
+              "struck",
+              "sympathetic",
+              "triangle"
+            ],
+            "type": "string"
+          },
+          "maxItems": 3,
+          "minItems": 2,
+          "type": "array"
+        },
         "pan": {
           "maximum": 1,
           "minimum": -1,

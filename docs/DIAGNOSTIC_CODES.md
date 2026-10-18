@@ -21,7 +21,7 @@ There are **54** diagnostic codes.
 | Code | Repair hint |
 |------|-------------|
 | `ambiguous_harmony` | _(see repair_hints in the manifest)_ |
-| `curve_unsupported_voice` | Move the curve to a supported voice, remove it, or wait for the physical-model kernel stage advertised in the support matrix. |
+| `curve_unsupported_voice` | Retired: pitch_cents curves on physical models are realised by deterministic varispeed since engine 3.2; the code is kept for manifest compatibility and is no longer emitted. |
 | `dead_air` | _(see repair_hints in the manifest)_ |
 | `duplicate_note_timbre_curve` | Keep at most one cutoff_hz, gain_db, or scan curve per note. |
 | `fret_out_of_range` | Use a fret inside 0..max_fret or the muted string value 'x'. |

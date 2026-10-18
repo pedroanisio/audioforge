@@ -6,6 +6,8 @@ from __future__ import annotations
 
 import numpy as np
 
+from .curves import PHYSICAL_MODEL_OSCILLATORS
+
 TWO_PI = 2.0 * np.pi
 
 NOTE_OFFSETS = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
@@ -559,7 +561,26 @@ def osc_dynamic(shape: str, freq_env: np.ndarray, n: int, sr: int, *,
         i0 = np.floor(pos).astype(np.int64) % N
         fr = pos - np.floor(pos)
         return table[i0] * (1.0 - fr) + table[(i0 + 1) % N] * fr
-    # physical models: pitch envelopes not applicable; render static
+    if shape in PHYSICAL_MODEL_OSCILLATORS:
+        # Physical models cannot retune their resonators mid-note. The pitch
+        # envelope is realised by deterministic variable-rate (varispeed)
+        # reading of the statically rendered voice — tape semantics: the
+        # scheduled duration is preserved and the instantaneous rate follows
+        # freq_env / f_nominal. Linear-interpolated reads keep it exact and
+        # byte-reproducible.
+        rate = freq_env / max(float(f_nominal), 1e-9)
+        pos = np.empty(n)
+        if n:
+            pos[0] = 0.0
+            np.cumsum(rate[:-1], out=pos[1:])
+        src_n = int(np.ceil(pos[-1] if n else 0.0)) + 2
+        src = osc(shape, f_nominal, src_n, sr, phase0=phase0,
+                  fm_ratio=fm_ratio, fm_index=fm_index, rng=rng, voice=voice)
+        i0 = np.clip(np.floor(pos).astype(np.int64), 0, src_n - 2)
+        fr = pos - i0
+        return src[i0] * (1.0 - fr) + src[i0 + 1] * fr
+    # remaining non-oscillator voices (pluck/modal): pitch envelopes not
+    # applicable; render static
     return osc(shape, f_nominal, n, sr, phase0=phase0, fm_ratio=fm_ratio,
                fm_index=fm_index, rng=rng, voice=voice)
 

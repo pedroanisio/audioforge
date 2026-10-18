@@ -1,4 +1,6 @@
-# AF-P3/G13 rejection fixture: physical-model pitch curves are not staged.
+# Acceptance fixture: physical-model pitch curves render via deterministic
+# varispeed (tape semantics) — scheduled duration preserved, rate follows
+# 2**(cents/1200).
 
 asset expressive_physical_pitch_curve {
   kind: cue

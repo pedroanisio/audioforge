@@ -344,6 +344,19 @@ def render_note_track(track: dict, total_n: int, sr: int, tm: "TempoMap",
     portamento (glide_s, monophonic-line semantics), per-note vibrato, and
     velocity->brightness. All deviation is drawn from per-note seeded RNG
     paths: 'imperfect' and byte-reproducible at once."""
+    mix = track.get("osc_mix")
+    if mix and len(mix) > 1:
+        # `osc: a + b` sums the independently rendered voices and scales by
+        # 1/sqrt(N): each component is byte-identical to its standalone
+        # render, so the mix is deterministic by construction.
+        acc = None
+        for s in mix:
+            sub = dict(track)
+            sub.pop("osc_mix", None)
+            sub["osc"] = s
+            y = render_note_track(sub, total_n, sr, tm, rng_factory, groove)
+            acc = y if acc is None else acc + y
+        return acc / np.sqrt(float(len(mix)))
     from .fx import _biquad
     from .render import _voice_params
     env_p = track.get("env", {"attack": 0.01, "decay": 0.1,
@@ -359,6 +372,21 @@ def render_note_track(track: dict, total_n: int, sr: int, tm: "TempoMap",
     from .performance import schedule_notes
     factory = rng_factory or (lambda path: rng_for("default_take", path))
     scheduled = schedule_notes(track, total_n, sr, tm, factory, groove)
+    lay_cents = None
+    for au in track.get("automation", []):
+        if au.get("target") != "pitch_cents":
+            continue
+        pts = au.get("points") or []
+        if not pts:
+            continue
+        xs = [float(b) for b, _ in pts]
+        if au.get("time_basis") == "layer_beats":
+            xs = [tm.sec(b) for b in xs]
+        ys = [float(v) for _, v in pts]
+        tgrid = np.arange(total_n) / sr
+        env_c = np.interp(tgrid, xs, ys)
+        lay_cents = env_c if lay_cents is None else lay_cents + env_c
+    lay_ratio = None if lay_cents is None else 2.0 ** (lay_cents / 1200.0)
     prev_freq = None
     prev_start = None
     pending: list = []                  # notes awaiting the batched filter
@@ -389,6 +417,11 @@ def render_note_track(track: dict, total_n: int, sr: int, tm: "TempoMap",
                     float(vib.get("depth_cents", 12.0)),
                     float(vib.get("delay_s", 0.25)))
                 ratio = v_env if ratio is None else ratio * v_env
+        if lay_ratio is not None:
+            seg = lay_ratio[start:start + n]
+            if seg.size < n:
+                seg = np.pad(seg, (0, n - seg.size), mode="edge")
+            ratio = seg if ratio is None else ratio * seg
         voice = _voice_params(track)
         note_scan = _sum_note_curve(ev, "scan", tm, start_beat, t, n, sr)
         if note_scan is not None:

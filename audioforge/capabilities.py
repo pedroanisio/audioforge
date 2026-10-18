@@ -4,7 +4,8 @@ from __future__ import annotations
 from . import interop
 from .dsl import (ARTICULATIONS, DSL_VERSION, DYNAMIC_MARKS, EMOTIONS,
                   GROOVE_TEMPLATES)
-from .schema import (AUTO_TARGETS, BIT_DEPTHS, FX_TYPES, KINDS, LAYER_TYPES,
+from .schema import (
+    NOTE_CURVE_UNSUPPORTED_VOICE_CODE,AUTO_TARGETS, BIT_DEPTHS, FX_TYPES, KINDS, LAYER_TYPES,
                      NATIVE_FX_TYPES, NATIVE_OSC_SHAPES, NOISE_COLORS,
                      OSC_SHAPES)
 from .styles import list_style_packs
@@ -65,12 +66,12 @@ CURVE_SUPPORT_MATRIX = {
     },
     "physical_models": {
         "voices": sorted(PHYSICAL_MODEL_OSCILLATORS),
-        "pitch_cents": "unsupported_until_staged",
+        "pitch_cents": "resampled_varispeed",
         "dynamic": "full",
         "gain_db": "full",
         "cutoff_hz": "unsupported_until_staged",
         "scan": "unsupported_until_staged",
-        "diagnostic": CURVE_UNSUPPORTED_VOICE_CODE,
+        "diagnostic": NOTE_CURVE_UNSUPPORTED_VOICE_CODE,
         "initial_pitch_bound_cents": 400,
     },
 }
@@ -630,8 +631,9 @@ def capability_manifest() -> dict:
                 "grow a documented per-voice timbre primitive."
             ),
             "curve_unsupported_voice": (
-                "Move the curve to a supported voice, remove it, or wait for "
-                "the physical-model kernel stage advertised in the support matrix."
+                "Retired: pitch_cents curves on physical models are realised "
+                "by deterministic varispeed since engine 3.2; the code is "
+                "kept for manifest compatibility and is no longer emitted."
             ),
             "render_plan_stale": (
                 "Regenerate the plan from the current spec, engine version, "

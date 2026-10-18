@@ -191,7 +191,9 @@ All note oscillators are bandlimited (the `sweep` layer's shapes are not); all r
 | `sympathetic` | `coupling: 0..1` (0.5), `buzz: 0..1` (0.2), `damping:` (0.4), `brightness:` (0.6) | one struck string driving a bank of tarab strings (tuned to its near-harmonics) through a shared nonlinear (sitar-`buzz`) bridge; the un-struck strings ring on for an evolving halo; `coupling: 0` reduces to a single Karplus-Strong string; seeded strike excitation (**native kernel**) |
 | `sine saw square triangle organ fm` | `unison: 1..16`, `spread: Nc` (default 18c) | detuned stack, golden-ratio phases (no RNG); survives pitch envelopes; ignored on other voices |
 
-Pitch envelopes (glide/vibrato, lowered to `pitch_cents` note curves) are rejected with `curve_unsupported_voice` on the native waveguides (`bowed blown brass struck sympathetic`) and accepted but not rendered on `pluck`/`modal`. The `bowed`/`blown` waveguides speak ~2% sharp of nominal (delay-line quantization + excitation phase delay); `brass` carries a measured loop-phase correction (~±10c); `struck`/`sympathetic` (Karplus-Strong) are in tune. Plugin oscillators and drum voices extend the `osc:`/`voice:` choices.
+Pitch envelopes (glide/vibrato, lowered to `pitch_cents` note curves) are rendered on the native waveguides (`bowed blown brass struck sympathetic`) by deterministic variable-rate resampling of the statically rendered voice (varispeed/tape semantics: the scheduled duration is preserved and the instantaneous read rate follows `2^(cents/1200)`; linear-interpolated reads keep renders byte-reproducible). The oscillator itself is not retuned — resonator state is physical, so a varispeed drop slows the whole sounding result, which is the tape-stop contract. On `pluck`/`modal` pitch envelopes remain accepted but not rendered. The `bowed`/`blown` waveguides speak ~2% sharp of nominal (delay-line quantization + excitation phase delay); `brass` carries a measured loop-phase correction (~±10c); `struck`/`sympathetic` (Karplus-Strong) are in tune. Plugin oscillators and drum voices extend the `osc:`/`voice:` choices.
+
+A notes layer may mix oscillators: `osc: a + b` (two or three distinct shapes; `morph` is excluded — its scan machinery is single-voice). Each component renders independently (so it is byte-identical to its standalone render) and the sum is scaled by `1/sqrt(N)` for headroom. The IR keeps `osc` as the first shape and records the full ordered list in `osc_mix`.
 
 ---
 
@@ -301,9 +303,9 @@ normalized performance dynamic in `[0, 1]`, and G13/P1 reserves note-scope
 timbre targets `cutoff_hz`, `gain_db`, and `scan` for explicit per-note timbre
 data. Curves may live on note events (`note_beats` or `note_seconds`) or layer
 automation (`layer_beats` or `layer_seconds`); existing automation targets
-continue to use layer scope. Layer-scope `pitch_cents` and `dynamic` automation
-validates and is kept in the IR but is **not yet rendered** (only note-scope curves
-and the legacy `dynamic:` field sound). The DSL `curves:` syntax accepts one shape
+continue to use layer scope. On notes layers the layer-scope `pitch_cents` ride is rendered: it multiplies every note's pitch-ratio envelope (synth voices retune the oscillator; physical voices go through the varispeed path). Layer-scope `dynamic` automation
+validates and is kept in the IR but is **not yet rendered** (note-scope `dynamic`
+curves and the legacy `dynamic:` field sound). The DSL `curves:` syntax accepts one shape
 name (`linear`, `hold`) after `@`; `pow:k` shapes and `auto` time bases are
 authored through `automation_ir:`/`notes_ir:` JSON.
 
@@ -325,9 +327,10 @@ Interpolation is explicit in IR: points are `[time, value]` or
 (`k` in `[0.1, 10]`). Edges hold the nearest endpoint and single-point curves
 are constants. Complex shapes should compile to dense breakpoints rather than
 adding runtime-private logic. `pitch_cents` curves sum in cents and render as
-`f_base * 2 ** (cents / 1200)`. Unsupported physical-model pitch curves reject
-with `curve_unsupported_voice`; sampled instruments and synth notes consume G11
-pitch/dynamic curves directly. G13 note-scope `cutoff_hz`/`scan` targets are
+`f_base * 2 ** (cents / 1200)`. Physical-model pitch curves on the native
+waveguides (`bowed blown brass struck sympathetic`) render by deterministic
+varispeed (§6); on `pluck`/`modal` they are accepted but not rendered.
+Sampled instruments and synth notes consume G11 pitch/dynamic curves directly. G13 note-scope `cutoff_hz`/`scan` targets are
 synth-only, `gain_db` is supported on synth, sampled, and physical voices, and
 unsupported note-scope target/voice combinations reject before render.
 
@@ -482,8 +485,8 @@ audioforge export-musicxml spec.af -o out.musicxml
 audioforge import-musicxml out.musicxml --id from_xml
 ```
 
-MIDI pitch-bend import becomes layer-scope `pitch_cents` automation (kept in the IR,
-not yet rendered — see §10) and honors RPN pitch-bend range when present. Arbitrary AudioForge pitch or dynamic curves
+MIDI pitch-bend import becomes layer-scope `pitch_cents` automation (rendered on
+notes layers — see §10) and honors RPN pitch-bend range when present. Arbitrary AudioForge pitch or dynamic curves
 that cannot be represented by the current MIDI/MusicXML exporters are reported
 through `interop_diagnostics()` as `lossy_pitch_curve` or
 `lossy_dynamic_curve`.
@@ -612,4 +615,4 @@ audioforge verify   spec manifest
 
 ## 20. Honest limits
 
-LUFS is a BS.1770-style approximation (manifests record measured values). Compressors are documented offline lookahead-RMS designs, not analog models. Every render needs a C compiler (engine 3.2): the limiter, filters, halls, delays, saturation and wavetable voices run in native kernels built with `-march=native` and cached per CPU; the `bowed`/`blown`/`brass`/`struck`/`sympathetic` voices, the `ladder` and `tape` effects, and plate-`mod` have dedicated kernels. Without a compiler, rendering fails loudly (never a silent fallback that would change the audio). The plate IR is computed in a Python loop bounded by tail length (0.8–2.6 s CPU, cached); FDN IRs are native. Pitch envelopes are rejected on the native waveguides and not rendered on `pluck`/`modal`; the `bowed`/`blown` waveguides speak ~2% sharp (`brass` is loop-phase-corrected, `struck` is in tune). Layers are mono pre-pan, except sectioned instrument layers, staged layers, and non-pattern audio layers with `preserve: stereo|channels`, which are true stereo. The stage approximates: ISO 9613-1-flavored air shelf, integer-sample ITD (≤ ~21 µs quantization), image-source to second order only, no B-format decoding (stereo IRs only). Sample layers accept WAV PCM only (instrument libraries also decode FLAC/Ogg/AIFF through libsndfile when it is installed). The darkness emotion macro can over-darken (it warns). Encoder-dependent formats (future FLAC/MP3) will sit outside the byte-hash guarantee. The sampler covers a documented SFZ subset only (no filters/LFOs/CC — AudioForge fx and automation own that ground); synth-layer dynamic brightness samples at note onset (the level term is fully time-varying); sampled-layer crossfades are time-varying throughout.
+LUFS is a BS.1770-style approximation (manifests record measured values). Compressors are documented offline lookahead-RMS designs, not analog models. Every render needs a C compiler (engine 3.2): the limiter, filters, halls, delays, saturation and wavetable voices run in native kernels built with `-march=native` and cached per CPU; the `bowed`/`blown`/`brass`/`struck`/`sympathetic` voices, the `ladder` and `tape` effects, and plate-`mod` have dedicated kernels. Without a compiler, rendering fails loudly (never a silent fallback that would change the audio). The plate IR is computed in a Python loop bounded by tail length (0.8–2.6 s CPU, cached); FDN IRs are native. Pitch envelopes on the native waveguides render by varispeed (tape semantics, §6) rather than resonator retuning, and are accepted but not rendered on `pluck`/`modal`; the `bowed`/`blown` waveguides speak ~2% sharp (`brass` is loop-phase-corrected, `struck` is in tune). Layers are mono pre-pan, except sectioned instrument layers, staged layers, and non-pattern audio layers with `preserve: stereo|channels`, which are true stereo. The stage approximates: ISO 9613-1-flavored air shelf, integer-sample ITD (≤ ~21 µs quantization), image-source to second order only, no B-format decoding (stereo IRs only). Sample layers accept WAV PCM only (instrument libraries also decode FLAC/Ogg/AIFF through libsndfile when it is installed). The darkness emotion macro can over-darken (it warns). Encoder-dependent formats (future FLAC/MP3) will sit outside the byte-hash guarantee. The sampler covers a documented SFZ subset only (no filters/LFOs/CC — AudioForge fx and automation own that ground); synth-layer dynamic brightness samples at note onset (the level term is fully time-varying); sampled-layer crossfades are time-varying throughout.

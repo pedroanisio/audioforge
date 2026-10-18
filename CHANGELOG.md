@@ -19,6 +19,20 @@ structured, per-version summary. Version consistency across sites is gated by
 
 ## [Unreleased]
 
+### Added — engine: physical pitch curves, layer pitch rides, osc mix
+- `pitch_cents` curves on the physical-model voices (`bowed blown brass
+  struck sympathetic`): realised by deterministic varispeed resampling of the
+  rendered voice (tape semantics — scheduled duration preserved, read rate
+  `2^(cents/1200)`); `curve_unsupported_voice` is no longer emitted and the
+  capability matrix advertises `resampled_varispeed`.
+- Layer-scope `pitch_cents` automation is now rendered on notes layers
+  (previously accepted into the IR but silently unrendered): the ride
+  multiplies every note's pitch-ratio envelope, for synth and physical
+  voices alike.
+- Multi-oscillator notes layers: `osc: a + b` (2–3 distinct shapes, `morph`
+  excluded) sums independently rendered voices scaled by `1/sqrt(N)`; the IR
+  gains an optional `osc_mix` list (first entry mirrors `osc`).
+
 ### Added — cues for video
 - `audioforge.cues`: 36 prebuilt, parameterized cues (10 music beds, 7 stings, 6 transitions,
   2 UI, 6 foley, 5 ambiences) that compile to ordinary `.af` source; fixed loudness per
