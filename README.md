@@ -288,4 +288,4 @@ lists them with their render manifests.
 * Recorded material uses content-addressed WAV sample layers or pinned SFZ-subset instrument libraries. Recorded transitions and ensemble realism depend on the source material; synthesized approximations are declared in the render plan.
 * A measured A/B against a professional sample-based renderer (FluidSynth + FluidR3_GM) is recorded in [docs/RENDER_QUALITY_COMPARISON.md](docs/RENDER_QUALITY_COMPARISON.md) (`audioforge.quality`, `scripts/compare_render_quality.py`).
 
-Requires Python 3.10+, lark, numpy, scipy, matplotlib and a C compiler. Engine 3.3.0 · DSL 2.0.
+Requires Python 3.10+, lark, numpy, scipy, matplotlib and a C compiler. Engine 3.3.1 · DSL 2.0.

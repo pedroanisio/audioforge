@@ -676,6 +676,8 @@ def main(argv=None) -> int:
                     return EXIT_OPTIONAL_DEPENDENCY_MISSING
                 print(f"score -> {result.pdf}  (engraved by LilyPond {result.lilypond_version}"
                       f"{'; ' + str(len(result.warnings)) + ' warning(s)' if result.warnings else ''})")
+                if result.tuning_note:
+                    print(f"score: {result.tuning_note}")
                 return 0
             program = None
             try:

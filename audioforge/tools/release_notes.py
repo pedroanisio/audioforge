@@ -6,8 +6,8 @@ version under another's name, so the tag is checked against the single source
 of truth before anything is built, and the release body is the matching
 `CHANGELOG.md` section — never hand-written at release time.
 
-    python -m audioforge.tools.release_notes --tag engine-3.3.0   # gate + print notes
-    python -m audioforge.tools.release_notes --version 3.3.0      # print notes only
+    python -m audioforge.tools.release_notes --tag engine-3.3.1   # gate + print notes
+    python -m audioforge.tools.release_notes --version 3.3.1      # print notes only
 """
 from __future__ import annotations
 

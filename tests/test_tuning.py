@@ -112,6 +112,15 @@ def test_microtonal_interop_exports_decimal_alter_and_pitch_bend():
         assert abs(alters[("C", "5")] - 1.0) > 0.1            # a 19-EDO sharp is not a 12-TET one
         assert alters[("B", "4")] == pytest.approx(t.xml_alter("B4"), abs=0.01) and alters[("B", "4")] != 0
         assert alters[("A", "4")] == 0.0                       # the reference note is exact
+        # The decimal <alter> is the sounding pitch; the written spelling travels in
+        # <accidental> (music21 reads a non-half-step alter only alongside one).
+        written = {(n.findtext("pitch/step"), n.findtext("pitch/octave")): n.findtext("accidental")
+                   for n in root.iter("note") if n.find("pitch") is not None}
+        assert written == {("A", "4"): "natural", ("B", "4"): "natural",
+                           ("C", "5"): "sharp", ("E", "5"): "natural"}
+    twelve = dict(spec, notation={k: v for k, v in spec["notation"].items() if k != "tuning"})
+    for xml in (interop.export_notated_musicxml(twelve), interop.export_musicxml(twelve)):
+        assert "<accidental" not in xml                        # 12-TET exports are unchanged
     data = interop.export_midi_bytes(spec)
     _, _, tracks = interop._split_tracks(data)
     assert b"\xb0\x65\x00" in tracks[1] and b"\xb0\x06\x02" in tracks[1]   # RPN 0 = 2 semitones

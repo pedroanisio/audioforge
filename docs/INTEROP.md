@@ -109,7 +109,7 @@ present; **conditional** — preserved when the stated condition holds, else the
 | `tuplets` | `notation.tuplets` | **preserved** — sounding durations are exact | **preserved** — sounding durations are exact | **preserved** — `<time-modification>` and tuplet brackets |
 | `lyrics` | `notation.lyrics` | **preserved** — lyric meta events, one per syllable | **lossy** `lossy_lyrics` — not written in the exact-tick view | **preserved** — `<lyric>` per syllable |
 | `phonemes` | lyric phonemes | **lossy** `lossy_lyrics` — phonemes omitted; lyric text may be retained | **lossy** `lossy_lyrics` — phonemes omitted | **lossy** `lossy_lyrics` — phonemes omitted; lyric text retained |
-| `tuning` | `notation.tuning` other than 12-EDO | **conditional** `lossy_tuning` — per-note pitch bend unless a layer needs two bends at once | **preserved** — decimal `<alter>` relative to the 12-TET natural | **preserved** — decimal `<alter>` relative to the 12-TET natural |
+| `tuning` | `notation.tuning` other than 12-EDO | **conditional** `lossy_tuning` — per-note pitch bend unless a layer needs two bends at once | **preserved** — decimal `<alter>` relative to the 12-TET natural plus the written `<accidental>` | **preserved** — decimal `<alter>` relative to the 12-TET natural plus the written `<accidental>`; `score --engrave` uses the written spelling |
 | `string_fret` | note `string` / `fret` fields | **lossy** `lossy_string_fret` — not written | **lossy** `lossy_string_fret` — not written | **lossy** `lossy_string_fret` — not written |
 | `markers` | `markers` (labels in real seconds) | **lossy** `lossy_marker` — markers are in seconds and are not converted to ticks | **lossy** `lossy_marker` — not written | **lossy** `lossy_marker` — not written |
 

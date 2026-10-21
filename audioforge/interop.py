@@ -286,8 +286,9 @@ COVERAGE: list[dict] = [
     dict(construct="tuning", description="`notation.tuning` other than 12-EDO",
          present=lambda s: int((_notation(s).get("tuning") or {}).get("divisions", 12)) != 12,
          midi=_cond(_midi_tuning, "lossy_tuning", "per-note pitch bend unless a layer needs two bends at once"),
-         musicxml=_P("decimal `<alter>` relative to the 12-TET natural"),
-         musicxml_notated=_P("decimal `<alter>` relative to the 12-TET natural")),
+         musicxml=_P("decimal `<alter>` relative to the 12-TET natural plus the written `<accidental>`"),
+         musicxml_notated=_P("decimal `<alter>` relative to the 12-TET natural plus the written `<accidental>`; "
+                             "`score --engrave` uses the written spelling")),
     dict(construct="string_fret", description="note `string` / `fret` fields",
          present=lambda s: any("string" in ev or "fret" in ev for *_, ev in _note_events(s)),
          midi=_L("lossy_string_fret", "not written"), musicxml=_L("lossy_string_fret", "not written"),

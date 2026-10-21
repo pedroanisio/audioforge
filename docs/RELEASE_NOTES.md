@@ -11,13 +11,19 @@ disclaimer:
 
 ## Current Runtime Contract
 
-- Engine 3.3.0
+- Engine 3.3.1
 - DSL 2.0
 - IR schema 2.1
 - Version source of truth: `audioforge.version`
 
-Engine 3.3.0 is the first release published as installable artifacts (GitHub Release
-`engine-3.3.0`: wheel, sdist, `SHA256SUMS`). Earlier distributions built from this
+Engine 3.3.1 makes MusicXML exports of non-12-EDO scores readable by music21: each
+note's decimal `<alter>` now comes with its written `<accidental>`. It also makes
+`score --engrave` engrave such scores in their written spelling instead of letting
+LilyPond truncate the offsets ([ADR-0014](adr/0014-n-edo-tuning-resolution.md)
+amendment). Engine 3.3.1 is the first release published as installable artifacts
+(GitHub Release `engine-3.3.1`: wheel, sdist, `SHA256SUMS`). The `engine-3.3.0` tag
+exists, but its release gate failed and nothing was published under it. Earlier
+distributions built from this
 repository omitted the C kernel sources that every render compiles
 ([ADR-0012](adr/0012-native-dsp-kernels-bounded-drift.md)) and the bundled samples, so an
 installed engine could not render. Both now ship as package data, the bundled samples and

@@ -364,14 +364,35 @@ def _move(measure, kind: str, ticks: int):
         ET.SubElement(ET.SubElement(measure, kind), "duration").text = str(ticks)
 
 
-def _xml_pitch(parent, name: str, tuning: Tuning | None = None):
-    """<pitch>; under a non-12-EDO tuning the alter is the decimal semitone offset from
-    the 12-TET natural (RN-T-003), which music21 reads as a microtonal accidental."""
-    pit = ET.SubElement(parent, "pitch")
-    ET.SubElement(pit, "step").text = name[0].upper()
+_ACCIDENTAL_XML = {-3: "triple-flat", -2: "flat-flat", -1: "flat", 0: "natural",
+                   1: "sharp", 2: "double-sharp", 3: "triple-sharp"}
+
+
+def _accidental_end(name: str) -> int:
     i = 1
     while i < len(name) and name[i] in "#b":
         i += 1
+    return i
+
+
+def _xml_accidental(note, name: str, tuning: Tuning | None) -> None:
+    """<accidental> with the written spelling, only under a non-12-EDO tuning: there the
+    decimal <alter> is the sounding pitch and no longer implies a written accidental, and
+    music21 reads a non-half-step alter only alongside one (ADR-0014 amendment)."""
+    if tuning is None or tuning.is_default:
+        return
+    acc = name[1:_accidental_end(name)]
+    text = _ACCIDENTAL_XML.get(acc.count("#") - acc.count("b"))
+    if text is not None:
+        ET.SubElement(note, "accidental").text = text
+
+
+def _xml_pitch(parent, name: str, tuning: Tuning | None = None):
+    """<pitch>; under a non-12-EDO tuning the alter is the decimal semitone offset from
+    the 12-TET natural (RN-T-003) and `_xml_accidental` carries the written spelling."""
+    pit = ET.SubElement(parent, "pitch")
+    ET.SubElement(pit, "step").text = name[0].upper()
+    i = _accidental_end(name)
     if tuning is not None and not tuning.is_default:
         alter = tuning.xml_alter(name)
         if alter:
@@ -449,6 +470,7 @@ def _emit_seg(measure, seg: dict, fermata: bool = False, tuning: Tuning | None =
             ET.SubElement(n, "type").text = typ
             for _ in range(dots):
                 ET.SubElement(n, "dot")
+            _xml_accidental(n, name, tuning)
             if tm:
                 t = ET.SubElement(n, "time-modification")
                 ET.SubElement(t, "actual-notes").text = str(tm[0])
@@ -548,6 +570,7 @@ def export_musicxml(spec: dict) -> str:
                         ET.SubElement(n, "chord")
                     _xml_pitch(n, ev["note"], tuning)
                     ET.SubElement(n, "duration").text = str(dur)
+                    _xml_accidental(n, ev["note"], tuning)
                 prev = dur
             cursor = start + (prev or 0)
     return ET.tostring(root, encoding="unicode")

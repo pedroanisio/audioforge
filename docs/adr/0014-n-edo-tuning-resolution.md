@@ -65,3 +65,32 @@ semantics the rest must respect.
 * `tuning_not_rendered` is retired from the manifest; `HARNESS-NTUN-003` is N/A.
 * Slice 2 (AF-M05: JI tables, historical temperaments, Scala import) must plug into
   `Tuning.note_to_freq` and keep decisions 3 and 5.
+
+## Amendment (2026-10-21, engine 3.3.1)
+
+_Amended by Claude Opus 5.5 via Claude Code._ Decision 6 claimed that music21 reads a
+bare decimal `<alter>` as a microtonal accidental. That is false for the pinned music21
+10.5.0: `MusicXMLImporter.xmlToPitch` builds `pitch.Accidental(alter)` when a note has no
+`<accidental>` element, and that rejects any value that is not a multiple of 0.5
+(`MusicXMLImportException: incorrect accidental -0.105 for pitch B4`). Given an
+`<accidental>`, it keeps the written accidental and stores the decimal alter with
+`setAttributeIndependently`. The oracle gate (`make oracle-check`) failed on
+`microtonal_19edo` from the moment decimal alters landed. It never ran in CI until
+engine 3.3.0, when the release workflow first ran it.
+
+LilyPond has the matching limit. `musicxml2ly` spells only half- and quarter-tone
+alterations (`musicexp.pitch_generic`). It truncates any other fraction toward zero with
+the warning "Language does not support microtones contained in the piece". A 19-EDO
+C#5 (alter 0.789) was therefore engraved as C natural.
+
+Decision 6 now reads:
+
+* Under a non-12-EDO tuning, both MusicXML exports keep the decimal `<alter>` (the
+  sounding pitch). Every pitched note also carries `<accidental>` with its written
+  spelling (`natural`, `sharp`, `flat`, …). MusicXML separates the two on purpose. 12-TET
+  exports are byte-for-byte unchanged.
+* `score --engrave` (`lilypond.engraving_musicxml`) engraves the written spelling, which
+  is the notated export without the tuning. It reports the choice in
+  `EngraveResult.tuning_note`, and the CLI prints it. The LilyPond oracle verifies that
+  input, which is identical to the notated export under 12-TET
+  (`tests/test_lilypond_backend.py`).

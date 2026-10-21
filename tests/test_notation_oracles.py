@@ -13,6 +13,7 @@ import pytest
 
 from audioforge import interop
 from audioforge.dsl import compile_dsl
+from audioforge.lilypond import engraving_musicxml
 from audioforge.musicxml import NOTATED_GRID, TPQ, stepped_tempo_map, tempo_marks, tempo_points
 
 FIX = Path(__file__).parent / "fixtures" / "notation"
@@ -689,7 +690,9 @@ def test_lilypond_zero_warnings_for_every_fixture(tmp_path):
     musicxml2ly = exe.parent / "musicxml2ly"
     for name in FIXTURES:
         xml_path = tmp_path / f"{name}.musicxml"
-        xml_path.write_text(interop.export_notated_musicxml(_spec(name)))
+        # What `score --engrave` hands LilyPond: the notated export itself under 12-TET,
+        # its written spelling otherwise (LilyPond cannot spell 19-EDO offsets; ADR-0014).
+        xml_path.write_text(engraving_musicxml(_spec(name)))
         ly = tmp_path / f"{name}.ly"
         r1 = subprocess.run([str(musicxml2ly), "-o", str(ly), str(xml_path)],
                             capture_output=True, text=True, timeout=300, env=env)

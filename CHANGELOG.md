@@ -19,10 +19,32 @@ structured, per-version summary. Version consistency across sites is gated by
 
 ## [Unreleased]
 
+## [3.3.1] - 2026-10-21
+
+_Engine 3.3.1 · DSL 2.0 · IR 2.1._ First release published as a GitHub Release
+(tag `engine-3.3.1`) with the wheel, sdist and `SHA256SUMS` attached. It contains
+everything listed under 3.3.0 below.
+
+### Fixed — notation interchange (non-12-EDO tunings)
+- music21 10.5 could not read the MusicXML exports of a microtonal score. It accepts a
+  decimal `<alter>` that is not a multiple of 0.5 only alongside an `<accidental>`
+  element (`incorrect accidental -0.105 for pitch B4`). Under a non-12-EDO tuning,
+  every pitched note in both MusicXML exports now also carries its written
+  `<accidental>`. The sounding pitch stays in the decimal `<alter>`, and 12-TET
+  exports are byte-for-byte unchanged.
+- `score --engrave` engraved 19-EDO C#5 (alter 0.789) as C natural, because LilyPond's
+  `musicxml2ly` truncates alterations it cannot spell and only warns. Engraving now
+  uses the written spelling (`lilypond.engraving_musicxml`), and the result says so
+  (`EngraveResult.tuning_note`, printed by the CLI). ADR-0014 decision 6 is amended
+  accordingly.
+- Both defects date from the n-EDO port (22459c5). `make oracle-check` caught them the
+  first time it ran in CI, which was the 3.3.0 release run.
+
 ## [3.3.0] - 2026-10-21
 
-_Engine 3.3.0 · DSL 2.0 · IR 2.1._ First release published as a GitHub Release
-(tag `engine-3.3.0`) with the wheel, sdist and `SHA256SUMS` attached.
+_Engine 3.3.0 · DSL 2.0 · IR 2.1._ Tagged (`engine-3.3.0`) but **not released**: the
+release workflow's CI gate failed on the oracle job (fixed in 3.3.1), so nothing was
+published under this tag.
 
 ### Fixed — distribution
 - The wheel and sdist shipped no `audioforge/native/*.c`, which every render compiles

@@ -42,7 +42,7 @@ Replace `<RELATIVE_PATH_TO_DISCLAIMER>` with the correct path for the file's dep
 
 ## Project Overview
 
-**AudioForge** — a deterministic, non-vocal audio-asset engine (engine 3.3.0, DSL 2.0).
+**AudioForge** — a deterministic, non-vocal audio-asset engine (engine 3.3.1, DSL 2.0).
 It compiles the `.af` DSL to a hashed JSON IR (the render contract) and renders
 SHA-256-verifiable WAV + manifest output through a CLI, a Python SDK, a typed agent-tools
 facade and a stdio MCP server. Requires Python ≥ 3.10 and a C compiler (native DSP kernels).

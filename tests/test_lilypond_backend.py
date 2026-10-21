@@ -64,3 +64,46 @@ def test_engrave_with_the_extra_produces_a_lilypond_pdf(tmp_path, capsys):
     result = engrave(__import__("audioforge.dsl", fromlist=["compile_dsl"]).compile_dsl(FIXTURE.read_text())[0][0],
                      tmp_path / "again.pdf", keep_ly=True)
     assert result.ly is not None and result.ly.exists() and not result.warnings
+
+
+MICROTONAL = Path(__file__).parent / "fixtures" / "notation" / "microtonal_19edo.af"
+
+
+def _spec(path: Path) -> dict:
+    from audioforge.dsl import compile_dsl
+    return compile_dsl(path.read_text())[0][0]
+
+
+def test_engraving_input_spells_a_non_12_tuning_in_written_pitches():
+    """LilyPond spells only half- and quarter-tone alterations and truncates the rest
+    (a 19-EDO C#5, alter 0.789, would engrave as C natural), so the engraving input
+    carries the written spelling; the sounding offsets stay in the MusicXML export."""
+    import xml.etree.ElementTree as ET
+    from audioforge.lilypond import engraving_musicxml, tuning_note
+    xml = engraving_musicxml(_spec(MICROTONAL))
+    root = ET.fromstring(xml.split("\n", 1)[1] if xml.startswith("<?xml") else xml)
+    alters = {(p.findtext("step"), p.findtext("octave")): p.findtext("alter")
+              for p in root.iter("pitch")}
+    assert alters == {("A", "4"): None, ("B", "4"): None, ("C", "5"): "1", ("E", "5"): None}
+    assert root.find(".//accidental") is None
+    assert "19-EDO" in tuning_note(_spec(MICROTONAL))
+
+
+def test_engraving_input_is_the_notated_export_under_12_tet():
+    from audioforge.interop import export_notated_musicxml
+    from audioforge.lilypond import engraving_musicxml, tuning_note
+    spec = _spec(FIXTURE)
+    assert engraving_musicxml(spec) == export_notated_musicxml(spec)
+    assert tuning_note(spec) is None
+
+
+def test_engrave_a_19_edo_score_in_its_written_spelling(tmp_path, capsys):
+    pytest.importorskip("lilypond", reason="install the engrave extra")
+    from audioforge.lilypond import engrave
+    result = engrave(_spec(MICROTONAL), tmp_path / "edo.pdf", keep_ly=True)
+    assert not result.warnings, result.warnings
+    ly = " ".join(result.ly.read_text().split())
+    assert "\\relative a' {" in ly and "a2 b2 | % 2 cis2 e2 }" in ly   # C#5 stays sharp, not truncated
+    assert result.tuning_note and "19-EDO" in result.tuning_note
+    assert cli.main(["score", str(MICROTONAL), "-o", str(tmp_path / "cli.pdf"), "--engrave"]) == 0
+    assert "19-EDO" in capsys.readouterr().out

@@ -5,6 +5,11 @@ installed, this module hands the *notated* MusicXML export to `musicxml2ly` and
 `lilypond` and returns the PDF they produce, attributing the result to LilyPond. Without
 the extra it raises :class:`EngraverUnavailable` with the install hint; the CLI maps that
 to exit code 3 (optional dependency missing).
+
+LilyPond spells only half- and quarter-tone alterations (its `musicexp.pitch_generic`
+truncates any other fraction with a warning), so a non-12-EDO score is engraved in its
+written spelling and the result says so (`tuning_note`); the sounding offsets stay in
+the MusicXML `<alter>` and in the audio (ADR-0014 amendment).
 """
 from __future__ import annotations
 
@@ -15,6 +20,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from .musicxml import export_notated_musicxml
+from .tuning import Tuning
 
 INSTALL_HINT = "score: install the engrave extra (uv pip install -e '.[engrave]') to engrave with LilyPond; " \
                "without it `audioforge score` draws the proportional proof sheet"
@@ -31,6 +37,26 @@ class EngraveResult:
     lilypond_version: str
     warnings: list[str] = field(default_factory=list)
     ly: Path | None = None
+    tuning_note: str | None = None
+
+
+def tuning_note(spec: dict) -> str | None:
+    """What engraving does to the spec's tuning (None under 12-TET at A4 = 440 Hz)."""
+    t = Tuning.from_spec(spec)
+    if t.is_default:
+        return None
+    ref = "" if (t.base_note.upper(), t.base_hz) == ("A4", 440.0) else f", {t.base_note} = {t.base_hz:g} Hz"
+    return (f"{t.divisions}-EDO{ref} engraved in its written spelling; the sounding offsets "
+            f"are in the MusicXML <alter> and the audio")
+
+
+def engraving_musicxml(spec: dict) -> str:
+    """The notated MusicXML LilyPond engraves: the export itself under 12-TET, else the
+    export without the tuning, i.e. written pitches with whole-semitone alters."""
+    notation = spec.get("notation") or {}
+    if Tuning.from_spec(spec).is_default:
+        return export_notated_musicxml(spec)
+    return export_notated_musicxml(dict(spec, notation={k: v for k, v in notation.items() if k != "tuning"}))
 
 
 def executables() -> tuple[Path, Path]:
@@ -63,7 +89,7 @@ def engrave(spec: dict, out_pdf: str | Path, *, keep_ly: bool = False, timeout: 
     exe, musicxml2ly = executables()
     out_pdf = Path(out_pdf)
     out_pdf.parent.mkdir(parents=True, exist_ok=True)
-    xml = export_notated_musicxml(spec)
+    xml = engraving_musicxml(spec)
     with tempfile.TemporaryDirectory() as td:
         work = Path(td)
         stem = re.sub(r"[^A-Za-z0-9_]+", "_", str(spec.get("id", "score"))) or "score"
@@ -85,4 +111,4 @@ def engrave(spec: dict, out_pdf: str | Path, *, keep_ly: bool = False, timeout: 
             kept = out_pdf.with_suffix(".ly")
             kept.write_text(ly.read_text())
     return EngraveResult(pdf=out_pdf, lilypond_version=lilypond_version(),
-                         warnings=_noise(r1.stderr + r2.stderr), ly=kept)
+                         warnings=_noise(r1.stderr + r2.stderr), ly=kept, tuning_note=tuning_note(spec))

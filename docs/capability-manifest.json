@@ -724,7 +724,7 @@
     "urgency",
     "wonder"
   ],
-  "engine_version": "3.3.0",
+  "engine_version": "3.3.1",
   "examples": {
     "audio_layer": "layer vocal : audio { file: \"take.wav\" sha256: \"...64 hex...\" preserve: stereo }",
     "intent_block": "intent {\n  density: sparse\n  contour: arch\n  texture: smooth\n  affect: tense\n  avoid: clipping, noise\n  repair: \"make the melody less rough\"\n}",
@@ -1316,12 +1316,12 @@
         },
         "musicxml": {
           "code": null,
-          "note": "decimal `<alter>` relative to the 12-TET natural",
+          "note": "decimal `<alter>` relative to the 12-TET natural plus the written `<accidental>`",
           "status": "preserved"
         },
         "musicxml_notated": {
           "code": null,
-          "note": "decimal `<alter>` relative to the 12-TET natural",
+          "note": "decimal `<alter>` relative to the 12-TET natural plus the written `<accidental>`; `score --engrave` uses the written spelling",
           "status": "preserved"
         }
       },
@@ -1402,7 +1402,7 @@
           "note_seconds"
         ]
       },
-      "engine_version": "3.3.0",
+      "engine_version": "3.3.1",
       "field_layers": {
         "provenance": [
           "_meta"
@@ -2942,7 +2942,7 @@
   },
   "version_contract": {
     "dsl_version": "2.0",
-    "engine_version": "3.3.0",
+    "engine_version": "3.3.1",
     "source": "audioforge.version"
   }
 }
