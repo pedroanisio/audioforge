@@ -9,7 +9,7 @@ disclaimer:
 
 # AudioForge DSL Specification
 
-**DSL 2.0 · Engine 3.2.0**
+**DSL 2.0 · Engine 3.3.0**
 
 The `.af` DSL is the authoring surface for humans and AI agents. It compiles to a JSON spec — the deterministic intermediate representation (IR) that the engine renders. Everything expressive in the DSL (emotion tags, intensity curves, motifs, chords, transforms, groove templates, `vary()` choices) is **expanded at compile time** into explicit JSON parameters, so the IR is always the single, inspectable ground truth for what will be rendered. Under the same engine version, in one verified environment (with the C compiler every render needs), same DSL text → same IR → same spec hash → byte-identical audio. Identity across engine versions is not promised: 3.2.0 output differs from 3.1.0 within −131 dBFS.
 
@@ -252,7 +252,7 @@ stage {
 layer vln1 : instrument { ... seat: -16deg @ 4.5m ... }
 ```
 
-`seat: <azimuth>deg @ <distance>m` places a source; seats and buses are mutually exclusive (the stage is the staged layer's bus). Three taps per source, blended by `mics:`: **close** = the spot mic (placement with distance clamped to 1.5 m); **tree** = the main-pair image: direct sound at distance (1/r gain, air absorption as a −0.3 dB/m high-shelf above 6 kHz — a documented approximation of ISO 9613-1 behavior, not a certified implementation — constant-power azimuth pan plus a sub-ms ITD) **plus** image-source early reflections over the shoebox (second order, reflection coefficient 0.82, closed-form, seedless, cached); **ambient** = one shared stereo convolution per stage with the pinned hall IR (stereo IRs give a decorrelated tail; the tail feed is distance-flat, as in real halls). The main pair captures direct + early sound together, so the mix model does too. Sectioned layers keep their internal stereo image; the seat adds distance, air, and the shared room. The shipped `stalbans_ortf_ir.wav` is the Lady Chapel, St Albans Cathedral from OpenAIR (University of York), **CC BY 4.0 — attribution required**, recorded in `samples/stalbans_ortf_ir.ATTRIBUTION.txt`; point `hall:` at any IR you own, pinned the same way.
+`seat: <azimuth>deg @ <distance>m` places a source; seats and buses are mutually exclusive (the stage is the staged layer's bus). Three taps per source, blended by `mics:`: **close** = the spot mic (placement with distance clamped to 1.5 m); **tree** = the main-pair image: direct sound at distance (1/r gain, air absorption as a −0.3 dB/m high-shelf above 6 kHz — a documented approximation of ISO 9613-1 behavior, not a certified implementation — constant-power azimuth pan plus a sub-ms ITD) **plus** image-source early reflections over the shoebox (second order, reflection coefficient 0.82, closed-form, seedless, cached); **ambient** = one shared stereo convolution per stage with the pinned hall IR (stereo IRs give a decorrelated tail; the tail feed is distance-flat, as in real halls). The main pair captures direct + early sound together, so the mix model does too. Sectioned layers keep their internal stereo image; the seat adds distance, air, and the shared room. The shipped `stalbans_ortf_ir.wav` is the Lady Chapel, St Albans Cathedral from OpenAIR (University of York), **CC BY 4.0 — attribution required**, recorded in `audioforge/data/samples/stalbans_ortf_ir.ATTRIBUTION.txt`; point `hall:` at any IR you own, pinned the same way.
 
 ## 9. FX chains
 

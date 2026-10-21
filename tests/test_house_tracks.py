@@ -48,7 +48,7 @@ def test_tracks_cover_every_new_construct():
 
 def test_source_loop_sample_is_the_pinned_one():
     import hashlib
-    wav = ROOT / "samples" / "house_source_loop.wav"
+    wav = ROOT / "audioforge" / "data" / "samples" / "house_source_loop.wav"
     chop = compile_dsl((HOUSE / "house-03-chop" / "house_03_chop.af").read_text())[0][0]
     pinned = {l["sha256"] for l in chop["layers"] if l["type"] == "sample"}
     assert pinned == {hashlib.sha256(wav.read_bytes()).hexdigest()}

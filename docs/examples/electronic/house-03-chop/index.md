@@ -39,7 +39,7 @@ The download above contains the full score.
 
 ```text
 # house_03_chop — "Chop shop". The sampling workflow: the engine's own rendered loop
-# (samples/house_source_loop.wav, pinned by hash) is cut into slices, re-sequenced
+# (audioforge/data/samples/house_source_loop.wav, pinned by hash) is cut into slices, re-sequenced
 # by pattern digits, reversed, time-stretched at constant pitch and bit-crushed.
 asset house_03_chop { kind: soundtrack
   duration: 62s

@@ -8,6 +8,8 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+  workflow_call:   # release.yml reuses this exact gate before publishing
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -34,6 +36,31 @@ jobs:
 
       - name: Run the gate
         run: make check
+
+  # The suite runs against the source tree, so it cannot see what the wheel drops.
+  # This job builds the sdist + wheel, asserts they carry every data file (native
+  # kernel sources, bundled samples), installs the wheel into a clean venv and
+  # renders from outside the repository (tests/test_packaging.py, ADR-0012).
+  package:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install package + uv (builder)
+        run: python -m pip install -e . uv
+
+      - name: Build, inspect, install and render
+        run: make package-check
 
   # ADR-0011 / roadmap-notation RN-O-004: the notation surface is judged by external
   # oracles (MusicXML 3.1 XSD, music21, LilyPond). `make oracle-check` skips loudly when

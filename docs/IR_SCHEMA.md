@@ -16,7 +16,7 @@ fail if the checked-in JSON artifact drifts from that source.
 ## Versioning
 
 - Current IR schema version: `2.1`
-- Engine `3.2.0`, DSL `2.0` (source of truth: `audioforge.version`)
+- Engine `3.3.0`, DSL `2.0` (source of truth: `audioforge.version`)
 - Accepted migration inputs: `0.9`, `1.0`, `1.1`, `1.2`, `2.0`, `2.1`; only `0.9` is
   structurally rewritten (`metadata` → `_meta`), pre-2.0 inputs are stamped for audio
   review

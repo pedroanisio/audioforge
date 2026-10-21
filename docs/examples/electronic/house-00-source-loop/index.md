@@ -41,7 +41,7 @@ The download above contains the full score.
 # house_00_source_loop — the "record" the chop track samples.
 # A four-bar (16-beat, 7.742 s) disco-flavoured loop rendered by this engine (no third-party
 # material): Rhodes-ish organ stabs, a plucked bass, a clap and hats. Rendered
-# once, mixed to mono 16-bit as samples/house_source_loop.wav; house_03_chop.af pins its sha256.
+# once, mixed to mono 16-bit as audioforge/data/samples/house_source_loop.wav; house_03_chop.af pins its sha256.
 asset house_00_source_loop { kind: loop
   duration: 7.742s
   tempo: 124bpm

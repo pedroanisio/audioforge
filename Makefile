@@ -16,7 +16,7 @@ PYTHON ?= $(shell [ -x ./.venv/bin/python ] && printf '%s' ./.venv/bin/python ||
 export PYTHON
 
 .DEFAULT_GOAL := help
-.PHONY: help check test native-check schema-check manifest-check interop-check golden-check drift-check version-check docs-gen-check lock-check floor-check oracle-check docs docs-check clean
+.PHONY: help check test native-check schema-check manifest-check interop-check golden-check drift-check version-check docs-gen-check lock-check floor-check oracle-check package-check docs docs-check clean
 
 help:  ## List available targets
 	@grep -hE '^[a-zA-Z0-9_.-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -65,6 +65,9 @@ lock-check:  ## Lockfile gate: uv.lock agrees with pyproject.toml (RM-B-004; CI 
 
 oracle-check:  ## Oracle gate: MusicXML XSD validity, music21 parity, LilyPond engraving (needs the `oracles` extra; skips loudly without it; ADR-0011)
 	@$(PYTHON) -m audioforge.tools.oracle_check
+
+package-check:  ## Distribution gate: build sdist+wheel, assert they carry every data file, install into a clean venv and render outside the repo (needs network; not in `check`)
+	@$(PYTHON) -m audioforge.tools.package_check
 
 
 floor-check:  ## Python-floor gate: no 3.11-only stdlib constructs without a guarded fallback (requires-python >= 3.10; RM-B-004)

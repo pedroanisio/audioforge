@@ -1,0 +1,73 @@
+name: release
+
+# Publishes a GitHub Release from an `engine-X.Y.Z` tag (HARNESS-REL-003 naming).
+# Order is the contract (tests/test_release_workflow.py):
+#   1. the full CI gate (ci.yml via workflow_call: `make check` + the package job);
+#   2. the tag must equal engine-<ENGINE_VERSION> and CHANGELOG.md must have that section;
+#   3. build the sdist + wheel, re-run the package gate on those exact files;
+#   4. create (or refresh) the release with the dists and SHA256SUMS attached.
+
+on:
+  push:
+    tags: ["engine-*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing engine-X.Y.Z tag to (re)publish"
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    uses: ./.github/workflows/ci.yml
+
+  publish:
+    needs: [gate]
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ inputs.tag || github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install package + uv (builder)
+        run: python -m pip install -e . uv
+
+      - name: Tag agrees with version.py; extract release notes
+        run: python -m audioforge.tools.release_notes --tag "$TAG" > "$RUNNER_TEMP/notes.md"
+
+      - name: Every version site agrees
+        run: python -m audioforge.tools.bump_version --check
+
+      - name: Build sdist + wheel
+        run: uv build --sdist --wheel --out-dir dist
+
+      - name: Package gate on the files being published
+        run: python -m audioforge.tools.package_check --dist dist
+
+      - name: Checksums
+        run: cd dist && sha256sum audioforge-* > SHA256SUMS && cat SHA256SUMS
+
+      - name: Publish GitHub Release
+        run: |
+          VERSION="${TAG#engine-}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/* --clobber
+          else
+            gh release create "$TAG" dist/* --verify-tag \
+              --title "AudioForge $VERSION" --notes-file "$RUNNER_TEMP/notes.md"
+          fi

@@ -42,7 +42,7 @@ Replace `<RELATIVE_PATH_TO_DISCLAIMER>` with the correct path for the file's dep
 
 ## Project Overview
 
-**AudioForge** — a deterministic, non-vocal audio-asset engine (engine 3.2.0, DSL 2.0).
+**AudioForge** — a deterministic, non-vocal audio-asset engine (engine 3.3.0, DSL 2.0).
 It compiles the `.af` DSL to a hashed JSON IR (the render contract) and renders
 SHA-256-verifiable WAV + manifest output through a CLI, a Python SDK, a typed agent-tools
 facade and a stdio MCP server. Requires Python ≥ 3.10 and a C compiler (native DSP kernels).
@@ -65,13 +65,13 @@ facade and a stdio MCP server. Requires Python ≥ 3.10 and a C compiler (native
 │   ├── synth.py, sampler.py, foley.py # Voices: synthesis, SFZ-subset sampler, foley
 │   ├── fx.py, spaces.py, dynamics.py, loudness.py, convolution.py  # Effects, mastering
 │   ├── _native.py, native/*.c         # ctypes wrappers and C kernels (ENGINE_KERNELS)
+│   ├── data/samples/                  # Shipped content-addressed samples and IRs (package data)
 │   ├── sdk.py, cli.py, agent_tools.py, mcp/  # Integration surfaces
 │   ├── interop.py, musicxml.py, score.py     # MIDI/MusicXML interchange, proof sheets
 │   ├── sample_catalog/                # Public-domain sample catalog pipeline
 │   └── tools/                         # Generators and gates behind `make check`
 ├── docs/              # DSL spec, IR schema, migration guide, ADRs, generated references, examples
 ├── examples/          # SDK and plugin integration recipes
-├── samples/           # Shipped content-addressed samples and impulse responses
 ├── scripts/           # Test runner, drift inspection, example gallery, library builders
 ├── static/fixtures/   # Focused acceptance/rejection .af fixtures
 ├── tests/             # pytest suite, golden locks, fixtures

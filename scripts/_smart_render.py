@@ -1,7 +1,7 @@
 import hashlib, math
 from pathlib import Path
 REPO = Path("/home/administrator/Downloads/audioforge_v2_13/audioforge")
-IR_SHA = hashlib.sha256((REPO / "samples/stalbans_ortf_ir.wav").read_bytes()).hexdigest()
+IR_SHA = hashlib.sha256((REPO / "audioforge/data/samples/stalbans_ortf_ir.wav").read_bytes()).hexdigest()
 BPM=60
 NAMES={0:"C",1:"C#",2:"D",3:"D#",4:"E",5:"F",6:"F#",7:"G",8:"G#",9:"A",10:"A#",11:"B"}
 def nm(m): return f"{NAMES[m%12]}{m//12-1}"

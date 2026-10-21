@@ -19,6 +19,29 @@ structured, per-version summary. Version consistency across sites is gated by
 
 ## [Unreleased]
 
+## [3.3.0] - 2026-10-21
+
+_Engine 3.3.0 · DSL 2.0 · IR 2.1._ First release published as a GitHub Release
+(tag `engine-3.3.0`) with the wheel, sdist and `SHA256SUMS` attached.
+
+### Fixed — distribution
+- The wheel and sdist shipped no `audioforge/native/*.c`, which every render compiles
+  on demand (ADR-0012), so an installed engine could not render at all; nor the bundled
+  samples and impulse responses. `[tool.setuptools.package-data]` now ships both.
+- The bundled samples/IRs moved from the repository's `samples/` to package data
+  (`audioforge/data/samples/`) and resolve from any working directory. Search order:
+  `add_sample_path()` paths, then `./samples` in the working directory (still
+  honoured, so a project's own files take precedence), then the bundled set.
+  Hash pins are unchanged.
+- New gates: `tests/test_packaging.py` fails when a file under `audioforge/` is not
+  package data; `make package-check` (CI `package` job, Python 3.10 and 3.12) builds
+  both distributions, checks their contents, installs the wheel into a clean venv and
+  renders a bundled sample from outside the repository.
+- CI/CD: `ci.yml` gains `workflow_dispatch` and `workflow_call`; the new `release.yml`
+  publishes on an `engine-X.Y.Z` tag after the full CI gate, a tag/version check
+  (`audioforge.tools.release_notes`), `bump_version --check` and the package gate on
+  the exact files it uploads.
+
 ### Added — engine: physical pitch curves, layer pitch rides, osc mix
 - `pitch_cents` curves on the physical-model voices (`bowed blown brass
   struck sympathetic`): realised by deterministic varispeed resampling of the

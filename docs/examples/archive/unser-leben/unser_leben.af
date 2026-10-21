@@ -15,7 +15,7 @@
 #    (native kernel). If unavailable, the engine will refuse loudly — substitute
 #    `pad` or `organ` as synthetic fallbacks and note the change in the manifest.
 # 2. The stage block uses the bundled St Albans IR (CC BY 4.0; attribution
-#    required — see samples/stalbans_ortf_ir.ATTRIBUTION.txt).
+#    required — see audioforge/data/samples/stalbans_ortf_ir.ATTRIBUTION.txt).
 # 3. No note-level pitch data is encoded here. The score's music notation
 #    symbols are not recoverable from the PDF text layer (LilyPond CID glyphs);
 #    this composition maps structural, timbral, emotional, and lyric metadata

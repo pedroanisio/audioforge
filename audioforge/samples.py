@@ -22,7 +22,12 @@ import numpy as np
 
 from .schema import SpecError
 
-SAMPLE_PATHS: list[Path] = [Path("samples")]
+# Search order: paths added with add_sample_path(), then ./samples in the
+# working directory (a project's own files), then the samples and impulse
+# responses shipped inside the package, so an installed engine resolves them
+# from any directory. The hash pin decides identity, not the location.
+BUNDLED_SAMPLES = Path(__file__).resolve().parent / "data" / "samples"
+SAMPLE_PATHS: list[Path] = [Path("samples"), BUNDLED_SAMPLES]
 _REGISTRY: dict[str, bytes] = {}
 _CACHE: dict = {}
 

@@ -92,6 +92,7 @@ against `cli.py`, so a verb cannot be added or removed without this file failing
 | `docs-check` | Fast, not in `check`: the four doc-drift pytest files. |
 | `docs` | `gen_docs --write` then `mkdocs build --strict` (needs uv). |
 | `oracle-check` | MusicXML XSD validity, music21 parity and LilyPond engraving of the notation fixtures; needs `uv pip install -e '.[oracles]'`, skips loudly without it (ADR-0011; not composed into `check`). |
+| `package-check` | Distribution gate: build the sdist + wheel, assert both carry every non-Python file under `audioforge/` (C kernel sources, bundled samples), install the wheel into a clean venv and render from outside the repo (`package_check`; needs network; not in `check` — CI's `package` job runs it). |
 | `lock-check` / `floor-check` | `uv lock --check` (skips loudly without uv; CI installs it) / no 3.11-only stdlib constructs (the Python 3.10 floor, RM-B-004). |
 | `clean` | Remove Python and pytest caches. |
 | `help` | Default goal: list every target. |
@@ -112,6 +113,9 @@ Coverage is **not** in `make check`; run it yourself:
   - `bump_version --check`, or `bump_version X.Y.Z [--dsl D] [--dry-run]` (AF-R09;
     also update `docs/DSL_SPEC.md`'s header and `docs/RELEASE_NOTES.md`, which the
     docs tests pin, and the package's own version line in `uv.lock`).
+  - `package_check [--dist DIR] [--no-smoke]` (behind `make package-check`);
+    `release_notes --tag engine-X.Y.Z` (fails unless the tag equals
+    `ENGINE_VERSION`; prints that `CHANGELOG.md` section as the release body).
   - `oracle_check` (behind `make oracle-check`), `notation_acceptance T1|T2|T3`,
     `musical_acceptance --out DIR`.
 - **`scripts/`** — `run_tests.sh` (canonical runner), `drift_inspect.py` (registry
@@ -120,6 +124,13 @@ Coverage is **not** in `make check`; run it yourself:
   are corpus/library builders; `harness.sh` / `harness-notation.sh` run the
   `docs/evolution/harness*.md` assertions; `examples.py` builds the composition
   catalog, pages and listening gallery; `_`-prefixed scripts are internal.
+
+- **Releases** — `.github/workflows/release.yml` runs on an `engine-X.Y.Z` tag push
+  (or `workflow_dispatch` with `tag`): the full `ci.yml` gate (reused via
+  `workflow_call`), `release_notes --tag`, `bump_version --check`, `uv build`,
+  `package_check --dist dist`, then a GitHub Release with the wheel, sdist and
+  `SHA256SUMS`. To cut one: `bump_version X.Y.Z`, date the CHANGELOG section,
+  update the pinned docs and `uv.lock`, merge to `main`, then push the tag.
 
 ## 5 · Agent surface
 

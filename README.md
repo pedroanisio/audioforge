@@ -169,7 +169,7 @@ One spec → a **pack** (`audioforge pack --variants 8`: seeded variant siblings
 
 ## Instrument classes (v2.5)
 
-Five new voices: **custom modal tables** (define `modes:` triplets in the DSL — infinite bespoke percussion), **wavetable morphing** (`osc: morph` with `scan` as an automation target), a **granular texture engine** (seeded grain clouds over any synthesized source), a **bowed waveguide** (native friction-curve kernel; needs a C compiler, fails loudly without), and the **content-addressed sample layer** — specs pin a sample's SHA-256, renders verify it byte-for-byte, pattern mode triggers real one-shots through the groove/humanize pipeline (sample shipped in `samples/`).
+Five new voices: **custom modal tables** (define `modes:` triplets in the DSL — infinite bespoke percussion), **wavetable morphing** (`osc: morph` with `scan` as an automation target), a **granular texture engine** (seeded grain clouds over any synthesized source), a **bowed waveguide** (native friction-curve kernel; needs a C compiler, fails loudly without), and the **content-addressed sample layer** — specs pin a sample's SHA-256, renders verify it byte-for-byte, pattern mode triggers real one-shots through the groove/humanize pipeline (samples ship inside the package, in `audioforge/data/samples/`).
 
 ## Performance realism (v2.4)
 
@@ -288,4 +288,4 @@ lists them with their render manifests.
 * Recorded material uses content-addressed WAV sample layers or pinned SFZ-subset instrument libraries. Recorded transitions and ensemble realism depend on the source material; synthesized approximations are declared in the render plan.
 * A measured A/B against a professional sample-based renderer (FluidSynth + FluidR3_GM) is recorded in [docs/RENDER_QUALITY_COMPARISON.md](docs/RENDER_QUALITY_COMPARISON.md) (`audioforge.quality`, `scripts/compare_render_quality.py`).
 
-Requires Python 3.10+, lark, numpy, scipy, matplotlib and a C compiler. Engine 3.2.0 · DSL 2.0.
+Requires Python 3.10+, lark, numpy, scipy, matplotlib and a C compiler. Engine 3.3.0 · DSL 2.0.

@@ -16,7 +16,7 @@ modulation effects, the bus vocoder, sample editing and the pre-existing house c
 engine renders the idiom end to end; the manifest values below come from
 `audioforge render <spec> --analyze` and are reproducible with `audioforge verify`.
 
-Render them from the repository root (the chop tracks read `samples/house_source_loop.wav`,
+Render them from the repository root (the chop tracks read the bundled `audioforge/data/samples/house_source_loop.wav`,
 itself the render of `house_00_source_loop.af`, mixed to mono 16-bit):
 
 ```

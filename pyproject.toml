@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "audioforge"
-version = "3.2.0"
+version = "3.3.0"
 description = "Deterministic audio-asset generation engine — compiles the .af DSL to reproducible WAV + manifests."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -51,6 +51,12 @@ Homepage = "https://github.com/pedroanisio/audioforge"
 
 [tool.setuptools.packages.find]
 include = ["audioforge*"]
+
+# Runtime data the wheel must carry: every render compiles the C kernels on
+# demand (ADR-0012), and the shipped samples/IRs resolve from the package.
+# tests/test_packaging.py fails if a file under audioforge/ is not covered here.
+[tool.setuptools.package-data]
+audioforge = ["native/*.c", "data/samples/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

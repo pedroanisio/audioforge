@@ -13,7 +13,7 @@ disclaimer:
 
 # Capabilities
 
-Machine-readable surface of AudioForge **engine 3.2.0 · DSL 2.0**, generated from `docs/capability-manifest.json` (itself generated from `audioforge/capabilities.py`).
+Machine-readable surface of AudioForge **engine 3.3.0 · DSL 2.0**, generated from `docs/capability-manifest.json` (itself generated from `audioforge/capabilities.py`).
 
 | Group | Count |
 |-------|------:|

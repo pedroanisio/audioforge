@@ -11,10 +11,25 @@ disclaimer:
 
 ## Current Runtime Contract
 
-- Engine 3.2.0
+- Engine 3.3.0
 - DSL 2.0
 - IR schema 2.1
 - Version source of truth: `audioforge.version`
+
+Engine 3.3.0 is the first release published as installable artifacts (GitHub Release
+`engine-3.3.0`: wheel, sdist, `SHA256SUMS`). Earlier distributions built from this
+repository omitted the C kernel sources that every render compiles
+([ADR-0012](adr/0012-native-dsp-kernels-bounded-drift.md)) and the bundled samples, so an
+installed engine could not render. Both now ship as package data, the bundled samples and
+impulse responses resolve from any working directory (`./samples` still takes precedence),
+and `make package-check` installs the built wheel into a clean environment and renders
+from outside the repository before anything is published. The release also carries the
+integrated feature work recorded in `CHANGELOG.md` under 3.3.0: physical-voice pitch
+curves by varispeed, rendered layer pitch rides, multi-oscillator notes layers, the video
+cue library and scene resolver, n-EDO tuning that renders, LilyPond engraving, the
+electronic-production effects, content-pinned `.af` includes, sound match and the
+render-quality A/B tooling. Spec hashes include the engine version, so every 3.2.0 spec
+hash changes; regenerate manifests with this engine. DSL 2.0 sources remain valid.
 
 Engine 3.2.0 renders with about 4.4x less CPU over the example corpus (short CLI renders
 ~7.5x less) by moving streaming DSP to native kernels, batching FFT convolution and
