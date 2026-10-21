@@ -45,7 +45,18 @@ def _args(tmp: Path, **over):
 
 
 def _has_svg_rasterizer() -> bool:
-    return any(shutil.which(t) for t in ("cairosvg", "rsvg-convert", "convert"))
+    """A rasterizer that can actually read SVG here — not merely a binary on
+    PATH: ImageMagick's `convert` reads SVG only through a delegate
+    (librsvg/MSVG), so its presence alone does not mean the step works."""
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmp:
+        src = Path(tmp) / "probe.svg"
+        src.write_text(_SVG)
+        try:
+            D._rasterize(src, Path(tmp) / "probe.png", 16)
+        except D.DistributeError:
+            return False
+        return (Path(tmp) / "probe.png").is_file()
 
 
 def test_pack_wav_only(tmp_path: Path):

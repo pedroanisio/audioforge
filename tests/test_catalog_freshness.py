@@ -5,8 +5,8 @@ deleting, or renaming SFZ/sample files can leave it stale with no signal. This
 test rescans `libraries/` with the same `Catalog` generator and asserts the
 committed inventory still matches (library set + instrument/renderable counts).
 
-It is opportunistic on the *presence* of `libraries/` (the tree is large and
-may be absent in a thin checkout) — but when the libraries ARE present it
+It is opportunistic on the *presence* of `libraries/` (gitignored and large; it
+exists only where the libraries were built) — but when the libraries ARE present it
 FAILS rather than skips, which is the whole point of a freshness guard.
 """
 import json
@@ -28,11 +28,17 @@ def _have_libraries() -> bool:
     return LIBS.is_dir() and any(LIBS.rglob("*.sfz"))
 
 
+# `libraries/` is gitignored, so `catalog.json` and `current.txt` exist only
+# where the libraries were built; a clone (and CI) has neither and nothing can
+# be stale. Asserting presence made `make check` fail on every machine but one.
+# Absent → a loud, explicit skip; present → stale or missing inventories FAIL.
+requires_libraries = pytest.mark.skipif(
+    not _have_libraries(),
+    reason="libraries/ (gitignored, built locally) is absent — no catalog to keep fresh")
+
+
+@requires_libraries
 def test_committed_catalog_matches_a_fresh_rescan():
-    assert _have_libraries(), (
-        "libraries/ is required for the catalog freshness guard; a thin "
-        "checkout would make Finding #6 silent again"
-    )
     assert CATALOG.is_file(), (
         "libraries/ is present but libraries/catalog.json is missing — "
         "regenerate it (scripts/catalog_instruments.py)"
@@ -62,8 +68,8 @@ def test_committed_catalog_matches_a_fresh_rescan():
     assert len(cat.libraries) == committed["library_count"]
 
 
+@requires_libraries
 def test_current_txt_matches_fresh_tree_snapshot():
-    assert LIBS.is_dir(), "libraries/ is required for the current.txt guard"
     current = LIBS / "current.txt"
     assert current.is_file(), (
         "libraries/current.txt is missing — regenerate it with "
